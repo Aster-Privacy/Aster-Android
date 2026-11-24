@@ -57,6 +57,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.launch
 import org.astermail.android.R
 import org.astermail.android.billing.BillingViewModel
 import org.astermail.android.design.AsterMaterial
@@ -71,6 +72,7 @@ import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.common.open_external_url
+import org.astermail.android.ui.settings.join_launched
 
 internal fun format_bytes(bytes: Long): String {
     if (bytes < 1024) return "$bytes B"
@@ -159,7 +161,23 @@ fun StorageScreen(
         onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
     }
 
-    detail_scaffold(title = stringResource(R.string.storage_title), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.storage_title),
+        on_back = on_back,
+        on_refresh = {
+            kotlinx.coroutines.coroutineScope {
+                launch { mail_vm.join_launched { mail_vm.load_stats(force = true) } }
+                launch {
+                    vm.join_launched {
+                        vm.load_storage(force = true)
+                        vm.load_subscription(force = true)
+                        vm.load_encryption_settings()
+                    }
+                }
+            }
+        },
+        refresh_enabled = !is_emptying_spam && !is_emptying_trash,
+    ) {
         val storage = state.storage
         val stats = inbox_state.stats
         val has_usable_storage = (storage != null && storage.total_bytes > 0L) ||
@@ -307,7 +325,7 @@ fun StorageScreen(
                         modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xl),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                        settings_load_spinner()
                     }
                 }
             } else {

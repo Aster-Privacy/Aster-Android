@@ -17,4 +17,22 @@
     <string name="alias_import_change_file">ファイルを変更</string>
     <string name="alias_import_remove_file">ファイルを削除</string>
     <string name="alias_note_placeholder_short">利用先</string>
+    <string name="alias_status_section">ステータス</string>
+    <string name="alias_receive_mail">メールを受信</string>
+    <string name="alias_receive_mail_on">このアドレス宛てのメールが届きます。</string>
+    <string name="alias_receive_mail_off">一時停止中です。このアドレス宛ての新しいメールは配信されません。</string>
+    <string name="alias_pin_subtitle">このエイリアスをリストの一番上に表示します。</string>
+    <string name="alias_danger_zone">危険な操作</string>
+    <string name="alias_delete_row_subtitle">このアドレスを完全に削除します。</string>
+    <string name="alias_protection_section">保護</string>
+    <string name="alias_automation_section">自動化</string>
+    <string name="alias_pin_mode_title">モード</string>
+    <string name="alias_remove_entry_a11y">%1$sを削除</string>
+    <string name="alias_create_action">エイリアスを作成</string>
+    <string name="alias_usage_near">エイリアスの上限に近づいています。</string>
+    <string name="alias_usage_full">エイリアスの上限に達しました。</string>
+    <string name="alias_offline_banner">オフラインです。変更は再接続時に同期されます。</string>
+    <string name="alias_menu_pause">一時停止</string>
+    <string name="alias_menu_resume">再開</string>
+    <string name="alias_directory_auto_create_a11y">%1$s のエイリアスを自動作成</string>
 </resources>

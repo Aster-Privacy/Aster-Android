@@ -73,6 +73,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterDragHandle
+import org.astermail.android.design.components.aster_show
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
@@ -174,12 +175,12 @@ internal fun remember_date_range_picker(
                     ).with_account_week_start().apply {
                         setTitle(end_title)
                         datePicker.minDate = earliest_end.timeInMillis
-                    }.show()
+                    }.aster_show()
                 },
                 start_seed.year,
                 start_seed.monthValue - 1,
                 start_seed.dayOfMonth,
-            ).with_account_week_start().apply { setTitle(start_title) }.show()
+            ).with_account_week_start().apply { setTitle(start_title) }.aster_show()
         }
     }
 }

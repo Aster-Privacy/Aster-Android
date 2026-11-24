@@ -21,6 +21,8 @@
 
 package org.astermail.android.ui.compose
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -31,11 +33,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.astermail.android.design.AsterDuration
+import org.astermail.android.design.AsterEasing
+import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.mail.EmailHtmlSanitizer
+import org.astermail.android.ui.mail.intercept_forward_editor_image
+import org.astermail.android.ui.mail.setting_blocks_remote_images
 
 internal data class forward_header_labels(
     val forwarded_message: String,
@@ -124,22 +134,30 @@ private const val forward_editor_script = """
   var ed=document.getElementById('aster_forward_editor');
   if(!ed){return;}
   var timer=null;
-  function height(){try{aster_forward.push_height(Math.ceil(document.documentElement.scrollHeight));}catch(e){}}
+  var height_queued=false;
+  function height(){try{aster_forward.push_height(Math.ceil(ed.getBoundingClientRect().height));}catch(e){}}
+  function queue_height(){if(height_queued){return;}height_queued=true;requestAnimationFrame(function(){height_queued=false;height();});}
   function push(){try{aster_forward.push_html(ed.innerHTML);}catch(e){}height();}
   function schedule(){if(timer){clearTimeout(timer);}timer=setTimeout(push,250);}
   ed.addEventListener('input',schedule);
   ed.addEventListener('blur',function(){if(timer){clearTimeout(timer);timer=null;push();}});
+  if(window.ResizeObserver){new ResizeObserver(queue_height).observe(ed);}
+  document.addEventListener('load',queue_height,true);
+  document.addEventListener('error',queue_height,true);
   window.addEventListener('load',height);
   setTimeout(height,0);
-  setTimeout(height,400);
 })();
 """
 
-private fun build_forward_editor_document(seed_html: String, nonce: String): String =
+internal fun forward_editor_image_sources(allow_external: Boolean): String =
+    if (allow_external) "data: https: http:" else "data:"
+
+private fun build_forward_editor_document(seed_html: String, nonce: String, allow_external: Boolean): String =
     "<!DOCTYPE html><html><head>" +
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
         "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; " +
-        "img-src data:; style-src 'unsafe-inline'; script-src 'nonce-$nonce'\">" +
+        "img-src ${forward_editor_image_sources(allow_external)}; style-src 'unsafe-inline'; " +
+        "script-src 'nonce-$nonce'\">" +
         "<style>html,body{margin:0;padding:0;background:#ffffff;}" +
         "#aster_forward_editor{padding:12px;outline:none;font-family:sans-serif;font-size:14px;" +
         "color:#222222;word-wrap:break-word;overflow-wrap:anywhere;}" +
@@ -161,17 +179,35 @@ internal fun forward_block_editor(
         return
     }
     val latest_on_html by rememberUpdatedState(on_html_change)
-    val document by produceState<String?>(initialValue = null, seed_html) {
+    val settings_vm = shared_settings_view_model()
+    val settings_state by settings_vm.state.collectAsStateWithLifecycle()
+    val allow_external = !setting_blocks_remote_images(settings_state.preferences) &&
+        !org.astermail.android.network.low_network_active()
+    val allow_external_now = rememberUpdatedState(allow_external)
+    val document by produceState<String?>(initialValue = null, seed_html, allow_external) {
         value = withContext(Dispatchers.Default) {
             val nonce = java.util.UUID.randomUUID().toString().replace("-", "")
-            build_forward_editor_document(sanitize_forward_seed(seed_html), nonce)
+            build_forward_editor_document(sanitize_forward_seed(seed_html), nonce, allow_external)
         }
     }
-    var measured_height_dp by remember(seed_html) { mutableIntStateOf(forward_editor_min_height_dp * 2) }
+    var measured_height_dp by remember { mutableIntStateOf(0) }
+    val reduce_motion = aster_reduce_motion()
+    val content_alpha by animateFloatAsState(
+        targetValue = if (measured_height_dp > 0) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = if (reduce_motion) 0 else AsterDuration.short_4,
+            easing = AsterEasing.standard_in_out,
+        ),
+        label = "forward_editor_alpha",
+    )
     val screen_height_dp = LocalConfiguration.current.screenHeightDp
     val max_height_dp = minOf(forward_editor_max_height_dp, (screen_height_dp * 0.55f).toInt())
         .coerceAtLeast(forward_editor_min_height_dp)
-    val target_height_dp = measured_height_dp.coerceIn(forward_editor_min_height_dp, max_height_dp)
+    val target_height_dp = if (measured_height_dp > 0) {
+        measured_height_dp.coerceIn(forward_editor_min_height_dp, max_height_dp)
+    } else {
+        forward_editor_min_height_dp
+    }
 
     val show_scroll_bar = !org.astermail.android.ui.theme.local_accessibility.current.hide_scrollbars
     androidx.compose.ui.viewinterop.AndroidView(
@@ -181,14 +217,20 @@ internal fun forward_block_editor(
                 settings.allowFileAccess = false
                 settings.allowContentAccess = false
                 settings.domStorageEnabled = false
-                settings.blockNetworkImage = true
-                settings.blockNetworkLoads = true
+                settings.blockNetworkImage = !allow_external_now.value
+                settings.blockNetworkLoads = !allow_external_now.value
                 settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
                 webViewClient = object : android.webkit.WebViewClient() {
                     override fun shouldOverrideUrlLoading(
                         view: android.webkit.WebView,
                         request: android.webkit.WebResourceRequest,
                     ): Boolean = true
+
+                    override fun shouldInterceptRequest(
+                        view: android.webkit.WebView?,
+                        request: android.webkit.WebResourceRequest?,
+                    ): android.webkit.WebResourceResponse? =
+                        intercept_forward_editor_image(view?.context, request, allow_external_now.value)
 
                     override fun onRenderProcessGone(
                         view: android.webkit.WebView?,
@@ -204,7 +246,7 @@ internal fun forward_block_editor(
                 addJavascriptInterface(
                     forward_editor_bridge(
                         on_html = { html -> latest_on_html(html) },
-                        on_height = { height -> if (height > 0) measured_height_dp = height },
+                        on_height = { height -> if (height > 0 && height != measured_height_dp) measured_height_dp = height },
                     ),
                     "aster_forward",
                 )
@@ -220,6 +262,8 @@ internal fun forward_block_editor(
         },
         update = { view ->
             val doc = document ?: return@AndroidView
+            view.settings.blockNetworkImage = !allow_external
+            view.settings.blockNetworkLoads = !allow_external
             if (view.tag != doc) {
                 view.tag = doc
                 view.loadDataWithBaseURL(null, doc, "text/html", "utf-8", null)
@@ -234,6 +278,7 @@ internal fun forward_block_editor(
         },
         modifier = modifier
             .fillMaxWidth()
-            .height(target_height_dp.dp),
+            .height(target_height_dp.dp)
+            .alpha(content_alpha),
     )
 }

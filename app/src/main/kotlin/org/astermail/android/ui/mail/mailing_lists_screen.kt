@@ -424,7 +424,7 @@ fun MailingListsScreen(
                         modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator(
+                        org.astermail.android.design.components.aster_spinner(
                             color = colors.accent_blue,
                             modifier = Modifier.size(24.dp),
                         )
@@ -676,9 +676,9 @@ private fun subscription_top_bar(
                         .semantics { contentDescription = cancel_label },
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator(
+                    org.astermail.android.design.components.aster_spinner(
                         color = colors.accent_blue,
-                        strokeWidth = 2.dp,
+                        stroke_width = 2.dp,
                         modifier = Modifier.size(18.dp),
                     )
                 }
@@ -1126,9 +1126,9 @@ private fun row_action_button(
         contentAlignment = Alignment.Center,
     ) {
         if (is_loading) {
-            CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 color = tint,
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
                 modifier = Modifier.size(16.dp),
             )
         } else {

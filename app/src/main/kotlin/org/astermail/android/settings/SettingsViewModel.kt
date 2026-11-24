@@ -292,6 +292,7 @@ data class SettingsUiState(
     val vanguard_status_load_failed: Boolean = false,
     val security_loading: Boolean = false,
     val pgp_key_info: org.astermail.android.api.encryption.PgpKeyInfo? = null,
+    val pgp_key_info_loaded: Boolean = false,
     val external_pgp_key: org.astermail.android.api.encryption.ExternalPgpKeyInfo? = null,
     val external_pgp_key_busy: Boolean = false,
     val recovery_methods: org.astermail.android.api.recovery.RecoveryMethodsResponse? = null,
@@ -732,9 +733,9 @@ class SettingsViewModel @Inject constructor(
         preferences_cache.write_badges(key, raw)
     }
 
-    fun load_default_sender() {
+    fun load_default_sender(force: Boolean = false) {
         val now = System.currentTimeMillis()
-        if (now - last_default_sender_load_ms < PREFERENCES_TTL_MS) return
+        if (!force && now - last_default_sender_load_ms < PREFERENCES_TTL_MS) return
         last_default_sender_load_ms = now
         viewModelScope.launch {
             try {
@@ -751,9 +752,9 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun load_product_updates() {
+    fun load_product_updates(force: Boolean = false) {
         val now = System.currentTimeMillis()
-        if (now - last_product_updates_load_ms < PREFERENCES_TTL_MS) return
+        if (!force && now - last_product_updates_load_ms < PREFERENCES_TTL_MS) return
         last_product_updates_load_ms = now
         viewModelScope.launch {
             try {
@@ -2020,7 +2021,8 @@ class SettingsViewModel @Inject constructor(
     fun load_alias_detail(alias_id: String, force: Boolean = false) {
         val existing = _state.value.alias_details[alias_id]
         if (!force && existing != null && (existing.loaded || existing.loading)) return
-        update_alias_detail(alias_id) { it.copy(loading = true) }
+        val keep_visible = existing?.loaded == true
+        if (!keep_visible) update_alias_detail(alias_id) { it.copy(loading = true) }
         viewModelScope.launch {
             val stats = fetch_alias_section { alias_detail_api.get_stats(alias_id) }
             val pins = fetch_alias_section { alias_detail_api.list_pins(alias_id) }
@@ -2058,6 +2060,11 @@ class SettingsViewModel @Inject constructor(
                 }
             }
             val section_failed = listOf(stats, pins, contacts, log, rules, apply_run).any { it.failed }
+            if (keep_visible && section_failed) {
+                update_alias_detail(alias_id) { it.copy(loading = false) }
+                _state.update { it.copy(action_result = context.getString(R.string.failed_to_load)) }
+                return@launch
+            }
             update_alias_detail(alias_id) {
                 it.copy(
                     loading = false,
@@ -4185,9 +4192,10 @@ class SettingsViewModel @Inject constructor(
             try {
                 val info = encryption_api.get_pgp_key_info()
                     .takeIf { org.astermail.android.auth.pgp_key_role_is_internal(it.role) }
-                _state.update { it.copy(pgp_key_info = info) }
+                _state.update { it.copy(pgp_key_info = info, pgp_key_info_loaded = true) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { it.copy(pgp_key_info_loaded = true) }
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_pgp_key_info", t)
             }
         }

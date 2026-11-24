@@ -37,6 +37,7 @@ import compose.icons.tablericons.*
 
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.aster_menu_item
+import org.astermail.android.design.components.aster_show
 import org.astermail.android.design.components.aster_menu_surface_color
 import org.astermail.android.design.components.aster_menu
 import org.astermail.android.BuildConfig
@@ -109,6 +110,7 @@ import androidx.compose.material3.SheetState
 import org.astermail.android.ui.common.remember_sheet_dismiss
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -1143,6 +1145,16 @@ private fun compose_screen_content(
                 quoted_html,
             )
         }
+    }
+
+    val frozen_forward_seed = remember(effective_mode, quoted_html) { mutableStateOf<String?>(null) }
+    val editor_forward_seed = if (forward_edited_html != null) {
+        frozen_forward_seed.value ?: forward_seed_html
+    } else {
+        forward_seed_html
+    }
+    SideEffect {
+        if (forward_edited_html == null) frozen_forward_seed.value = forward_seed_html
     }
 
     fun forward_block_for_send(): String? {
@@ -2686,10 +2698,10 @@ private fun compose_screen_content(
                             .background(colors.accent_blue),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator(
+                        org.astermail.android.design.components.aster_spinner(
                             color = colors.on_accent,
                             modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
+                            stroke_width = 2.dp,
                         )
                     }
                 } else {
@@ -3116,7 +3128,7 @@ private fun compose_screen_content(
                         enter = aster_expand_in(compose_reduce_motion),
                         exit = aster_collapse_out(compose_reduce_motion),
                     ) {
-                        val editable_forward_seed = forward_seed_html
+                        val editable_forward_seed = editor_forward_seed
                         val editable_reply_seed = reply_seed_html
                         if (editable_forward_seed != null) {
                             forward_block_editor(
@@ -3586,7 +3598,7 @@ private fun compose_screen_content(
                         show_schedule_picker = false
                         if (scheduled_at_iso == null) scheduled_send = false
                     }
-                    time_picker.show()
+                    time_picker.aster_show()
                 },
                 calendar.get(java.util.Calendar.YEAR),
                 calendar.get(java.util.Calendar.MONTH),
@@ -3602,7 +3614,7 @@ private fun compose_screen_content(
                 show_schedule_picker = false
                 scheduled_send = false
             }
-            date_picker.show()
+            date_picker.aster_show()
         }
     }
 
@@ -4973,10 +4985,10 @@ private fun TemplatePickerSheet(
                             .padding(AsterSpacing.xl),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator(
+                        org.astermail.android.design.components.aster_spinner(
                             modifier = Modifier.size(28.dp),
                             color = colors.accent_blue,
-                            strokeWidth = 2.dp,
+                            stroke_width = 2.dp,
                         )
                     }
                 }
@@ -5437,7 +5449,7 @@ internal fun ExpiringSheet(
                     calendar.get(java.util.Calendar.MINUTE),
                     org.astermail.android.ui.mail.AsterTimePreferences.use_24h,
                 )
-                time_picker.show()
+                time_picker.aster_show()
             },
             calendar.get(java.util.Calendar.YEAR),
             calendar.get(java.util.Calendar.MONTH),
@@ -5445,7 +5457,7 @@ internal fun ExpiringSheet(
         )
         date_picker.datePicker.minDate = System.currentTimeMillis()
         date_picker.with_account_week_start()
-        date_picker.show()
+        date_picker.aster_show()
     }
     val commit_or_close: () -> Unit = commit@{
         val hours = selected_hours

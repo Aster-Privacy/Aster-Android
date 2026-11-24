@@ -74,6 +74,7 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.mail.SenderAvatar
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 internal fun filters_description(text: String) {
@@ -295,7 +296,7 @@ internal fun filters_loading_block() {
             .padding(AsterSpacing.xxl),
         contentAlignment = Alignment.Center,
     ) {
-        CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+        settings_load_spinner()
     }
 }
 
@@ -359,7 +360,11 @@ fun BlockedSendersScreen(
 
     LaunchedEffect(Unit) { vm.load_blocked_senders() }
 
-    detail_scaffold(title = stringResource(R.string.blocked_senders), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.blocked_senders),
+        on_back = on_back,
+        on_refresh = { vm.join_launched { vm.load_blocked_senders() } },
+    ) {
         when {
             state.blocked_senders_loading && senders.isEmpty() -> filters_loading_block()
 

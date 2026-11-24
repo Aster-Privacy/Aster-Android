@@ -47,11 +47,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -210,6 +206,7 @@ import org.astermail.android.design.tonal_surface_color
 import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.disabled_surface_color
 import org.astermail.android.design.components.shimmer
+import org.astermail.android.design.components.skeleton_reveal
 import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterExpandVisibility
 import org.astermail.android.design.aster_expand_in
@@ -1175,6 +1172,31 @@ fun MailDetailScreen(
         if (total > 0) list_state.animateScrollToItem(total - 1)
     }
     val pan_signal = remember { horizontal_pan_signal() }
+    val card_reduce_motion = org.astermail.android.design.aster_reduce_motion()
+    val card_placement_spec: androidx.compose.animation.core.FiniteAnimationSpec<androidx.compose.ui.unit.IntOffset>? =
+        if (card_reduce_motion) null else org.astermail.android.design.AsterSpring.fast_spatial()
+    val body_holder = remember(email_id) { body_view_holder() }
+    val body_holder_context = LocalContext.current
+    DisposableEffect(body_holder, body_holder_context) {
+        val callbacks = object : android.content.ComponentCallbacks2 {
+            override fun onConfigurationChanged(new_config: android.content.res.Configuration) {
+                body_holder.evict_detached()
+            }
+            @Deprecated("Deprecated in Java")
+            override fun onLowMemory() {
+                body_holder.evict_detached()
+            }
+            override fun onTrimMemory(level: Int) {
+                body_holder.evict_detached()
+            }
+        }
+        val app_context = body_holder_context.applicationContext
+        app_context.registerComponentCallbacks(callbacks)
+        onDispose {
+            runCatching { app_context.unregisterComponentCallbacks(callbacks) }
+            body_holder.release_all()
+        }
+    }
     val show_topbar_subject by remember {
         derivedStateOf { list_state.firstVisibleItemIndex > 0 || list_state.firstVisibleItemScrollOffset > 80 }
     }
@@ -1191,11 +1213,11 @@ fun MailDetailScreen(
         if (target != null) list_state.scrollToItem(target)
     }
 
-    val pending_anchor = remember { mutableStateOf<Pair<String, Int>?>(null) }
+    val pending_anchor = remember { mutableStateOf<Triple<String, Int, Int>?>(null) }
     val toggle_tick = remember { mutableStateOf(0) }
     fun anchor_toggle(id: String) {
         val info = list_state.layoutInfo.visibleItemsInfo.firstOrNull { it.key == id }
-        pending_anchor.value = if (info != null) id to info.offset else null
+        pending_anchor.value = if (info != null) Triple(id, info.index, info.offset) else null
         toggle_tick.value += 1
     }
     LaunchedEffect(toggle_tick.value) {
@@ -1203,17 +1225,30 @@ fun MailDetailScreen(
         pending_anchor.value = null
         androidx.compose.runtime.withFrameNanos { }
         val info = list_state.layoutInfo.visibleItemsInfo.firstOrNull { it.key == anchor.first }
-            ?: return@LaunchedEffect
-        val delta = (info.offset - anchor.second).toFloat()
-        if (kotlin.math.abs(delta) > 1f) {
-            list_state.scrollBy(delta)
+        if (info != null) {
+            val delta = (info.offset - anchor.third).toFloat()
+            if (kotlin.math.abs(delta) > 1f) list_state.scrollBy(delta)
+            return@LaunchedEffect
         }
-        androidx.compose.runtime.withFrameNanos { }
-        val settled = list_state.layoutInfo.visibleItemsInfo.firstOrNull { it.key == anchor.first }
-            ?: return@LaunchedEffect
-        if (kotlin.math.abs(settled.offset - anchor.second) > 24) {
-            list_state.animateScrollToItem(settled.index)
+        val index = anchor.second.coerceAtMost((list_state.layoutInfo.totalItemsCount - 1).coerceAtLeast(0))
+        if (anchor.third < 0) {
+            list_state.scrollToItem(index, -anchor.third)
+        } else {
+            list_state.scrollToItem(index)
+            if (anchor.third > 0) list_state.scrollBy(-anchor.third.toFloat())
         }
+    }
+    val quote_density = LocalDensity.current.density
+    DisposableEffect(body_holder, quote_density) {
+        body_holder.on_quote_collapse = { _, shift_dp ->
+            val shift_px = shift_dp * quote_density
+            if (shift_px > 1f && !body_holder.is_released) {
+                scope.launch {
+                    if (!body_holder.is_released && list_state.canScrollBackward) list_state.scrollBy(-shift_px)
+                }
+            }
+        }
+        onDispose { body_holder.on_quote_collapse = null }
     }
 
     batch_action_toast(mail_vm)
@@ -1233,13 +1268,11 @@ fun MailDetailScreen(
         }
     }
 
-    val subject_selection = remember_subject_selection_state()
     Box(
         modifier = Modifier
             .fillMaxSize()
             .page_surface(colors)
-            .statusBarsPadding()
-            .clear_subject_selection_on_press_outside(subject_selection),
+            .statusBarsPadding(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             Box(
@@ -1569,7 +1602,10 @@ fun MailDetailScreen(
                     .detail_swipe_navigation(detail_swipe, on_next, on_previous),
             ) {
             Box(modifier = Modifier.fillMaxSize().detail_swipe_offset(detail_swipe)) {
-            CompositionLocalProvider(local_horizontal_pan_signal provides pan_signal) {
+            CompositionLocalProvider(
+                local_horizontal_pan_signal provides pan_signal,
+                local_body_view_holder provides body_holder,
+            ) {
             if (email != null) LazyColumn(
                 state = list_state,
                 modifier = Modifier
@@ -1581,6 +1617,13 @@ fun MailDetailScreen(
                 item(key = "subject_header") {
                     var subject_expanded by remember(subject_text) { mutableStateOf(false) }
                     var subject_truncated by remember(subject_text) { mutableStateOf(false) }
+                    val code_source = messages.lastOrNull()?.takeIf { !it.is_body_pending && !it.is_undecryptable }
+                    val subject_verification_code = remember(email?.subject, code_source?.id, code_source?.body, code_source?.body_html) {
+                        org.astermail.android.mail.detect_unambiguous_verification_code(
+                            email?.subject,
+                            code_source?.let { select_display_body(it.body, it.body_html) },
+                        )
+                    }
                     val applied_tag_tokens = remember(api_item, inbox_state_for_folder.items) {
                         org.astermail.android.labels.conversation_tag_tokens(
                             api_item?.as_conversation_member(),
@@ -1614,15 +1657,12 @@ fun MailDetailScreen(
                             on_overflow = { overflowed ->
                                 if (!subject_expanded && overflowed) subject_truncated = true
                             },
-                            selection_state = subject_selection,
                             modifier = Modifier
                                 .weight(1f)
-                                .then(
-                                    if (subject_truncated) {
-                                        Modifier.clickable { subject_expanded = !subject_expanded }
-                                    } else {
-                                        Modifier
-                                    },
+                                .subject_press_actions(
+                                    expandable = subject_truncated,
+                                    on_toggle_expand = { subject_expanded = !subject_expanded },
+                                    verification_code = subject_verification_code,
                                 ),
                         )
                         if (api_item?.raw_item?.metadata?.is_pinned == true) {
@@ -1700,6 +1740,7 @@ fun MailDetailScreen(
                     val is_first_card = idx == 0 || is_after_indicator
                     val is_last_card = is_last
 
+                    Box(modifier = Modifier.fillMaxWidth().animateItem(fadeInSpec = null, placementSpec = card_placement_spec, fadeOutSpec = null)) {
                     val body_kept = remember(msg.id) { BooleanArray(1) }
                     if (is_expanded) body_kept[0] = true
                     if (!is_expanded) {
@@ -1922,6 +1963,7 @@ fun MailDetailScreen(
                             can_collapse = !is_pending_send && thread_items.size > 1,
                             is_pending_send = is_pending_send,
                         )
+                    }
                     }
                 }
 
@@ -2409,11 +2451,35 @@ fun MailDetailScreen(
     }
 
     val profile_target = profile_sender
+    val profile_address = profile_target?.first?.trim()?.lowercase().orEmpty()
+    LaunchedEffect(profile_address.isNotEmpty()) {
+        if (profile_address.isNotEmpty() && settings_state.blocked_senders.isEmpty() &&
+            !settings_state.blocked_senders_loading
+        ) {
+            settings_vm.load_blocked_senders()
+        }
+    }
     if (profile_target != null) {
+        val profile_blocked = settings_state.blocked_senders.firstOrNull {
+            !it.is_domain && it.address.trim().lowercase() == profile_address
+        }
         sender_profile_sheet(
             sender_email = profile_target.first,
             sender_name = profile_target.second,
             trust = profile_sender_trust,
+            is_own_address = profile_address in reaction_own_addresses,
+            on_open_alias_settings = on_navigate?.let { navigate ->
+                { address: String ->
+                    val normalized = address.trim().lowercase()
+                    val alias_id = settings_state.aliases.firstOrNull {
+                        !it.decryption_failed && it.address.trim().lowercase() == normalized
+                    }?.id
+                    navigate(if (alias_id.isNullOrBlank()) "settings/aliases" else "alias:$alias_id")
+                }
+            },
+            on_open_contact = on_navigate?.let { navigate -> { id: String -> navigate("contact:$id") } },
+            is_blocked = profile_blocked != null,
+            on_unblock = profile_blocked?.let { blocked -> { _: String -> settings_vm.unblock_sender(blocked.sender_token) } },
             on_close = {
                 profile_sender = null
                 profile_sender_trust = null
@@ -3229,6 +3295,7 @@ internal fun expanded_message(
         } else if (!plain_text_mode && html_part != null && !msg.is_undecryptable) {
             email_html_view(
                 html = html_part,
+                message_key = msg.id,
                 allow_external = allow_external,
                 inline_images = inline_images,
                 access_token = access_token,
@@ -3342,9 +3409,9 @@ internal fun expanded_message(
                     )
                     if (retry_in_progress) {
                         Spacer(Modifier.width(8.dp))
-                        CircularProgressIndicator(
+                        org.astermail.android.design.components.aster_spinner(
                             color = retry_content_color,
-                            strokeWidth = 2.dp,
+                            stroke_width = 2.dp,
                             modifier = Modifier.size(16.dp),
                         )
                     }
@@ -3382,6 +3449,7 @@ internal fun expanded_message(
             }
             email_html_view(
                 html = plain_html,
+                message_key = msg.id,
                 allow_external = false,
                 access_token = access_token,
                 on_ready = on_body_ready,
@@ -6116,29 +6184,8 @@ private inline fun <T> as_io_failure(block: () -> T): T =
     } catch (e: Throwable) {
         throw java.io.IOException(e)
     }
-private const val remeasure_settle_ms = 32L
-private const val remeasure_visual_timeout_ms = 250L
-private const val remeasure_resize_frames = 20
-private const val remeasure_read_frames = 12
-private const val remeasure_stale_read_frames = 36
-private const val remeasure_stable_reads = 1
-private const val remeasure_probe_inset_dp = 8f
 private const val remeasure_viewport_slack_px = 4
-private const val remeasure_known_heights_max = 16
-private const val remeasure_collapse_wait_ms = 700L
-private const val remeasure_collapse_poll_ms = 32L
-private const val height_watch_fast_ms = 24L
-private const val height_watch_slow_ms = 100L
-private const val height_watch_fast_window_ms = 1000L
-private const val height_watch_probe_ms = 64L
-private const val height_watch_exact_stable_ms = 48L
-private const val height_watch_settle_ms = 2000L
-private const val height_watch_budget_ms = 15000L
 private const val vertical_overflow_slack_dp = 8f
-private const val max_overflow_fit_attempts = 3
-private const val height_late_growth_poll_ms = 500L
-private const val height_late_growth_budget_ms = 60000L
-private const val height_late_growth_slack_dp = 8f
 
 internal object web_view_support {
     @Volatile
@@ -6234,9 +6281,47 @@ internal class mail_body_web_view(
         if (t != 0 && !vertical_scroll_allowed()) scrollTo(l, 0)
     }
 
+    var on_content_height: ((Int) -> Unit)? = null
+
+    var destroyed: Boolean = false
+        private set
+
+    private var reported_content_height = -1
+
+    fun forget_content_height() {
+        reported_content_height = -1
+    }
+
+    override fun onDraw(canvas: android.graphics.Canvas) {
+        super.onDraw(canvas)
+        if (destroyed) return
+        val content = contentHeight
+        if (content > 0 && content != reported_content_height) {
+            reported_content_height = content
+            on_content_height?.invoke(content)
+        }
+    }
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        if (body_width_changed(oldw, w)) on_width_change?.invoke()
+        if (destroyed) return
+        if (body_width_changed(oldw, w) || (oldw == 0 && w > 0)) on_width_change?.invoke()
+        if (h != oldh && h > 0) on_height_change?.invoke()
+    }
+
+    var on_height_change: (() -> Unit)? = null
+
+    fun release_body() {
+        if (destroyed) return
+        destroyed = true
+        on_content_height = null
+        on_width_change = null
+        on_height_change = null
+        on_horizontal_scroll = null
+        stopLoading()
+        loadUrl("about:blank")
+        removeAllViews()
+        destroy()
     }
 
     private fun wrap(
@@ -6305,12 +6390,12 @@ internal fun configure_mail_body_web_view(
 ) {
     web.setBackgroundColor(android.graphics.Color.TRANSPARENT)
     web.settings.javaScriptEnabled = false
-    web.settings.loadWithOverviewMode = true
+    web.settings.loadWithOverviewMode = false
     web.settings.useWideViewPort = true
     web.settings.textZoom = text_zoom
-    web.settings.builtInZoomControls = true
+    web.settings.builtInZoomControls = false
     web.settings.displayZoomControls = false
-    web.settings.setSupportZoom(true)
+    web.settings.setSupportZoom(false)
     web.settings.domStorageEnabled = false
     web.settings.loadsImagesAutomatically = true
     web.settings.blockNetworkImage = !allow_external
@@ -6333,63 +6418,6 @@ internal fun configure_mail_body_web_view(
     web.isNestedScrollingEnabled = false
 }
 
-private suspend fun await_web_visual_state(web: android.webkit.WebView) {
-    kotlinx.coroutines.withTimeoutOrNull(remeasure_visual_timeout_ms) {
-        kotlinx.coroutines.suspendCancellableCoroutine<Unit> { cont ->
-            web.postVisualStateCallback(
-                System.nanoTime(),
-                object : android.webkit.WebView.VisualStateCallback() {
-                    override fun onComplete(requestId: Long) {
-                        if (cont.isActive) cont.resumeWith(Result.success(Unit))
-                    }
-                },
-            )
-        }
-    }
-}
-
-@Suppress("DEPRECATION")
-private fun web_viewport_css_height(web: android.webkit.WebView): Int =
-    if (web.scale > 0f) (web.height / web.scale).toInt() else 0
-
-private fun web_overflows_sideways(web: android.webkit.WebView): Boolean {
-    val body = web as? mail_body_web_view ?: return false
-    return body_overflows_sideways(body.horizontal_scroll_range(), body.horizontal_scroll_extent())
-}
-
-private fun web_height_viewport_filled(web: android.webkit.WebView, content_css: Int): Boolean {
-    val body = web as? mail_body_web_view ?: return false
-    return body_height_viewport_filled(
-        content_css = content_css,
-        viewport_css = web_viewport_css_height(web),
-        scroll_range = body.horizontal_scroll_range(),
-        scroll_extent = body.horizontal_scroll_extent(),
-    )
-}
-
-private class height_channel(private val on_height: (Int, Boolean) -> Unit) {
-    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
-    private var pending_height = 0
-    private var pending_exact = false
-    private val commit = Runnable {
-        if (pending_height > 0) on_height(pending_height, pending_exact)
-        pending_height = 0
-        pending_exact = false
-    }
-
-    fun report(height: Int, exact: Boolean = false) {
-        if (height <= 0) return
-        if (exact) {
-            pending_height = height
-            pending_exact = true
-        } else if (height > pending_height) {
-            pending_height = height
-        }
-        handler.removeCallbacks(commit)
-        handler.postDelayed(commit, if (exact) 0 else 40)
-    }
-}
-
 private object body_height_cache {
     private const val max_entries = 128
     private val store = object : java.util.LinkedHashMap<Long, Float>(max_entries, 0.75f, true) {
@@ -6397,31 +6425,6 @@ private object body_height_cache {
     }
     @Synchronized fun get(key: Long): Float? = store[key]
     @Synchronized fun put(key: Long, value: Float) { store[key] = value }
-}
-
-private class body_fit_record(
-    val width: Int?,
-    val attempts: Int,
-    val viewport_css: Float,
-    val needed_css: Float,
-)
-
-private object body_fit_width_cache {
-    private const val max_entries = 128
-    private val store = object : java.util.LinkedHashMap<Long, body_fit_record>(max_entries, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, body_fit_record>?): Boolean = size > max_entries
-    }
-    @Synchronized fun get(key: Long): body_fit_record? = store[key]
-    @Synchronized fun put(key: Long, value: body_fit_record) { store[key] = value }
-}
-
-private object body_shown_cache {
-    private const val max_entries = 128
-    private val store = object : java.util.LinkedHashMap<Long, Boolean>(max_entries, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, Boolean>?): Boolean = size > max_entries
-    }
-    @Synchronized fun was_shown(key: Long): Boolean = store[key] == true
-    @Synchronized fun mark_shown(key: Long) { store[key] = true }
 }
 
 private object thread_revealed_cache {
@@ -6607,9 +6610,9 @@ private fun translation_banner(
                 )
             }
             is TranslationBannerState.Translating -> {
-                CircularProgressIndicator(
+                org.astermail.android.design.components.aster_spinner(
                     color = colors.accent_blue,
-                    strokeWidth = 2.dp,
+                    stroke_width = 2.dp,
                     modifier = Modifier.size(14.dp),
                 )
                 Spacer(Modifier.width(AsterSpacing.sm))
@@ -6732,6 +6735,7 @@ private fun translation_banner(
 internal fun email_html_view(
     html: String,
     modifier: Modifier = Modifier,
+    message_key: String? = null,
     allow_external: Boolean = false,
     inline_images: Map<String, String> = emptyMap(),
     access_token: String? = null,
@@ -6775,6 +6779,7 @@ internal fun email_html_view(
         else -> 100
     }
     val forwarded_label = stringResource(R.string.forwarded_message_label)
+    val hide_quote_label_text = stringResource(R.string.hide_quoted_text)
     val blocked_image_labels = BlockedImageLabels(
         image = stringResource(R.string.image_blocked),
         tracking_pixel = stringResource(R.string.tracking_pixel_blocked),
@@ -7022,59 +7027,43 @@ internal fun email_html_view(
         ((html_cache.height_key(html_hash, allow_external, screen_width_dp, text_zoom) * 31L + (if (dyslexia_font) 1L else 0L)) *
             31L + email_font_id.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L)
     }
-    var overflow_fit_width by remember(base_height_key) { mutableStateOf(body_fit_width_cache.get(base_height_key)?.width) }
-    val overflow_fit_attempts = remember(base_height_key) { intArrayOf(body_fit_width_cache.get(base_height_key)?.attempts ?: 0) }
-    val height_cache_key = remember(base_height_key, overflow_fit_width) {
-        base_height_key * 31L + (overflow_fit_width ?: 0).toLong()
+    val estimated_height = remember(html_hash, screen_width_dp) {
+        if (html.isEmpty()) placeholder_body_height else estimated_body_height(html, screen_width_dp)
     }
-    val estimated_height = remember(html_hash, screen_width_dp) { estimated_body_height(html, screen_width_dp) }
-    val cached_height = remember(height_cache_key) { body_height_cache.get(height_cache_key) }
-    var content_height_dp by remember(height_cache_key) { mutableStateOf((cached_height ?: 0f).dp) }
-    var has_measured by remember(height_cache_key) { mutableStateOf(cached_height != null) }
-    var height_settled by remember(height_cache_key) { mutableStateOf(cached_height != null) }
-    var body_shown by remember(height_cache_key) {
-        mutableStateOf(cached_height != null && body_shown_cache.was_shown(height_cache_key))
+    val body_holder = local_body_view_holder.current
+    val measure = remember(message_key, body_holder) {
+        message_key?.let { key -> body_holder?.measure_for(key) } ?: body_measure()
     }
-    val loading_height = remember(height_cache_key, estimated_height) {
-        cached_height?.dp ?: if (html.isEmpty()) placeholder_body_height else estimated_height
+    remember(measure, base_height_key) {
+        if (measure.height_key != base_height_key) {
+            measure.begin_key(
+                base_height_key,
+                seed_body_height(body_height_cache.get(base_height_key), estimated_height.value),
+                android.os.SystemClock.uptimeMillis(),
+            )
+        }
+        base_height_key
     }
-    val shown_height_ref = remember { floatArrayOf(0f) }
-    var ever_shown by remember { mutableStateOf(body_shown) }
-    val held_recheck = remember(height_cache_key) { booleanArrayOf(false) }
-    val page_painted = remember(height_cache_key) { mutableStateOf(false) }
-    val measure_probe = remember(height_cache_key) { mutableStateOf(false) }
-    val probe_hold_dp = remember(height_cache_key) { mutableStateOf(0.dp) }
-    val probe_height_dp = remember(height_cache_key) { mutableStateOf(MEASURE_PROBE_HEIGHT) }
-    val remeasure_active = remember(height_cache_key) { booleanArrayOf(false) }
-    val toggled_ref = remember(height_cache_key) { booleanArrayOf(false) }
-    var height_instant by remember(height_cache_key) { mutableStateOf(false) }
-    val known_heights = remember(height_cache_key) {
-        mutableListOf<Float>().apply { if (cached_height != null && cached_height > 0f) add(cached_height) }
+    val alive = remember { booleanArrayOf(true) }
+    DisposableEffect(Unit) {
+        alive[0] = true
+        onDispose { alive[0] = false }
     }
-    val visual_ready = remember(height_cache_key) { mutableStateOf(false) }
+    val visual_ready = remember(measure) { mutableStateOf(false) }
+    val load_tick = remember(measure) { mutableStateOf(0) }
+    val layout_tick = remember(measure) { mutableStateOf(0) }
     val renderer_gone = remember { mutableStateOf(false) }
     var web_generation by remember { mutableStateOf(0) }
-    val remeasure_trigger = remember(height_cache_key) { mutableStateOf(0) }
     val layout_density = LocalDensity.current.density
-    val max_body_height_px = remember(layout_density) { (max_body_layout_px / layout_density.coerceAtLeast(1f)).toInt() }
+    val max_body_height_dp = remember(layout_density) { (max_body_layout_px / layout_density.coerceAtLeast(1f)).toInt() }
     val last_window_y = remember { floatArrayOf(Float.NaN) }
-    val has_toggles_ref = remember { booleanArrayOf(true) }
-    val reload_policy = remember(height_cache_key) { body_reload_policy() }
-    val height_guard = remember(height_cache_key) { body_height_guard() }
-    val growth_guard = remember(height_cache_key) { body_growth_guard() }
-    val height_recheck = remember(height_cache_key) { mutableStateOf(false) }
+    val reload_policy = remember(measure) { body_reload_policy() }
     val web_view_context = androidx.compose.ui.platform.LocalContext.current
-    val web_view_missing = remember(height_cache_key) { !web_view_support.is_available(web_view_context) }
-    val renderer_exhausted = remember(height_cache_key) { mutableStateOf(web_view_missing) }
-
-    LaunchedEffect(height_cache_key, page_painted.value) {
-        if (page_painted.value) return@LaunchedEffect
-        kotlinx.coroutines.delay(2500)
-        if ((web_ref[0]?.contentHeight ?: 0) > 0) page_painted.value = true
-    }
-
-    val settled_height_ref = remember(html_hash) { floatArrayOf(cached_height ?: 0f) }
-    var zoom_active by remember(height_cache_key) { mutableStateOf(false) }
+    val web_view_missing = remember(base_height_key) { !web_view_support.is_available(web_view_context) }
+    val renderer_exhausted = remember(base_height_key) { mutableStateOf(web_view_missing) }
+    val cacheable_load = remember(measure) { booleanArrayOf(true) }
+    val white_page_ref = remember { booleanArrayOf(false) }
+    var long_pressed_link by remember { mutableStateOf<String?>(null) }
 
     fun build_html(body: String): String = build_email_html(
         body = body,
@@ -7089,107 +7078,94 @@ internal fun email_html_view(
         email_font_id = email_font_id,
         text_zoom = text_zoom,
         underline_links = underline_links,
-        fit_width_override = overflow_fit_width,
+        hide_quote_label = hide_quote_label_text,
     )
 
     val translate_active = translate_active_early
     val allow_external_ref = remember { booleanArrayOf(false) }
     allow_external_ref[0] = allow_external
-    val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links, overflow_fit_width) { (((((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong()) * 31L + sanitize_options.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L)) * 31L + (overflow_fit_width ?: 0).toLong() }
-    var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links, overflow_fit_width) { mutableStateOf<String?>(if (html.isEmpty()) null else html_cache.get(cache_key)) }
-    var loaded_built by remember { mutableStateOf("") }
-    var loaded_external by remember { mutableStateOf(false) }
-    val scale_ref = remember { floatArrayOf(1f) }
-    val nl_scale_ref = remember { floatArrayOf(1f) }
-    val measured_dp_ref = remember { floatArrayOf(0f) }
-    val measured_scale_ref = remember { floatArrayOf(1f) }
-    val zoom_scale_ref = remember { floatArrayOf(1f) }
-    val zoom_base_ref = remember { floatArrayOf(0f) }
-    val zoom_last_ref = remember { floatArrayOf(0f) }
-    val is_nl_ref = remember { booleanArrayOf(false) }
-    val white_page_ref = remember { booleanArrayOf(false) }
-    var long_pressed_link by remember { mutableStateOf<String?>(null) }
+    val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { ((((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong()) * 31L + sanitize_options.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L) }
+    var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { mutableStateOf<String?>(if (html.isEmpty()) null else html_cache.get(cache_key)) }
+    val wants_white_page = remember(prebuilt_html) { prebuilt_html?.contains("data-white=\"1\"") == true }
 
-    val on_height_report by rememberUpdatedState<(Int, Boolean, Boolean) -> Unit> { h, exact, forced ->
-        if (h > 0) {
-            val natural_scale = if (is_nl_ref[0]) nl_scale_ref[0] else 1f
-            val is_natural = forced || kotlin.math.abs(zoom_scale_ref[0] - natural_scale) < 0.01f
-            if (has_measured && !is_natural) return@rememberUpdatedState
-            if (forced) {
-                zoom_active = false
-                scale_ref[0] = natural_scale
-                zoom_scale_ref[0] = natural_scale
-                if (zoom_last_ref[0] > 0f) zoom_base_ref[0] = zoom_last_ref[0]
-                growth_guard.reset()
-            }
-            val reported_h = (h * scale_ref[0]).toInt().coerceAtMost(max_body_height_px)
-            val visual_h = if (has_measured && exact && !forced) {
-                growth_guard.settle(content_height_dp.value.toInt(), reported_h)
-            } else {
-                reported_h
-            }
-            if (exact && height_guard.should_remeasure_capped(visual_h, max_body_height_px)) height_recheck.value = true
-            val new_dp = visual_h.dp
-            fun remember_known_height(value: Float) {
-                if (!is_natural || value <= 0f) return
-                known_heights.removeAll { kotlin.math.abs(it - value) < 8f }
-                known_heights.add(value)
-                while (known_heights.size > remeasure_known_heights_max) known_heights.removeAt(0)
-            }
-            if (!has_measured) {
-                content_height_dp = new_dp
-                measured_dp_ref[0] = new_dp.value
-                measured_scale_ref[0] = scale_ref[0]
-                if (zoom_last_ref[0] > 0f) zoom_base_ref[0] = zoom_last_ref[0]
-                has_measured = true
-                if (is_natural && !toggled_ref[0]) {
-                    body_height_cache.put(height_cache_key, new_dp.value)
-                    settled_height_ref[0] = new_dp.value
+    fun degrade_to_plain_text() {
+        renderer_exhausted.value = true
+        measure.probing = false
+        measure.measured = true
+    }
+
+    fun read_body(web: mail_body_web_view, generation: Int) {
+        if (!alive[0] || web.destroyed || renderer_exhausted.value) return
+        try {
+            val density = web.resources.displayMetrics.density.coerceAtLeast(0.1f)
+            if (!body_width_measurable(web.width, density)) return
+            @Suppress("DEPRECATION")
+            val px_per_css = web.scale.takeIf { it > 0f } ?: density
+            val content_dp = kotlin.math.round(web.contentHeight * px_per_css / density).toInt()
+            val view_dp = kotlin.math.round(web.height / density).toInt()
+            val probe_dp = MEASURE_PROBE_HEIGHT.value.toInt()
+            val accepted = measure.accepts(generation) && measure.painted
+            val verdict = judge_body_reading(accepted, content_dp, view_dp, probe_dp, measure.view_is_known_height)
+            when (verdict) {
+                body_reading_verdict.stale -> Unit
+                body_reading_verdict.probe -> if (!measure.probing) {
+                    web.forget_content_height()
+                    measure.probing = true
                 }
-                if (exact) {
-                    height_settled = true
-                    remember_known_height(new_dp.value)
-                }
-                on_ready()
-            } else if (exact) {
-                height_settled = true
-                val delta = kotlin.math.abs((new_dp - content_height_dp).value)
-                if (delta >= 8f) {
-                    if (forced) toggled_ref[0] = true
-                    content_height_dp = new_dp
-                    measured_dp_ref[0] = new_dp.value
-                    measured_scale_ref[0] = scale_ref[0]
-                    if (zoom_last_ref[0] > 0f) zoom_base_ref[0] = zoom_last_ref[0]
-                    if (!toggled_ref[0]) {
-                        body_height_cache.put(height_cache_key, new_dp.value)
-                        settled_height_ref[0] = new_dp.value
+                body_reading_verdict.grow, body_reading_verdict.settle -> {
+                    val exact = verdict == body_reading_verdict.grow || view_dp <= probe_dp + BODY_HEIGHT_SLACK_CSS
+                    val height = if (exact) {
+                        body_reading_height_dp(content_dp, max_body_height_dp)
+                    } else {
+                        measure.view_dp.coerceAtLeast(1f)
+                    }
+                    measure.view_dp = height
+                    measure.view_is_known_height = true
+                    measure.probing = false
+                    measure.measured = true
+                    measure.quote.on_exact_height(height)
+                    if (cacheable_load[0] && !measure.quote.is_expanded &&
+                        body_height_cacheable(accepted, measure.painted, verdict, height)
+                    ) {
+                        body_height_cache.put(measure.height_key, height)
                     }
                 }
-                remember_known_height(new_dp.value)
             }
+        } catch (_: Throwable) {
+            degrade_to_plain_text()
         }
     }
 
-    val height_sink = remember { height_channel { h, exact -> on_height_report(h, exact, false) } }
-
-    fun adopt_natural_scale(view: android.webkit.WebView?, px_scale: Float) {
-        if (!is_nl_ref[0] || view == null) return
-        val previous = nl_scale_ref[0]
-        val actual = natural_body_scale(previous, px_scale, view.resources.displayMetrics.density)
-        if (kotlin.math.abs(actual - previous) < NATURAL_SCALE_TOLERANCE) return
-        nl_scale_ref[0] = actual
-        scale_ref[0] = actual
-        zoom_scale_ref[0] = actual
-        measured_scale_ref[0] = actual
-        if (has_measured && measured_dp_ref[0] > 0f) {
-            val rescaled = rescaled_body_height_dp(measured_dp_ref[0], previous, actual)
-            measured_dp_ref[0] = rescaled
-            content_height_dp = rescaled.dp
+    fun request_read(web: mail_body_web_view) {
+        if (!alive[0] || web.destroyed) return
+        val generation = measure.load_generation
+        try {
+            web.postVisualStateCallback(
+                System.nanoTime(),
+                object : android.webkit.WebView.VisualStateCallback() {
+                    override fun onComplete(requestId: Long) {
+                        if (measure.accepts(generation)) read_body(web, generation)
+                    }
+                },
+            )
+        } catch (_: Throwable) {
+            read_body(web, generation)
         }
     }
 
-    LaunchedEffect(height_cache_key) {
-        if (has_measured) on_ready()
+    fun load_body(web: mail_body_web_view, built: String, notify: Boolean = true) {
+        if (web.destroyed) return
+        measure.begin_load(android.os.SystemClock.uptimeMillis(), keep_height = measure.measured)
+        web.forget_content_height()
+        measure.loaded_built = built
+        measure.loaded_external = allow_external_ref[0]
+        visual_ready.value = false
+        if (notify) load_tick.value++
+        web.loadDataWithBaseURL("https://mail-content.invalid/", built, "text/html", "UTF-8", null)
+    }
+
+    LaunchedEffect(measure, base_height_key, measure.measured) {
+        if (measure.measured) on_ready()
     }
 
     val proxy_base = REMOTE_IMAGE_PROXY_BASE
@@ -7203,17 +7179,11 @@ internal fun email_html_view(
         return proxy_external_urls(cid_normalized, proxy_base)
     }
 
-    LaunchedEffect(html, inline_sig, allow_external, bg_hex, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links, translated_body, overflow_fit_width) {
+    LaunchedEffect(html, inline_sig, allow_external, bg_hex, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links, translated_body) {
         if (html.isEmpty()) {
             prebuilt_html = null
             return@LaunchedEffect
         }
-        scale_ref[0] = 1f
-        zoom_scale_ref[0] = 1f
-        measured_dp_ref[0] = 0f
-        measured_scale_ref[0] = 1f
-        zoom_base_ref[0] = 0f
-        zoom_last_ref[0] = 0f
         val override = translated_body
         if (override != null) {
             prebuilt_html = withContext(Dispatchers.Default) {
@@ -7248,261 +7218,60 @@ internal fun email_html_view(
         prebuilt_html = result
     }
 
-    LaunchedEffect(height_cache_key, prebuilt_html, web_generation) {
-        if (prebuilt_html == null) return@LaunchedEffect
-        var elapsed = 0L
-        var last_reported = 0
-        var stable_ms = 0L
-        var exact_sent = false
-        var probed = false
-        var overflow_checked = false
-        val fit_at_start = overflow_fit_width
-        while (elapsed < height_watch_budget_ms) {
-            val step = if (elapsed < height_watch_fast_window_ms) height_watch_fast_ms else height_watch_slow_ms
-            delay(step)
-            elapsed += step
-            if (remeasure_active[0]) {
-                last_reported = 0
-                stable_ms = 0L
-                exact_sent = false
-                continue
-            }
-            val web = web_ref[0] ?: continue
-            if (!body_width_measurable(web.width, web.resources.displayMetrics.density)) continue
-            val content = web.contentHeight
-            if (content <= 0) continue
-            @Suppress("DEPRECATION")
-            if (!zoom_active) adopt_natural_scale(web, web.scale)
-            if (!overflow_checked && !zoom_active && loaded_built == prebuilt_html && overflow_fit_attempts[0] < max_overflow_fit_attempts) {
-                val body = web as? mail_body_web_view
+    LaunchedEffect(measure, measure.painted, measure.measured, measure.probing, web_generation, load_tick.value) {
+        if (prebuilt_html == null || renderer_exhausted.value) return@LaunchedEffect
+        if (measure.measured && !measure.probing) return@LaunchedEffect
+        if (!measure.painted) {
+            delay(BODY_PAINT_FALLBACK_MS)
+            val web = web_ref[0] as? mail_body_web_view ?: return@LaunchedEffect
+            if (!web.destroyed && web.contentHeight > 0) measure.painted = true
+            return@LaunchedEffect
+        }
+        repeat(BODY_READ_FALLBACK_ATTEMPTS) {
+            delay(BODY_READ_FALLBACK_STEP_MS)
+            if (measure.measured && !measure.probing) return@LaunchedEffect
+            val web = web_ref[0] as? mail_body_web_view ?: return@repeat
+            read_body(web, measure.load_generation)
+        }
+        if (measure.measured && !measure.probing) return@LaunchedEffect
+        val web = web_ref[0] as? mail_body_web_view
+        val content_dp = try {
+            if (web == null || web.destroyed) 0 else {
+                val density = web.resources.displayMetrics.density.coerceAtLeast(0.1f)
                 @Suppress("DEPRECATION")
-                val scale = web.scale
-                val range = body?.horizontal_scroll_range() ?: 0
-                val extent = body?.horizontal_scroll_extent() ?: 0
-                val fit = body?.let { overflow_fit_width(range, extent, scale, fit_at_start, readable_fit_width(screen_width_dp)) }
-                if (fit != null) {
-                    val viewport_css = extent / scale
-                    val needed_css = range / scale
-                    val previous = body_fit_width_cache.get(base_height_key)
-                    val chasing = fit_at_start != null && previous != null &&
-                        overflow_tracks_viewport(previous.viewport_css, previous.needed_css, viewport_css, needed_css)
-                    overflow_fit_attempts[0] = if (chasing) max_overflow_fit_attempts else overflow_fit_attempts[0] + 1
-                    val next_fit = if (chasing) null else fit
-                    body_fit_width_cache.put(base_height_key, body_fit_record(next_fit, overflow_fit_attempts[0], viewport_css, needed_css))
-                    overflow_fit_width = next_fit
-                    return@LaunchedEffect
-                }
-                if (exact_sent) overflow_checked = true
+                val px_per_css = web.scale.takeIf { it > 0f } ?: density
+                kotlin.math.round(web.contentHeight * px_per_css / density).toInt()
             }
-            @Suppress("DEPRECATION")
-            val viewport_floor = if (web.scale > 0f) (web.height / web.scale).toInt() else 0
-            val filled = web_height_viewport_filled(web, content)
-            if (!probed && !has_measured && !body_shown && ever_shown && (content <= viewport_floor + 2 || filled)) {
-                probed = true
-                held_recheck[0] = true
-            }
-            if (!probed && !has_measured && !body_shown && (content <= viewport_floor + 2 || filled)) {
-                probed = true
-                measure_probe.value = true
-                last_reported = 0
-                stable_ms = 0L
-                exact_sent = false
-                delay(height_watch_probe_ms)
-                elapsed += height_watch_probe_ms
-                continue
-            }
-            if (content == last_reported) {
-                stable_ms += step
-            } else {
-                stable_ms = 0L
-                exact_sent = false
-                last_reported = content
-                if (!(filled && has_measured)) height_sink.report(content, exact = false)
-            }
-            if (!exact_sent && stable_ms >= height_watch_exact_stable_ms) {
-                exact_sent = true
-                if (!(filled && has_measured)) height_sink.report(content, exact = true)
-                measure_probe.value = false
-            }
-            if (has_measured && stable_ms >= height_watch_settle_ms) break
+        } catch (_: Throwable) { 0 }
+        val height = if (content_dp > 0) {
+            body_reading_height_dp(content_dp, max_body_height_dp)
+        } else {
+            measure.view_dp.takeIf { it > 0f } ?: measure.reserve_dp
         }
-        if (!remeasure_active[0]) measure_probe.value = false
-        height_settled = true
-        if (!has_measured) {
-            val web = web_ref[0]
-            val native = if (web != null && web.contentHeight > 0 &&
-                body_width_measurable(web.width, web.resources.displayMetrics.density)
-            ) {
-                (web.contentHeight * web.scale / web.resources.displayMetrics.density).toInt().dp
-            } else {
-                0.dp
-            }
-            if (content_height_dp <= 0.dp) {
-                content_height_dp = if (native > 0.dp) native else estimated_height
-            }
-            has_measured = true
-            on_ready()
-        }
+        measure.view_dp = height
+        measure.view_is_known_height = true
+        measure.probing = false
+        measure.measured = true
+        measure.quote.on_exact_height(height)
     }
 
-    LaunchedEffect(height_cache_key, prebuilt_html, web_generation) {
-        if (prebuilt_html == null) return@LaunchedEffect
-        var elapsed = 0L
-        while (elapsed < height_late_growth_budget_ms) {
-            delay(height_late_growth_poll_ms)
-            elapsed += height_late_growth_poll_ms
-            if (!has_measured || !height_settled || !body_shown) continue
-            if (remeasure_active[0] || measure_probe.value || zoom_active) continue
-            val web = web_ref[0] ?: continue
-            if ((web as? mail_body_web_view)?.selection_active == true) continue
-            val natural_scale = if (is_nl_ref[0]) nl_scale_ref[0] else 1f
-            if (kotlin.math.abs(zoom_scale_ref[0] - natural_scale) >= 0.01f) continue
-            if (!body_width_measurable(web.width, web.resources.displayMetrics.density)) continue
-            val content = web.contentHeight
-            if (content <= 0) continue
-            if (web_height_viewport_filled(web, content)) continue
-            if (body_needs_regrowth(
-                    content_dp = content * scale_ref[0],
-                    shown_dp = content_height_dp.value,
-                    max_dp = max_body_height_px.toFloat(),
-                    slack_dp = height_late_growth_slack_dp,
-                )
-            ) {
-                height_sink.report(content, exact = true)
-            }
-        }
-    }
-
-    LaunchedEffect(remeasure_trigger.value) {
-        if (remeasure_trigger.value == 0) return@LaunchedEffect
-        if (!has_measured || !body_shown || renderer_exhausted.value) return@LaunchedEffect
-        val start_dp = content_height_dp
-        if (start_dp <= 0.dp) return@LaunchedEffect
-        remeasure_active[0] = true
-        height_instant = true
-        try {
-            delay(remeasure_settle_ms)
-            val first_web = web_ref[0] ?: return@LaunchedEffect
-            if ((first_web as? mail_body_web_view)?.selection_active == true) return@LaunchedEffect
-            await_web_visual_state(first_web)
-            val grown = first_web.contentHeight
-            if (grown > 0 && (grown * scale_ref[0]) > start_dp.value + 8f && !web_overflows_sideways(first_web)) {
-                probe_hold_dp.value = start_dp
-                probe_height_dp.value = (grown * scale_ref[0]).coerceAtMost(max_body_height_px.toFloat()).dp
-                measure_probe.value = true
-                androidx.compose.runtime.withFrameNanos { }
-                androidx.compose.runtime.withFrameNanos { }
-                web_ref[0]?.let { await_web_visual_state(it) }
-                on_height_report(web_ref[0]?.contentHeight?.takeIf { it > 0 } ?: grown, true, true)
-                return@LaunchedEffect
-            }
-
-            suspend fun probe_document_height(probe_dp: Dp): Int? {
-                val stale_web = web_ref[0] ?: return null
-                val stale_content = stale_web.contentHeight
-                val stale_viewport = web_viewport_css_height(stale_web)
-                probe_height_dp.value = probe_dp
-                measure_probe.value = true
-                var frames = 0
-                while (frames < remeasure_resize_frames) {
-                    androidx.compose.runtime.withFrameNanos { }
-                    frames++
-                    val web = web_ref[0] ?: return null
-                    val expected_px = kotlin.math.round(probe_dp.value * web.resources.displayMetrics.density).toInt()
-                    if (kotlin.math.abs(web.height - expected_px) <= 1) break
-                }
-                val web = web_ref[0] ?: return null
-                await_web_visual_state(web)
-                var last = 0
-                var same = 0
-                var reads = 0
-                val probe_shrank = web_viewport_css_height(web) < stale_viewport
-                while (reads < remeasure_stale_read_frames) {
-                    androidx.compose.runtime.withFrameNanos { }
-                    reads++
-                    val content = web.contentHeight
-                    if (content <= 0) continue
-                    if (probe_read_is_stale(
-                            content_css = content,
-                            stale_content_css = stale_content,
-                            stale_viewport_css = stale_viewport,
-                            probe_shrank = probe_shrank,
-                            slack_css = remeasure_viewport_slack_px,
-                        )
-                    ) {
-                        last = content
-                        same = 0
-                        continue
-                    }
-                    if (content == last) {
-                        same++
-                        if (same >= remeasure_stable_reads) break
-                    } else {
-                        same = 0
-                        last = content
-                    }
-                }
-                if (last <= 0) return null
-                if (web_height_viewport_filled(web, last)) return 0
-                return if (last > web_viewport_css_height(web) + remeasure_viewport_slack_px) last else 0
-            }
-
-            probe_hold_dp.value = start_dp
-            val near_start = (start_dp.value - remeasure_probe_inset_dp).coerceAtLeast(MEASURE_PROBE_HEIGHT.value).dp
-            val collapse_deadline = android.os.SystemClock.uptimeMillis() + remeasure_collapse_wait_ms
-            while (true) {
-                val near = probe_document_height(near_start) ?: return@LaunchedEffect
-                if (near == 0) break
-                if (kotlin.math.abs(near * scale_ref[0] - start_dp.value) >= 8f) {
-                    on_height_report(near, true, true)
-                    return@LaunchedEffect
-                }
-                if (android.os.SystemClock.uptimeMillis() >= collapse_deadline) return@LaunchedEffect
-                delay(remeasure_collapse_poll_ms)
-            }
-            val candidates = known_heights
-                .filter { it < near_start.value - 4f }
-                .sortedDescending()
-            for (candidate in candidates) {
-                val probe_dp = (candidate - remeasure_probe_inset_dp).coerceAtLeast(MEASURE_PROBE_HEIGHT.value).dp
-                probe_hold_dp.value = candidate.dp
-                val measured = probe_document_height(probe_dp) ?: return@LaunchedEffect
-                if (measured > 0) {
-                    on_height_report(measured, true, true)
-                    return@LaunchedEffect
-                }
-            }
-            val floor_measured = probe_document_height(MEASURE_PROBE_HEIGHT) ?: return@LaunchedEffect
-            val settled_value = if (floor_measured > 0) floor_measured else web_ref[0]?.contentHeight ?: 0
-            if (settled_value > 0) on_height_report(settled_value, true, true)
-        } finally {
-            measure_probe.value = false
-            probe_hold_dp.value = 0.dp
-            probe_height_dp.value = MEASURE_PROBE_HEIGHT
-            remeasure_active[0] = false
-        }
-    }
-
-    LaunchedEffect(height_cache_key, web_view_missing) {
+    LaunchedEffect(base_height_key, web_view_missing) {
         if (!web_view_missing) return@LaunchedEffect
-        has_measured = true
-        height_settled = true
-        page_painted.value = true
-        on_ready()
+        measure.painted = true
+        measure.probing = false
+        measure.measured = true
     }
 
     LaunchedEffect(renderer_gone.value) {
         if (!renderer_gone.value) return@LaunchedEffect
         renderer_gone.value = false
+        measure.discard_view = true
         web_ref[0] = null
         when (reload_policy.on_renderer_gone()) {
             renderer_gone_action.stop -> {
                 white_page_ref[0] = false
-                renderer_exhausted.value = true
-                has_measured = true
-                height_settled = true
-                page_painted.value = true
-                on_ready()
+                degrade_to_plain_text()
+                measure.painted = true
                 return@LaunchedEffect
             }
             renderer_gone_action.plain_text_fallback -> {
@@ -7511,32 +7280,30 @@ internal fun email_html_view(
             }
             renderer_gone_action.regenerate -> Unit
         }
-        has_measured = false
-        height_settled = false
-        page_painted.value = false
         visual_ready.value = false
-        loaded_built = ""
+        measure.loaded_built = null
         web_generation++
     }
 
-    LaunchedEffect(loaded_built, web_generation) {
-        if (loaded_built.isEmpty()) return@LaunchedEffect
+    LaunchedEffect(load_tick.value, web_generation) {
+        if (load_tick.value == 0) return@LaunchedEffect
         reload_policy.begin_load()
         while (reload_policy.reloads_remaining()) {
             delay(2200)
-            val web = web_ref[0] ?: return@LaunchedEffect
-            if (!reload_policy.should_reload(page_painted.value, visual_ready.value, web.contentHeight)) return@LaunchedEffect
-            visual_ready.value = false
-            web.loadDataWithBaseURL("https://mail-content.invalid/", loaded_built, "text/html", "UTF-8", null)
+            val web = web_ref[0] as? mail_body_web_view ?: return@LaunchedEffect
+            if (web.destroyed) return@LaunchedEffect
+            if (!reload_policy.should_reload(measure.painted, visual_ready.value, web.contentHeight)) return@LaunchedEffect
+            val built = measure.loaded_built ?: return@LaunchedEffect
+            load_body(web, built, notify = false)
         }
         delay(2600)
-        val regen_web = web_ref[0] ?: return@LaunchedEffect
-        if (reload_policy.should_regenerate(page_painted.value, visual_ready.value, regen_web.contentHeight)) {
-            has_measured = false
-            height_settled = false
-            page_painted.value = false
+        val regen_web = web_ref[0] as? mail_body_web_view ?: return@LaunchedEffect
+        if (regen_web.destroyed) return@LaunchedEffect
+        if (reload_policy.should_regenerate(measure.painted, visual_ready.value, regen_web.contentHeight)) {
+            measure.discard_view = true
             visual_ready.value = false
-            loaded_built = ""
+            measure.loaded_built = null
+            web_ref[0] = null
             web_generation++
         }
     }
@@ -7550,8 +7317,8 @@ internal fun email_html_view(
         }
     }
 
-    LaunchedEffect(has_measured, translate_mode, translate_accepted, prebuilt_html, source_body_version) {
-        if (!has_measured || translate_mode == "off") return@LaunchedEffect
+    LaunchedEffect(measure.measured, translate_mode, translate_accepted, prebuilt_html, source_body_version) {
+        if (!measure.measured || translate_mode == "off") return@LaunchedEffect
         if (translated_body != null || kept_translation[0] != null) return@LaunchedEffect
         delay(150)
         val engine = translation_engine_ref[0] ?: return@LaunchedEffect
@@ -7564,7 +7331,7 @@ internal fun email_html_view(
         engine.detect(org.astermail.android.translation.detection_text_of(text), translate_accepted)
     }
 
-    val webview_client = remember {
+    val webview_client = remember(measure, body_holder) {
         object : android.webkit.WebViewClient() {
             override fun shouldOverrideUrlLoading(
                 view: android.webkit.WebView?,
@@ -7585,44 +7352,39 @@ internal fun email_html_view(
                         on_link_click(url)
                         return true
                     }
+                    QUOTE_HIDE_SCHEME -> {
+                        val target = view as? mail_body_web_view ?: return true
+                        val built = measure.loaded_built ?: return true
+                        if (target.destroyed) return true
+                        val compensate = request.url?.schemeSpecificPart != QUOTE_CLOSE_ACTION
+                        main_handler.post {
+                            if (!alive[0] || target.destroyed || measure.loaded_built != built) return@post
+                            val shift = measure.quote.on_collapse_requested()
+                            load_body(target, built)
+                            val collapsed = measure.quote.collapsed_height_dp
+                            if (collapsed != null && collapsed > 0f) {
+                                measure.view_dp = collapsed
+                                measure.view_is_known_height = true
+                            } else {
+                                measure.view_is_known_height = false
+                            }
+                            if (compensate && shift > 0f) {
+                                val key = message_key
+                                if (key != null) body_holder?.on_quote_collapse?.invoke(key, shift)
+                            }
+                        }
+                        return true
+                    }
                     "about" -> return false
                     else -> return true
                 }
-            }
-
-            override fun onScaleChanged(view: android.webkit.WebView?, oldScale: Float, newScale: Float) {
-                if (newScale <= 0f) return
-                zoom_last_ref[0] = newScale
-                if (!height_settled) {
-                    zoom_base_ref[0] = newScale
-                    zoom_active = false
-                    adopt_natural_scale(view, newScale)
-                    return
-                }
-                (view as? mail_body_web_view)?.report_horizontal_scroll()
-                if (zoom_base_ref[0] <= 0f) {
-                    zoom_base_ref[0] = newScale
-                    adopt_natural_scale(view, newScale)
-                }
-                val ratio = newScale / zoom_base_ref[0]
-                scale_ref[0] = if (is_nl_ref[0]) nl_scale_ref[0] else ratio
-                zoom_scale_ref[0] = if (is_nl_ref[0]) nl_scale_ref[0] * ratio else ratio
-                if (!has_measured) return
-                val base_dp = measured_dp_ref[0]
-                if (base_dp <= 0f) return
-                if (kotlin.math.abs(ratio - 1f) < 0.01f) {
-                    zoom_active = false
-                    content_height_dp = base_dp.dp
-                    return
-                }
-                zoom_active = true
-                content_height_dp = zoomed_body_height_dp(base_dp, ratio, max_body_height_px).dp
             }
 
             override fun onRenderProcessGone(
                 view: android.webkit.WebView?,
                 detail: android.webkit.RenderProcessGoneDetail?,
             ): Boolean {
+                measure.discard_view = true
                 renderer_gone.value = true
                 return true
             }
@@ -7632,23 +7394,32 @@ internal fun email_html_view(
                 view?.setBackgroundColor(
                     if (white_page_ref[0]) android.graphics.Color.WHITE else android.graphics.Color.TRANSPARENT,
                 )
-                page_painted.value = true
+                measure.painted = true
+                (view as? mail_body_web_view)?.let { request_read(it) }
             }
 
             override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
                 view?.setBackgroundColor(
                     if (white_page_ref[0]) android.graphics.Color.WHITE else android.graphics.Color.TRANSPARENT,
                 )
-                page_painted.value = true
-                if (view != null && url != "about:blank") {
-                    view.postVisualStateCallback(
+                if (url == "about:blank") return
+                measure.painted = true
+                val body = view as? mail_body_web_view ?: return
+                if (body.destroyed) return
+                val generation = measure.load_generation
+                try {
+                    body.postVisualStateCallback(
                         System.nanoTime(),
                         object : android.webkit.WebView.VisualStateCallback() {
                             override fun onComplete(requestId: Long) {
+                                if (!measure.accepts(generation)) return
                                 visual_ready.value = true
+                                read_body(body, generation)
                             }
                         },
                     )
+                } catch (_: Throwable) {
+                    read_body(body, generation)
                 }
             }
 
@@ -7794,37 +7565,34 @@ internal fun email_html_view(
         on_dismiss = { translation_state = TranslationBannerState.Hidden },
         on_update_webview = { org.astermail.android.translation.TranslationRuntime.open_webview_update(translate_context) },
       )
-      val body_ready_now = html.isNotEmpty() && has_measured && height_settled && page_painted.value
-      LaunchedEffect(height_recheck.value, body_shown) {
-          if (height_recheck.value && body_shown) {
-              height_recheck.value = false
-              remeasure_trigger.value += 1
+      val view_dp = measure.view_dp
+      val probing_now = measure.probing
+      val measured_now = measure.measured
+      var skeleton_due by remember(measure) { mutableStateOf(false) }
+      LaunchedEffect(measure, measured_now, base_height_key) {
+          if (measured_now) {
+              skeleton_due = false
+              return@LaunchedEffect
           }
+          val waited = android.os.SystemClock.uptimeMillis() - measure.started_ms
+          delay((BODY_SKELETON_DELAY_MS - waited).coerceAtLeast(0L))
+          skeleton_due = show_body_skeleton(measure.measured, android.os.SystemClock.uptimeMillis() - measure.started_ms)
       }
-      LaunchedEffect(body_ready_now) {
-          if (body_ready_now) {
-              body_shown = true
-              ever_shown = true
-              body_shown_cache.mark_shown(height_cache_key)
-              if (held_recheck[0]) {
-                  held_recheck[0] = false
-                  height_recheck.value = true
-              }
-          }
+      val hold_dp = when {
+          renderer_exhausted.value -> 0f
+          !measured_now -> maxOf(measure.reserve_dp, view_dp)
+          probing_now -> view_dp
+          else -> 0f
       }
-      val body_reveal by animateFloatAsState(
-          targetValue = if (body_shown || ever_shown) 1f else 0f,
-          animationSpec = androidx.compose.animation.core.tween(durationMillis = 140),
-          label = "web_reveal",
-      )
+      val web_height = if (probing_now || view_dp < 1f) MEASURE_PROBE_HEIGHT else view_dp.dp
       Box(
           modifier = Modifier
               .fillMaxWidth()
-              .then(if (body_shown || ever_shown || renderer_exhausted.value) Modifier else Modifier.height(loading_height))
+              .heightIn(min = hold_dp.coerceAtLeast(0f).dp)
               .clipToBounds(),
-          contentAlignment = Alignment.Center,
+          contentAlignment = Alignment.TopStart,
       ) {
-        if (white_page_ref[0] && (body_shown || ever_shown)) {
+        if (white_page_ref[0] && measured_now) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -7832,9 +7600,12 @@ internal fun email_html_view(
             )
         }
         if (renderer_exhausted.value) {
-            val fallback_text = remember(html) { org.astermail.android.mail.html_to_plain_text(html) }
+            val fallback_text = remember(html) {
+                runCatching { org.astermail.android.mail.html_to_plain_text(html) }.getOrDefault("")
+            }
             val fallback_color = remember(fg_hex) {
-                androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(fg_hex))
+                runCatching { androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(fg_hex)) }
+                    .getOrDefault(androidx.compose.ui.graphics.Color.Unspecified)
             }
             androidx.compose.foundation.text.selection.SelectionContainer(
                 modifier = Modifier.fillMaxWidth(),
@@ -7848,27 +7619,32 @@ internal fun email_html_view(
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                 )
             }
-        } else Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(
-                    if (measure_probe.value && probe_hold_dp.value > 0.dp) {
-                        Modifier.height(probe_hold_dp.value)
-                    } else {
-                        Modifier
-                    },
-                )
-                .clipToBounds(),
-            contentAlignment = Alignment.TopCenter,
-        ) {
-        if (!webview_usable) {
+        } else if (!webview_usable) {
             org.astermail.android.ui.common.webview_unavailable_notice()
         } else androidx.compose.runtime.key(web_generation) {
         androidx.compose.ui.viewinterop.AndroidView(
             factory = { ctx ->
-                mail_body_web_view(ctx).apply {
+                val reused = message_key?.let { key -> body_holder?.take_view(key, measure) }
+                val created = reused ?: mail_body_web_view(ctx).also {
+                    measure.loaded_built = null
+                    measure.discard_view = false
+                }
+                created.apply {
                     configure_mail_body_web_view(this, text_zoom, allow_external)
-                    on_width_change = { height_recheck.value = true }
+                    on_width_change = {
+                        if (alive[0] && !destroyed) {
+                            layout_tick.value++
+                            measure.view_is_known_height = false
+                            forget_content_height()
+                            request_read(this)
+                        }
+                    }
+                    on_height_change = {
+                        if (alive[0] && !destroyed) request_read(this)
+                    }
+                    on_content_height = { _ ->
+                        if (alive[0] && !destroyed) read_body(this, measure.load_generation)
+                    }
                     on_horizontal_scroll = { offset, extent, range -> pan_signal?.report(offset, extent, range) }
                     var touch_down_x = 0f
                     var touch_down_y = 0f
@@ -7895,19 +7671,6 @@ internal fun email_html_view(
                             android.view.MotionEvent.ACTION_POINTER_DOWN -> {
                                 multi_touch = true
                                 v.parent?.requestDisallowInterceptTouchEvent(true)
-                            }
-                            android.view.MotionEvent.ACTION_UP -> {
-                                val may_toggle = body_tap_may_toggle(
-                                    dx = Math.abs(ev.x - touch_down_x),
-                                    dy = Math.abs(ev.y - touch_down_y),
-                                    touch_slop_px = tap_slop_px,
-                                    duration_ms = ev.eventTime - ev.downTime,
-                                    long_press_ms = android.view.ViewConfiguration.getLongPressTimeout().toLong(),
-                                    multi_touch = multi_touch,
-                                )
-                                if (may_toggle && has_toggles_ref[0]) {
-                                    remeasure_trigger.value += 1
-                                }
                             }
                             android.view.MotionEvent.ACTION_MOVE -> {
                                 if (ev.pointerCount > 1) {
@@ -7975,105 +7738,64 @@ internal fun email_html_view(
                     }
                     webViewClient = webview_client
                     web_ref[0] = this
+                    if (reused != null) {
+                        forget_content_height()
+                        if (progress >= 100 && contentHeight > 0) measure.painted = true
+                    }
+                    message_key?.let { key -> body_holder?.keep_view(key, measure, this) }
                 }
             },
             update = { web_view ->
+                layout_tick.value
                 web_ref[0] = web_view
                 val built = prebuilt_html ?: return@AndroidView
-                val is_newsletter = built.contains("data-nl=\"1\"")
-                val wants_white_page = built.contains("data-white=\"1\"")
                 web_view.settings.textZoom = text_zoom
                 web_view.settings.loadsImagesAutomatically = true
                 web_view.settings.blockNetworkImage = false
                 web_view.settings.mixedContentMode =
                     android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
-                if (loaded_built != built || loaded_external != allow_external) {
-                    if (loaded_built != built && body_height_cache.get(height_cache_key) == null) {
-                        has_measured = false
-                        height_settled = false
-                    }
-                    if (body_height_cache.get(height_cache_key) == null) page_painted.value = false
-                    visual_ready.value = false
-                    web_view.setBackgroundColor(
-                        if (wants_white_page) android.graphics.Color.WHITE else android.graphics.Color.TRANSPARENT,
-                    )
-                    has_toggles_ref[0] = built.contains("<details")
-                    loaded_built = built
-                    loaded_external = allow_external
-                    white_page_ref[0] = wants_white_page
-                    val fitted_viewport = fitted_viewport_width(built)
-                    nl_scale_ref[0] = when {
-                        fitted_viewport != null ->
-                            (screen_width_dp.toFloat() / fitted_viewport).coerceIn(0.1f, 1.0f)
-                        is_newsletter ->
-                            Regex("initial-scale=([0-9.]+)").find(built)
-                                ?.groupValues?.get(1)?.toFloatOrNull()?.coerceIn(0.1f, 1.0f) ?: 1f
-                        else -> 1f
-                    }
-                    is_nl_ref[0] = is_newsletter || fitted_viewport != null
-                    scale_ref[0] = nl_scale_ref[0]
-                    zoom_scale_ref[0] = nl_scale_ref[0]
-                    measured_scale_ref[0] = nl_scale_ref[0]
-                    if (has_measured && measured_dp_ref[0] <= 0f) measured_dp_ref[0] = content_height_dp.value
-                    web_view.loadDataWithBaseURL("https://mail-content.invalid/", built, "text/html", "UTF-8", null)
+                if (web_view.destroyed) return@AndroidView
+                if (measure.loaded_built == built && measure.loaded_external == allow_external) return@AndroidView
+                if (!body_width_measurable(web_view.width, web_view.resources.displayMetrics.density)) return@AndroidView
+                val previous = measure.loaded_built
+                if (previous != null && previous != built) {
+                    measure.view_is_known_height = false
+                    measure.quote.reset()
                 }
-            },
-            modifier = run {
-                val target = when {
-                    measure_probe.value -> probe_height_dp.value
-                    has_measured && content_height_dp > 0.dp -> content_height_dp
-                    (body_shown || ever_shown) && shown_height_ref[0] > 0f -> shown_height_ref[0].dp
-                    settled_height_ref[0] > 0f -> settled_height_ref[0].dp
-                    else -> estimated_height
-                }
-                if (has_measured && content_height_dp > 0.dp) shown_height_ref[0] = content_height_dp.value
-                val animated_target by animateDpAsState(
-                    targetValue = target,
-                    animationSpec = if (height_instant || zoom_active || !(body_shown || ever_shown) || measure_probe.value) {
-                        snap()
-                    } else {
-                        tween(durationMillis = 220)
-                    },
-                    label = "body_height",
+                white_page_ref[0] = wants_white_page
+                web_view.setBackgroundColor(
+                    if (wants_white_page) android.graphics.Color.WHITE else android.graphics.Color.TRANSPARENT,
                 )
-                Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight(align = Alignment.Top, unbounded = true)
-                    .height(animated_target)
-                    .clipToBounds()
-                    .onGloballyPositioned { coords ->
-                        if (!coords.isAttached) return@onGloballyPositioned
-                        val window_y = coords.positionInWindow().y
-                        if (window_y != last_window_y[0]) {
-                            last_window_y[0] = window_y
-                            web_ref[0]?.invalidate()
-                        }
-                    }
-                    .then(
-                        when {
-                            body_reveal >= 1f -> Modifier
-                            white_page_ref[0] -> if (body_shown || ever_shown) Modifier else Modifier.alpha(0f)
-                            else -> Modifier.alpha(body_reveal)
-                        },
-                    )
+                cacheable_load[0] = translated_body == null
+                load_body(web_view, built)
             },
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(align = Alignment.Top, unbounded = true)
+                .height(web_height)
+                .clipToBounds()
+                .onGloballyPositioned { coords ->
+                    if (!coords.isAttached) return@onGloballyPositioned
+                    val window_y = coords.positionInWindow().y
+                    if (window_y != last_window_y[0]) {
+                        last_window_y[0] = window_y
+                        web_ref[0]?.invalidate()
+                    }
+                },
             onRelease = { web_view ->
-                runCatching {
-                    web_view.stopLoading()
-                    web_view.loadUrl("about:blank")
-                    web_view.removeAllViews()
-                    web_view.destroy()
+                if (web_ref[0] === web_view) web_ref[0] = null
+                val key = message_key
+                if (body_holder == null || key == null || !body_holder.park(key, web_view)) {
+                    release_body_view_later(web_view)
                 }
             },
         )
         }
-        }
-        if (!renderer_exhausted.value && !body_shown && !ever_shown) {
+        if (!renderer_exhausted.value && skeleton_due && !measured_now) {
             email_body_skeleton(
                 modifier = Modifier
                     .matchParentSize()
                     .background(if (colors.is_translucent) Color.Transparent else inbox_card_read_color(colors))
-                    .clipToBounds()
                     .align(Alignment.TopStart),
             )
         }
@@ -8157,11 +7879,10 @@ private fun attachment_section_placeholder() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.md)
-            .testTag("attachments_loading"),
+            .testTag("attachments_loading")
+            .skeleton_reveal(),
     ) {
         Spacer(Modifier.height(AsterSpacing.sm))
-        AsterDivider()
-        Spacer(Modifier.height(AsterSpacing.md))
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.3f)
@@ -8169,18 +7890,12 @@ private fun attachment_section_placeholder() {
                 .shimmer(state, shape),
         )
         Spacer(Modifier.height(AsterSpacing.sm))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp)
-                    .shimmer(state, AsterShapes.island_lg),
-            )
-            Spacer(Modifier.weight(1f))
-        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .shimmer(state, AsterShapes.island_lg),
+        )
         Spacer(Modifier.height(8.dp))
     }
 }
@@ -8200,8 +7915,6 @@ private fun attachment_section(
             .padding(horizontal = AsterSpacing.md),
     ) {
         Spacer(Modifier.height(AsterSpacing.sm))
-        AsterDivider()
-        Spacer(Modifier.height(AsterSpacing.md))
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -8233,29 +7946,33 @@ private fun attachment_section(
 
         Spacer(Modifier.height(AsterSpacing.sm))
 
-        val chunked = attachments.chunked(2)
-        chunked.forEach { row ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                row.forEach { att ->
-                    attachment_chip(
-                        attachment = att,
-                        on_tap = { on_tap(att) },
-                        on_download = { on_download(att) },
-                        on_long_press = { on_options(att) },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                if (row.size == 1) {
-                    Spacer(Modifier.weight(1f))
+        androidx.compose.foundation.layout.BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val columns = attachment_grid_columns(maxWidth.value)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                attachments.chunked(columns).forEach { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        row.forEach { att ->
+                            attachment_chip(
+                                attachment = att,
+                                on_tap = { on_tap(att) },
+                                on_download = { on_download(att) },
+                                on_long_press = { on_options(att) },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                    Spacer(Modifier.height(8.dp))
                 }
             }
-            Spacer(Modifier.height(8.dp))
         }
     }
 }
+
+internal fun attachment_grid_columns(width_dp: Float): Int = if (width_dp >= 560f) 2 else 1
 
 @Composable
 private fun attachment_chip(
@@ -8287,14 +8004,14 @@ private fun attachment_chip(
                 modifier = Modifier.size(24.dp),
             )
             Spacer(Modifier.width(8.dp))
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = display_filename(attachment.filename),
                     color = colors.text_primary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    overflow = TextOverflow.MiddleEllipsis,
                     style = androidx.compose.material3.LocalTextStyle.current.copy(
                         textDirection = androidx.compose.ui.text.style.TextDirection.Ltr,
                     ),
@@ -8313,13 +8030,13 @@ private fun attachment_chip(
                         color = colors.warning,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(8.dp))
         Box(
             modifier = Modifier
                 .size(40.dp)
@@ -9305,9 +9022,9 @@ private fun pending_send_status(
                         tint = colors.accent_blue,
                         modifier = Modifier.size(14.dp),
                     )
-                    pending_send_phase_sending -> CircularProgressIndicator(
+                    pending_send_phase_sending -> org.astermail.android.design.components.aster_spinner(
                         color = colors.text_muted,
-                        strokeWidth = 1.5.dp,
+                        stroke_width = 1.5.dp,
                         modifier = Modifier.size(12.dp),
                     )
                     else -> Icon(

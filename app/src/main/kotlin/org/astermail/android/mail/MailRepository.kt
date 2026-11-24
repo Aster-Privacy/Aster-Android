@@ -6799,8 +6799,11 @@ class MailRepository @Inject constructor(
         val sealed_fields_trusted =
             carries_sealed_details(ratchet_decrypted, is_unauthenticated, is_unconfirmed_sender)
         val sealed_details = bundle.details.takeIf { sealed_fields_trusted }
-        if (sealed_fields_trusted) {
-            InboundAttachmentKeyStore.register_sealed_manifest(message_id, attachment_manifest)
+        if (sealed_fields_trusted &&
+            InboundAttachmentKeyStore.register_sealed_manifest(message_id, attachment_manifest) &&
+            message_id != null
+        ) {
+            synchronized(attachment_meta_cache) { attachment_meta_cache.remove(message_id) }
         }
 
         return if (
@@ -7236,6 +7239,7 @@ class MailRepository @Inject constructor(
             }
             val hidden_bcc = hidden_internal_bcc(to, cc, bcc)
             val shared_internal = shared_targets(to, cc, bcc).filter { is_internal_recipient(it) }
+            val attachment_plan = plan_outbound_attachments(attachments)
             val wrapped = build_subject_bundle_text(
                 subject,
                 recipient_body_html,
@@ -7244,6 +7248,7 @@ class MailRepository @Inject constructor(
                     to = to,
                     cc = cc,
                 ),
+                attachment_plan?.manifest,
             )
             val sealed = seal_with_private_bcc(
                 from_addr,
@@ -7275,6 +7280,7 @@ class MailRepository @Inject constructor(
                     attachments,
                     from_addr,
                     sealing_recipients = shared_internal.takeIf { client_copies != null },
+                    attachment_plan = attachment_plan,
                 )
             } else {
                 emptyList()
@@ -7462,10 +7468,12 @@ class MailRepository @Inject constructor(
             val shared_internal = shared_targets(to, cc, bcc).filter { is_internal_recipient(it) }
 
             var recipient_bodies: Map<String, String>? = null
+            var attachment_plan: SealedAttachmentPlan? = null
             val ratchet_body = if (internal_recipients.isNotEmpty()) {
                 if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
                     throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
                 }
+                attachment_plan = plan_outbound_attachments(attachments)
                 val wrapped = build_subject_bundle_text(
                     subject,
                     recipient_body_html,
@@ -7474,6 +7482,7 @@ class MailRepository @Inject constructor(
                         to = to,
                         cc = cc,
                     ),
+                    attachment_plan?.manifest,
                 )
                 val sealed = seal_with_private_bcc(
                     from_addr,
@@ -7499,6 +7508,7 @@ class MailRepository @Inject constructor(
                     attachments,
                     from_addr,
                     hidden_bcc,
+                    attachment_plan,
                 )
             } else {
                 emptyList()
@@ -7795,11 +7805,30 @@ class MailRepository @Inject constructor(
         return keys
     }
 
+    private fun decode_attachment_data(data: String): ByteArray =
+        android.util.Base64.decode(data, android.util.Base64.DEFAULT)
+
+    internal fun plan_outbound_attachments(attachments: List<ExternalAttachmentPayload>): SealedAttachmentPlan? =
+        plan_sealed_attachments(attachments, ::decode_attachment_data)
+
     internal suspend fun build_internal_attachments(
         recipients: List<String>,
         attachments: List<ExternalAttachmentPayload>,
         sender_email: String? = null,
         hidden_bcc: List<String> = emptyList(),
+        attachment_plan: SealedAttachmentPlan? = null,
+    ): List<SendAttachmentPayload> = try {
+        build_internal_attachment_payloads(recipients, attachments, sender_email, hidden_bcc, attachment_plan)
+    } finally {
+        attachment_plan?.wipe()
+    }
+
+    private suspend fun build_internal_attachment_payloads(
+        recipients: List<String>,
+        attachments: List<ExternalAttachmentPayload>,
+        sender_email: String?,
+        hidden_bcc: List<String>,
+        attachment_plan: SealedAttachmentPlan?,
     ): List<SendAttachmentPayload> {
         val shared_keys = fetch_internal_public_keys(recipients, sender_email)
         val recipient_keys = if (shared_keys.isEmpty() && hidden_bcc.isNotEmpty()) {
@@ -7818,7 +7847,7 @@ class MailRepository @Inject constructor(
         }
         val own_seal = if (attachments.isEmpty()) null else own_seal_inputs()
         try {
-            return build_attachment_payloads(attachments, recipient_keys, own_seal, private_keys)
+            return build_attachment_payloads(attachments, recipient_keys, own_seal, private_keys, attachment_plan)
         } finally {
             own_seal?.second?.fill(' ')
         }
@@ -7829,6 +7858,19 @@ class MailRepository @Inject constructor(
         attachments: List<ExternalAttachmentPayload>,
         sender_email: String,
         sealing_recipients: List<String>? = null,
+        attachment_plan: SealedAttachmentPlan? = null,
+    ): List<SendAttachmentPayload> = try {
+        build_mixed_attachment_payloads(internal_recipients, attachments, sender_email, sealing_recipients, attachment_plan)
+    } finally {
+        attachment_plan?.wipe()
+    }
+
+    private suspend fun build_mixed_attachment_payloads(
+        internal_recipients: List<String>,
+        attachments: List<ExternalAttachmentPayload>,
+        sender_email: String,
+        sealing_recipients: List<String>?,
+        attachment_plan: SealedAttachmentPlan?,
     ): List<SendAttachmentPayload> {
         val seen = HashSet<String>()
         val unique = internal_recipients.filter { seen.add(normalize_own_address(it)) }
@@ -7848,7 +7890,7 @@ class MailRepository @Inject constructor(
         } ?: emptyList()
         val own_seal = own_seal_inputs()
         try {
-            return build_attachment_payloads(attachments, sealing_keys, own_seal, private_keys)
+            return build_attachment_payloads(attachments, sealing_keys, own_seal, private_keys, attachment_plan)
         } finally {
             own_seal?.second?.fill(' ')
         }
@@ -7859,11 +7901,16 @@ class MailRepository @Inject constructor(
         recipient_keys: List<String>,
         own_seal: Pair<String, CharArray>?,
         private_keys: Map<String, List<String>> = emptyMap(),
+        attachment_plan: SealedAttachmentPlan? = null,
     ): List<SendAttachmentPayload> {
+        if (attachment_plan != null && attachment_plan.session_keys.size != attachments.size) {
+            throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
+        }
         return attachments.mapIndexed { index, att ->
             try {
-                val raw = android.util.Base64.decode(att.data, android.util.Base64.DEFAULT)
-                val session_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
+                val raw = decode_attachment_data(att.data)
+                val session_key = attachment_plan?.key_for(index)
+                    ?: ByteArray(32).also { SecureRandom().nextBytes(it) }
                 val data_nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
                 val encrypted_data = seal_attachment_data(raw, session_key, data_nonce, index)
 

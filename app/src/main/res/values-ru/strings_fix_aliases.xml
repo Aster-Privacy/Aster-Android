@@ -17,4 +17,22 @@
     <string name="alias_import_change_file">Изменить файл</string>
     <string name="alias_import_remove_file">Удалить файл</string>
     <string name="alias_note_placeholder_short">Где вы его используете</string>
+    <string name="alias_status_section">Статус</string>
+    <string name="alias_receive_mail">Получать почту</string>
+    <string name="alias_receive_mail_on">Почта, отправленная на этот адрес, доходит до вас.</string>
+    <string name="alias_receive_mail_off">Приостановлено. Новая почта на этот адрес не доставляется.</string>
+    <string name="alias_pin_subtitle">Закрепить этот псевдоним вверху списка.</string>
+    <string name="alias_danger_zone">Опасная зона</string>
+    <string name="alias_delete_row_subtitle">Удалить этот адрес навсегда.</string>
+    <string name="alias_protection_section">Защита</string>
+    <string name="alias_automation_section">Автоматизация</string>
+    <string name="alias_pin_mode_title">Режим</string>
+    <string name="alias_remove_entry_a11y">Удалить %1$s</string>
+    <string name="alias_create_action">Создать псевдоним</string>
+    <string name="alias_usage_near">Вы почти достигли лимита псевдонимов.</string>
+    <string name="alias_usage_full">Вы достигли лимита псевдонимов.</string>
+    <string name="alias_offline_banner">Нет подключения. Изменения синхронизируются после восстановления связи.</string>
+    <string name="alias_menu_pause">Приостановить</string>
+    <string name="alias_menu_resume">Возобновить</string>
+    <string name="alias_directory_auto_create_a11y">Автоматически создавать псевдонимы для %1$s</string>
 </resources>

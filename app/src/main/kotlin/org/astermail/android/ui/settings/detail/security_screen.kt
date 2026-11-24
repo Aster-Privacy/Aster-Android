@@ -21,6 +21,9 @@
 
 package org.astermail.android.ui.settings.detail
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.widthIn
+import org.astermail.android.design.AsterRadius
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -96,6 +99,7 @@ import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_state
+import org.astermail.android.design.components.skeleton_reveal
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSwitch
@@ -112,6 +116,7 @@ import org.astermail.android.ui.security.AppLockSetupSheet
 import org.astermail.android.ui.security.AppLockVerifySheet
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.ui.settings.join_launched
 
 private const val activity_preview_count = 5
 private const val trusted_preview_count = 3
@@ -383,6 +388,24 @@ fun SecurityScreen(
         title = stringResource(R.string.security),
         on_back = on_back,
         scroll_state = scroll_state,
+        on_refresh = {
+            kotlinx.coroutines.coroutineScope {
+                launch { guard_entry_vm.join_launched { guard_entry_vm.refresh() } }
+                launch {
+                    vm.join_launched {
+                        vm.load_security_status()
+                        vm.load_login_alerts()
+                        vm.load_recovery_email()
+                        vm.load_hardware_keys()
+                        vm.load_trusted_devices()
+                        vm.load_audit_log()
+                        vm.load_vanguard_status()
+                        vm.load_subscription(force = true)
+                        vm.load_recovery_codes_status()
+                    }
+                }
+            }
+        },
     ) {
         if (!content_ready) {
             security_loading_skeleton(show_banner = prefs?.account_security_banner_dismissed != true)
@@ -997,9 +1020,9 @@ private fun vanguard_section(
                         onClick = { vm.load_vanguard_status() },
                     )
                 } else if (state.vanguard_enabled == null) {
-                    androidx.compose.material3.CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
+                    org.astermail.android.design.components.aster_spinner(
+                        modifier = Modifier.size(20.dp).skeleton_reveal(),
+                        stroke_width = 2.dp,
                         color = colors.text_muted,
                     )
                 } else if (is_nova_plus || state.subscription == null) {
@@ -1551,11 +1574,13 @@ private fun trusted_device_row(
             .testTag("trusted_device_row"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        list_icon_tile(icon = TablerIcons.DeviceLaptop, tint = colors.text_secondary)
+        val device_label = org.astermail.android.ui.settings.clean_trusted_device_label(device.label)
+        val device_kind = trusted_device_kind_of(device_label)
+        trusted_device_tile(device_kind)
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = org.astermail.android.ui.settings.clean_trusted_device_label(device.label)
+                text = device_label
                     .ifBlank { stringResource(R.string.trusted_device_default_label) },
                 color = colors.text_primary,
                 fontSize = 15.sp,
@@ -1585,11 +1610,52 @@ private fun trusted_device_row(
             }
         }
         Spacer(Modifier.width(AsterSpacing.sm))
-        revoke_pill_button(
+        org.astermail.android.design.components.AsterCompactButton(
             label = stringResource(R.string.revoke),
-            in_flight = false,
-            on_click = { show_revoke_confirm = true },
+            onClick = { show_revoke_confirm = true },
+            fill = trusted_revoke_red,
+            content_color = Color.White,
+            modifier = Modifier.widthIn(min = 84.dp).testTag("trusted_device_revoke"),
         )
+    }
+}
+
+private val trusted_revoke_red = Color(0xFFB91C1C)
+
+internal enum class TrustedDeviceKind { phone, tablet, desktop, laptop }
+
+internal fun trusted_device_kind_of(label: String): TrustedDeviceKind {
+    val value = label.lowercase()
+    return when {
+        listOf("ipad", "tablet", "tab ").any { value.contains(it) } -> TrustedDeviceKind.tablet
+        listOf("android", "iphone", "phone", "pixel", "galaxy", "mobile", "ios").any { value.contains(it) } -> TrustedDeviceKind.phone
+        listOf("windows", "linux", "desktop", "pc").any { value.contains(it) } -> TrustedDeviceKind.desktop
+        else -> TrustedDeviceKind.laptop
+    }
+}
+
+@Composable
+private fun trusted_device_tile(kind: TrustedDeviceKind) {
+    val tint = when (kind) {
+        TrustedDeviceKind.phone -> Color(0xFF22C55E)
+        TrustedDeviceKind.tablet -> Color(0xFFA855F7)
+        TrustedDeviceKind.desktop -> Color(0xFFF59E0B)
+        TrustedDeviceKind.laptop -> Color(0xFF3B82F6)
+    }
+    val icon = when (kind) {
+        TrustedDeviceKind.phone -> TablerIcons.DeviceMobile
+        TrustedDeviceKind.tablet -> TablerIcons.DeviceTablet
+        TrustedDeviceKind.desktop -> TablerIcons.DeviceDesktop
+        TrustedDeviceKind.laptop -> TablerIcons.DeviceLaptop
+    }
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(RoundedCornerShape(AsterRadius.md))
+            .background(tint.copy(alpha = 0.16f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
     }
 }
 

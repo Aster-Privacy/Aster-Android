@@ -1592,6 +1592,10 @@
     <string name="send_email_to_sender">Napisz do tego nadawcy</string>
     <string name="add_to_contacts">Zapisz w kontaktach</string>
     <string name="remove_from_contacts">Usuń z kontaktów</string>
+    <string name="sender_action_new_message">Nowa wiadomość</string>
+    <string name="sender_action_add_contact">Dodaj kontakt</string>
+    <string name="sender_action_view_contact">Zobacz kontakt</string>
+    <string name="sender_action_in_contacts">W kontaktach</string>
     <string name="contact_added_named">Zapisano %1$s w kontaktach</string>
     <string name="contact_removed_named">Usunięto %1$s z kontaktów</string>
     <string name="blocked_content_details_title">Zablokowana zawartość</string>

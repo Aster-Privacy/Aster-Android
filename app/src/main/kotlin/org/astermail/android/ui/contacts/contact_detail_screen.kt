@@ -262,7 +262,7 @@ fun ContactDetailScreen(
         if (contact == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 if (ui_state.is_loading) {
-                    androidx.compose.material3.CircularProgressIndicator(
+                    org.astermail.android.design.components.aster_spinner(
                         color = colors.accent_blue,
                         modifier = Modifier.size(28.dp),
                     )
@@ -568,8 +568,8 @@ fun ContactDetailScreen(
             Box(modifier = Modifier.padding(horizontal = AsterSpacing.lg)) {
                 AsterDestructiveButton(
                     label = stringResource(R.string.delete_contact),
-                    onClick = { show_delete_confirm = true },
-                    enabled = !ui_state.is_loading,
+                    onClick = { if (!delete_requested) show_delete_confirm = true },
+                    is_loading = delete_requested,
                 )
             }
             if (show_delete_confirm) {

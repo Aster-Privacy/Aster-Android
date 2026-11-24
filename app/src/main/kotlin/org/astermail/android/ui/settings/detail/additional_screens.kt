@@ -119,6 +119,7 @@ import org.astermail.android.folders.flatten_folder_tree
 import org.astermail.android.folders.folder_sibling_group
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 private fun toggle_row(title: String, subtitle: String?, checked: Boolean, on_change: (Boolean) -> Unit) {
@@ -149,11 +150,10 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
     val colors = AsterMaterial.colors
 
     LaunchedEffect(Unit) { vm.load_sessions() }
-    val devices_context = LocalContext.current
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
-        android.widget.Toast.makeText(devices_context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg)
         vm.clear_action_result()
     }
 
@@ -166,6 +166,7 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
         title = stringResource(R.string.trusted_devices),
         on_back = on_back,
         scroll_state = scroll_state,
+        on_refresh = { vm.join_launched { vm.load_sessions() } },
     ) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             detail_row(
@@ -234,7 +235,7 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
                                 title = name,
                                 subtitle = last_seen,
                                 leading = {
-                                    org.astermail.android.ui.settings.device_client_glyph(
+                                    org.astermail.android.ui.settings.device_client_tile(
                                         browser = s.browser,
                                         kind = client_kind,
                                     )
@@ -385,29 +386,31 @@ internal fun revoke_pill_button(
     Box(
         modifier = Modifier
             .height(36.dp)
-            .widthIn(min = 72.dp)
+            .widthIn(min = 84.dp)
             .clip(shape)
-            .background(if (in_flight) disabled_surface_color(colors) else field_surface_color(colors))
+            .background(if (in_flight) revoke_deep_red.copy(alpha = 0.55f) else revoke_deep_red)
             .clickable(enabled = !in_flight, onClick = on_click)
             .padding(horizontal = AsterSpacing.md),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
-            color = colors.text_primary,
+            color = Color.White,
             fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
+            fontWeight = FontWeight.SemiBold,
             modifier = Modifier.alpha(if (in_flight) 0f else 1f),
         )
         if (in_flight) {
-            CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 modifier = Modifier.size(16.dp),
-                color = colors.text_secondary,
-                strokeWidth = 2.dp,
+                color = Color.White,
+                stroke_width = 2.dp,
             )
         }
     }
 }
+
+private val revoke_deep_red = Color(0xFFB91C1C)
 
 private const val devices_page_size = 10
 
@@ -451,10 +454,10 @@ internal fun devices_list_action_row(
         )
         if (in_flight) {
             Spacer(Modifier.width(AsterSpacing.sm))
-            CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 modifier = Modifier.size(16.dp),
                 color = resolved_tint,
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
             )
         }
     }
@@ -505,7 +508,11 @@ fun ReferralScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         }
     }
 
-    detail_scaffold(title = stringResource(R.string.referral_program), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.referral_program),
+        on_back = on_back,
+        on_refresh = { vm.join_launched { vm.load_referral_info() } },
+    ) {
         if (referral == null && state.referral_load_failed) {
             load_failed_card(null) { vm.load_referral_info() }
         } else if (referral == null) {
@@ -513,7 +520,7 @@ fun ReferralScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                settings_load_spinner()
             }
         } else {
             val commission_percent =
@@ -1009,7 +1016,7 @@ fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     var save_trigger by remember { mutableIntStateOf(0) }
     var prefs_loaded_dev by remember { mutableStateOf(false) }
 
-    LaunchedEffect(prefs, state.preferences_authoritative) {
+    LaunchedEffect(prefs, state.preferences_authoritative, prefs_loaded_dev) {
         if (prefs != null && state.preferences_authoritative && !prefs_loaded_dev) {
             prefs_loaded_dev = true
             dev_mode = prefs.dev_mode
@@ -1050,9 +1057,17 @@ fun DeveloperScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         onDispose { flush_on_exit.value() }
     }
 
+    val dev_dirty = prefs != null && (dev_mode != prefs.dev_mode || show_raw_headers != prefs.show_raw_headers)
     detail_scaffold(
         title = stringResource(R.string.developer),
         on_back = on_back,
+        on_refresh = {
+            val before_dev_mode = dev_mode
+            val before_raw_headers = show_raw_headers
+            vm.join_launched { vm.load_preferences(force = true) }
+            if (dev_mode == before_dev_mode && show_raw_headers == before_raw_headers) prefs_loaded_dev = false
+        },
+        refresh_enabled = !dev_dirty,
     ) {
         if (prefs == null || !state.preferences_authoritative) {
             preferences_load_placeholder()
@@ -1183,7 +1198,16 @@ fun LabelsScreen(
     var pending_label_rename by remember { mutableStateOf<label_screen_row?>(null) }
     var show_create_label by remember { mutableStateOf(false) }
 
-    detail_scaffold(title = stringResource(R.string.labels), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.labels),
+        on_back = on_back,
+        on_refresh = {
+            vm.join_launched {
+                vm.load_labels(folder_type = "label", force = true)
+                vm.load_tags(force = true)
+            }
+        },
+    ) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             detail_row(
                 title = stringResource(R.string.create_label),
@@ -1199,7 +1223,7 @@ fun LabelsScreen(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                settings_load_spinner()
             }
         } else if (rows.isEmpty() && state.error != null) {
             load_failed_card(state.error) {
@@ -1409,7 +1433,16 @@ fun FoldersScreen(
             )
         }
 
-    detail_scaffold(title = stringResource(R.string.folders), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.folders),
+        on_back = on_back,
+        on_refresh = {
+            vm.join_launched {
+                vm.load_labels(folder_type = "folder", force = true)
+                vm.load_preferences(force = true)
+            }
+        },
+    ) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             detail_row(
                 title = stringResource(R.string.create_folder),
@@ -1425,7 +1458,7 @@ fun FoldersScreen(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                settings_load_spinner()
             }
         } else if (folder_nodes.isEmpty() && state.error != null) {
             load_failed_card(state.error) {
@@ -1619,7 +1652,7 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     var save_trigger by remember { mutableIntStateOf(0) }
     var prefs_loaded_priv by remember { mutableStateOf(false) }
 
-    LaunchedEffect(prefs, state.preferences_authoritative) {
+    LaunchedEffect(prefs, state.preferences_authoritative, prefs_loaded_priv) {
         if (prefs != null && state.preferences_authoritative && !prefs_loaded_priv) {
             prefs_loaded_priv = true
             block_trackers = prefs.block_tracking_pixels && prefs.block_external_content != false
@@ -1678,6 +1711,11 @@ fun PrivacyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     detail_scaffold(
         title = stringResource(R.string.privacy),
         on_back = on_back,
+        on_refresh = {
+            vm.join_launched { vm.load_preferences(force = true) }
+            if (save_trigger == 0) prefs_loaded_priv = false
+        },
+        refresh_enabled = save_trigger == 0,
     ) {
         if (prefs == null || !state.preferences_authoritative) {
             preferences_load_placeholder()
@@ -1723,13 +1761,17 @@ fun ApiKeysScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
     LaunchedEffect(Unit) { vm.load_api_keys() }
 
-    detail_scaffold(title = stringResource(R.string.api_keys), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.api_keys),
+        on_back = on_back,
+        on_refresh = { vm.join_launched { vm.load_api_keys() } },
+    ) {
         if (state.is_loading && state.api_keys.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                settings_load_spinner()
             }
         } else if (state.api_keys.isEmpty() && state.error != null) {
             load_failed_card(state.error) { vm.load_api_keys() }
@@ -1804,7 +1846,16 @@ fun IntegrationsScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) 
 
     val context = LocalContext.current
 
-    detail_scaffold(title = stringResource(R.string.integrations), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.integrations),
+        on_back = on_back,
+        on_refresh = {
+            vm.join_launched {
+                vm.load_preferences(force = true)
+                vm.load_webhooks()
+            }
+        },
+    ) {
         section_label(stringResource(R.string.connected_apps))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             detail_row(
@@ -1865,13 +1916,17 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
     val is_family = sub?.effective_plan_name?.contains("family", ignoreCase = true) == true
     val play_install = org.astermail.android.billing.remember_play_install()
 
-    detail_scaffold(title = stringResource(R.string.family_plan), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.family_plan),
+        on_back = on_back,
+        on_refresh = { vm.join_launched { vm.load_subscription(force = true) } },
+    ) {
         if (state.is_loading && sub == null) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                settings_load_spinner()
             }
         } else if (state.subscription_load_failed && sub == null) {
             load_failed_card(state.error) { vm.load_subscription() }
@@ -1946,7 +2001,15 @@ fun KidsReservedScreen(on_back: () -> Unit) {
 
     LaunchedEffect(Unit) { vm.load_reserved_addresses() }
 
-    detail_scaffold(title = stringResource(R.string.kids_reserved_addresses), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.kids_reserved_addresses),
+        on_back = on_back,
+        on_refresh = {
+            vm.join_launched {
+                vm.load_reserved_addresses()
+            }
+        },
+    ) {
         section_label(stringResource(R.string.kids_reserved_subtitle))
 
         val seats = state.family_seats
@@ -2002,7 +2065,7 @@ fun KidsReservedScreen(on_back: () -> Unit) {
                 modifier = androidx.compose.ui.Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = androidx.compose.ui.Modifier.size(24.dp))
+                settings_load_spinner()
             }
         } else if (state.reserved_addresses.isEmpty()) {
             AsterCard(modifier = androidx.compose.ui.Modifier.fillMaxWidth()) {
@@ -2148,7 +2211,7 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                settings_load_spinner()
             }
         } else {
             section_label(stringResource(R.string.display_language))

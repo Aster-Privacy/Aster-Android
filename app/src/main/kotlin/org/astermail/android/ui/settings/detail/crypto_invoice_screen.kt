@@ -502,10 +502,10 @@ private fun crypto_loading_view() {
             .height(240.dp),
         contentAlignment = Alignment.Center,
     ) {
-        CircularProgressIndicator(
+        org.astermail.android.design.components.aster_spinner(
             modifier = Modifier.size(28.dp),
             color = AsterMaterial.colors.accent_blue,
-            strokeWidth = 2.dp,
+            stroke_width = 2.dp,
         )
     }
 }

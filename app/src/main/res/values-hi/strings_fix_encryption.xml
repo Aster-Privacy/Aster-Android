@@ -3,4 +3,8 @@
     <string name="fix_enc_codes_share_title">रिकवरी कोड</string>
     <string name="fix_enc_codes_file_note">हर कोड एक बार काम करता है। इस फ़ाइल को किसी सुरक्षित जगह रखें।</string>
     <string name="fix_enc_codes_save_failed">आप अभी फ़ाइल नहीं सहेज सकते। इसके बजाय कोड कॉपी कर लें।</string>
+    <string name="enc_hero_status_protected">सुरक्षित</string>
+    <string name="enc_hero_status_attention">ध्यान देने की ज़रूरत है</string>
+    <string name="enc_hero_summary">आपके संदेश एंड-टू-एंड एन्क्रिप्टेड हैं, ऐसी कुंजी से जो केवल आपके पास है।</string>
+    <string name="enc_hero_summary_missing">इस डिवाइस पर आपकी कुंजी नहीं है। इसे वापस पाने के लिए फिर से साइन इन करें।</string>
 </resources>

@@ -21,6 +21,7 @@
 
 package org.astermail.android
 
+import org.astermail.android.ui.common.find_host_activity
 import androidx.lifecycle.repeatOnLifecycle
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
@@ -214,12 +215,13 @@ class MainActivity :
         const val EXTRA_GUARD_ACCOUNT_ID = "guard_account_id"
         const val EXTRA_OPEN_CONTACT_SYNC = "open_contact_sync"
         const val EXTRA_ACCOUNT_LINK_REQUEST = "account_link_request"
-        private const val FIRST_FRAME_INSET_TIMEOUT_MS = 1000L
         private const val CONTENT_INSET_TIMEOUT_MS = 4000L
         private const val STATE_LAUNCH_PENDING = "launch_intent_pending"
     }
 
     private val insets_applied = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    private val insets_ready = androidx.compose.runtime.mutableStateOf(false)
 
     private val secure_storage_ready = androidx.compose.runtime.mutableStateOf(
         org.astermail.android.storage.SecurePrefs.warm_complete.value,
@@ -259,10 +261,11 @@ class MainActivity :
             consume_open_email_extra(intent)
             consume_share_intent(intent)
         }
+        if (saved_instance_state == null) org.astermail.android.ui.common.first_frame_gate.arm()
         apply_boot_background()
         enableEdgeToEdge()
+        org.astermail.android.ui.common.install_aster_motion_scale(this)
         setContent {
-            val insets_ready = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
             window_inset_probe {
                 insets_applied.set(true)
                 insets_ready.value = true
@@ -284,17 +287,39 @@ class MainActivity :
                 }
             }
         }
-        hold_first_frame_until_insets()
+        hold_first_frame_until_ready()
     }
 
-    private fun hold_first_frame_until_insets() {
+    private fun hold_first_frame_until_ready() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            runCatching {
+                splashScreen.setOnExitAnimationListener { splash ->
+                    val motion = org.astermail.android.design.AsterMotionScale
+                    if (motion.reduced || motion.system_disabled) {
+                        splash.remove()
+                    } else {
+                        splash.animate()
+                            .alpha(0f)
+                            .setDuration(org.astermail.android.design.AsterMotionSpec.fade_exit_ms.toLong())
+                            .withEndAction { splash.remove() }
+                            .start()
+                    }
+                }
+            }
+        }
         val content = findViewById<android.view.View>(android.R.id.content) ?: return
-        val deadline = android.os.SystemClock.uptimeMillis() + FIRST_FRAME_INSET_TIMEOUT_MS
+        val started = android.os.SystemClock.uptimeMillis()
         content.viewTreeObserver.addOnPreDrawListener(
             object : android.view.ViewTreeObserver.OnPreDrawListener {
                 override fun onPreDraw(): Boolean {
-                    if (insets_applied.get() || android.os.SystemClock.uptimeMillis() > deadline) {
+                    val may_draw = org.astermail.android.ui.common.first_frame_may_draw(
+                        insets_applied = insets_applied.get(),
+                        content_ready = org.astermail.android.ui.common.first_frame_gate.is_ready,
+                        elapsed_ms = android.os.SystemClock.uptimeMillis() - started,
+                    )
+                    if (may_draw) {
                         content.viewTreeObserver.removeOnPreDrawListener(this)
+                        insets_ready.value = true
                         return true
                     }
                     content.postInvalidateOnAnimation()
@@ -735,6 +760,7 @@ private fun AsterNavHost() {
 
     val splash_was_shown = remember { mutableStateOf(!is_ready) }
     if (!is_ready) {
+        androidx.compose.runtime.SideEffect { org.astermail.android.ui.common.first_frame_gate.mark_ready() }
         aster_launch_splash(Modifier)
         return
     }
@@ -744,13 +770,26 @@ private fun AsterNavHost() {
         runCatching { lock_vm.store.forget_unverifiable_lock(signed_in = is_signed_in_state) }
     }
 
-    val start = remember(is_ready) {
-        when {
-            is_signed_in_state -> routes.inbox
-            org.astermail.android.ui.guard.has_pending_guard_sign_in(guard_context) -> routes.sign_in
-            !theme_vm.onboarding_seen.value -> routes.onboarding
-            else -> routes.welcome
-        }
+    val start_kind = remember(is_ready) {
+        org.astermail.android.ui.common.launch_start_for(
+            is_signed_in = is_signed_in_state,
+            pending_guard_sign_in = !is_signed_in_state &&
+                org.astermail.android.ui.guard.has_pending_guard_sign_in(guard_context),
+            onboarding_seen = theme_vm.onboarding_seen.value,
+        )
+    }
+    val start = when (start_kind) {
+        org.astermail.android.ui.common.launch_start.inbox -> routes.inbox
+        org.astermail.android.ui.common.launch_start.sign_in -> routes.sign_in
+        org.astermail.android.ui.common.launch_start.onboarding -> routes.onboarding
+        org.astermail.android.ui.common.launch_start.welcome -> routes.welcome
+    }
+    val ready_before_inbox = org.astermail.android.ui.common.first_frame_ready_before_inbox(
+        start = start_kind,
+        is_locked = is_locked && is_signed_in_state,
+    )
+    androidx.compose.runtime.SideEffect {
+        if (ready_before_inbox) org.astermail.android.ui.common.first_frame_gate.mark_ready()
     }
     val nav_controller = rememberNavController()
     val notification_prompt_route by nav_controller.currentBackStackEntryAsState()
@@ -761,7 +800,7 @@ private fun AsterNavHost() {
     )
     val context = LocalContext.current
     val a11y = local_accessibility.current
-    val nav_duration = if (a11y.reduce_motion) 0 else nav_anim_duration_ms
+    val nav_duration = if (org.astermail.android.design.aster_reduce_motion()) 0 else nav_anim_duration_ms
 
     val session_expired_state by auth_gate.session_expired.collectAsStateWithLifecycle()
     androidx.compose.runtime.LaunchedEffect(session_expired_state, is_signed_in_state) {
@@ -1310,6 +1349,10 @@ private fun AsterNavHost() {
                         path == "settings" -> routes.settings
                         path == "pending_send_preview" -> routes.pending_send_preview
                         path.startsWith("search:") -> routes.search_for(path.removePrefix("search:"))
+                        path.startsWith("contact:") -> path.removePrefix("contact:").takeIf { it.isNotBlank() }
+                            ?.let { routes.contact_detail_for(it) }
+                        path.startsWith("alias:") -> path.removePrefix("alias:").takeIf { it.isNotBlank() }
+                            ?.let { routes.alias_detail_for(it) }
                         else -> null
                     }
                     if (route != null) navigate_once(nav_controller, route)
@@ -1532,10 +1575,82 @@ private fun AsterNavHost() {
                 on_open = { id -> navigate_once(nav_controller, routes.settings_detail(id)) },
             )
         }
-        composable(routes.settings_search) {
+        composable(routes.settings_search) { entry ->
+            val account_inbox_entry = remember(entry) {
+                try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
+            }
+            val account_settings_vm = org.astermail.android.settings.shared_settings_view_model()
+            val account_settings_state by account_settings_vm.state.collectAsStateWithLifecycle()
+            val account_accounts_vm: org.astermail.android.accounts.AccountsViewModel =
+                if (account_inbox_entry != null) hiltViewModel(account_inbox_entry) else hiltViewModel()
+            val account_accounts_state by account_accounts_vm.state.collectAsStateWithLifecycle()
+            val account_mail_vm: org.astermail.android.mail.MailViewModel? =
+                if (account_inbox_entry != null) hiltViewModel(account_inbox_entry) else null
+            val account_stats = account_mail_vm?.inbox_state?.collectAsStateWithLifecycle()?.value?.stats
+            val account_storage = account_storage_usage_for(account_settings_state.storage, account_stats)
+            val account_user_email = account_user_email_for(account_settings_state, account_accounts_state)
+            val account_display_email = org.astermail.android.ui.common.remember_display_address(
+                account_settings_state,
+                account_user_email,
+            )
+            val account_storage_label = account_profile_storage_label(
+                account_storage.used_bytes,
+                account_storage.total_bytes,
+            )
             org.astermail.android.ui.settings.settings_search_screen(
                 on_back = { pop_once(nav_controller) },
                 on_open = { id -> navigate_once(nav_controller, routes.settings_detail(id)) },
+                trailing_action = { dismiss_keyboard ->
+                    org.astermail.android.ui.settings.settings_account_button(
+                        accounts = account_accounts_state.accounts,
+                        current_account_id = account_accounts_state.current_account_id,
+                        user_email = account_user_email,
+                        display_email = account_display_email,
+                        plan_code = account_settings_state.subscription?.plan?.code,
+                        storage_used_fraction = account_storage.fraction,
+                        storage_used_label = account_storage_label,
+                        max_accounts = account_accounts_state.max_accounts,
+                        is_unlimited_accounts = account_accounts_state.is_unlimited,
+                        can_add_account = account_accounts_state.can_add_more,
+                        needs_sign_in = { account ->
+                            account.id != account_accounts_state.current_account_id &&
+                                !account_accounts_vm.has_stored_session(account.id)
+                        },
+                        on_open_sheet = {
+                            dismiss_keyboard()
+                            account_accounts_vm.refresh_with_profile()
+                        },
+                        on_switch_account = { account ->
+                            switch_to_stored_account(
+                                account,
+                                nav_controller,
+                                account_accounts_vm,
+                                account_settings_vm,
+                                account_mail_vm,
+                            ) {}
+                        },
+                        on_add_account = {
+                            open_add_account(nav_controller, account_accounts_state.can_add_more)
+                        },
+                        on_manage_account = {
+                            nav_controller.navigate(routes.settings_detail("profile"))
+                        },
+                        on_open_storage = {
+                            nav_controller.navigate(routes.settings_detail("storage"))
+                        },
+                        on_logout = {
+                            sign_out_current_account(
+                                nav_controller,
+                                account_accounts_vm,
+                                account_settings_vm,
+                                account_mail_vm,
+                            ) {}
+                        },
+                        on_logout_all = {
+                            sign_out_all_accounts(nav_controller, account_accounts_vm, account_settings_vm)
+                        },
+                    )
+                },
             )
         }
         composable(routes.mailing_lists) {
@@ -2145,7 +2260,7 @@ composable(routes.settings_detail("family")) {
     }
     if (splash_was_shown.value) {
         val splash_alpha = remember { androidx.compose.animation.core.Animatable(1f) }
-        val splash_reduce = local_accessibility.current.reduce_motion
+        val splash_reduce = org.astermail.android.design.aster_reduce_motion()
         androidx.compose.runtime.LaunchedEffect(Unit) {
             splash_alpha.animateTo(
                 targetValue = 0f,
@@ -2179,9 +2294,9 @@ private fun aster_launch_splash(modifier: Modifier) {
             modifier = Modifier.height(22.dp),
         )
         androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(20.dp))
-        androidx.compose.material3.LinearProgressIndicator(
+        org.astermail.android.design.components.aster_linear_progress(
             color = AsterMaterial.colors.accent_blue,
-            trackColor = AsterMaterial.colors.border_secondary,
+            track_color = AsterMaterial.colors.text_primary.copy(alpha = 0.14f),
             modifier = Modifier
                 .width(160.dp)
                 .height(3.dp)
@@ -2480,22 +2595,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         theme_vm_inbox.set_text_size_from_key(prefs.font_size_scale)
     }
 
-    val storage = settings_state.storage
-    val used_bytes = when {
-        storage != null && storage.used_bytes > 0 -> storage.used_bytes
-        stats != null && stats.storage_used_bytes > 0 -> stats.storage_used_bytes
-        else -> 0L
-    }
-    val total_bytes = when {
-        storage != null && storage.total_bytes > 0 -> storage.total_bytes
-        stats != null && stats.storage_total_bytes > 0 -> stats.storage_total_bytes
-        else -> 0L
-    }
-    val storage_fraction = when {
-        total_bytes > 0 -> (used_bytes.toFloat() / total_bytes).coerceIn(0f, 1f)
-        storage != null && storage.percentage_used > 0 -> (storage.percentage_used / 100.0).toFloat().coerceIn(0f, 1f)
-        else -> 0f
-    }
+    val storage_usage = account_storage_usage_for(settings_state.storage, stats)
+    val used_bytes = storage_usage.used_bytes
+    val total_bytes = storage_usage.total_bytes
+    val storage_fraction = storage_usage.fraction
     val storage_label = when {
         total_bytes > 0 -> stringResource(
             R.string.common_storage_used_of_total,
@@ -2509,11 +2612,45 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         else -> ""
     }
 
-    val user_email = settings_state.user?.email
-        ?: accounts_state.accounts.firstOrNull { it.id == accounts_state.current_account_id }?.email
-        ?: accounts_state.accounts.firstOrNull()?.email
-        ?: ""
+    val user_email = account_user_email_for(settings_state, accounts_state)
     val display_email = org.astermail.android.ui.common.remember_display_address(settings_state, user_email)
+
+    var show_account_manager by remember { mutableStateOf(false) }
+    if (show_account_manager) {
+        org.astermail.android.ui.settings.account_manager_sheet(
+            accounts = accounts_state.accounts,
+            current_account_id = accounts_state.current_account_id,
+            user_email = user_email,
+            display_email = display_email,
+            plan_code = settings_state.subscription?.plan?.code,
+            storage_used_fraction = storage_fraction,
+            storage_used_label = account_profile_storage_label(used_bytes, total_bytes),
+            max_accounts = accounts_state.max_accounts,
+            is_unlimited_accounts = accounts_state.is_unlimited,
+            can_add_account = accounts_state.can_add_more,
+            needs_sign_in = { account ->
+                account.id != accounts_state.current_account_id &&
+                    !accounts_vm.has_stored_session(account.id)
+            },
+            on_dismiss = { show_account_manager = false },
+            on_switch_account = { account ->
+                switch_to_stored_account(account, nav_controller, accounts_vm, settings_vm, mail_vm) {
+                    selected_folder = "inbox"
+                    filter_kind = null
+                }
+            },
+            on_add_account = { open_add_account(nav_controller, accounts_state.can_add_more) },
+            on_manage_account = { navigate_once(nav_controller, routes.settings) },
+            on_open_storage = { navigate_once(nav_controller, routes.settings_detail("storage")) },
+            on_logout = {
+                sign_out_current_account(nav_controller, accounts_vm, settings_vm, mail_vm) {
+                    selected_folder = "inbox"
+                    filter_kind = null
+                }
+            },
+            on_logout_all = { sign_out_all_accounts(nav_controller, accounts_vm, settings_vm) },
+        )
+    }
 
     val folder_nodes = remember(settings_state.labels) {
         org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
@@ -2861,34 +2998,14 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 can_add_account = accounts_state.can_add_more,
                 on_switch_account = { account ->
                     scope.launch { drawer_state.close() }
-                    if (accounts_vm.has_stored_session(account.id)) {
-                        mail_vm.reset_for_account_switch()
-                        settings_vm.reset_for_account_switch()
-                        accounts_vm.switch_account(account.id) { restored ->
-                            if (restored) {
-                                settings_vm.load_preferences(force = true)
-                                settings_vm.load_signature()
-                                selected_folder = "inbox"
-                                filter_kind = null
-                                nav_controller.navigate(routes.inbox) {
-                                    popUpTo(0) { inclusive = true }
-                                }
-                            } else {
-                                nav_controller.navigate(routes.sign_in_for(account.email))
-                            }
-                        }
-                    } else {
-                        nav_controller.navigate(routes.sign_in_for(account.email))
+                    switch_to_stored_account(account, nav_controller, accounts_vm, settings_vm, mail_vm) {
+                        selected_folder = "inbox"
+                        filter_kind = null
                     }
                 },
                 on_add_account = {
-                    if (accounts_state.can_add_more) {
-                        nav_controller.navigate(routes.sign_in_for(""))
-                        scope.launch { drawer_state.close() }
-                    } else {
-                        scope.launch { drawer_state.close() }
-                        nav_controller.navigate(routes.settings_detail("billing"))
-                    }
+                    open_add_account(nav_controller, accounts_state.can_add_more)
+                    scope.launch { drawer_state.close() }
                 },
                 on_open_workspace_sheet = {
                     accounts_vm.refresh_with_profile()
@@ -2973,23 +3090,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     nav_controller.navigate(routes.settings_detail("storage"))
                 },
                 on_logout_all = {
-                    settings_vm.logout_all {
-                        accounts_vm.refresh()
-                        nav_controller.navigate(routes.welcome) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    }
+                    sign_out_all_accounts(nav_controller, accounts_vm, settings_vm)
                 },
                 plan_code = settings_state.subscription?.plan?.code,
-                profile_storage_label = if (total_bytes > 0) {
-                    stringResource(
-                        R.string.profile_menu_storage_of_used,
-                        format_storage_bytes(used_bytes),
-                        format_storage_bytes(total_bytes),
-                    )
-                } else {
-                    ""
-                },
+                profile_storage_label = account_profile_storage_label(used_bytes, total_bytes),
                 max_accounts = accounts_state.max_accounts,
                 is_unlimited_accounts = accounts_state.is_unlimited,
                 needs_sign_in = { account ->
@@ -2997,30 +3101,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         !accounts_vm.has_stored_session(account.id)
                 },
                 on_logout = {
-                    settings_vm.logout { switched_account ->
-                        accounts_vm.refresh()
-                        if (switched_account) {
-                            mail_vm.reset_for_account_switch()
-                            settings_vm.reset_for_account_switch()
-                            settings_vm.load_preferences(force = true)
-                            settings_vm.load_signature()
-                            selected_folder = "inbox"
-                            filter_kind = null
-                            nav_controller.navigate(routes.inbox) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                            return@logout
-                        }
-                        val next = accounts_vm.state.value.accounts.firstOrNull()
-                        if (next != null) {
-                            nav_controller.navigate(routes.sign_in_for(next.email)) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        } else {
-                            nav_controller.navigate(routes.welcome) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        }
+                    sign_out_current_account(nav_controller, accounts_vm, settings_vm, mail_vm) {
+                        selected_folder = "inbox"
+                        filter_kind = null
                     }
                 },
                 initial_more_collapsed = prefs?.sidebar_more_collapsed ?: false,
@@ -3050,15 +3133,16 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         val exit_context = LocalContext.current
         val exit_hint = stringResource(R.string.tap_again_to_exit)
         var last_back_press by remember { mutableStateOf(0L) }
+        var inbox_selection_active by remember { mutableStateOf(false) }
         BackHandler(enabled = drawer_state.isOpen) {
             scope.launch { drawer_state.close() }
         }
-        BackHandler(enabled = !drawer_state.isOpen) {
+        BackHandler(enabled = !drawer_state.isOpen && !inbox_selection_active) {
             val now = android.os.SystemClock.elapsedRealtime()
             if (!org.astermail.android.settings.ExitConfirmPref.is_enabled(exit_context)) {
-                (exit_context as? android.app.Activity)?.finish()
+                exit_context.find_host_activity()?.finish()
             } else if (now - last_back_press in 1L..2000L) {
-                (exit_context as? android.app.Activity)?.finish()
+                exit_context.find_host_activity()?.finish()
             } else {
                 last_back_press = now
                 android.widget.Toast.makeText(exit_context, exit_hint, android.widget.Toast.LENGTH_SHORT).show()
@@ -3066,7 +3150,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         }
         val saveable_state_holder = rememberSaveableStateHolder()
         var inbox_scroll_top_token by remember { mutableStateOf(0) }
-        val folder_anim_duration = if (local_accessibility.current.reduce_motion) 0 else nav_anim_duration_ms
+        val folder_anim_duration = if (org.astermail.android.design.aster_reduce_motion()) 0 else nav_anim_duration_ms
         AnimatedContent(
             targetState = folder_key,
             modifier = Modifier.edge_swipe_to_open(enabled = !drawer_state.isOpen) {
@@ -3107,7 +3191,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             saveable_state_holder.SaveableStateProvider(active_key) {
                 when {
                     slot_filter_kind != null -> {
-                        BackHandler(enabled = !drawer_state.isOpen) {
+                        BackHandler(enabled = !drawer_state.isOpen && !inbox_selection_active) {
                             saveable_state_holder.removeState("inbox:inbox")
                             inbox_scroll_top_token += 1
                             filter_kind = null
@@ -3146,6 +3230,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_view_pending_send = { nav_controller.navigate(routes.pending_send_preview) },
                             on_open_email = { id -> open_mail_detail(nav_controller, id) },
                             on_open_settings = { nav_controller.navigate(routes.settings) },
+                            on_open_account = {
+                                accounts_vm.refresh_with_profile()
+                                show_account_manager = true
+                            },
+                            stored_account = accounts_state.accounts.firstOrNull { it.id == accounts_state.current_account_id },
                             on_open_low_network = {
                                 nav_controller.navigate(routes.settings_low_network)
                             },
@@ -3174,6 +3263,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_custom_folder_change = { id, name -> request_custom_folder(id, name) },
                             folder_unread_counts = quick_folder_counts,
                             on_customize_toolbar = { nav_controller.navigate(routes.settings_detail("customize_toolbar")) },
+                            select_back_enabled = !drawer_state.isOpen,
+                            on_select_mode_change = { active -> inbox_selection_active = active },
                         )
                     }
                     slot_selected_folder == "subscriptions" -> {
@@ -3216,7 +3307,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     }
                     else -> {
                         BackHandler(
-                            enabled = !drawer_state.isOpen &&
+                            enabled = !drawer_state.isOpen && !inbox_selection_active &&
                                 (slot_selected_folder != "inbox" || inbox_category != "primary"),
                         ) {
                             saveable_state_holder.removeState("inbox:inbox")
@@ -3238,6 +3329,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                                 }
                             },
                             on_open_settings = { nav_controller.navigate(routes.settings) },
+                            on_open_account = {
+                                accounts_vm.refresh_with_profile()
+                                show_account_manager = true
+                            },
+                            stored_account = accounts_state.accounts.firstOrNull { it.id == accounts_state.current_account_id },
                             on_open_low_network = {
                                 nav_controller.navigate(routes.settings_low_network)
                             },
@@ -3271,6 +3367,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                                 selected_folder = "inbox"
                                 inbox_category = cat
                             },
+                            select_back_enabled = !drawer_state.isOpen,
+                            on_select_mode_change = { active -> inbox_selection_active = active },
                         )
                     }
                 }
@@ -3536,6 +3634,132 @@ private fun open_mail_detail(nav_controller: NavHostController, email_id: String
     if (!entry.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
     if (entry.destination.route == routes.mail_detail) return
     nav_controller.navigate(routes.mail_detail_for(email_id)) { launchSingleTop = true }
+}
+
+private data class account_storage_usage(
+    val used_bytes: Long,
+    val total_bytes: Long,
+    val fraction: Float,
+)
+
+private fun account_storage_usage_for(
+    storage: org.astermail.android.api.settings.StorageOverview?,
+    stats: org.astermail.android.api.mail.MailUserStatsResponse?,
+): account_storage_usage {
+    val used_bytes = when {
+        storage != null && storage.used_bytes > 0 -> storage.used_bytes
+        stats != null && stats.storage_used_bytes > 0 -> stats.storage_used_bytes
+        else -> 0L
+    }
+    val total_bytes = when {
+        storage != null && storage.total_bytes > 0 -> storage.total_bytes
+        stats != null && stats.storage_total_bytes > 0 -> stats.storage_total_bytes
+        else -> 0L
+    }
+    val fraction = when {
+        total_bytes > 0 -> (used_bytes.toFloat() / total_bytes).coerceIn(0f, 1f)
+        storage != null && storage.percentage_used > 0 -> (storage.percentage_used / 100.0).toFloat().coerceIn(0f, 1f)
+        else -> 0f
+    }
+    return account_storage_usage(used_bytes, total_bytes, fraction)
+}
+
+@Composable
+private fun account_profile_storage_label(used_bytes: Long, total_bytes: Long): String =
+    if (total_bytes > 0) {
+        stringResource(
+            R.string.profile_menu_storage_of_used,
+            format_storage_bytes(used_bytes),
+            format_storage_bytes(total_bytes),
+        )
+    } else {
+        ""
+    }
+
+private fun account_user_email_for(
+    settings_state: org.astermail.android.settings.SettingsUiState,
+    accounts_state: org.astermail.android.accounts.AccountsUiState,
+): String =
+    settings_state.user?.email
+        ?: accounts_state.accounts.firstOrNull { it.id == accounts_state.current_account_id }?.email
+        ?: accounts_state.accounts.firstOrNull()?.email
+        ?: ""
+
+private fun switch_to_stored_account(
+    account: org.astermail.android.storage.StoredAccount,
+    nav_controller: NavHostController,
+    accounts_vm: org.astermail.android.accounts.AccountsViewModel,
+    settings_vm: org.astermail.android.settings.SettingsViewModel,
+    mail_vm: org.astermail.android.mail.MailViewModel?,
+    on_restored: () -> Unit,
+) {
+    if (!accounts_vm.has_stored_session(account.id)) {
+        nav_controller.navigate(routes.sign_in_for(account.email))
+        return
+    }
+    mail_vm?.reset_for_account_switch()
+    settings_vm.reset_for_account_switch()
+    accounts_vm.switch_account(account.id) { restored ->
+        if (restored) {
+            settings_vm.load_preferences(force = true)
+            settings_vm.load_signature()
+            on_restored()
+            nav_controller.navigate(routes.inbox) {
+                popUpTo(0) { inclusive = true }
+            }
+        } else {
+            nav_controller.navigate(routes.sign_in_for(account.email))
+        }
+    }
+}
+
+private fun open_add_account(nav_controller: NavHostController, can_add_more: Boolean) {
+    if (can_add_more) {
+        nav_controller.navigate(routes.sign_in_for(""))
+    } else {
+        nav_controller.navigate(routes.settings_detail("billing"))
+    }
+}
+
+private fun sign_out_current_account(
+    nav_controller: NavHostController,
+    accounts_vm: org.astermail.android.accounts.AccountsViewModel,
+    settings_vm: org.astermail.android.settings.SettingsViewModel,
+    mail_vm: org.astermail.android.mail.MailViewModel?,
+    on_switched: () -> Unit,
+) {
+    settings_vm.logout { switched_account ->
+        accounts_vm.refresh()
+        if (switched_account) {
+            mail_vm?.reset_for_account_switch()
+            settings_vm.reset_for_account_switch()
+            settings_vm.load_preferences(force = true)
+            settings_vm.load_signature()
+            on_switched()
+            nav_controller.navigate(routes.inbox) {
+                popUpTo(0) { inclusive = true }
+            }
+        } else {
+            val next = accounts_vm.state.value.accounts.firstOrNull()
+            val target = if (next != null) routes.sign_in_for(next.email) else routes.welcome
+            nav_controller.navigate(target) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+}
+
+private fun sign_out_all_accounts(
+    nav_controller: NavHostController,
+    accounts_vm: org.astermail.android.accounts.AccountsViewModel,
+    settings_vm: org.astermail.android.settings.SettingsViewModel,
+) {
+    settings_vm.logout_all {
+        accounts_vm.refresh()
+        nav_controller.navigate(routes.welcome) {
+            popUpTo(0) { inclusive = true }
+        }
+    }
 }
 
 private fun format_storage_bytes(bytes: Long): String {

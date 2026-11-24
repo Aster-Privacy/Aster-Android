@@ -200,11 +200,16 @@ fun image_theme_photo_editor(
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
         val view = LocalView.current
+        val context = androidx.compose.ui.platform.LocalContext.current
         SideEffect {
             val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-            window.setDimAmount(0f)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) window.isNavigationBarContrastEnforced = false
+            org.astermail.android.design.components.prepare_popup_window(
+                window = window,
+                host = org.astermail.android.design.components.aster_host_window(context),
+                light_status_bars = false,
+                light_navigation_bars = false,
+                full_window = true,
+            )
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 @Suppress("DEPRECATION")
                 window.navigationBarColor = android.graphics.Color.rgb(0x17, 0x17, 0x1B)
@@ -350,6 +355,7 @@ fun image_theme_photo_editor(
             }
         }
         }
+        org.astermail.android.ui.common.app_toast_host(nested = true)
     }
 }
 
@@ -426,7 +432,7 @@ private fun editor_button(
         contentAlignment = Alignment.Center,
     ) {
         if (busy) {
-            CircularProgressIndicator(color = content, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+            org.astermail.android.design.components.aster_spinner(color = content, stroke_width = 2.dp, modifier = Modifier.size(20.dp))
         } else {
             Text(
                 text = label,

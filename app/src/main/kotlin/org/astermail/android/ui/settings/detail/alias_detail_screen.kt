@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,14 +59,14 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterIconButton
-import org.astermail.android.design.components.AsterSecondaryButton
-import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.aster_menu
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.settings.AliasDetailState
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.ui.icons.pin_icon
 import org.astermail.android.ui.icons.pin_icon_filled
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun alias_detail_screen(
@@ -105,12 +106,36 @@ fun alias_detail_screen(
         vm.clear_action_result()
     }
 
+    val page_title = stringResource(R.string.alias)
+    val feature_locked_text = stringResource(R.string.alias_feature_locked)
     val alias = state.aliases.firstOrNull { it.id == alias_id }
+    val request_delete: () -> Unit = {
+        val eligible_at = alias?.let { alias_delete_eligible_at(it.created_at) }
+        if (instant_delete_locked && eligible_at != null && System.currentTimeMillis() < eligible_at) {
+            alias_too_new_date = format_alias_date(eligible_at)
+        } else {
+            confirm_delete = true
+        }
+    }
+    val refresh_alias: suspend () -> Unit = {
+        vm.join_launched {
+            vm.load_aliases(force = true)
+            vm.load_labels(force = true)
+            vm.load_mail_rules(force = true)
+            vm.load_alias_detail(alias_id, force = true)
+        }
+    }
 
     if (alias == null) {
-        detail_scaffold(title = stringResource(R.string.aliases), on_back = on_back) {
-            if (state.aliases_loading) {
-                skeleton_card_list(rows = 4)
+        detail_scaffold(title = page_title, on_back = on_back, on_refresh = refresh_alias) {
+            if (state.aliases_loading || (!state.aliases_loaded && state.error == null)) {
+                skeleton_hero_card(lines = 2)
+                v_gap(AsterSpacing.md)
+                skeleton_card_list(rows = 2, trailing_width = 44.dp)
+                v_gap(AsterSpacing.md)
+                skeleton_card_list(rows = 3)
+            } else if (state.error != null) {
+                load_failed_card(message = state.error, on_retry = { vm.load_aliases(force = true) })
             } else {
                 AsterCard(modifier = Modifier.fillMaxWidth()) {
                     detail_row(title = stringResource(R.string.alias_detail_unavailable))
@@ -120,9 +145,16 @@ fun alias_detail_screen(
         return
     }
 
+    val receive_subtitle = when {
+        alias.downgrade_grace_expires_at != null -> stringResource(R.string.alias_grace_upgrade_hint)
+        alias.is_enabled -> stringResource(R.string.alias_receive_mail_on)
+        else -> stringResource(R.string.alias_receive_mail_off)
+    }
+
     detail_scaffold(
-        title = alias.address,
+        title = page_title,
         on_back = on_back,
+        on_refresh = refresh_alias,
         trailing = {
             Box {
                 AsterIconButton(
@@ -154,62 +186,51 @@ fun alias_detail_screen(
                             if (pin_locked) on_open("billing") else vm.toggle_alias_pin(alias.id)
                         },
                     )
+                    aster_menu_item(
+                        label = stringResource(R.string.delete_alias),
+                        icon = TablerIcons.Trash,
+                        destructive = true,
+                        test_tag = "alias_detail_delete_menu",
+                        on_click = {
+                            menu_open = false
+                            request_delete()
+                        },
+                    )
                 }
             }
         },
     ) {
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(AsterSpacing.lg),
-                verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = alias.address,
-                            color = colors.text_primary,
-                            fontSize = 17.sp,
-                            lineHeight = 22.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.testTag("alias_detail_address"),
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = if (alias.is_enabled) {
-                                stringResource(R.string.alias_status_active)
-                            } else {
-                                stringResource(R.string.alias_status_disabled_badge)
-                            },
-                            color = if (alias.is_enabled) colors.text_tertiary else colors.text_muted,
-                            fontSize = 12.sp,
-                        )
-                    }
-                    AsterSwitch(
-                        checked = alias.is_enabled,
-                        enabled = alias.downgrade_grace_expires_at == null,
-                        onCheckedChange = { vm.toggle_alias(alias.id) },
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-                    AsterButton(
-                        label = stringResource(R.string.new_message),
-                        onClick = { on_compose_from(alias.address) },
-                        modifier = Modifier.weight(1f).testTag("alias_detail_compose"),
-                    )
-                    AsterSecondaryButton(
-                        label = stringResource(R.string.copy_address),
-                        onClick = { copy_address(context, alias.address) },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-        }
+        alias_detail_header(
+            address = alias.address,
+            display_name = alias.encrypted_display_name.orEmpty(),
+            profile_picture = alias.profile_picture,
+            is_enabled = alias.is_enabled,
+            on_copy = { copy_address(context, alias.address) },
+            on_compose = { on_compose_from(alias.address) },
+        )
 
-        v_gap(AsterSpacing.md)
+        settings_group(title = stringResource(R.string.alias_status_section)) {
+            settings_toggle_row(
+                title = stringResource(R.string.alias_receive_mail),
+                subtitle = receive_subtitle,
+                checked = alias.is_enabled,
+                enabled = alias.downgrade_grace_expires_at == null,
+                test_tag = "alias_detail_enabled_toggle",
+                on_change = { vm.toggle_alias(alias.id) },
+            )
+            settings_row_gap()
+            settings_toggle_row(
+                title = stringResource(R.string.alias_pin),
+                subtitle = if (pin_locked) {
+                    feature_locked_text
+                } else {
+                    stringResource(R.string.alias_pin_subtitle)
+                },
+                checked = alias.is_pinned && !pin_locked,
+                test_tag = "alias_detail_pin_toggle",
+                on_change = { if (pin_locked) on_open("billing") else vm.toggle_alias_pin(alias.id) },
+            )
+        }
 
         alias_detail_panel(
             alias = alias,
@@ -226,25 +247,17 @@ fun alias_detail_screen(
             contacts_locked = contacts_locked,
         )
 
-        v_gap(AsterSpacing.md)
-
-        AsterCard(modifier = Modifier.fillMaxWidth()) {
+        settings_group(title = stringResource(R.string.alias_danger_zone)) {
             detail_row(
                 title = stringResource(R.string.delete_alias),
+                subtitle = stringResource(R.string.alias_delete_row_subtitle),
                 icon = TablerIcons.Trash,
                 icon_tint = colors.danger,
-                on_click = {
-                    val eligible_at = alias_delete_eligible_at(alias.created_at)
-                    if (instant_delete_locked && eligible_at != null && System.currentTimeMillis() < eligible_at) {
-                        alias_too_new_date = format_alias_date(eligible_at)
-                    } else {
-                        confirm_delete = true
-                    }
-                },
+                on_click = request_delete,
             )
         }
 
-        v_gap(AsterSpacing.lg)
+        v_gap(AsterSpacing.xl)
     }
 
     alias_too_new_date?.let { date ->
@@ -285,5 +298,83 @@ fun alias_detail_screen(
                 )
             },
         )
+    }
+}
+
+@Composable
+private fun alias_detail_header(
+    address: String,
+    display_name: String,
+    profile_picture: String?,
+    is_enabled: Boolean,
+    on_copy: () -> Unit,
+    on_compose: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = AsterSpacing.lg, end = AsterSpacing.xs, top = AsterSpacing.lg, bottom = AsterSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SenderAvatar(
+                    email = address,
+                    name = display_name,
+                    size = 48.dp,
+                    profile_picture_url = profile_picture,
+                    use_contact_photo = false,
+                )
+                Spacer(Modifier.width(AsterSpacing.md))
+                Column(modifier = Modifier.weight(1f)) {
+                    alias_address_text(
+                        address = address,
+                        font_size = 17.sp,
+                        font_weight = FontWeight.SemiBold,
+                        test_tag = "alias_detail_address",
+                    )
+                    Spacer(Modifier.height(AsterSpacing.xs))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                    ) {
+                        tone_badge(
+                            text = if (is_enabled) {
+                                stringResource(R.string.alias_status_active)
+                            } else {
+                                stringResource(R.string.alias_status_disabled_badge)
+                            },
+                            tone = if (is_enabled) colors.success else colors.text_tertiary,
+                            modifier = Modifier.testTag("alias_detail_status"),
+                        )
+                        if (display_name.isNotBlank()) {
+                            Text(
+                                text = display_name,
+                                color = colors.text_tertiary,
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false),
+                            )
+                        }
+                    }
+                }
+                AsterIconButton(
+                    icon = TablerIcons.Copy,
+                    content_description = stringResource(R.string.copy_address),
+                    onClick = on_copy,
+                    modifier = Modifier.testTag("alias_detail_copy_button"),
+                )
+            }
+            AsterButton(
+                label = stringResource(R.string.new_message),
+                onClick = on_compose,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(end = AsterSpacing.md)
+                    .testTag("alias_detail_compose"),
+            )
+        }
     }
 }

@@ -3,4 +3,8 @@
     <string name="fix_enc_codes_share_title">Коды восстановления</string>
     <string name="fix_enc_codes_file_note">Каждый код работает один раз. Храните этот файл в надёжном месте.</string>
     <string name="fix_enc_codes_save_failed">Сейчас не удаётся сохранить файл. Скопируйте коды.</string>
+    <string name="enc_hero_status_protected">Защищено</string>
+    <string name="enc_hero_status_attention">Требует внимания</string>
+    <string name="enc_hero_summary">Ваши сообщения защищены сквозным шифрованием с ключом, который есть только у вас.</string>
+    <string name="enc_hero_summary_missing">На этом устройстве нет вашего ключа. Войдите снова, чтобы восстановить его.</string>
 </resources>

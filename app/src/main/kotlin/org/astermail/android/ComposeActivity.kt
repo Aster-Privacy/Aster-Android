@@ -141,6 +141,7 @@ class ComposeActivity :
         val thread_ghost_email = intent?.getStringExtra(extra_thread_ghost)?.takeIf { it.isNotBlank() }
         val selected_alias = intent?.getStringExtra(extra_selected_alias)?.takeIf { it.isNotBlank() }
         enableEdgeToEdge()
+        org.astermail.android.ui.common.install_aster_motion_scale(this)
         setContent {
             if (!secure_storage_ready.value) return@setContent
             aster_theme_root {

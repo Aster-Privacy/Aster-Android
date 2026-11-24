@@ -1018,10 +1018,10 @@ private fun processing_step(status: String) {
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        CircularProgressIndicator(
+        org.astermail.android.design.components.aster_spinner(
             modifier = Modifier.size(48.dp),
             color = colors.accent_blue,
-            strokeWidth = 3.dp,
+            stroke_width = 3.dp,
         )
         Spacer(Modifier.height(AsterSpacing.xl))
         Text(

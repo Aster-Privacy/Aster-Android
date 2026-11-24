@@ -141,7 +141,7 @@ fun bimi_setup_screen(domain_id: String, on_back: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().heightIn(min = 240.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    if (show_spinner) CircularProgressIndicator(color = colors.accent_blue)
+                    if (show_spinner) org.astermail.android.design.components.aster_spinner(color = colors.accent_blue)
                 }
                 state.step == BimiStep.logo -> bimi_logo_step(state = state, domain_name = domain_name, vm = vm)
                 state.step == BimiStep.publish -> bimi_publish_step(state = state, domain = domain)

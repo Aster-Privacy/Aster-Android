@@ -61,6 +61,7 @@ import org.astermail.android.design.components.AsterDialogPrimaryButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 private fun allowlist_kind_option(
@@ -123,7 +124,11 @@ fun AllowListScreen(on_back: () -> Unit) {
 
     LaunchedEffect(Unit) { vm.load_allowed_senders() }
 
-    detail_scaffold(title = stringResource(R.string.allowlist), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.allowlist),
+        on_back = on_back,
+        on_refresh = { vm.join_launched { vm.load_allowed_senders() } },
+    ) {
         when {
             state.allowed_senders_loading && senders.isEmpty() -> filters_loading_block()
 

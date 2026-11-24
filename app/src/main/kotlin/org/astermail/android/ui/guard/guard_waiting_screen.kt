@@ -381,7 +381,7 @@ private fun wait_progress(title: String, body: String) {
         Spacer(Modifier.height(AsterSpacing.sm))
         guard_wizard_body(body, Modifier.fillMaxWidth(), TextAlign.Center)
         Spacer(Modifier.height(AsterSpacing.xxl))
-        CircularProgressIndicator(color = AsterMaterial.colors.text_secondary, modifier = Modifier.size(28.dp))
+        org.astermail.android.design.components.aster_spinner(color = AsterMaterial.colors.text_secondary, modifier = Modifier.size(28.dp))
     }
 }
 

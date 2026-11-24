@@ -92,6 +92,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue
@@ -2166,15 +2167,27 @@ private fun profile_menu_plan_badge(plan_code: String?) {
     val res = plan_badge_res(plan_code) ?: return
     val label = stringResource(res)
     val thanks = stringResource(R.string.plan_badge_thanks, label)
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val press_scale by animateFloatAsState(
+        targetValue = if (pressed) 0.97f else 1f,
+        animationSpec = tween(120),
+        label = "plan_badge_press",
+    )
     org.astermail.android.design.components.AsterPlanTag(
         text = label,
         plan = org.astermail.android.design.components.aster_plan_kind_of(plan_code),
-        modifier = Modifier.clickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = null,
-        ) {
-            org.astermail.android.ui.common.app_toast.show(thanks)
-        },
+        modifier = Modifier
+            .graphicsLayer {
+                scaleX = press_scale
+                scaleY = press_scale
+            }
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+            ) {
+                org.astermail.android.ui.common.app_toast.show(thanks)
+            },
     )
 }
 

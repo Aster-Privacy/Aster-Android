@@ -312,9 +312,9 @@ fun aster_pull_refresh_indicator(
         }
         if (reduce_motion) {
             arrow.snapTo(0f)
-        } else {
-            launch { arrow.animateTo(0f, tween(durationMillis = 200, easing = AsterEasing.standard)) }
+            return@LaunchedEffect
         }
+        launch { arrow.animateTo(0f, tween(durationMillis = 200, easing = AsterEasing.standard)) }
         val start = withFrameNanos { it }
         while (true) {
             withFrameNanos { now -> spin_ms.longValue = (now - start) / 1_000_000L }

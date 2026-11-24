@@ -310,7 +310,7 @@ fun ContactGroupScreen(
                         .fillMaxWidth(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator(
+                    org.astermail.android.design.components.aster_spinner(
                         color = colors.accent_blue,
                         modifier = Modifier.testTag("contact_group_loading"),
                     )

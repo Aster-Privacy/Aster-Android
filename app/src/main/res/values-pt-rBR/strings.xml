@@ -1587,6 +1587,10 @@
     <string name="send_email_to_sender">Escrever para este remetente</string>
     <string name="add_to_contacts">Salvar nos contatos</string>
     <string name="remove_from_contacts">Remover dos contatos</string>
+    <string name="sender_action_new_message">Nova mensagem</string>
+    <string name="sender_action_add_contact">Adicionar contato</string>
+    <string name="sender_action_view_contact">Ver contato</string>
+    <string name="sender_action_in_contacts">Nos contatos</string>
     <string name="contact_added_named">%1$s salvo nos contatos</string>
     <string name="contact_removed_named">%1$s removido dos contatos</string>
     <string name="blocked_content_details_title">Conteúdo bloqueado</string>

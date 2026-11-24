@@ -83,6 +83,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -323,23 +327,11 @@ fun image_theme_library(
         onDismissRequest = request_dismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
-        val view = LocalView.current
-        SideEffect {
-            val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-            window.setDimAmount(0f)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) window.isNavigationBarContrastEnforced = false
-            WindowCompat.getInsetsController(window, view).apply {
-                isAppearanceLightStatusBars = false
-                isAppearanceLightNavigationBars = false
-            }
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-                @Suppress("DEPRECATION")
-                window.navigationBarColor = android.graphics.Color.TRANSPARENT
-                @Suppress("DEPRECATION")
-                window.statusBarColor = android.graphics.Color.TRANSPARENT
-            }
-        }
+        org.astermail.android.design.components.aster_popup_window_effect(
+            light_status_bars = false,
+            light_navigation_bars = false,
+            full_window = true,
+        )
         val nav_bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
         val theme_base = remember(color) {
             AsterColorThemes.semantic_colors_for(true, AsterColorThemes.palette_for(color)).bg_card
@@ -461,6 +453,7 @@ fun image_theme_library(
                             .testTag("image_theme_applied"),
                     )
                 }
+                org.astermail.android.ui.common.app_toast_host(nested = true)
             }
             }
         }
@@ -836,14 +829,11 @@ private fun choose_photo_row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .background(local_library_palette.current.control_bg),
+            modifier = Modifier.size(24.dp),
             contentAlignment = Alignment.Center,
         ) {
             if (importing) {
-                CircularProgressIndicator(color = accent, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                org.astermail.android.design.components.aster_spinner(color = accent, stroke_width = 2.dp, modifier = Modifier.size(20.dp))
             } else {
                 Icon(
                     imageVector = TablerIcons.Plus,
@@ -968,7 +958,7 @@ private fun photo_action_button(
     ) {
         Box(modifier = Modifier.size(22.dp), contentAlignment = Alignment.Center) {
             if (busy) {
-                CircularProgressIndicator(color = accent, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                org.astermail.android.design.components.aster_spinner(color = accent, stroke_width = 2.dp, modifier = Modifier.size(18.dp))
             } else {
                 Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
             }
@@ -1078,23 +1068,41 @@ private fun custom_photo_preview(
                 ),
         )
         if (progress > 0f) {
-            Box(
+            photo_overlay_icon(
+                icon = TablerIcons.Check,
+                icon_size = 20.dp,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(10.dp)
-                    .size(26.dp)
-                    .clip(CircleShape)
-                    .background(lerp(local_library_palette.current.control_bg, accent, progress)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Check,
-                    contentDescription = null,
-                    tint = lerp(local_library_palette.current.control_bg, on_accent, progress),
-                    modifier = Modifier.size(16.dp),
-                )
-            }
+                    .padding(8.dp)
+                    .alpha(progress),
+            )
         }
+    }
+}
+
+@Composable
+private fun photo_overlay_icon(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon_size: Dp,
+    modifier: Modifier = Modifier,
+    content_description: String? = null,
+) {
+    Box(modifier = modifier.size(40.dp), contentAlignment = Alignment.Center) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color.Black.copy(alpha = 0.45f),
+            modifier = Modifier
+                .size(icon_size)
+                .offset(y = 1.dp)
+                .blur(3.dp, BlurredEdgeTreatment.Unbounded),
+        )
+        Icon(
+            imageVector = icon,
+            contentDescription = content_description,
+            tint = Color.White,
+            modifier = Modifier.size(icon_size),
+        )
     }
 }
 
@@ -1141,22 +1149,14 @@ private fun shelf_tile(
                     .fillMaxSize()
                     .border(3.dp, lerp(local_library_palette.current.hairline, accent, progress), shape),
             )
-            Box(
+            photo_overlay_icon(
+                icon = TablerIcons.Check,
+                icon_size = 18.dp,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(8.dp)
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(lerp(local_library_palette.current.control_bg, accent, progress)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Check,
-                    contentDescription = null,
-                    tint = lerp(local_library_palette.current.control_bg, on_accent, progress),
-                    modifier = Modifier.size(15.dp),
-                )
-            }
+                    .padding(6.dp)
+                    .alpha(progress),
+            )
         }
     }
 }
@@ -1200,28 +1200,21 @@ fun image_theme_thumbnail(background: ThemeBackground, modifier: Modifier = Modi
             thumb?.let { draw_cover(it, reveal) }
         }
         if (unavailable) {
-            Box(
+            photo_overlay_icon(
+                icon = TablerIcons.Refresh,
+                icon_size = 20.dp,
+                content_description = stringResource(R.string.image_theme_retry_download),
                 modifier = Modifier
-                    .size(34.dp)
                     .clip(CircleShape)
-                    .background(local_library_palette.current.control_bg)
                     .clickable {
                         remote_theme_store.clear_failure(background.id, RemoteThemeKind.thumb)
                         retry_token += 1
                     },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Refresh,
-                    contentDescription = stringResource(R.string.image_theme_retry_download),
-                    tint = Color.White,
-                    modifier = Modifier.size(17.dp),
-                )
-            }
+            )
         } else if (thumb == null) {
-            CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 color = Color.White.copy(alpha = 0.55f),
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
                 modifier = Modifier.size(20.dp),
             )
         }

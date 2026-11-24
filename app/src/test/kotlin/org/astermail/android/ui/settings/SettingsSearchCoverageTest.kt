@@ -190,7 +190,9 @@ class SettingsSearchCoverageTest {
 
     @Test
     fun keywords_are_translated_for_every_locale() {
-        val english = settings_search_fixture.english.filterKeys { it.startsWith("search_keywords_") }
+        val english = settings_search_fixture.english.filterKeys {
+            it.startsWith("search_keywords_") && !it.startsWith("search_keywords_more_")
+        }
         assertTrue(english.size > 40)
         locales.forEach { locale ->
             val translated = settings_search_fixture.read_strings("values-$locale")

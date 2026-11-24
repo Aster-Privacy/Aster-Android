@@ -49,6 +49,7 @@ data class VacationReplyUiState(
     val end_date: String? = null,
     val external_only: Boolean = false,
     val reply_count: Int = 0,
+    val dirty: Boolean = false,
 )
 
 @HiltViewModel
@@ -60,16 +61,24 @@ class VacationReplyViewModel @Inject constructor(
     private val _state = MutableStateFlow(VacationReplyUiState())
     val state: StateFlow<VacationReplyUiState> = _state.asStateFlow()
 
-    fun load() {
+    fun load(quiet: Boolean = false) {
         viewModelScope.launch {
-            _state.value = _state.value.copy(is_loading = true, error = null, load_failed = false)
+            if (!quiet) _state.value = _state.value.copy(is_loading = true, error = null, load_failed = false)
             val outcome = runCatching { vacation_api.get() }
+            val current = _state.value
+            if (quiet && (current.dirty || current.is_busy)) return@launch
+            if (quiet && outcome.isFailure && !current.load_failed) {
+                _state.value = current.copy(error = readable(outcome.exceptionOrNull()!!))
+                return@launch
+            }
             _state.value = outcome.fold(
                 onSuccess = { reply ->
                     if (reply == null) {
                         _state.value.copy(
                             is_loading = false,
                             load_failed = false,
+                            error = null,
+                            dirty = false,
                             exists = false,
                             is_enabled = false,
                             subject = context.getString(R.string.vacation_default_subject),
@@ -83,6 +92,8 @@ class VacationReplyViewModel @Inject constructor(
                         _state.value.copy(
                             is_loading = false,
                             load_failed = false,
+                            error = null,
+                            dirty = false,
                             exists = true,
                             is_enabled = reply.is_enabled,
                             subject = reply.subject,
@@ -102,11 +113,11 @@ class VacationReplyViewModel @Inject constructor(
     }
 
     fun update_subject(value: String) {
-        _state.value = _state.value.copy(subject = value, error = null, saved_message = null)
+        _state.value = _state.value.copy(subject = value, error = null, saved_message = null, dirty = true)
     }
 
     fun update_body(value: String) {
-        _state.value = _state.value.copy(body = value, error = null, saved_message = null)
+        _state.value = _state.value.copy(body = value, error = null, saved_message = null, dirty = true)
     }
 
     fun set_enabled(value: Boolean) {
@@ -117,15 +128,15 @@ class VacationReplyViewModel @Inject constructor(
     }
 
     fun set_start_date(value: String?) {
-        _state.value = _state.value.copy(start_date = value, error = null, saved_message = null)
+        _state.value = _state.value.copy(start_date = value, error = null, saved_message = null, dirty = true)
     }
 
     fun set_end_date(value: String?) {
-        _state.value = _state.value.copy(end_date = value, error = null, saved_message = null)
+        _state.value = _state.value.copy(end_date = value, error = null, saved_message = null, dirty = true)
     }
 
     fun set_external_only(value: Boolean) {
-        _state.value = _state.value.copy(external_only = value, error = null, saved_message = null)
+        _state.value = _state.value.copy(external_only = value, error = null, saved_message = null, dirty = true)
     }
 
     fun save(revert_is_enabled: Boolean? = null) {
@@ -183,6 +194,7 @@ class VacationReplyViewModel @Inject constructor(
                         external_only = it.external_only,
                         reply_count = it.reply_count,
                         saved_message = context.getString(R.string.saved),
+                        dirty = false,
                     )
                 },
                 onFailure = {

@@ -194,4 +194,66 @@ class VerificationCodeTest {
             ),
         )
     }
+
+    @Test
+    fun unambiguous_finds_code_in_subject_and_body() {
+        assertEquals(
+            "482913",
+            detect_unambiguous_verification_code(
+                "Your verification code",
+                "Hello,\nYour verification code is 482913. It expires in 10 minutes.",
+            ),
+        )
+    }
+
+    @Test
+    fun unambiguous_accepts_same_code_repeated() {
+        assertEquals(
+            "482913",
+            detect_unambiguous_verification_code("482913 is your sign-in code", "Enter code 482 913 to sign in"),
+        )
+    }
+
+    @Test
+    fun unambiguous_finds_alphanumeric_code() {
+        assertEquals("X7K9QP", detect_unambiguous_verification_code("Verify your email", "Use X7K9QP to verify your email"))
+    }
+
+    @Test
+    fun unambiguous_rejects_two_distinct_codes() {
+        assertNull(
+            detect_unambiguous_verification_code(
+                "Your codes",
+                "Your verification code is 482913. Your backup code is 771204.",
+            ),
+        )
+    }
+
+    @Test
+    fun unambiguous_ignores_years_prices_dates_and_references() {
+        assertEquals(
+            "552014",
+            detect_unambiguous_verification_code(
+                "Sign in to your account",
+                "Your login code is 552014. Order 12345678 ships on 11/11/2026 for \$1299. Call 555-123-4567. Copyright 2026.",
+            ),
+        )
+    }
+
+    @Test
+    fun unambiguous_returns_null_without_keyword() {
+        assertNull(detect_unambiguous_verification_code("Lunch on Friday", "Meet me in room 4821 at 12:30"))
+    }
+
+    @Test
+    fun unambiguous_returns_null_for_promo_and_zip_codes() {
+        assertNull(detect_unambiguous_verification_code("Sale", "Use promo code SAVE2026 today"))
+        assertNull(detect_unambiguous_verification_code("Delivery", "Postal code 10115"))
+    }
+
+    @Test
+    fun unambiguous_returns_null_for_empty_input() {
+        assertNull(detect_unambiguous_verification_code())
+        assertNull(detect_unambiguous_verification_code(null, " "))
+    }
 }

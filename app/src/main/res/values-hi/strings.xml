@@ -303,6 +303,10 @@
     <string name="send_email_to_sender">इस प्रेषक को लिखें</string>
     <string name="add_to_contacts">संपर्कों में सहेजें</string>
     <string name="remove_from_contacts">संपर्कों से निकालें</string>
+    <string name="sender_action_new_message">नया संदेश</string>
+    <string name="sender_action_add_contact">संपर्क जोड़ें</string>
+    <string name="sender_action_view_contact">संपर्क देखें</string>
+    <string name="sender_action_in_contacts">संपर्कों में</string>
     <string name="contact_added_named">%1$s संपर्कों में सहेजा गया</string>
     <string name="contact_removed_named">%1$s संपर्कों से हटाया गया</string>
     <string name="message_unavailable">संदेश उपलब्ध नहीं</string>

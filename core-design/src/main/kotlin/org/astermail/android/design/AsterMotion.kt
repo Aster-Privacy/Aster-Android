@@ -27,10 +27,18 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.PathEasing
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.SpringSpec
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.MotionDurationScale
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 
@@ -141,6 +149,59 @@ fun system_animations_disabled(context: Context): Boolean = try {
 @Composable
 fun aster_reduce_motion(): Boolean {
     if (local_reduce_motion.current) return true
+    if (AsterMotionScale.system_disabled) return true
     val context = LocalContext.current
     return remember(context) { system_animations_disabled(context) }
 }
+
+fun system_animator_scale(context: Context): Float = try {
+    Settings.Global.getFloat(
+        context.contentResolver,
+        Settings.Global.ANIMATOR_DURATION_SCALE,
+        1f,
+    )
+} catch (e: Exception) {
+    1f
+}
+
+object AsterMotionScale : MotionDurationScale {
+    private val reduced_state = mutableStateOf(false)
+    private val system_scale_state = mutableFloatStateOf(1f)
+
+    var reduced: Boolean
+        get() = reduced_state.value
+        set(value) {
+            if (reduced_state.value != value) reduced_state.value = value
+        }
+
+    val system_disabled: Boolean
+        get() = system_scale_state.floatValue == 0f
+
+    override val scaleFactor: Float
+        get() = if (reduced_state.value) 0f else system_scale_state.floatValue
+
+    fun refresh_system_scale(context: Context) {
+        val scale = system_animator_scale(context)
+        if (system_scale_state.floatValue != scale) system_scale_state.floatValue = scale
+    }
+}
+
+fun <T> aster_motion_spec(reduce_motion: Boolean, spec: AnimationSpec<T>): AnimationSpec<T> =
+    if (reduce_motion) snap() else spec
+
+fun <T> aster_finite_spec(reduce_motion: Boolean, spec: FiniteAnimationSpec<T>): FiniteAnimationSpec<T> =
+    if (reduce_motion) snap() else spec
+
+@Composable
+fun <T> aster_spec(spec: AnimationSpec<T>): AnimationSpec<T> = aster_motion_spec(aster_reduce_motion(), spec)
+
+@Composable
+fun <T> aster_finite(spec: FiniteAnimationSpec<T>): FiniteAnimationSpec<T> = aster_finite_spec(aster_reduce_motion(), spec)
+
+@Composable
+fun aster_motion_enter(enter: EnterTransition): EnterTransition =
+    if (aster_reduce_motion()) EnterTransition.None else enter
+
+@Composable
+fun aster_motion_exit(exit: ExitTransition): ExitTransition =
+    if (aster_reduce_motion()) ExitTransition.None else exit

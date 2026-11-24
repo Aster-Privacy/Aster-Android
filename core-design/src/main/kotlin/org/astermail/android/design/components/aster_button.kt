@@ -99,10 +99,10 @@ private fun aster_button_label(
 
 @Composable
 private fun aster_button_spinner(content_color: Color) {
-    CircularProgressIndicator(
+    org.astermail.android.design.components.aster_spinner(
         modifier = Modifier.size(aster_button_spinner_size),
         color = content_color,
-        strokeWidth = 2.dp,
+        stroke_width = 2.dp,
     )
 }
 

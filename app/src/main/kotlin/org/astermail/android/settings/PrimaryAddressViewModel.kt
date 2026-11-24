@@ -154,7 +154,11 @@ class PrimaryAddressViewModel @Inject constructor(
     private val session_key_store: SessionKeyStore,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(PrimaryAddressUiState())
+    private val _state = MutableStateFlow(
+        PrimaryAddressUiState().with_eligibility(
+            primary_address_eligibility_cache.memo.read(session_key_store.get_user_id()),
+        ),
+    )
     val state = _state.asStateFlow()
 
     private var availability_job: Job? = null
@@ -166,15 +170,15 @@ class PrimaryAddressViewModel @Inject constructor(
         eligibility_job = viewModelScope.launch {
             runCatching { primary_address_api.get_eligibility() }
                 .onSuccess { response ->
-                    _state.value = _state.value.copy(
+                    val snapshot = primary_address_eligibility_snapshot(
                         eligible = response.eligible,
                         lock_reason = response.reason,
                         current_address = response.current_address,
                         next_change_available_at = response.next_change_available_at,
                         renames_allowed = response.renames_allowed,
-                        eligibility_failed = false,
-                        eligibility_checked = true,
                     )
+                    primary_address_eligibility_cache.memo.write(session_key_store.get_user_id(), snapshot)
+                    _state.value = _state.value.with_eligibility(snapshot)
                 }
                 .onFailure { throwable ->
                     if (throwable is CancellationException) throw throwable
@@ -648,6 +652,7 @@ class PrimaryAddressViewModel @Inject constructor(
         }
 
         auth_repository.refresh_session_snapshot()
+        primary_address_eligibility_cache.memo.clear()
         _state.value = _state.value.copy(
             busy = false,
             error = null,

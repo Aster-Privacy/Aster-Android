@@ -60,6 +60,8 @@ import org.astermail.android.ui.theme.draw_theme_window_slice
 import org.astermail.android.ui.theme.remember_active_theme_bitmap
 import org.astermail.android.ui.theme.remember_theme_animation
 
+private val popup_toast_overlay: @Composable () -> Unit = { app_toast_host(nested = true) }
+
 @Composable
 fun aster_theme_root(content: @Composable () -> Unit) {
     val theme_vm: ThemeViewModel = hiltViewModel()
@@ -112,6 +114,9 @@ fun aster_theme_root(content: @Composable () -> Unit) {
             dyslexia_font = dyslexia_font,
             haptic_enabled = haptic_enabled,
         )
+    }
+    androidx.compose.runtime.SideEffect {
+        org.astermail.android.design.AsterMotionScale.reduced = reduce_motion
     }
     val dyslexia_family = remember(dyslexia_font) {
         if (dyslexia_font) {
@@ -192,8 +197,15 @@ fun aster_theme_root(content: @Composable () -> Unit) {
                     }
                 }
             }
+            val motion_indication = if (org.astermail.android.design.aster_reduce_motion()) {
+                org.astermail.android.design.aster_static_press_indication(colors.text_primary)
+            } else {
+                androidx.compose.foundation.LocalIndication.current
+            }
             CompositionLocalProvider(
+                androidx.compose.foundation.LocalIndication provides motion_indication,
                 org.astermail.android.design.local_acrylic provides acrylic_source,
+                org.astermail.android.design.components.LocalAsterPopupOverlay provides popup_toast_overlay,
                 androidx.compose.foundation.LocalOverscrollFactory provides
                     if (colors.is_translucent) null else androidx.compose.foundation.LocalOverscrollFactory.current,
             ) {

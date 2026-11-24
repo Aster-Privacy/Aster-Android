@@ -128,6 +128,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.CircularProgressIndicator
@@ -135,6 +136,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.key
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -153,6 +155,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.astermail.android.design.components.aster_menu
+import org.astermail.android.design.components.aster_show
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu_section_label
 import org.astermail.android.R
@@ -402,6 +405,8 @@ fun InboxScreen(
     on_view_pending_send: () -> Unit = {},
     on_open_email: (String) -> Unit,
     on_open_settings: () -> Unit = {},
+    on_open_account: () -> Unit = on_open_settings,
+    stored_account: org.astermail.android.storage.StoredAccount? = null,
     on_open_low_network: () -> Unit = {},
     on_open_upgrade: () -> Unit = {},
     on_open_recovery_email: () -> Unit = {},
@@ -427,6 +432,8 @@ fun InboxScreen(
     on_select_category: (String) -> Unit = {},
     alias_direction: String? = null,
     on_alias_direction_change: (String) -> Unit = {},
+    select_back_enabled: Boolean = true,
+    on_select_mode_change: (Boolean) -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -1543,7 +1550,14 @@ fun InboxScreen(
         mail_vm.cancel_load_all_remaining()
     }
 
-    androidx.activity.compose.BackHandler(enabled = select_mode) { exit_select_mode() }
+    val latest_select_mode_change by rememberUpdatedState(on_select_mode_change)
+    LaunchedEffect(select_mode) { latest_select_mode_change(select_mode) }
+    DisposableEffect(Unit) { onDispose { latest_select_mode_change(false) } }
+    key(select_mode) {
+        if (select_mode) {
+            androidx.activity.compose.BackHandler(enabled = select_back_enabled) { exit_select_mode() }
+        }
+    }
 
     fun toggle_selection(id: String) {
         select_all_active = false
@@ -2277,13 +2291,17 @@ fun InboxScreen(
                     refreshing_known_empty = is_refreshing && empty_state_seen,
                     emptied_by_action = emptied_by_action,
                 )
-                val rows_imminent = threads.isEmpty() &&
-                    (cache_pending || !state_matches_folder || (threads_pending && inbox_state.items.isNotEmpty()))
-                val skeleton_phase by remember_skeleton_phase(
-                    wanted = skeleton_now,
-                    rows_imminent = rows_imminent,
-                )
+                val skeleton_phase by remember_skeleton_phase(wanted = skeleton_now)
                 skeleton_showing[0] = skeleton_phase == SkeletonPhase.skeleton
+                val first_frame_ready = org.astermail.android.ui.common.inbox_first_frame_ready(
+                    state_matches_folder = state_matches_folder,
+                    has_rows = threads.isNotEmpty(),
+                    cache_pending = cache_pending,
+                    rows_deriving = rows_deriving,
+                )
+                androidx.compose.runtime.SideEffect {
+                    if (first_frame_ready) org.astermail.android.ui.common.first_frame_gate.mark_ready()
+                }
                 val handoff = Modifier.skeleton_handoff(skeleton_phase)
                 val row_geometry = remember_row_geometry(skeleton_geometry_of(settings_state.preferences))
                 val record_row_height = remember_row_height_recorder()
@@ -2945,10 +2963,11 @@ fun InboxScreen(
                         },
                         alias_direction = alias_direction,
                         on_alias_direction_change = on_alias_direction_change,
-                        account_email = settings_state.user?.email.orEmpty(),
-                        account_name = settings_state.user?.display_name.orEmpty(),
-                        account_profile_picture = settings_state.user?.profile_picture,
-                        account_profile_color = settings_state.user?.profile_color,
+                        on_open_account = on_open_account,
+                        account_email = settings_state.user?.email?.takeIf { it.isNotBlank() } ?: stored_account?.email.orEmpty(),
+                        account_name = settings_state.user?.display_name ?: stored_account?.display_name.orEmpty(),
+                        account_profile_picture = if (settings_state.user != null) settings_state.user?.profile_picture else stored_account?.profile_picture,
+                        account_profile_color = if (settings_state.user != null) settings_state.user?.profile_color else stored_account?.profile_color,
                     )
             scope_selection_banner(
                 offered = can_offer_scope_selection,
@@ -3504,6 +3523,7 @@ internal fun inbox_top_bar(
     has_unread: Boolean,
     on_select_all: () -> Unit,
     on_open_settings: () -> Unit,
+    on_open_account: () -> Unit = on_open_settings,
     on_open_upgrade: () -> Unit = {},
     show_upgrade: Boolean = true,
     on_empty_trash: () -> Unit = {},
@@ -3841,11 +3861,12 @@ internal fun inbox_top_bar(
                     modifier = Modifier.weight(1f),
                 )
             }
-            AsterIconButton(
-                icon = TablerIcons.Settings,
-                content_description = stringResource(R.string.settings),
-                onClick = on_open_settings,
-                modifier = Modifier.testTag("open_settings"),
+            inbox_account_button(
+                email = account_email,
+                name = account_name,
+                profile_picture = account_profile_picture,
+                profile_color = account_profile_color,
+                on_click = on_open_account,
             )
         }
         androidx.compose.animation.AnimatedContent(
@@ -3968,9 +3989,9 @@ private fun select_mode_top_bar(
             modifier = Modifier.weight(1f),
         )
         if (counting) {
-            CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 modifier = Modifier.size(16.dp).testTag("select_all_progress"),
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
                 color = colors.accent_blue,
             )
             Spacer(Modifier.width(AsterSpacing.xs))
@@ -4059,6 +4080,8 @@ internal fun select_mode_bottom_bar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
+                val shared_label_size = remember(current_folder, custom_actions) { androidx.compose.runtime.mutableFloatStateOf(11f) }
+                androidx.compose.runtime.CompositionLocalProvider(local_select_label_size provides shared_label_size) {
                 when (current_folder) {
                     "trash" -> {
                         val read_action = selection_read_toolbar_action(selection_all_read)
@@ -4165,13 +4188,13 @@ internal fun select_mode_bottom_bar(
                         )
                     }
                     else -> {
-                        custom_actions.forEach { action_id ->
-                            if (action_id == "category" && !show_category) return@forEach
-                            val action = selection_toolbar_action_for(
-                                action_id,
-                                selection_all_starred,
-                                selection_all_read,
-                            ) ?: return@forEach
+                        resolve_selection_toolbar(
+                            custom_actions,
+                            selection_all_starred,
+                            selection_all_read,
+                            is_available = { it != "category" || show_category },
+                        ).forEach { action ->
+                            val action_id = action.id
                             val discards_draft = current_folder == "drafts" && action.id == "trash"
                             bottom_select_action(
                                 icon = action.icon,
@@ -4191,10 +4214,13 @@ internal fun select_mode_bottom_bar(
                         )
                     }
                 }
+                }
             }
         }
     }
 }
+
+private val local_select_label_size = androidx.compose.runtime.compositionLocalOf<androidx.compose.runtime.MutableFloatState?> { null }
 
 @Composable
 private fun androidx.compose.foundation.layout.RowScope.bottom_select_action(
@@ -4223,11 +4249,13 @@ private fun androidx.compose.foundation.layout.RowScope.bottom_select_action(
             tint = resolved_tint,
             modifier = Modifier.size(22.dp),
         )
-        var label_size by remember(label) { mutableStateOf(11.sp) }
+        val shared_size = local_select_label_size.current
+        var own_size by remember(label) { mutableStateOf(11f) }
+        val label_size = shared_size?.floatValue ?: own_size
         Text(
             text = label,
             color = resolved_tint,
-            fontSize = label_size,
+            fontSize = label_size.sp,
             lineHeight = 13.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
@@ -4235,8 +4263,8 @@ private fun androidx.compose.foundation.layout.RowScope.bottom_select_action(
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             onTextLayout = { result ->
-                if (result.hasVisualOverflow && label_size.value > 8f) {
-                    label_size = (label_size.value - 0.5f).sp
+                if (result.hasVisualOverflow && label_size > 8f) {
+                    if (shared_size != null) shared_size.floatValue = label_size - 0.5f else own_size = label_size - 0.5f
                 }
             },
         )
@@ -4488,7 +4516,7 @@ internal fun show_reschedule_picker(
                 AsterTimePreferences.use_24h,
             )
             time_picker.setOnCancelListener { on_cancel() }
-            time_picker.show()
+            time_picker.aster_show()
         },
         calendar.get(java.util.Calendar.YEAR),
         calendar.get(java.util.Calendar.MONTH),
@@ -4499,7 +4527,7 @@ internal fun show_reschedule_picker(
         org.astermail.android.mail.latest_sealed_schedule_ms(System.currentTimeMillis())
     date_picker.with_account_week_start()
     date_picker.setOnCancelListener { on_cancel() }
-    date_picker.show()
+    date_picker.aster_show()
 }
 
 @Composable
@@ -5225,3 +5253,45 @@ internal fun filtered_load_more_wanted(
 
 internal fun footer_skeleton_wanted(is_loading_more: Boolean, removal_quiet: Boolean): Boolean =
     is_loading_more && !removal_quiet
+
+@Composable
+private fun inbox_account_button(
+    email: String,
+    name: String,
+    profile_picture: String?,
+    profile_color: String?,
+    on_click: () -> Unit,
+) {
+    val description = stringResource(R.string.account)
+    val avatar_size = 34.dp
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = on_click)
+            .semantics { contentDescription = description }
+            .testTag("open_account"),
+        contentAlignment = Alignment.Center,
+    ) {
+        org.astermail.android.ui.common.plan_ring(size = avatar_size, enabled = org.astermail.android.ui.common.remember_has_paid_plan()) {
+            if (email.isBlank() && name.isBlank()) {
+                Box(
+                    modifier = Modifier
+                        .size(avatar_size)
+                        .clip(CircleShape)
+                        .background(AsterMaterial.colors.text_muted.copy(alpha = 0.18f)),
+                )
+            } else {
+                SenderAvatar(
+                    email = email,
+                    name = name,
+                    size = avatar_size,
+                    profile_picture_url = profile_picture,
+                    profile_color = profile_color,
+                    use_contact_photo = false,
+                    modifier = Modifier.clearAndSetSemantics {},
+                )
+            }
+        }
+    }
+}

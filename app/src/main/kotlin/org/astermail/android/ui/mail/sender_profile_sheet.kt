@@ -22,8 +22,6 @@
 package org.astermail.android.ui.mail
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -34,58 +32,71 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import compose.icons.TablerIcons
+import compose.icons.tablericons.At
 import compose.icons.tablericons.Ban
+import compose.icons.tablericons.Check
+import compose.icons.tablericons.CircleCheck
 import compose.icons.tablericons.Copy
 import compose.icons.tablericons.Mail
 import compose.icons.tablericons.Search
 import compose.icons.tablericons.ShieldLock
+import compose.icons.tablericons.User
 import compose.icons.tablericons.UserMinus
 import compose.icons.tablericons.UserPlus
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import org.astermail.android.R
 import org.astermail.android.contacts.ContactsViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.components.AsterDivider
+import org.astermail.android.design.aster_haptic
+import org.astermail.android.design.remember_haptic
+import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.security.SenderAuthState
 import org.astermail.android.security.SenderTrust
 import org.astermail.android.ui.common.aster_modal_sheet
+import org.astermail.android.ui.common.aster_sheet_shape
 import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.contacts.Contact
+import org.astermail.android.ui.settings.detail.settings_row_gap
 
 private val internal_sender_domains =
     setOf("aster.cx", "astermail.org", "astermail.me", "astermail.net")
+
+private const val copied_feedback_ms = 1600L
+private const val contact_save_timeout_ms = 15_000L
 
 fun is_internal_sender(email: String): Boolean {
     val domain = email.substringAfter('@', "").lowercase().trim()
     return domain in internal_sender_domains
 }
+
+private enum class sender_contact_slot { loading, add, adding, view, saved }
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -100,12 +111,18 @@ fun sender_profile_sheet(
     on_result: (String) -> Unit,
     contacts_vm: ContactsViewModel = hiltViewModel(),
     trust: SenderTrust? = null,
+    is_own_address: Boolean = false,
+    on_open_alias_settings: ((String) -> Unit)? = null,
+    on_open_contact: ((String) -> Unit)? = null,
+    is_blocked: Boolean = false,
+    on_unblock: ((String) -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val aster_haptics = remember_haptic()
     val header_tap = remember { MutableInteractionSource() }
-    val state = rememberModalBottomSheetState()
+    val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val contacts_state by contacts_vm.state.collectAsStateWithLifecycle()
     val normalized = remember(sender_email) { sender_email.trim().lowercase() }
     val marks_hidden = trust?.show_identity_marks == false
@@ -116,21 +133,87 @@ fun sender_profile_sheet(
             trust.auth_state == SenderAuthState.internal && trust.warning == null && is_internal_sender(normalized)
         }
     }
+    val shows_verified = !is_internal && trust?.show_verified_badge == true
     val existing_contact = remember(contacts_state.contacts, normalized) {
         contacts_state.contacts.firstOrNull { it.email.trim().lowercase() == normalized }
     }
-
-    val identity_text = remember(sender_name, normalized) {
-        val name = sender_name.trim()
-        if (name.isBlank() || name.equals(normalized, ignoreCase = true)) normalized else "$name <$normalized>"
+    val display_name = remember(sender_name, normalized) {
+        sender_name.trim().takeUnless { it.isBlank() || it.equals(normalized, ignoreCase = true) }
     }
+    val identity_text = remember(display_name, normalized) {
+        if (display_name == null) normalized else "$display_name <$normalized>"
+    }
+
+    var contacts_resolved by remember { mutableStateOf(false) }
+    var adding_contact by remember { mutableStateOf(false) }
+    var contact_added by remember { mutableStateOf(false) }
+    var copied by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         contacts_vm.load_contacts()
+        contacts_vm.state.first { !it.is_loading }
+        contacts_resolved = true
+    }
+    LaunchedEffect(copied) {
+        if (copied) {
+            delay(copied_feedback_ms)
+            copied = false
+        }
+    }
+    LaunchedEffect(adding_contact) {
+        if (adding_contact) {
+            delay(contact_save_timeout_ms)
+            adding_contact = false
+        }
     }
 
+    val contact_slot = when {
+        adding_contact -> sender_contact_slot.adding
+        existing_contact != null && on_open_contact != null -> sender_contact_slot.view
+        existing_contact != null || contact_added -> sender_contact_slot.saved
+        !contacts_resolved -> sender_contact_slot.loading
+        else -> sender_contact_slot.add
+    }
+
+    val label_new_message = stringResource(R.string.sender_action_new_message)
+    val label_copy = stringResource(R.string.copy)
+    val label_copied = stringResource(R.string.copied)
+    val label_add_contact = stringResource(R.string.sender_action_add_contact)
+    val label_view_contact = stringResource(R.string.sender_action_view_contact)
+    val label_in_contacts = stringResource(R.string.sender_action_in_contacts)
+    val label_search = stringResource(R.string.search)
+
+    val add_contact = {
+        aster_haptics(aster_haptic.tap)
+        adding_contact = true
+        contacts_vm.save_contact(
+            Contact(
+                id = "",
+                name = display_name ?: normalized.substringBefore('@'),
+                email = normalized,
+            ),
+        ) { saved ->
+            adding_contact = false
+            if (saved) contact_added = true
+            aster_haptics(if (saved) aster_haptic.confirm else aster_haptic.reject)
+            on_result(
+                if (saved) {
+                    context.getString(R.string.contact_added_named, normalized)
+                } else {
+                    context.getString(R.string.contact_add_failed, normalized)
+                },
+            )
+        }
+    }
+
+    val show_alias_settings = is_own_address && on_open_alias_settings != null
+    val show_remove_contact = existing_contact != null
+    val show_unblock = is_blocked && on_unblock != null
+    val show_block = !show_unblock && !is_internal && !is_own_address
+    val has_secondary_rows = show_alias_settings || show_remove_contact || show_unblock || show_block
+
     aster_modal_sheet(
-        shape = org.astermail.android.ui.common.aster_sheet_shape,
+        shape = aster_sheet_shape,
         on_dismiss_request = on_close,
         sheet_state = state,
         container_color = sheet_container_color(colors),
@@ -139,151 +222,199 @@ fun sender_profile_sheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding(),
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(horizontal = AsterSpacing.xl)
+                .padding(bottom = AsterSpacing.xl),
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.xl)
-                    .padding(bottom = AsterSpacing.md)
                     .combinedClickable(
                         interactionSource = header_tap,
                         indication = null,
                         onClick = {},
+                        onLongClickLabel = stringResource(R.string.copy_address),
                         onLongClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             on_copy(identity_text)
                         },
-                    ),
+                    )
+                    .padding(top = AsterSpacing.xs, bottom = AsterSpacing.xl),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                SenderAvatar(email = normalized, name = sender_name, size = 64.dp, plain = marks_hidden)
+                SenderAvatar(email = normalized, name = sender_name, size = 72.dp, plain = marks_hidden)
                 Spacer(Modifier.height(AsterSpacing.md))
                 Text(
-                    text = sender_name.ifBlank { normalized },
+                    text = display_name ?: normalized,
                     color = colors.text_primary,
-                    fontSize = 17.sp,
+                    fontSize = 20.sp,
+                    lineHeight = 26.sp,
                     fontWeight = FontWeight.SemiBold,
-                    maxLines = 2,
                     textAlign = TextAlign.Center,
-                    overflow = TextOverflow.Ellipsis,
+                    maxLines = if (display_name == null) 1 else 2,
+                    overflow = if (display_name == null) TextOverflow.MiddleEllipsis else TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth(),
                 )
-                if (!sender_name.equals(normalized, ignoreCase = true)) {
+                if (display_name != null) {
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = normalized,
-                        color = colors.text_muted,
-                        fontSize = 13.sp,
-                        maxLines = 2,
+                        color = colors.text_tertiary,
+                        fontSize = 14.sp,
+                        lineHeight = 19.sp,
                         textAlign = TextAlign.Center,
-                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.MiddleEllipsis,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
-                if (is_internal) {
-                    Spacer(Modifier.height(AsterSpacing.sm))
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(lerp(colors.bg_card, colors.text_primary, 0.06f))
-                            .border(1.dp, lerp(colors.bg_card, colors.text_primary, 0.14f), RoundedCornerShape(6.dp))
-                            .padding(horizontal = 8.dp, vertical = 3.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        Icon(
-                            imageVector = TablerIcons.ShieldLock,
-                            contentDescription = null,
+                if (is_internal || shows_verified) {
+                    Spacer(Modifier.height(AsterSpacing.md))
+                    if (is_internal) {
+                        sender_identity_badge(
+                            label = stringResource(R.string.sender_on_aster),
+                            icon = TablerIcons.ShieldLock,
                             tint = colors.text_primary,
-                            modifier = Modifier.size(12.dp),
                         )
-                        Spacer(Modifier.width(5.dp))
-                        Text(
-                            text = stringResource(R.string.sender_on_aster),
-                            color = colors.text_primary,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
+                    } else {
+                        sender_identity_badge(
+                            label = stringResource(R.string.sender_verified_badge),
+                            icon = TablerIcons.CircleCheck,
+                            tint = colors.accent_blue,
                         )
                     }
                 }
             }
-            AsterDivider()
-            sheet_row(
-                stringResource(R.string.copy_address),
-                colors.text_primary,
-                TablerIcons.Copy,
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+                verticalAlignment = Alignment.Top,
             ) {
-                on_copy(normalized)
-                on_close()
+                sender_quick_action(
+                    face = sender_quick_action_face(label_new_message, TablerIcons.Mail),
+                    on_click = {
+                        on_close()
+                        on_send_email(normalized)
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+                sender_quick_action(
+                    face = sender_quick_action_face(
+                        label = if (copied) label_copied else label_copy,
+                        icon = if (copied) TablerIcons.Check else TablerIcons.Copy,
+                        highlighted = copied,
+                    ),
+                    on_click = {
+                        aster_haptics(aster_haptic.tap)
+                        on_copy(normalized)
+                        copied = true
+                    },
+                    state_description = if (copied) label_copied else null,
+                    modifier = Modifier.weight(1f),
+                )
+                sender_quick_action(
+                    face = when (contact_slot) {
+                        sender_contact_slot.loading -> sender_quick_action_face(label_add_contact, TablerIcons.UserPlus)
+                        sender_contact_slot.add -> sender_quick_action_face(label_add_contact, TablerIcons.UserPlus)
+                        sender_contact_slot.adding -> sender_quick_action_face(label_add_contact, TablerIcons.UserPlus, busy = true)
+                        sender_contact_slot.view -> sender_quick_action_face(label_view_contact, TablerIcons.User, highlighted = true)
+                        sender_contact_slot.saved -> sender_quick_action_face(label_in_contacts, TablerIcons.Check, highlighted = true)
+                    },
+                    on_click = {
+                        when (contact_slot) {
+                            sender_contact_slot.add -> add_contact()
+                            sender_contact_slot.view -> {
+                                val id = existing_contact?.id
+                                val open = on_open_contact
+                                if (id != null && open != null) {
+                                    on_close()
+                                    open(id)
+                                }
+                            }
+                            else -> Unit
+                        }
+                    },
+                    enabled = contact_slot == sender_contact_slot.add || contact_slot == sender_contact_slot.view,
+                    placeholder = contact_slot == sender_contact_slot.loading,
+                    modifier = Modifier.weight(1f),
+                )
+                sender_quick_action(
+                    face = sender_quick_action_face(label_search, TablerIcons.Search),
+                    on_click = {
+                        on_close()
+                        on_search_sender(normalized)
+                    },
+                    modifier = Modifier.weight(1f),
+                )
             }
-            sheet_row(
-                stringResource(R.string.messages_from_sender),
-                colors.text_primary,
-                TablerIcons.Search,
-            ) {
-                on_close()
-                on_search_sender(normalized)
-            }
-            sheet_row(
-                stringResource(R.string.send_email_to_sender),
-                colors.text_primary,
-                TablerIcons.Mail,
-            ) {
-                on_close()
-                on_send_email(normalized)
-            }
-            if (existing_contact != null) {
-                sheet_row(
-                    stringResource(R.string.remove_from_contacts),
-                    colors.text_primary,
-                    TablerIcons.UserMinus,
-                ) {
-                    contacts_vm.delete_contact(existing_contact.id) { removed ->
-                        on_result(
-                            if (removed) {
-                                context.getString(R.string.contact_removed_named, normalized)
-                            } else {
-                                context.getString(R.string.contact_remove_failed, normalized)
-                            },
-                        )
+
+            if (has_secondary_rows) {
+                Spacer(Modifier.height(AsterSpacing.xl))
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    Column {
+                        var row_index = 0
+                        if (show_alias_settings) {
+                            row_index++
+                            sender_sheet_row(
+                                label = stringResource(R.string.alias_open_settings),
+                                icon = TablerIcons.At,
+                                show_chevron = true,
+                                on_click = {
+                                    on_close()
+                                    on_open_alias_settings?.invoke(normalized)
+                                },
+                            )
+                        }
+                        if (show_remove_contact) {
+                            if (row_index++ > 0) settings_row_gap()
+                            sender_sheet_row(
+                                label = stringResource(R.string.remove_from_contacts),
+                                icon = TablerIcons.UserMinus,
+                                destructive = true,
+                                on_click = {
+                                    val target = existing_contact ?: return@sender_sheet_row
+                                    contacts_vm.delete_contact(target.id) { removed ->
+                                        on_result(
+                                            if (removed) {
+                                                context.getString(R.string.contact_removed_named, normalized)
+                                            } else {
+                                                context.getString(R.string.contact_remove_failed, normalized)
+                                            },
+                                        )
+                                    }
+                                    on_close()
+                                },
+                            )
+                        }
+                        if (show_unblock) {
+                            if (row_index++ > 0) settings_row_gap()
+                            sender_sheet_row(
+                                label = stringResource(R.string.unblock),
+                                icon = TablerIcons.CircleCheck,
+                                on_click = {
+                                    on_close()
+                                    on_unblock?.invoke(normalized)
+                                },
+                            )
+                        }
+                        if (show_block) {
+                            if (row_index++ > 0) settings_row_gap()
+                            sender_sheet_row(
+                                label = stringResource(R.string.block_sender),
+                                icon = TablerIcons.Ban,
+                                destructive = true,
+                                on_click = {
+                                    on_close()
+                                    on_block(normalized)
+                                },
+                            )
+                        }
                     }
-                    on_close()
-                }
-            } else {
-                sheet_row(
-                    stringResource(R.string.add_to_contacts),
-                    colors.text_primary,
-                    TablerIcons.UserPlus,
-                ) {
-                    contacts_vm.save_contact(
-                        Contact(
-                            id = "",
-                            name = sender_name.ifBlank { normalized.substringBefore('@') },
-                            email = normalized,
-                        ),
-                    ) { saved ->
-                        on_result(
-                            if (saved) {
-                                context.getString(R.string.contact_added_named, normalized)
-                            } else {
-                                context.getString(R.string.contact_add_failed, normalized)
-                            },
-                        )
-                    }
-                    on_close()
                 }
             }
-            if (!is_internal) {
-                AsterDivider()
-                sheet_row(
-                    stringResource(R.string.block_sender),
-                    colors.danger,
-                    TablerIcons.Ban,
-                ) {
-                    on_close()
-                    on_block(normalized)
-                }
-            }
-            Spacer(Modifier.height(AsterSpacing.md))
         }
     }
 }

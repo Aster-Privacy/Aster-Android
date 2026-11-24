@@ -85,6 +85,7 @@ import org.astermail.android.settings.host_activity
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.util.ascii_digits
 import org.astermail.android.util.latest_code_input
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun RecoveryEmailScreen(on_back: () -> Unit) {
@@ -156,7 +157,18 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
         }
     }
 
-    detail_scaffold(title = stringResource(R.string.recovery_email), on_back = on_back) {
+    val recovery_email_dirty = email.isNotBlank() && email != state.recovery_email_address.orEmpty()
+    detail_scaffold(
+        title = stringResource(R.string.recovery_email),
+        on_back = on_back,
+        on_refresh = {
+            vm.join_launched {
+                vm.load_recovery_email()
+                vm.load_security_status()
+            }
+        },
+        refresh_enabled = !recovery_email_dirty && !show_step_up && state.save_status != SaveStatus.SAVING,
+    ) {
         Text(
             text = stringResource(R.string.backup_email_description),
             color = colors.text_tertiary,

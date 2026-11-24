@@ -144,3 +144,26 @@ fun selection_toolbar_action_for(
         else -> base
     }
 }
+
+fun resolve_selection_toolbar(
+    slot_ids: List<String>,
+    selection_all_starred: Boolean,
+    selection_all_read: Boolean = false,
+    selection_all_trashed: Boolean = false,
+    is_available: (String) -> Boolean = { true },
+): List<ToolbarAction> {
+    fun resolve(id: String): ToolbarAction? =
+        if (is_available(id)) {
+            selection_toolbar_action_for(id, selection_all_starred, selection_all_read, selection_all_trashed)
+        } else {
+            null
+        }
+    val target = slot_ids.count { resolve(it) != null }
+    val shown = mutableListOf<ToolbarAction>()
+    fun add(action: ToolbarAction?) {
+        if (action != null && shown.size < target && shown.none { it.id == action.id }) shown.add(action)
+    }
+    slot_ids.forEach { add(resolve(it)) }
+    selection_toolbar_action_catalog.forEach { add(resolve(it.id)) }
+    return shown
+}

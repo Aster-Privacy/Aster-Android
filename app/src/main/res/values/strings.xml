@@ -375,6 +375,10 @@
     <string name="send_email_to_sender">Write to this sender</string>
     <string name="add_to_contacts">Save to contacts</string>
     <string name="remove_from_contacts">Remove from contacts</string>
+    <string name="sender_action_new_message">New message</string>
+    <string name="sender_action_add_contact">Add contact</string>
+    <string name="sender_action_view_contact">View contact</string>
+    <string name="sender_action_in_contacts">In contacts</string>
     <string name="contact_added_named">Saved %1$s to contacts</string>
     <string name="contact_removed_named">Removed %1$s from contacts</string>
     <string name="message_unavailable">Message unavailable</string>
@@ -2058,8 +2062,8 @@
     <string name="public_key_copied">Public key copied to clipboard</string>
     <string name="created_at_format">Created %1$s</string>
     <string name="identity_key_unavailable_hint">Sign in again to restore your key material.</string>
-    <string name="export_public_key">Export Public Key</string>
-    <string name="export_private_key_label">Export Private Key</string>
+    <string name="export_public_key">Export public key</string>
+    <string name="export_private_key_label">Export private key</string>
     <string name="copy_fingerprint_action">Copy fingerprint</string>
     <string name="copy_public_key_action">Copy public key</string>
     <string name="copied">Copied</string>
@@ -3772,4 +3776,5 @@
     <string name="attachment_unverified">Unverified attachment</string>
     <string name="confirm_back_exit">Confirm before exiting</string>
     <string name="confirm_back_exit_subtitle">Press back twice to leave the app from the inbox</string>
+    <string name="hide_quoted_text">Hide quoted text</string>
 </resources>

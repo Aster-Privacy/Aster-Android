@@ -129,6 +129,7 @@ internal fun prepare_email_body(
     image_failed_label: String,
     is_newsletter: Boolean,
     simple_dark: Boolean,
+    hide_quote_label: String? = null,
 ): String = try {
     val doc = Jsoup.parseBodyFragment(body).apply { outputSettings(raw_body_output_settings()) }
     val root = doc.body()
@@ -141,6 +142,7 @@ internal fun prepare_email_body(
     prune_empty_signature_blocks(root)
     reveal_fully_hidden_content(root)
     collapse_quoted_content(root, forwarded_label)
+    if (!hide_quote_label.isNullOrBlank()) append_quote_hide_pills(root, hide_quote_label)
     if (simple_dark) BlockedImagePlaceholder.repaint(root, BlockedImagePlaceholder.DARK)
     wrap_images_for_zoom(root)
     label_images_for_failure(root, image_failed_label)
@@ -149,6 +151,36 @@ internal fun prepare_email_body(
     root.html()
 } catch (_: Throwable) {
     "<div class=\"aster-quoted-content aster-quoted-solo\">$body</div>"
+}
+
+internal const val QUOTE_HIDE_SCHEME = "asterquote"
+
+internal const val QUOTE_CLOSE_ACTION = "close"
+
+private fun append_quote_hide_pills(root: Element, label: String) {
+    for (details in root.select("details.aster-quoted-wrapper")) {
+        if (details.parents().any { it.tagName().equals("details", ignoreCase = true) }) continue
+        val content = details.children().firstOrNull { it.hasClass("aster-quoted-content") } ?: continue
+        if (content.children().any { it.hasClass("aster-quote-hide") }) continue
+        val pill = Element("a")
+            .addClass("aster-quote-hide")
+            .attr("href", "$QUOTE_HIDE_SCHEME:hide")
+            .attr("translate", "no")
+            .attr("role", "button")
+        pill.text(label)
+        content.appendChild(pill)
+    }
+    for (summary in root.select("details.aster-quoted-wrapper>summary, details.aster-forwarded-collapse>summary")) {
+        if (summary.children().any { it.hasClass("aster-quote-close") || it.hasClass("aster-quote-cover") }) continue
+        val forwarded = summary.parent()?.hasClass("aster-forwarded-collapse") == true
+        val close = Element("a")
+            .addClass(if (forwarded) "aster-quote-cover" else "aster-quote-close")
+            .attr("href", "$QUOTE_HIDE_SCHEME:$QUOTE_CLOSE_ACTION")
+            .attr("translate", "no")
+            .attr("role", "button")
+        if (forwarded) close.attr("aria-label", label) else close.text(label)
+        summary.appendChild(close)
+    }
 }
 
 private const val RENDERABLE_SCAN_LIMIT = 32768

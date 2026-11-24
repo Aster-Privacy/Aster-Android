@@ -3,4 +3,8 @@
     <string name="fix_enc_codes_share_title">Kurtarma kodları</string>
     <string name="fix_enc_codes_file_note">Her kod bir kez çalışır. Bu dosyayı güvenli bir yerde saklayın.</string>
     <string name="fix_enc_codes_save_failed">Dosyayı şu anda kaydedemezsiniz. Bunun yerine kodları kopyalayın.</string>
+    <string name="enc_hero_status_protected">Korunuyor</string>
+    <string name="enc_hero_status_attention">İlgilenmeniz gerekiyor</string>
+    <string name="enc_hero_summary">Mesajlarınız yalnızca sizde bulunan bir anahtarla uçtan uca şifrelenir.</string>
+    <string name="enc_hero_summary_missing">Bu cihazda anahtarınız yok. Geri yüklemek için yeniden oturum açın.</string>
 </resources>

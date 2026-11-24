@@ -150,13 +150,40 @@ internal fun intercept_side_view_image(
     )
     if (action == MailBodyRequestAction.LOCAL) return null
     if (action == MailBodyRequestAction.BLOCK || context == null) return empty_image_response(403, "Forbidden")
+    return fetch_proxied_image_response(context, uri.toString())
+}
+
+internal fun forward_editor_proxy_target(url: String?, allow_external: Boolean): String? {
+    if (!allow_external) return null
+    val trimmed = url?.trim().orEmpty()
+    val scheme = trimmed.substringBefore(':', "").lowercase()
+    if (scheme != "https" && scheme != "http") return null
+    if (is_image_proxy_url(trimmed)) return trimmed
+    return REMOTE_IMAGE_PROXY_BASE + java.net.URLEncoder.encode(secure_image_url(trimmed), "UTF-8")
+}
+
+internal fun intercept_forward_editor_image(
+    context: Context?,
+    request: WebResourceRequest?,
+    allow_external: Boolean,
+): WebResourceResponse? {
+    val uri = request?.url ?: return null
+    if (request.isForMainFrame) return null
+    val scheme = uri.scheme?.lowercase()
+    if (scheme == "data" || scheme == "about") return null
+    val target = forward_editor_proxy_target(uri.toString(), allow_external)
+    if (target == null || context == null) return empty_image_response(403, "Forbidden")
+    return fetch_proxied_image_response(context, target)
+}
+
+private fun fetch_proxied_image_response(context: Context, proxied_url: String): WebResourceResponse {
     val token = current_access_token(context)
     val client = side_view_image_client()
     return try {
         fun fetch_once(target: String, bearer: String?): okhttp3.Response? =
             proxied_image_request(target, bearer)?.let { client.newCall(it).execute() }
         fun fetch(bearer: String?): okhttp3.Response? {
-            var target = uri.toString()
+            var target = proxied_url
             var response = fetch_once(target, bearer) ?: return null
             if (response.isRedirect) {
                 val next = proxy_redirect_target(target, response.header("Location"))

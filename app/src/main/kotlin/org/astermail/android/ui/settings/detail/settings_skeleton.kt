@@ -49,6 +49,7 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_appearance
 import org.astermail.android.design.components.shimmer_state
+import org.astermail.android.design.components.skeleton_reveal
 
 private const val load_settle_timeout_ms = 6000L
 
@@ -133,7 +134,7 @@ internal fun skeleton_card_list(
     trailing_width: Dp = 0.dp,
 ) {
     val state = shimmer_state()
-    Box(modifier = Modifier.clearAndSetSemantics {}) {
+    Box(modifier = Modifier.clearAndSetSemantics {}.skeleton_reveal()) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             repeat(rows) { idx ->
                 skeleton_list_row(
@@ -152,7 +153,7 @@ internal fun skeleton_card_list(
 @Composable
 internal fun skeleton_hero_card(lines: Int = 2, bar: Boolean = false) {
     val state = shimmer_state()
-    Box(modifier = Modifier.clearAndSetSemantics {}) {
+    Box(modifier = Modifier.clearAndSetSemantics {}.skeleton_reveal()) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(AsterSpacing.lg)) {
                 skeleton_block_fill(state, 18.dp, fraction = 0.6f)
@@ -175,8 +176,19 @@ internal fun skeleton_section_label() {
     Box(
         modifier = Modifier
             .clearAndSetSemantics {}
+            .skeleton_reveal()
             .padding(top = AsterSpacing.md, bottom = AsterSpacing.xs),
     ) {
         skeleton_block(state, 96.dp, 10.dp)
     }
+}
+
+@Composable
+internal fun settings_load_spinner(modifier: Modifier = Modifier, size: Dp = 24.dp) {
+    org.astermail.android.design.components.aster_spinner(
+        color = org.astermail.android.design.AsterMaterial.colors.accent_blue,
+        modifier = modifier
+            .size(size)
+            .skeleton_reveal(),
+    )
 }

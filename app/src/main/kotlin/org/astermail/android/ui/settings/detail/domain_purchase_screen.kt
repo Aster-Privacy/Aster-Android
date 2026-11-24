@@ -243,9 +243,9 @@ internal fun domain_pill_button(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (is_loading) {
-            CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 modifier = Modifier.size(14.dp),
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
                 color = content_color,
             )
             Spacer(Modifier.width(6.dp))
@@ -292,9 +292,9 @@ internal fun domain_ghost_link(
         )
         if (is_loading) {
             Spacer(Modifier.width(8.dp))
-            CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 modifier = Modifier.size(14.dp),
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
                 color = colors.accent_blue,
             )
         }
@@ -353,9 +353,9 @@ private fun purchase_search_content(vm: DomainPurchaseViewModel, state: DomainPu
         },
         trailing_icon = if (state.searching) {
             {
-                CircularProgressIndicator(
+                org.astermail.android.design.components.aster_spinner(
                     modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp,
+                    stroke_width = 2.dp,
                     color = colors.text_muted,
                 )
             }

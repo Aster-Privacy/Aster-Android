@@ -17,4 +17,22 @@
     <string name="alias_import_change_file">फ़ाइल बदलें</string>
     <string name="alias_import_remove_file">फ़ाइल निकालें</string>
     <string name="alias_note_placeholder_short">आप इसे कहां इस्तेमाल करते हैं</string>
+    <string name="alias_status_section">स्थिति</string>
+    <string name="alias_receive_mail">मेल प्राप्त करें</string>
+    <string name="alias_receive_mail_on">इस पते पर भेजा गया मेल आप तक पहुंचता है।</string>
+    <string name="alias_receive_mail_off">रोका गया। इस पते पर नया मेल डिलीवर नहीं होता।</string>
+    <string name="alias_pin_subtitle">इस उपनाम को अपनी सूची में सबसे ऊपर रखें।</string>
+    <string name="alias_danger_zone">खतरा क्षेत्र</string>
+    <string name="alias_delete_row_subtitle">इस पते को स्थायी रूप से हटाएं।</string>
+    <string name="alias_protection_section">सुरक्षा</string>
+    <string name="alias_automation_section">स्वचालन</string>
+    <string name="alias_pin_mode_title">मोड</string>
+    <string name="alias_remove_entry_a11y">%1$s हटाएं</string>
+    <string name="alias_create_action">उपनाम बनाएं</string>
+    <string name="alias_usage_near">आप अपनी उपनाम सीमा के करीब हैं।</string>
+    <string name="alias_usage_full">आप अपनी उपनाम सीमा तक पहुंच गए हैं।</string>
+    <string name="alias_offline_banner">आप ऑफ़लाइन हैं। दोबारा कनेक्ट होने पर बदलाव सिंक हो जाते हैं।</string>
+    <string name="alias_menu_pause">रोकें</string>
+    <string name="alias_menu_resume">फिर से शुरू करें</string>
+    <string name="alias_directory_auto_create_a11y">%1$s के लिए उपनाम अपने आप बनाएं</string>
 </resources>

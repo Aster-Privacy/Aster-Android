@@ -94,13 +94,15 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import org.astermail.android.ui.common.show_copied_toast
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import org.astermail.android.ui.mail.SenderAvatar
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -155,6 +157,7 @@ import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.ui.icons.pin_icon
 import org.astermail.android.ui.icons.pin_icon_filled
 import org.astermail.android.ui.common.page_surface
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 private fun tab_labels_computed(): List<String> = listOf(
@@ -256,6 +259,24 @@ fun AliasesScreen(
         title = stringResource(R.string.aliases),
         on_back = on_back,
         scrollable = false,
+        on_refresh = {
+            vm.join_launched {
+                vm.load_aliases(force = true)
+                vm.load_domains(prefetch_dns = false)
+                vm.load_custom_domain_addresses(force = true)
+                vm.load_deleted_aliases()
+                vm.load_labels(folder_type = "folder", force = true)
+                vm.load_alias_preferences()
+                vm.load_mail_rules(force = true)
+                vm.load_twin_address()
+                when (selected_tab) {
+                    1 -> vm.load_directories()
+                    2 -> vm.load_ghost_aliases()
+                    4 -> vm.load_sending_blocks()
+                }
+            }
+        },
+        refresh_enabled = !show_create_alias && !show_alias_import && !show_alias_export,
         trailing = {
             if (selected_tab == 0) {
                 Box {
@@ -589,6 +610,41 @@ private fun aliases_tab(
         }
     }
 
+    val is_online = remember_is_online()
+    val alias_groups = remember(visible_aliases) { group_aliases(visible_aliases) { it.is_pinned } }
+    val alias_row_item: @Composable (org.astermail.android.api.settings.AliasInfo, Int, Int) -> Unit =
+        { alias, idx, last_index ->
+            val expanded = state.expanded_alias_ids.contains(alias.id)
+            LaunchedEffect(alias.id, always_expand_aliases) {
+                if (always_expand_aliases) vm.set_alias_expanded(alias.id, true)
+            }
+            alias_list_row(
+                alias = alias,
+                idx = idx,
+                last_index = last_index,
+                context = context,
+                on_toggle = { vm.toggle_alias(alias.id) },
+                on_toggle_pin = {
+                    if (pin_locked) on_upgrade() else vm.toggle_alias_pin(alias.id)
+                },
+                delivery_folder_name = alias_delivery_folder_name(alias, state.labels),
+                on_delete = {
+                    val eligible_at = alias_delete_eligible_at(alias.created_at)
+                    if (instant_delete_locked && eligible_at != null && System.currentTimeMillis() < eligible_at) {
+                        alias_too_new_date = format_alias_date(eligible_at)
+                    } else {
+                        pending_delete = alias.id to alias.address
+                    }
+                },
+                on_edit_note = { note_editing = alias.id to (alias.encrypted_note ?: "") },
+                on_restore = { claimed -> vm.restore_orphaned_alias(alias.id, claimed) },
+                expanded = expanded,
+                on_toggle_expanded = { vm.toggle_alias_expanded(alias.id) },
+                on_open_detail = { on_open_alias_detail(alias.id) },
+                on_compose_from = { on_compose_from(alias.address) },
+                    )
+        }
+
     Box(modifier = Modifier.fillMaxSize()) {
       Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -602,33 +658,7 @@ private fun aliases_tab(
                     bottom = AsterSpacing.sm,
                 ),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = pluralStringResource(R.plurals.aliases_count, counted_alias_total, counted_alias_total),
-                    color = colors.text_tertiary,
-                    fontSize = 13.sp,
-                )
-                if (org.astermail.android.billing.alias_limit_near(counted_alias_total, alias_limit)) {
-                    Text(
-                        text = pluralStringResource(R.plurals.alias_limit_notice, alias_limit ?: 0, counted_alias_total, alias_limit ?: 0),
-                        color = colors.accent_blue,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.clickable(onClick = on_upgrade),
-                    )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = on_show_create) {
-                        Text(stringResource(R.string.create), color = colors.accent_blue, fontSize = 14.sp)
-                    }
-                }
-            }
             if (state.aliases.isNotEmpty() || state.custom_domain_addresses.isNotEmpty()) {
-                v_gap(AsterSpacing.xs)
                 org.astermail.android.ui.common.list_search_bar(
                     query = alias_query,
                     on_query_change = { alias_query = it },
@@ -785,25 +815,37 @@ private fun aliases_tab(
                 bottom = AsterSpacing.lg,
             ),
         ) {
+            if (!is_online) {
+                item(key = "alias_offline") {
+                    alias_offline_banner()
+                    v_gap(AsterSpacing.sm)
+                }
+            }
+            item(key = "alias_plan_usage") {
+                alias_plan_usage_card(
+                    used = counted_alias_total,
+                    limit = alias_limit,
+                    on_create = on_show_create,
+                    on_upgrade = on_upgrade,
+                )
+                v_gap(AsterSpacing.sm)
+            }
             if (state.aliases.isEmpty() && (state.aliases_loading || !alias_load_settled)) {
                 item(key = "alias_loading") {
-                    skeleton_card_list(rows = 5, leading_circle = true, trailing_width = 44.dp)
+                    skeleton_card_list(rows = 5, leading_circle = true, trailing_width = 56.dp)
                 }
             } else if (state.aliases.isEmpty()) {
                 item(key = "alias_empty") {
                     val load_error = state.error
-                    AsterCard(modifier = Modifier.fillMaxWidth()) {
-                        if (load_error != null) {
-                            detail_row(
-                                title = stringResource(R.string.failed_to_load),
-                                subtitle = load_error,
-                            )
-                            settings_row_gap()
-                            detail_row(
-                                title = stringResource(R.string.retry),
-                                on_click = { vm.load_aliases(force = true) },
-                            )
-                        } else {
+                    if (load_error != null && is_online) {
+                        load_failed_card(message = load_error, on_retry = { vm.load_aliases(force = true) })
+                    } else if (load_error != null) {
+                        load_failed_card(
+                            message = stringResource(R.string.error_no_connection),
+                            on_retry = { vm.load_aliases(force = true) },
+                        )
+                    } else {
+                        AsterCard(modifier = Modifier.fillMaxWidth()) {
                             detail_row(
                                 title = stringResource(R.string.no_aliases),
                                 subtitle = stringResource(R.string.no_aliases_subtitle),
@@ -818,53 +860,47 @@ private fun aliases_tab(
                     }
                 }
             } else {
+                if (alias_groups.pinned.isNotEmpty()) {
+                    item(key = "alias_group_pinned") {
+                        alias_group_header(
+                            title = stringResource(R.string.pinned),
+                            count = alias_groups.pinned.size,
+                        )
+                    }
+                    itemsIndexed(
+                        items = alias_groups.pinned,
+                        key = { _, alias -> "alias_${alias.id}" },
+                    ) { idx, alias ->
+                        Box(modifier = Modifier.animateItem()) {
+                            alias_row_item(alias, idx, alias_groups.pinned.lastIndex)
+                        }
+                    }
+                }
+                if (alias_groups.pinned.isNotEmpty() && alias_groups.others.isNotEmpty()) {
+                    item(key = "alias_group_all") {
+                        alias_group_header(
+                            title = stringResource(R.string.aliases),
+                            count = alias_groups.others.size,
+                        )
+                    }
+                }
                 itemsIndexed(
-                    items = visible_aliases,
+                    items = alias_groups.others,
                     key = { _, alias -> "alias_${alias.id}" },
                 ) { idx, alias ->
-                    val expanded = state.expanded_alias_ids.contains(alias.id)
-                    LaunchedEffect(alias.id, always_expand_aliases) {
-                        if (always_expand_aliases) vm.set_alias_expanded(alias.id, true)
-                    }
                     Box(modifier = Modifier.animateItem()) {
-                    alias_list_row(
-                        alias = alias,
-                        idx = idx,
-                        last_index = visible_aliases.lastIndex,
-                        context = context,
-                        on_toggle = { vm.toggle_alias(alias.id) },
-                        on_toggle_pin = {
-                            if (pin_locked) on_upgrade() else vm.toggle_alias_pin(alias.id)
-                        },
-                        delivery_folder_name = alias_delivery_folder_name(alias, state.labels),
-                        on_delete = {
-                            val eligible_at = alias_delete_eligible_at(alias.created_at)
-                            if (instant_delete_locked && eligible_at != null && System.currentTimeMillis() < eligible_at) {
-                                alias_too_new_date = format_alias_date(eligible_at)
-                            } else {
-                                pending_delete = alias.id to alias.address
-                            }
-                        },
-                        on_edit_note = { note_editing = alias.id to (alias.encrypted_note ?: "") },
-                        on_restore = { claimed -> vm.restore_orphaned_alias(alias.id, claimed) },
-                        expanded = expanded,
-                        on_toggle_expanded = { vm.toggle_alias_expanded(alias.id) },
-                        on_open_detail = { on_open_alias_detail(alias.id) },
-                        on_compose_from = { on_compose_from(alias.address) },
-                    )
+                        alias_row_item(alias, idx, alias_groups.others.lastIndex)
                     }
                 }
             }
 
             if (visible_domain_addresses.isNotEmpty()) {
                 item(key = "custom_domain_header") {
-                    v_gap(AsterSpacing.md)
-                    Text(
-                        text = stringResource(R.string.custom_domains),
-                        color = colors.text_tertiary,
-                        fontSize = 13.sp,
-                    )
                     v_gap(AsterSpacing.sm)
+                    alias_group_header(
+                        title = stringResource(R.string.custom_domains),
+                        count = visible_domain_addresses.size,
+                    )
                 }
                 itemsIndexed(
                     items = visible_domain_addresses,
@@ -1119,43 +1155,6 @@ internal fun alias_rule_label_note(
 }
 
 @Composable
-private fun alias_meta_row(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    text: String,
-    color: Color,
-    max_lines: Int = 1,
-) {
-    val font_size = 12.sp
-    val line_height = font_size * 1.4f
-    val line_height_dp = with(LocalDensity.current) { line_height.toDp() }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Box(
-            modifier = Modifier.height(line_height_dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = color,
-                modifier = Modifier.size(13.dp),
-            )
-        }
-        Text(
-            text = text,
-            color = color,
-            fontSize = font_size,
-            lineHeight = line_height,
-            maxLines = max_lines,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-@Composable
 internal fun alias_last_received_text(received_at: String?): String {
     if (received_at.isNullOrBlank()) return stringResource(R.string.alias_never_received)
     val millis = org.astermail.android.settings.alias_received_millis(received_at)
@@ -1187,116 +1186,145 @@ internal fun alias_list_row(
     val shape = list_item_shape(idx, last_index)
     val note_val = alias.encrypted_note
     var row_menu_open by remember(alias.id) { mutableStateOf(false) }
+    val grace_ends = remember(alias.downgrade_grace_expires_at) {
+        format_grace_end(alias.downgrade_grace_expires_at)
+    }
+    val can_toggle = grace_ends == null && !alias.is_retained_primary && !alias.decryption_failed
+    val receive_label = stringResource(R.string.alias_receive_mail)
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
             .acrylic(colors, shape, island_surface_color(colors))
-            .testTag("alias_row_${alias.id}")
-            .combinedClickable(
-                hapticFeedbackEnabled = false,
-                onClick = {
-                    if (alias.decryption_failed) return@combinedClickable
-                    when {
-                        on_open_detail != null -> on_open_detail()
-                        on_toggle_expanded != null -> on_toggle_expanded()
-                        else -> on_edit_note?.invoke()
-                    }
-                },
-                onLongClick = {
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    copy_address(context, alias.address)
-                },
-            )
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+            .testTag("alias_row_${alias.id}"),
     ) {
-        val grace_ends = remember(alias.downgrade_grace_expires_at) {
-            format_grace_end(alias.downgrade_grace_expires_at)
-        }
-
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 72.dp)
+                .combinedClickable(
+                    hapticFeedbackEnabled = false,
+                    onClick = {
+                        if (alias.decryption_failed) return@combinedClickable
+                        when {
+                            on_open_detail != null -> on_open_detail()
+                            on_toggle_expanded != null -> on_toggle_expanded()
+                            else -> on_edit_note?.invoke()
+                        }
+                    },
+                    onLongClick = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        copy_address(context, alias.address)
+                    },
+                )
+                .padding(start = AsterSpacing.lg, end = AsterSpacing.xs, top = AsterSpacing.md, bottom = AsterSpacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (alias.decryption_failed) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(colors.bg_tertiary),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = TablerIcons.Lock,
+                        contentDescription = null,
+                        tint = colors.danger,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            } else {
+                SenderAvatar(
+                    email = alias.address,
+                    name = alias.encrypted_display_name.orEmpty(),
+                    size = 40.dp,
+                    profile_picture_url = alias.profile_picture,
+                    use_contact_photo = false,
+                )
+            }
+            Spacer(Modifier.width(AsterSpacing.md))
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Text(
-                        text = alias.address,
+                    alias_address_text(
+                        address = alias.address,
                         color = if (alias.decryption_failed) colors.text_muted else colors.text_primary,
-                        fontSize = 15.sp,
-                        lineHeight = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false).testTag("alias_address_${alias.id}"),
+                        font_size = 15.sp,
+                        font_weight = FontWeight.SemiBold,
+                        test_tag = "alias_address_${alias.id}",
+                        modifier = Modifier.weight(1f, fill = false),
                     )
                     if (alias.is_pinned && !alias.decryption_failed) {
                         Icon(
                             imageVector = pin_icon_filled,
-                            contentDescription = stringResource(R.string.alias_unpin),
+                            contentDescription = stringResource(R.string.pinned),
                             tint = colors.accent_blue,
                             modifier = Modifier.size(14.dp),
                         )
                     }
-                    if (!alias.decryption_failed && !alias.is_enabled) {
-                        panel_row_chip(stringResource(R.string.alias_status_disabled_badge))
-                    }
                 }
                 if (alias.decryption_failed) {
-                    Spacer(Modifier.height(3.dp))
-                    alias_meta_row(
-                        icon = TablerIcons.Lock,
-                        text = stringResource(R.string.alias_locked_title),
-                        color = colors.danger,
-                        max_lines = 1,
-                    )
-                    Spacer(Modifier.height(3.dp))
-                    Text(
-                        text = stringResource(R.string.alias_locked_body),
-                        color = colors.text_tertiary,
-                        fontSize = 11.sp,
-                        lineHeight = 15.sp,
-                    )
-                    if (on_restore != null && alias.routing_address_hash.isNotBlank()) {
-                        alias_restore_section(alias = alias, on_restore = on_restore)
-                    }
-                } else {
-                    val display_name_val = alias.encrypted_display_name
-                    val secondary_line = when {
-                        !note_val.isNullOrBlank() -> note_val
-                        !display_name_val.isNullOrBlank() -> display_name_val
-                        delivery_folder_name != null ->
-                            stringResource(R.string.forwards_to_folder, delivery_folder_name)
-                        else -> stringResource(R.string.forwards_to_inbox)
-                    }
-                    Spacer(Modifier.height(3.dp))
-                    Text(
-                        text = secondary_line,
-                        color = colors.text_tertiary,
-                        fontSize = 12.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    val received_at = alias.last_received_at
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        text = alias_last_received_text(received_at),
-                        color = colors.text_tertiary,
-                        fontSize = 11.sp,
+                        text = stringResource(R.string.alias_locked_title),
+                        color = colors.danger,
+                        fontSize = 13.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.testTag("alias_last_received_${alias.id}"),
                     )
+                } else {
+                    val status_text = if (alias.is_enabled) {
+                        stringResource(R.string.alias_filter_active)
+                    } else {
+                        stringResource(R.string.alias_status_disabled_badge)
+                    }
+                    Spacer(Modifier.height(2.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(if (alias.is_enabled) colors.success else colors.text_tertiary),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = status_text + " · " + alias_last_received_text(alias.last_received_at),
+                            color = colors.text_tertiary,
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.testTag("alias_last_received_${alias.id}"),
+                        )
+                    }
+                    val display_name_val = alias.encrypted_display_name
+                    val detail_line = when {
+                        !note_val.isNullOrBlank() -> note_val
+                        !display_name_val.isNullOrBlank() -> display_name_val
+                        delivery_folder_name != null -> stringResource(R.string.forwards_to_folder, delivery_folder_name)
+                        else -> null
+                    }
+                    if (detail_line != null) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = detail_line,
+                            color = colors.text_tertiary,
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                     if (grace_ends != null) {
                         Spacer(Modifier.height(2.dp))
                         Text(
                             text = stringResource(R.string.alias_grace_upgrade_hint),
                             color = colors.warning,
-                            fontSize = 11.sp,
+                            fontSize = 13.sp,
                             maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
@@ -1317,21 +1345,42 @@ internal fun alias_list_row(
                         if (expanded) R.string.collapse else R.string.expand,
                     ),
                     onClick = on_toggle_expanded,
+                    tint = colors.text_tertiary,
                     modifier = Modifier
                         .graphicsLayer { rotationZ = chevron_turn }
                         .testTag("alias_expand_" + alias.id),
                 )
             }
-            AsterSwitch(
-                checked = alias.is_enabled,
-                enabled = grace_ends == null && !alias.is_retained_primary,
-                onCheckedChange = { on_toggle() },
-            )
+            if (!alias.decryption_failed) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 56.dp, height = 48.dp)
+                        .toggleable(
+                            value = alias.is_enabled,
+                            enabled = can_toggle,
+                            role = Role.Switch,
+                            onValueChange = {
+                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                on_toggle()
+                            },
+                        )
+                        .semantics { contentDescription = receive_label + ", " + alias.address }
+                        .testTag("alias_toggle_${alias.id}"),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    AsterSwitch(
+                        checked = alias.is_enabled,
+                        enabled = can_toggle,
+                        onCheckedChange = null,
+                    )
+                }
+            }
             Box {
                 AsterIconButton(
                     icon = TablerIcons.DotsVertical,
                     content_description = stringResource(R.string.more_options),
                     onClick = { row_menu_open = true },
+                    tint = colors.text_tertiary,
                     modifier = Modifier.testTag("alias_menu_${alias.id}"),
                 )
                 aster_menu(
@@ -1346,6 +1395,17 @@ internal fun alias_list_row(
                             on_click = {
                                 row_menu_open = false
                                 on_open_detail()
+                            },
+                        )
+                    }
+                    if (!alias.decryption_failed) {
+                        aster_menu_item(
+                            label = stringResource(R.string.copy_address),
+                            icon = TablerIcons.Copy,
+                            test_tag = "alias_copy_${alias.id}",
+                            on_click = {
+                                row_menu_open = false
+                                copy_address(context, alias.address)
                             },
                         )
                     }
@@ -1386,6 +1446,21 @@ internal fun alias_list_row(
                             },
                         )
                     }
+                    if (can_toggle) {
+                        aster_menu_item(
+                            label = if (alias.is_enabled) {
+                                stringResource(R.string.alias_menu_pause)
+                            } else {
+                                stringResource(R.string.alias_menu_resume)
+                            },
+                            icon = if (alias.is_enabled) TablerIcons.PlayerPause else TablerIcons.PlayerPlay,
+                            test_tag = "alias_pause_${alias.id}",
+                            on_click = {
+                                row_menu_open = false
+                                on_toggle()
+                            },
+                        )
+                    }
                     if (!alias.is_retained_primary) {
                         aster_menu_item(
                             label = stringResource(R.string.delete),
@@ -1398,6 +1473,23 @@ internal fun alias_list_row(
                             },
                         )
                     }
+                }
+            }
+        }
+        if (alias.decryption_failed) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = AsterSpacing.md),
+            ) {
+                Text(
+                    text = stringResource(R.string.alias_locked_body),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                )
+                if (on_restore != null && alias.routing_address_hash.isNotBlank()) {
+                    alias_restore_section(alias = alias, on_restore = on_restore)
                 }
             }
         }
@@ -1436,6 +1528,7 @@ internal fun alias_list_row(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = AsterSpacing.md)
                         .clickable(
                             interactionSource = panel_interaction,
                             indication = null,
@@ -1546,16 +1639,18 @@ private fun custom_domain_address_row(
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
     val shape = list_item_shape(idx, last_index)
+    val receive_label = stringResource(R.string.alias_receive_mail)
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
             .acrylic(colors, shape, island_surface_color(colors))
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+            .padding(start = AsterSpacing.lg, end = AsterSpacing.xs, top = AsterSpacing.md, bottom = AsterSpacing.md),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(min = 48.dp)
                 .combinedClickable(
                     hapticFeedbackEnabled = false,
                     onClick = { copy_address(context, addr.address) },
@@ -1567,48 +1662,73 @@ private fun custom_domain_address_row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = addr.address,
+                alias_address_text(
+                    address = addr.address,
                     color = if (addr.decryption_failed) colors.text_muted else colors.text_primary,
-                    fontSize = 15.sp,
-                    lineHeight = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
+                    font_size = 15.sp,
+                    font_weight = FontWeight.SemiBold,
+                    test_tag = "cda_address_${addr.id}",
                 )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = if (addr.is_enabled) {
-                        stringResource(R.string.forwards_to_inbox)
-                    } else {
-                        stringResource(R.string.alias_status_disabled_badge)
-                    },
-                    color = if (addr.is_enabled) colors.text_tertiary else colors.danger,
-                    fontSize = 11.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                Spacer(Modifier.height(2.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(if (addr.is_enabled) colors.success else colors.text_tertiary),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = if (addr.is_enabled) {
+                            stringResource(R.string.alias_filter_active)
+                        } else {
+                            stringResource(R.string.alias_status_disabled_badge)
+                        },
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            Spacer(Modifier.width(AsterSpacing.sm))
+            Box(
+                modifier = Modifier
+                    .size(width = 56.dp, height = 48.dp)
+                    .toggleable(
+                        value = addr.is_enabled,
+                        role = Role.Switch,
+                        onValueChange = {
+                            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            on_toggle()
+                        },
+                    )
+                    .semantics { contentDescription = receive_label + ", " + addr.address }
+                    .testTag("cda_toggle_${addr.id}"),
+                contentAlignment = Alignment.Center,
+            ) {
+                AsterSwitch(
+                    checked = addr.is_enabled,
+                    onCheckedChange = null,
                 )
             }
-            AsterSwitch(
-                checked = addr.is_enabled,
-                onCheckedChange = { on_toggle() },
-            )
-            Spacer(Modifier.width(AsterSpacing.sm))
             AsterIconButton(
                 icon = TablerIcons.Trash,
-                content_description = stringResource(R.string.delete),
+                content_description = stringResource(R.string.alias_remove_entry_a11y, addr.address),
                 onClick = on_delete,
                 tint = colors.danger,
             )
         }
         if (!addr.decryption_failed) {
             Spacer(Modifier.height(AsterSpacing.sm))
-            alias_avatar_field(
-                address = addr.address,
-                profile_picture = addr.profile_picture,
-                locked = avatars_locked,
-                on_change = on_change_avatar,
-            )
+            Box(modifier = Modifier.padding(end = AsterSpacing.md)) {
+                alias_avatar_field(
+                    address = addr.address,
+                    profile_picture = addr.profile_picture,
+                    locked = avatars_locked,
+                    on_change = on_change_avatar,
+                )
+            }
         }
     }
 }
@@ -2169,11 +2289,10 @@ private fun directories_tab(
                                 },
                             ),
                     ) {
-                        Text(
-                            text = dir_address,
-                            color = colors.text_primary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
+                        alias_address_text(
+                            address = dir_address,
+                            font_size = 14.sp,
+                            font_weight = FontWeight.SemiBold,
                         )
                         Text(
                             text = stringResource(R.string.alias_separator_hint),
@@ -2181,10 +2300,24 @@ private fun directories_tab(
                             fontSize = 12.sp,
                         )
                     }
-                    AsterSwitch(
-                        checked = dir.auto_create_enabled,
-                        onCheckedChange = { vm.toggle_directory_auto_create(dir.id) },
-                    )
+                    val auto_create_label = stringResource(R.string.alias_directory_auto_create_a11y, dir_address)
+                    Box(
+                        modifier = Modifier
+                            .size(width = 56.dp, height = 48.dp)
+                            .toggleable(
+                                value = dir.auto_create_enabled,
+                                role = Role.Switch,
+                                onValueChange = { vm.toggle_directory_auto_create(dir.id) },
+                            )
+                            .semantics { contentDescription = auto_create_label }
+                            .testTag("directory_auto_create_${dir.id}"),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        AsterSwitch(
+                            checked = dir.auto_create_enabled,
+                            onCheckedChange = null,
+                        )
+                    }
                     AsterIconButton(
                         icon = TablerIcons.Trash,
                         content_description = stringResource(R.string.alias_delete_directory),
@@ -2667,30 +2800,24 @@ private fun preferences_tab(
             )
         }
         settings_row_gap()
-        detail_row(
+        settings_toggle_row(
             title = stringResource(R.string.alias_always_expand),
             subtitle = stringResource(R.string.alias_always_expand_subtitle),
             info_title = stringResource(R.string.alias_always_expand_info_title),
             info_description = stringResource(R.string.alias_always_expand_info_desc),
-            trailing = {
-                AsterSwitch(
-                    checked = prefs?.alias_always_expand == true,
-                    onCheckedChange = { v -> vm.update_alias_preference(UpdateAliasPreferencesRequest(alias_always_expand = v)) },
-                )
-            },
+            checked = prefs.alias_always_expand == true,
+            test_tag = "alias_pref_always_expand",
+            on_change = { v -> vm.update_alias_preference(UpdateAliasPreferencesRequest(alias_always_expand = v)) },
         )
         settings_row_gap()
-        detail_row(
+        settings_toggle_row(
             title = stringResource(R.string.alias_readable_reverse),
             subtitle = stringResource(R.string.alias_readable_reverse_subtitle),
             info_title = stringResource(R.string.alias_readable_reverse_info_title),
             info_description = stringResource(R.string.alias_readable_reverse_info_desc),
-            trailing = {
-                AsterSwitch(
-                    checked = prefs?.readable_reverse_aliases == true,
-                    onCheckedChange = { v -> vm.update_alias_preference(UpdateAliasPreferencesRequest(readable_reverse_aliases = v)) },
-                )
-            },
+            checked = prefs.readable_reverse_aliases == true,
+            test_tag = "alias_pref_readable_reverse",
+            on_change = { v -> vm.update_alias_preference(UpdateAliasPreferencesRequest(readable_reverse_aliases = v)) },
         )
     }
 
@@ -3575,7 +3702,7 @@ private fun create_alias_dialog(
                     },
                     trailing_icon = when {
                         checking -> {
-                            { CircularProgressIndicator(modifier = Modifier.size(16.dp), color = colors.text_muted, strokeWidth = 2.dp) }
+                            { org.astermail.android.design.components.aster_spinner(modifier = Modifier.size(16.dp), color = colors.text_muted, stroke_width = 2.dp) }
                         }
                         availability is SettingsViewModel.AliasAvailability.Available -> {
                             { Icon(TablerIcons.CircleCheck, contentDescription = null, tint = colors.success, modifier = Modifier.size(20.dp)) }

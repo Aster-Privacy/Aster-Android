@@ -98,6 +98,7 @@ import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.common.print_recovery_codes
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun RecoveryCodesScreen(on_back: () -> Unit) {
@@ -173,7 +174,12 @@ fun RecoveryCodesScreen(on_back: () -> Unit) {
         }
     }
 
-    detail_scaffold(title = stringResource(R.string.recovery_codes), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.recovery_codes),
+        on_back = on_back,
+        on_refresh = { vm.join_launched { vm.load_security_status() } },
+        refresh_enabled = !showing_codes && !is_verifying && !is_rotating,
+    ) {
         if (!showing_codes) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Row(
@@ -520,10 +526,10 @@ private fun recovery_codes_rotating_card() {
                 .padding(AsterSpacing.lg),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 modifier = Modifier.size(18.dp),
                 color = colors.accent_blue,
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
             )
             Spacer(Modifier.width(AsterSpacing.md))
             Text(

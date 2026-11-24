@@ -3,4 +3,8 @@
     <string name="fix_enc_codes_share_title">Códigos de recuperação</string>
     <string name="fix_enc_codes_file_note">Cada código funciona uma única vez. Guarde este ficheiro num local seguro.</string>
     <string name="fix_enc_codes_save_failed">Não é possível guardar o ficheiro agora. Copie os códigos em vez disso.</string>
+    <string name="enc_hero_status_protected">Protegido</string>
+    <string name="enc_hero_status_attention">Requer atenção</string>
+    <string name="enc_hero_summary">As suas mensagens estão encriptadas ponto a ponto com uma chave que só você tem.</string>
+    <string name="enc_hero_summary_missing">Este dispositivo não tem a sua chave. Inicie sessão novamente para a restaurar.</string>
 </resources>

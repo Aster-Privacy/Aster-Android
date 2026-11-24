@@ -67,6 +67,20 @@ class toast_controller_test {
     }
 
     @Test
+    fun repeating_the_same_message_keeps_the_toast_and_restarts_its_timer() {
+        controller.show("thanks")
+        val key = controller.state.value?.key
+        settle(toast_plain_duration_ms - 100)
+        controller.show("thanks")
+        assertEquals(key, controller.state.value?.key)
+        assertEquals("thanks", shown())
+        settle(toast_plain_duration_ms - 100)
+        assertEquals("thanks", shown())
+        settle(200)
+        assertNull(shown())
+    }
+
+    @Test
     fun a_toast_that_only_just_appeared_is_swapped_in_place() {
         controller.show("first")
         settle(toast_settle_ms - 1)

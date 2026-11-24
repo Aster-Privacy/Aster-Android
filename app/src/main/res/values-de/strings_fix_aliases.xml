@@ -17,4 +17,22 @@
     <string name="alias_import_change_file">Datei ändern</string>
     <string name="alias_import_remove_file">Datei entfernen</string>
     <string name="alias_note_placeholder_short">Wo Sie ihn nutzen</string>
+    <string name="alias_status_section">Status</string>
+    <string name="alias_receive_mail">E-Mails empfangen</string>
+    <string name="alias_receive_mail_on">E-Mails an diese Adresse erreichen dich.</string>
+    <string name="alias_receive_mail_off">Pausiert. Neue E-Mails an diese Adresse werden nicht zugestellt.</string>
+    <string name="alias_pin_subtitle">Diesen Alias oben in deiner Liste halten.</string>
+    <string name="alias_danger_zone">Gefahrenbereich</string>
+    <string name="alias_delete_row_subtitle">Diese Adresse dauerhaft entfernen.</string>
+    <string name="alias_protection_section">Schutz</string>
+    <string name="alias_automation_section">Automatisierung</string>
+    <string name="alias_pin_mode_title">Modus</string>
+    <string name="alias_remove_entry_a11y">%1$s entfernen</string>
+    <string name="alias_create_action">Alias erstellen</string>
+    <string name="alias_usage_near">Du hast dein Alias-Limit fast erreicht.</string>
+    <string name="alias_usage_full">Du hast dein Alias-Limit erreicht.</string>
+    <string name="alias_offline_banner">Du bist offline. Änderungen werden synchronisiert, sobald du wieder verbunden bist.</string>
+    <string name="alias_menu_pause">Pausieren</string>
+    <string name="alias_menu_resume">Fortsetzen</string>
+    <string name="alias_directory_auto_create_a11y">Aliasse für %1$s automatisch erstellen</string>
 </resources>

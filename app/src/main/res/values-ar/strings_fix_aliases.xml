@@ -17,4 +17,22 @@
     <string name="alias_import_change_file">تغيير الملف</string>
     <string name="alias_import_remove_file">إزالة الملف</string>
     <string name="alias_note_placeholder_short">أين تستخدمه</string>
+    <string name="alias_status_section">الحالة</string>
+    <string name="alias_receive_mail">استلام البريد</string>
+    <string name="alias_receive_mail_on">يصلك البريد المرسل إلى هذا العنوان.</string>
+    <string name="alias_receive_mail_off">متوقف مؤقتًا. لا يتم تسليم البريد الجديد المرسل إلى هذا العنوان.</string>
+    <string name="alias_pin_subtitle">إبقاء هذا الاسم المستعار في أعلى قائمتك.</string>
+    <string name="alias_danger_zone">منطقة الخطر</string>
+    <string name="alias_delete_row_subtitle">إزالة هذا العنوان نهائيًا.</string>
+    <string name="alias_protection_section">الحماية</string>
+    <string name="alias_automation_section">الأتمتة</string>
+    <string name="alias_pin_mode_title">الوضع</string>
+    <string name="alias_remove_entry_a11y">إزالة %1$s</string>
+    <string name="alias_create_action">إنشاء اسم مستعار</string>
+    <string name="alias_usage_near">أنت على وشك الوصول إلى حد الأسماء المستعارة.</string>
+    <string name="alias_usage_full">لقد وصلت إلى حد الأسماء المستعارة.</string>
+    <string name="alias_offline_banner">أنت غير متصل. تتم مزامنة التغييرات عند إعادة الاتصال.</string>
+    <string name="alias_menu_pause">إيقاف مؤقت</string>
+    <string name="alias_menu_resume">استئناف</string>
+    <string name="alias_directory_auto_create_a11y">إنشاء أسماء مستعارة تلقائيًا لـ %1$s</string>
 </resources>

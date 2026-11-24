@@ -30,6 +30,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -97,10 +98,17 @@ private fun lightbox_scale(progress: Float): Float =
 @Composable
 private fun prepare_lightbox_window() {
     val view = androidx.compose.ui.platform.LocalView.current
+    val context = LocalContext.current
     androidx.compose.runtime.SideEffect {
         val window = (view.parent as? androidx.compose.ui.window.DialogWindowProvider)?.window ?: return@SideEffect
         window.setWindowAnimations(0)
-        window.setDimAmount(0f)
+        org.astermail.android.design.components.prepare_popup_window(
+            window = window,
+            host = org.astermail.android.design.components.aster_host_window(context),
+            light_status_bars = false,
+            light_navigation_bars = false,
+            full_window = true,
+        )
     }
 }
 
@@ -180,9 +188,10 @@ fun email_image_lightbox(
 
     Dialog(
         onDismissRequest = start_dismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
         prepare_lightbox_window()
+        Box(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -193,6 +202,7 @@ fun email_image_lightbox(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .safeDrawingPadding()
                     .graphicsLayer(
                         scaleX = if (reduce_motion) 1f else lightbox_scale(content_progress),
                         scaleY = if (reduce_motion) 1f else lightbox_scale(content_progress),
@@ -215,7 +225,7 @@ fun email_image_lightbox(
                             modifier = image_modifier,
                         )
                     } else {
-                        CircularProgressIndicator(color = Color.White)
+                        org.astermail.android.design.components.aster_spinner(color = Color.White)
                     }
                 } else {
                     androidx.compose.foundation.Image(
@@ -225,7 +235,7 @@ fun email_image_lightbox(
                         modifier = image_modifier,
                     )
                     when (state) {
-                        is AsyncImagePainter.State.Loading -> CircularProgressIndicator(color = Color.White)
+                        is AsyncImagePainter.State.Loading -> org.astermail.android.design.components.aster_spinner(color = Color.White)
                         is AsyncImagePainter.State.Error -> Text(
                             text = stringResource(R.string.image_lightbox_failed),
                             color = Color.White,
@@ -252,6 +262,8 @@ fun email_image_lightbox(
                     )
                 }
             }
+        }
+        org.astermail.android.ui.common.app_toast_host(nested = true)
         }
     }
 }

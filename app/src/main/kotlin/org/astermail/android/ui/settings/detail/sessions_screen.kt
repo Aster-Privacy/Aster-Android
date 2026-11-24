@@ -61,6 +61,7 @@ import org.astermail.android.ui.settings.device_client_label_res
 import org.astermail.android.ui.settings.device_display_name
 import org.astermail.android.ui.settings.device_display_platform
 import org.astermail.android.ui.settings.this_device_badge
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun SessionsScreen(
@@ -91,6 +92,7 @@ fun SessionsScreen(
         title = stringResource(R.string.sessions),
         on_back = on_back,
         scroll_state = scroll_state,
+        on_refresh = { vm.join_launched { vm.load_sessions() } },
     ) {
         state.sessions_held?.let {
             org.astermail.android.guard.GuardHeldBanner(it)

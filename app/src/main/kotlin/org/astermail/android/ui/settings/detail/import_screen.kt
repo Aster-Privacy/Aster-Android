@@ -88,6 +88,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.ui.settings.join_launched
 
 private const val CHUNK_SIZE = 4 * 1024 * 1024
 private const val MAX_TOTAL_BYTES = 10L * 1024 * 1024 * 1024
@@ -496,6 +497,8 @@ fun ImportScreen(
         embedded = embedded,
         title = stringResource(R.string.import_title),
         on_back = on_back,
+        on_refresh = { vm.join_launched { vm.load_jobs() } },
+        refresh_enabled = !state.is_uploading,
     ) {
         section_label(stringResource(R.string.import_section_connect))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -574,6 +577,7 @@ fun ImportScreen(
                         progress = { progress },
                         modifier = Modifier.fillMaxWidth(),
                         color = colors.accent_blue,
+                        trackColor = colors.text_primary.copy(alpha = 0.14f),
                     )
                 } else {
                     Box(
@@ -691,6 +695,7 @@ fun ImportScreen(
                                         progress = { progress },
                                         modifier = Modifier.fillMaxWidth(),
                                         color = colors.accent_blue,
+                                        trackColor = colors.text_primary.copy(alpha = 0.14f),
                                     )
                                     Spacer(Modifier.size(AsterSpacing.xs))
                                     Text(text = stringResource(R.string.import_job_state, friendly_state_label(details.job.state, context)), color = colors.text_secondary, fontSize = 12.sp)

@@ -80,6 +80,7 @@ import org.astermail.android.ui.mail.toolbar_action_by_id
 import org.astermail.android.ui.mail.toolbar_action_catalog
 import org.astermail.android.ui.mail.toolbar_slot_count
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.settings.join_launched
 
 private data class editing_target(val kind: String, val index: Int)
 
@@ -156,6 +157,8 @@ fun CustomizeToolbarScreen(
     detail_scaffold(
         title = stringResource(R.string.customize_toolbar),
         on_back = on_back,
+        on_refresh = { settings_vm.join_launched { settings_vm.load_preferences(force = true) } },
+        refresh_enabled = settings_state.save_status != org.astermail.android.settings.SaveStatus.SAVING,
     ) {
         preferences_save_error_banner()
         Text(

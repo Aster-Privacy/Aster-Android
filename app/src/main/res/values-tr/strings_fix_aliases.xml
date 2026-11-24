@@ -17,4 +17,22 @@
     <string name="alias_import_change_file">Dosyayı değiştir</string>
     <string name="alias_import_remove_file">Dosyayı kaldır</string>
     <string name="alias_note_placeholder_short">Nerede kullandığınız</string>
+    <string name="alias_status_section">Durum</string>
+    <string name="alias_receive_mail">Posta al</string>
+    <string name="alias_receive_mail_on">Bu adrese gönderilen postalar size ulaşır.</string>
+    <string name="alias_receive_mail_off">Duraklatıldı. Bu adrese gelen yeni postalar teslim edilmez.</string>
+    <string name="alias_pin_subtitle">Bu takma adı listenizin en üstünde tutun.</string>
+    <string name="alias_danger_zone">Tehlikeli bölge</string>
+    <string name="alias_delete_row_subtitle">Bu adresi kalıcı olarak kaldırın.</string>
+    <string name="alias_protection_section">Koruma</string>
+    <string name="alias_automation_section">Otomasyon</string>
+    <string name="alias_pin_mode_title">Mod</string>
+    <string name="alias_remove_entry_a11y">%1$s öğesini kaldır</string>
+    <string name="alias_create_action">Takma ad oluştur</string>
+    <string name="alias_usage_near">Takma ad sınırınıza yaklaştınız.</string>
+    <string name="alias_usage_full">Takma ad sınırınıza ulaştınız.</string>
+    <string name="alias_offline_banner">Çevrimdışısınız. Değişiklikler yeniden bağlandığınızda eşitlenir.</string>
+    <string name="alias_menu_pause">Duraklat</string>
+    <string name="alias_menu_resume">Sürdür</string>
+    <string name="alias_directory_auto_create_a11y">%1$s için takma adları otomatik oluştur</string>
 </resources>

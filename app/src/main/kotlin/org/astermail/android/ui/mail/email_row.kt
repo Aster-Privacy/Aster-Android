@@ -51,7 +51,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -124,15 +123,6 @@ import org.astermail.android.design.AsterSemanticColors
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterDivider
 import org.astermail.android.mail.MailViewModel
-import org.astermail.android.mail.detect_verification_code
-import org.astermail.android.design.components.aster_menu
-import org.astermail.android.design.components.aster_menu_item
-import org.astermail.android.ui.common.show_copy_failed_toast
-import org.astermail.android.ui.common.system_confirms_copy
-import org.astermail.android.ui.common.write_sensitive_to_clipboard
-import org.astermail.android.ui.common.write_to_clipboard
-import android.content.ClipData
-import android.widget.Toast
 import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.security.safe_sender_name
 import org.astermail.android.security.trusted_sender_name
@@ -144,6 +134,8 @@ internal fun inbox_leading_slot(
     is_selected: Boolean,
     avatar_size: androidx.compose.ui.unit.Dp,
     on_avatar_click: (() -> Unit)? = null,
+    on_avatar_long_click: (() -> Unit)? = null,
+    haptic_enabled: Boolean = true,
     avatar: @Composable () -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -151,11 +143,13 @@ internal fun inbox_leading_slot(
     val toggle_label = stringResource(if (is_selected) R.string.deselect else R.string.select)
     val tap_interaction = remember { MutableInteractionSource() }
     val tap_modifier = if (on_avatar_click != null) {
-        Modifier.clickable(
+        Modifier.combinedClickable(
             interactionSource = tap_interaction,
             indication = androidx.compose.material3.ripple(bounded = false, radius = avatar_size / 2),
             onClickLabel = toggle_label,
             onClick = on_avatar_click,
+            onLongClick = on_avatar_long_click,
+            hapticFeedbackEnabled = haptic_enabled,
         )
     } else {
         Modifier
@@ -709,6 +703,8 @@ fun ThreadInboxRow(
             is_selected,
             metrics.avatar_size,
             if (select_mode) null else on_avatar_click,
+            on_avatar_long_click = on_long_click,
+            haptic_enabled = haptic_enabled,
         ) {
             val authenticated_system_email = androidx.compose.runtime.remember(
                 email.sender_email, email.display_sender_email, email.is_external, email.system_origin,
@@ -837,25 +833,15 @@ fun ThreadInboxRow(
                     modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    subject_with_copy_menu(
-                        subject = email.subject,
-                        preview = email.preview,
-                        enabled = !select_mode,
-                        interaction_source = interaction_source,
-                        haptic_enabled = haptic_enabled,
-                        on_click = { if (!tap_guard.blocked) on_click() },
+                    Text(
+                        text = subject_text,
+                        style = inbox_subject_text_style(),
+                        color = subject_color,
+                        fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
-                    ) {
-                        Text(
-                            text = subject_text,
-                            style = inbox_subject_text_style(),
-                            color = subject_color,
-                            fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = it,
-                        )
-                    }
+                    )
                     alias_indicator_store.label_for_delivery(email.routing_token, email.received_on)?.let {
                         Spacer(Modifier.width(6.dp))
                         alias_chip(it, modifier = Modifier.widthIn(max = 148.dp))
@@ -1310,74 +1296,3 @@ private fun low_network_preview(preview: String): String {
     return preview.take(limit).trimEnd() + "…"
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun subject_with_copy_menu(
-    subject: String,
-    preview: String,
-    enabled: Boolean,
-    interaction_source: MutableInteractionSource,
-    haptic_enabled: Boolean,
-    on_click: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable (Modifier) -> Unit,
-) {
-    if (!enabled) {
-        Box(modifier = modifier) { content(Modifier) }
-        return
-    }
-    val context = LocalContext.current
-    var menu_open by remember { androidx.compose.runtime.mutableStateOf(false) }
-    Box(modifier = modifier) {
-        content(
-            Modifier.combinedClickable(
-                interactionSource = interaction_source,
-                indication = null,
-                onClick = on_click,
-                onLongClick = { menu_open = true },
-                onLongClickLabel = stringResource(R.string.copy),
-                hapticFeedbackEnabled = haptic_enabled,
-            ),
-        )
-        aster_menu(
-            expanded = menu_open,
-            on_dismiss = { menu_open = false },
-        ) {
-            val code = remember(subject, preview) { detect_verification_code(subject, preview) }
-            if (code != null) {
-                val copied_label = stringResource(R.string.code_copied)
-                aster_menu_item(
-                    label = stringResource(R.string.copy_code),
-                    icon = TablerIcons.Key,
-                    test_tag = "row_copy_code",
-                    on_click = {
-                        menu_open = false
-                        val copied = write_sensitive_to_clipboard(context, context.getString(R.string.app_name), code)
-                        confirm_copy(context, copied, copied_label)
-                    },
-                )
-            }
-            if (subject.isNotBlank()) {
-                val copied_label = stringResource(R.string.subject_copied)
-                aster_menu_item(
-                    label = stringResource(R.string.copy_subject),
-                    icon = TablerIcons.Copy,
-                    test_tag = "row_copy_subject",
-                    on_click = {
-                        menu_open = false
-                        val copied = write_to_clipboard(context, ClipData.newPlainText(subject, subject))
-                        confirm_copy(context, copied, copied_label)
-                    },
-                )
-            }
-        }
-    }
-}
-
-private fun confirm_copy(context: android.content.Context, copied: Boolean, message: String) {
-    if (!copied) {
-        show_copy_failed_toast(context)
-    } else if (!system_confirms_copy()) {
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-    }
-}

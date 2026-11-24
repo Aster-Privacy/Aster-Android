@@ -362,7 +362,7 @@ private fun progress_step(
         )
     } else {
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(52.dp), strokeWidth = 4.dp)
+            org.astermail.android.design.components.aster_spinner(color = colors.accent_blue, modifier = Modifier.size(52.dp), stroke_width = 4.dp)
         }
         v_gap(AsterSpacing.xl)
         Text(
@@ -380,7 +380,7 @@ private fun progress_step(
                 progress = { fraction },
                 modifier = Modifier.fillMaxWidth().height(6.dp).clip(SquircleShape(3.dp)),
                 color = colors.accent_blue,
-                trackColor = colors.bg_secondary,
+                trackColor = colors.text_primary.copy(alpha = 0.14f),
             )
             v_gap(AsterSpacing.sm)
             Text(

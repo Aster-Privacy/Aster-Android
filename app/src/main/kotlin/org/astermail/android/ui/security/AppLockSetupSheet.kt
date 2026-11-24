@@ -503,7 +503,7 @@ fun AppLockVerifySheet(
                     PinDots(digits = digits, filled = input.length, shake_trigger = shake_trigger)
                     Box(modifier = Modifier.height(18.dp), contentAlignment = Alignment.Center) {
                         when {
-                            verifying -> androidx.compose.material3.CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = colors.accent_blue)
+                            verifying -> org.astermail.android.design.components.aster_spinner(modifier = Modifier.size(16.dp), stroke_width = 2.dp, color = colors.accent_blue)
                             error_msg != null -> Text(text = error_msg!!, color = colors.danger, fontSize = 12.sp)
                             attempt_hint != null -> Text(text = attempt_hint, color = colors.text_muted, fontSize = 12.sp)
                         }

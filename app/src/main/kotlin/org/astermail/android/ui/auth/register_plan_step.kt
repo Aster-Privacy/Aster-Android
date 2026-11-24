@@ -311,7 +311,7 @@ fun RegisterPlanStep(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                        org.astermail.android.design.components.aster_spinner(color = colors.accent_blue, modifier = Modifier.size(16.dp), stroke_width = 2.dp)
                         Spacer(Modifier.size(AsterSpacing.sm))
                         Text(text = stringResource(R.string.confirming_payment), color = colors.text_tertiary, fontSize = 13.sp)
                     }
@@ -326,7 +326,7 @@ fun RegisterPlanStep(
                     modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                    org.astermail.android.design.components.aster_spinner(color = colors.accent_blue, modifier = Modifier.size(24.dp))
                 }
             } else if (options.isEmpty()) {
                 Text(

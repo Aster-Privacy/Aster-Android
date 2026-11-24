@@ -17,4 +17,22 @@
     <string name="alias_import_change_file">更换文件</string>
     <string name="alias_import_remove_file">移除文件</string>
     <string name="alias_note_placeholder_short">使用场景</string>
+    <string name="alias_status_section">状态</string>
+    <string name="alias_receive_mail">接收邮件</string>
+    <string name="alias_receive_mail_on">发送到此地址的邮件会送达给你。</string>
+    <string name="alias_receive_mail_off">已暂停。发送到此地址的新邮件不会送达。</string>
+    <string name="alias_pin_subtitle">将此别名保持在列表顶部。</string>
+    <string name="alias_danger_zone">危险区域</string>
+    <string name="alias_delete_row_subtitle">永久移除此地址。</string>
+    <string name="alias_protection_section">保护</string>
+    <string name="alias_automation_section">自动化</string>
+    <string name="alias_pin_mode_title">模式</string>
+    <string name="alias_remove_entry_a11y">移除 %1$s</string>
+    <string name="alias_create_action">创建别名</string>
+    <string name="alias_usage_near">你即将达到别名数量上限。</string>
+    <string name="alias_usage_full">你已达到别名数量上限。</string>
+    <string name="alias_offline_banner">你已离线。重新连接后会同步更改。</string>
+    <string name="alias_menu_pause">暂停</string>
+    <string name="alias_menu_resume">恢复</string>
+    <string name="alias_directory_auto_create_a11y">为 %1$s 自动创建别名</string>
 </resources>

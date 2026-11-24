@@ -168,7 +168,7 @@ private fun approve_loading() {
     val colors = AsterMaterial.colors
     guard_sheet_header(title = stringResource(R.string.guard_approve_title))
     Spacer(Modifier.height(AsterSpacing.xxl))
-    CircularProgressIndicator(color = colors.accent_blue, strokeWidth = 3.dp, modifier = Modifier.size(32.dp))
+    org.astermail.android.design.components.aster_spinner(color = colors.accent_blue, stroke_width = 3.dp, modifier = Modifier.size(32.dp))
     Spacer(Modifier.height(AsterSpacing.xxl))
 }
 

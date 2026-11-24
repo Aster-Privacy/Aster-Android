@@ -121,6 +121,7 @@ import org.astermail.android.ui.settings.mail_rules.pickers.base_sheet
 import org.astermail.android.ui.theme.ThemeViewModel
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.ui.settings.join_launched
 
 private val quick_seed_colors = listOf(
     "#3b82f6", "#a855f7", "#22c55e", "#f43f5e", "#f97316",
@@ -541,6 +542,11 @@ fun AppearanceScreen(
         title = stringResource(R.string.settings_appearance),
         on_back = on_back,
         scroll_state = page_scroll,
+        on_refresh = {
+            settings_vm.join_launched { settings_vm.load_preferences(force = true) }
+            if (settings_state.save_status != SaveStatus.SAVING) remote_prefs_adopted = false
+        },
+        refresh_enabled = settings_state.save_status != SaveStatus.SAVING,
     ) {
         preferences_save_error_banner()
         if (prefs == null || (!settings_state.preferences_authoritative && !page_loaded_once)) {

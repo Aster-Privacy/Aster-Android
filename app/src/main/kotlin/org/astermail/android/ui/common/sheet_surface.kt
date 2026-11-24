@@ -21,7 +21,6 @@
 
 package org.astermail.android.ui.common
 
-import android.os.Build
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
@@ -29,7 +28,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -38,12 +36,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogWindowProvider
-import androidx.core.view.WindowCompat
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSemanticColors
+import org.astermail.android.design.components.aster_popup_window_effect
 
 fun sheet_container_color(colors: AsterSemanticColors): Color =
     if (colors.is_glass) colors.solid_bg else colors.bg_card
@@ -74,7 +70,8 @@ fun aster_modal_sheet(
         scrimColor = scrim_color,
         dragHandle = drag_handle,
     ) {
-        sheet_navigation_bar(light_bars = container_color.luminance() > 0.5f)
+        aster_popup_window_effect(light_navigation_bars = container_color.luminance() > 0.5f)
+        sheet_toast_host()
         content()
     }
 }
@@ -90,17 +87,5 @@ fun remember_sheet_dismiss(sheet_state: SheetState, on_hidden: () -> Unit): () -
                 if (!sheet_state.isVisible) latest.value()
             }
         }
-    }
-}
-
-@Composable
-private fun sheet_navigation_bar(light_bars: Boolean) {
-    val view = LocalView.current
-    SideEffect {
-        val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            window.isNavigationBarContrastEnforced = false
-        }
-        WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = light_bars
     }
 }

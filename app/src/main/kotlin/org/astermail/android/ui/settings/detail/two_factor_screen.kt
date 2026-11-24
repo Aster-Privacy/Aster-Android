@@ -87,6 +87,7 @@ import org.astermail.android.twofactor.TwoFactorViewModel
 import org.astermail.android.twofactor.render_qr_code
 import org.astermail.android.settings.host_activity
 import org.astermail.android.auth.request_passkey_json
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun TwoFactorScreen(
@@ -100,13 +101,18 @@ fun TwoFactorScreen(
 
     LaunchedEffect(Unit) { vm.load_status() }
 
-    detail_scaffold(title = stringResource(R.string.two_factor_authentication), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.two_factor_authentication),
+        on_back = on_back,
+        on_refresh = { vm.join_launched { vm.load_status(quiet = true) } },
+        refresh_enabled = !state.is_loading && !state.is_busy && state.mode == TwoFactorMode.Idle,
+    ) {
         if (state.is_loading) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                settings_load_spinner()
             }
             return@detail_scaffold
         }

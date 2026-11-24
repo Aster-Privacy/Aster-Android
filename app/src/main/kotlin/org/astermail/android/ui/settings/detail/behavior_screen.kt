@@ -104,6 +104,7 @@ import org.astermail.android.translation.language_display_name
 import org.astermail.android.translation.translation_language_codes
 import org.astermail.android.translation.translation_supported
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.settings.join_launched
 
 private const val retention_days_options_count = 8
 
@@ -420,7 +421,17 @@ fun BehaviorScreen(
         onDispose { flush_on_exit.value() }
     }
 
-    detail_scaffold(title = stringResource(R.string.settings_behavior), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.settings_behavior),
+        on_back = on_back,
+        on_refresh = {
+            vm.join_launched {
+                vm.load_preferences(force = true)
+                vm.load_spam_settings()
+            }
+        },
+        refresh_enabled = save_trigger == 0,
+    ) {
         preferences_save_error_banner()
         if (!prefs_loaded) {
             preferences_load_placeholder()

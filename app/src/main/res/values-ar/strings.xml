@@ -1600,6 +1600,10 @@
     <string name="send_email_to_sender">مراسلة هذا المرسل</string>
     <string name="add_to_contacts">حفظ في جهات الاتصال</string>
     <string name="remove_from_contacts">إزالة من جهات الاتصال</string>
+    <string name="sender_action_new_message">رسالة جديدة</string>
+    <string name="sender_action_add_contact">إضافة جهة اتصال</string>
+    <string name="sender_action_view_contact">عرض جهة الاتصال</string>
+    <string name="sender_action_in_contacts">في جهات الاتصال</string>
     <string name="contact_added_named">تم حفظ %1$s في جهات الاتصال</string>
     <string name="contact_removed_named">تمت إزالة %1$s من جهات الاتصال</string>
     <string name="blocked_content_details_title">محتوى محظور</string>

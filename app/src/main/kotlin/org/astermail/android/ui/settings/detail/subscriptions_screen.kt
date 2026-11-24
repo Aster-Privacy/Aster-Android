@@ -90,6 +90,7 @@ import kotlinx.coroutines.launch
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.ui.settings.join_launched
 
 private val LOCALE_CURRENCY_MAP = mapOf(
     "en_us" to "usd", "en_gb" to "gbp", "en_au" to "aud", "en_ca" to "cad", "en_in" to "inr",
@@ -535,7 +536,37 @@ fun SubscriptionsScreen(
         org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, "nova", "year"),
     )
 
-    detail_scaffold(title = stringResource(R.string.plan_billing), on_back = on_back, scroll_state = scroll_state) {
+    detail_scaffold(
+        title = stringResource(R.string.plan_billing),
+        on_back = on_back,
+        scroll_state = scroll_state,
+        on_refresh = {
+            kotlinx.coroutines.coroutineScope {
+                launch {
+                    billing_vm.join_launched {
+                        billing_vm.load_subscription()
+                        billing_vm.load_plans()
+                        billing_vm.load_history()
+                        billing_vm.load_storage_addons()
+                        billing_vm.load_crypto_native_coins()
+                        billing_vm.load_pending_crypto_invoices()
+                        billing_vm.load_credits_and_discounts()
+                        billing_vm.load_limits()
+                        billing_vm.load_credit_packages()
+                    }
+                }
+                launch {
+                    vm.join_launched {
+                        vm.load_subscription(force = true)
+                        vm.load_storage(force = true)
+                        vm.load_aliases(force = true)
+                        vm.load_domains(prefetch_dns = false)
+                    }
+                }
+            }
+        },
+        refresh_enabled = !billing_state.is_acting,
+    ) {
         if (sub == null && state.subscription_load_failed) {
             load_failed_card(state.error) { vm.load_subscription() }
             return@detail_scaffold
@@ -2221,9 +2252,9 @@ private fun notice_row(
         horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
     ) {
         if (loading) {
-            androidx.compose.material3.CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 color = accent,
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
                 modifier = Modifier.size(14.dp),
             )
         }

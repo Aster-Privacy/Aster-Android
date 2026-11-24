@@ -74,24 +74,28 @@ private class code_token(val start: Int, val end: Int, val value: String) {
 
 private class code_span(val start: Int, val end: Int, val value: String)
 
-fun detect_verification_code(vararg parts: String?): String? {
+fun detect_verification_code(vararg parts: String?): String? =
+    keyword_near_candidates(parts).minByOrNull { it.second }?.first
+
+fun detect_unambiguous_verification_code(vararg parts: String?): String? {
+    val distinct = keyword_near_candidates(parts).map { it.first }.distinct()
+    return distinct.singleOrNull()
+}
+
+private fun keyword_near_candidates(parts: Array<out String?>): List<Pair<String, Int>> {
     val text = parts.filterNot { it.isNullOrBlank() }.joinToString("\n").take(MAX_SCAN_LENGTH)
-    if (text.isEmpty()) return null
+    if (text.isEmpty()) return emptyList()
     val keywords = keyword_spans(text)
-    if (keywords.isEmpty()) return null
-    var best: String? = null
-    var best_gap = Int.MAX_VALUE
+    if (keywords.isEmpty()) return emptyList()
+    val found = mutableListOf<Pair<String, Int>>()
     for (candidate in code_candidates(text)) {
         if (keywords.any { candidate.start < it.last + 1 && it.first < candidate.end }) continue
         val gap = keywords.minOf { keyword ->
             if (keyword.first >= candidate.end) keyword.first - candidate.end else candidate.start - (keyword.last + 1)
         }
-        if (gap <= KEYWORD_WINDOW && gap < best_gap) {
-            best = candidate.value
-            best_gap = gap
-        }
+        if (gap <= KEYWORD_WINDOW) found.add(candidate.value to gap)
     }
-    return best
+    return found
 }
 
 private fun keyword_spans(text: String): List<IntRange> {

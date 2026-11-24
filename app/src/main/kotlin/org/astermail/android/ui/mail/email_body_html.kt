@@ -24,6 +24,9 @@ package org.astermail.android.ui.mail
 import org.astermail.android.mail.body_starts_with
 import org.astermail.android.mail.looks_like_html_body
 
+internal const val EMAIL_VIEWPORT_META =
+    "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no\">"
+
 private val WIDE_WIDTH_ATTRIBUTE_VALUE = Regex("""(?:[4-9]\d{2}|[1-9]\d{3})(?:\.\d+)?(?:px)?""", RegexOption.IGNORE_CASE)
 
 internal fun fit_wide_width_attributes(body: String): String {
@@ -193,7 +196,7 @@ internal fun build_email_html(
     email_font_id: String? = null,
     text_zoom: Int = 100,
     underline_links: Boolean = false,
-    fit_width_override: Int? = null,
+    hide_quote_label: String? = null,
 ): String {
     val chip_scale = maxOf(1f, text_zoom.coerceIn(50, 300) / 100f)
     fun scaled_px(value: Float): String = String.format(java.util.Locale.US, "%.1fpx", value * chip_scale)
@@ -227,7 +230,12 @@ internal fun build_email_html(
     val seeded_background = detect_body_background(render_body)
     val designed_light = declares_light || declares_light_bg || has_newsletter_layout ||
         background_reads_light(seeded_background) || (is_html_body && declares_light_background(render_body))
-    val white_page = is_dark && is_html_body && designed_light && !force_dark_emails
+    val plain_light = is_dark && is_html_body && !declares_light && !force_dark_emails && if (has_newsletter_layout) {
+        reads_as_plain_table_correspondence(render_body)
+    } else {
+        reads_as_plain_light_text(render_body)
+    }
+    val white_page = is_dark && is_html_body && designed_light && !force_dark_emails && !plain_light
     val simple_dark = is_dark && is_html_body && !white_page
     val force_light = is_html_body && !simple_dark
     val chip_dark = is_dark && !white_page
@@ -282,13 +290,9 @@ html,body{background-color:#ffffff!important}
     val table_css = if (has_newsletter_layout) {
         "#m{max-width:100%!important;overflow-x:visible!important;box-sizing:border-box!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m div,#m p,#m blockquote,#m section,#m article,#m figure,#m picture,#m form,#m pre,#m hr,#m iframe,#m video,#m embed,#m object,#m svg,#m canvas,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}#m pre{white-space:pre-wrap!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
     } else {
-        "#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}#m [data-aster-long-token]{overflow-wrap:anywhere}#m div,#m p,#m blockquote,#m section,#m article,#m pre,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}"
+        "#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:anywhere}#m [data-aster-long-token]{overflow-wrap:anywhere}#m div,#m p,#m blockquote,#m section,#m article,#m pre,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}"
     }
-    val viewport_meta = if (fit_width_override != null) {
-        "<meta name=\"viewport\" content=\"width=$fit_width_override,maximum-scale=5,user-scalable=yes\">"
-    } else {
-        "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes\">"
-    }
+    val viewport_meta = EMAIL_VIEWPORT_META
     val color_scheme_meta = if (force_light) "<meta name=\"color-scheme\" content=\"light only\">" else ""
 
     val bq_border = if (simple_dark) "#4b5563" else "#dadce0"
@@ -304,7 +308,7 @@ html,body{background-color:#ffffff!important}
         ""
     }
     val dark_ready_body = when {
-        force_dark_emails -> lighten_dark_email_text(render_body)
+        force_dark_emails || plain_light -> lighten_dark_email_text(render_body)
         simple_dark -> lighten_dark_stylesheet_text(render_body)
         else -> render_body
     }
@@ -315,6 +319,7 @@ html,body{background-color:#ffffff!important}
         image_failed_label = image_failed_label,
         is_newsletter = has_newsletter_layout,
         simple_dark = simple_dark,
+        hide_quote_label = hide_quote_label,
     )
 
     val html_style = when {
@@ -353,13 +358,20 @@ a.aster-email-button,#m a.aster-email-button{white-space:nowrap!important;word-b
 .aster-quoted-content .aster_quote,.aster-quoted-content .gmail_quote,.aster-quoted-content .protonmail_quote,.aster-quoted-content .yahoo_quoted,.aster-quoted-content .moz-cite-prefix,.aster-forwarded-content .aster_quote,.aster-forwarded-content .gmail_quote,.aster-forwarded-content .protonmail_quote,.aster-forwarded-content .yahoo_quoted,.aster-forwarded-content .moz-cite-prefix{display:block;margin:0;padding:0}
 blockquote{margin:8px 0;padding-left:12px;border-left:2px solid $bq_border;color:$bq_color}
 details.aster-quoted-wrapper{margin-top:18px;margin-bottom:4px}
-.aster-quote-toggle{display:inline-flex;align-items:center;justify-content:center;min-height:${scaled_px(28f)};min-width:${scaled_px(44f)};padding:0 ${scaled_px(16f)};margin:0;border-radius:${scaled_px(14f)};border:none;outline:none;background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"};color:${if (chip_dark) "rgba(255,255,255,0.65)" else "rgba(0,0,0,0.55)"};cursor:pointer;font-family:inherit;font-size:0;letter-spacing:0;line-height:0;vertical-align:middle;user-select:none;list-style:none;-webkit-tap-highlight-color:transparent;transition:background 0.12s ease}
+.aster-quote-toggle{display:flex;width:max-content;white-space:nowrap;align-items:center;justify-content:center;min-height:${scaled_px(28f)};min-width:${scaled_px(44f)};padding:0 ${scaled_px(16f)};margin:0;border-radius:${scaled_px(14f)};border:none;outline:none;background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"};color:${if (chip_dark) "rgba(255,255,255,0.65)" else "rgba(0,0,0,0.55)"};cursor:pointer;font-family:inherit;font-size:0;letter-spacing:0;line-height:0;vertical-align:middle;user-select:none;list-style:none;-webkit-tap-highlight-color:transparent;position:relative}
 .aster-quote-toggle::-webkit-details-marker{display:none}
 .aster-quote-toggle::before{content:'';display:block;flex:none;width:${scaled_px(4f)};height:${scaled_px(4f)};border-radius:50%;background:currentColor;box-shadow:${scaled_px(-6.4f)} 0 0 currentColor,${scaled_px(6.4f)} 0 0 currentColor}
 .aster-quote-toggle::marker{content:''}
-.aster-quote-toggle:active,details[open].aster-quoted-wrapper>.aster-quote-toggle{background:${if (chip_dark) "rgba(255,255,255,0.2)" else "rgba(0,0,0,0.16)"}}
+.aster-quote-toggle,#m .aster-quote-toggle,details[open].aster-quoted-wrapper>.aster-quote-toggle{background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"}!important;color:${if (chip_dark) "rgba(255,255,255,0.75)" else "rgba(0,0,0,0.65)"}!important}
+.aster-quote-toggle:active,#m .aster-quote-toggle:active,a.aster-quote-hide:active,#m a.aster-quote-hide:active{background:${if (chip_dark) "rgba(255,255,255,0.18)" else "rgba(0,0,0,0.12)"}!important}
 .aster-quoted-content{margin-top:14px;padding-top:14px;border-top:1px solid $detail_border;color:$bq_color;font-family:inherit;font-size:1em;line-height:1.45}
 .aster-quoted-content.aster-quoted-solo{margin-top:0;padding-top:0;border-top:none}
+a.aster-quote-hide,#m a.aster-quote-hide{display:flex;width:max-content;align-items:center;min-height:${scaled_px(28f)};padding:0 ${scaled_px(14f)};margin:16px 0 4px 0;border-radius:${scaled_px(14f)};background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"}!important;color:${if (chip_dark) "rgba(255,255,255,0.75)" else "rgba(0,0,0,0.65)"}!important;font-family:inherit;font-size:13px;font-weight:500;line-height:1;white-space:nowrap;text-decoration:none!important;user-select:none;-webkit-tap-highlight-color:transparent}
+a.aster-quote-close,a.aster-quote-cover{display:none}
+details[open].aster-quoted-wrapper>.aster-quote-toggle::before{display:none}
+details[open].aster-quoted-wrapper>.aster-quote-toggle>a.aster-quote-close,#m details[open].aster-quoted-wrapper>.aster-quote-toggle>a.aster-quote-close{display:flex;align-items:center;align-self:stretch;margin:0 -${scaled_px(16f)};padding:0 ${scaled_px(16f)};color:inherit!important;font-family:inherit;font-size:13px;font-weight:500;line-height:1;white-space:nowrap;text-decoration:none!important;-webkit-tap-highlight-color:transparent}
+details.aster-forwarded-collapse>summary{position:relative}
+details[open].aster-forwarded-collapse>summary>a.aster-quote-cover{display:block;position:absolute;top:0;right:0;bottom:0;left:0}
 .aster-quoted-content .aster_quote_attr,.aster-quoted-content .gmail_attr{color:$bq_color;font-size:0.82em;margin-bottom:4px}
 .aster-quoted-content blockquote{margin:0;padding:0 0 0 12px;border-left:2px solid $bq_border2;color:$bq_color}
 .aster-quoted-content blockquote blockquote{border-left-color:$bq_border3}
@@ -369,9 +381,6 @@ details.aster-forwarded-collapse>summary::-webkit-details-marker{display:none}
 details.aster-forwarded-collapse>summary::before{content:'\25B6';display:inline-block;font-size:0.62em;margin-right:6px;transition:transform 0.15s ease}
 details[open].aster-forwarded-collapse>summary::before{transform:rotate(90deg)}
 details.aster-forwarded-collapse>.aster-forwarded-content{padding-top:8px}
-@keyframes aster-reveal-in{from{opacity:0}to{opacity:1}}
-details[open].aster-quoted-wrapper .aster-quoted-content,details[open].aster-forwarded-collapse .aster-forwarded-content{animation:aster-reveal-in 150ms cubic-bezier(0.05,0.7,0.1,1)}
-@media (prefers-reduced-motion:reduce){details[open].aster-quoted-wrapper .aster-quoted-content,details[open].aster-forwarded-collapse .aster-forwarded-content{animation:none}}
 $user_font_css
 $underline_css
 $dyslexia_css

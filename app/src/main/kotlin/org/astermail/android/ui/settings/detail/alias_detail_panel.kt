@@ -50,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -98,66 +99,66 @@ internal fun alias_detail_panel(
     avatars_locked: Boolean = false,
     contacts_locked: Boolean = false,
 ) {
-    val colors = AsterMaterial.colors
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("alias_detail_panel"),
-        verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
     ) {
-        panel_card { alias_details_section(alias, vm, on_view_sent, avatars_locked) }
-        panel_card { alias_delivery_section(alias, vm, detail, rule_delivery, rule_label) }
-        if (detail.loading) {
-            panel_card {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = colors.accent_blue,
+        settings_group(title = stringResource(R.string.alias_delivery_title)) {
+            alias_delivery_section(alias, vm, detail, rule_delivery, rule_label)
+            if (on_view_sent != null) {
+                settings_row_gap()
+                Box(modifier = Modifier.testTag("alias_view_sent")) {
+                    detail_row(
+                        title = stringResource(R.string.alias_sent_mail_label),
+                        subtitle = stringResource(R.string.alias_sent_mail_desc),
+                        icon = TablerIcons.Send,
+                        on_click = on_view_sent,
                     )
                 }
             }
-        } else if (detail.load_failed) {
-            panel_card {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    panel_hint_text(stringResource(R.string.failed_to_load))
-                    Text(
-                        text = stringResource(R.string.retry),
-                        color = colors.accent_blue,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.clickable { vm.load_alias_detail(alias.id, force = true) },
-                    )
-                }
-            }
-        } else {
-            if (detail.stats_locked || detail.stats != null) {
-                panel_card { alias_stats_section(detail) }
-            }
-            panel_card { alias_sender_pinning_section(alias.id, detail, vm) }
-            panel_card { alias_rules_section(alias.id, detail, vm) }
-            panel_card { alias_blocked_log_section(detail) }
-            panel_card { alias_contacts_section(alias.id, detail, vm, contacts_locked) }
         }
-    }
-}
 
-@Composable
-private fun panel_card(content: @Composable ColumnScope.() -> Unit) {
-    AsterCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(AsterSpacing.lg),
-            content = content,
-        )
+        settings_group(title = stringResource(R.string.alias_panel_details_title)) {
+            alias_details_section(alias, vm, avatars_locked)
+        }
+
+        when {
+            detail.loaded -> {
+                if (detail.stats_locked || detail.stats != null) {
+                    settings_group(title = stringResource(R.string.alias_stats_title)) {
+                        alias_stats_section(detail)
+                    }
+                }
+                section_label(stringResource(R.string.alias_protection_section))
+                alias_sender_pinning_section(alias.id, detail, vm)
+                v_gap(AsterSpacing.md)
+                alias_contacts_section(alias.id, detail, vm, contacts_locked)
+                v_gap(AsterSpacing.md)
+                alias_blocked_log_section(detail)
+                section_label(stringResource(R.string.alias_automation_section))
+                alias_rules_section(alias.id, detail, vm)
+            }
+            detail.load_failed -> {
+                v_gap(AsterSpacing.lg)
+                alias_card {
+                    detail_row(
+                        title = stringResource(R.string.failed_to_load),
+                        trailing = {
+                            alias_text_action(
+                                label = stringResource(R.string.retry),
+                                on_click = { vm.load_alias_detail(alias.id, force = true) },
+                                modifier = Modifier.testTag("alias_detail_retry"),
+                            )
+                        },
+                    )
+                }
+            }
+            else -> {
+                v_gap(AsterSpacing.lg)
+                alias_detail_sections_skeleton(cards = 3)
+            }
+        }
     }
 }
 
@@ -267,10 +268,7 @@ internal fun panel_hint_text(text: String) {
 
 @Composable
 internal fun panel_locked_section(title: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs)) {
-        panel_section_title(title)
-        panel_hint_text(stringResource(R.string.alias_feature_locked))
-    }
+    alias_card(title = title, description = stringResource(R.string.alias_feature_locked)) {}
 }
 
 @Composable
@@ -297,54 +295,9 @@ internal fun panel_row_chip(label: String) {
 private fun alias_details_section(
     alias: org.astermail.android.api.settings.AliasInfo,
     vm: SettingsViewModel,
-    on_view_sent: (() -> Unit)?,
     avatars_locked: Boolean,
 ) {
-    val colors = AsterMaterial.colors
-    Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-        panel_section_title(stringResource(R.string.alias_panel_details_title))
-        if (on_view_sent != null) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
-                    .clickable(onClick = on_view_sent)
-                    .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
-                    .testTag("alias_view_sent"),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Send,
-                    contentDescription = null,
-                    tint = colors.text_muted,
-                    modifier = Modifier.size(18.dp).mirror_in_rtl(),
-                )
-                Spacer(Modifier.width(AsterSpacing.sm))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.alias_sent_mail_label),
-                        color = colors.text_primary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Text(
-                        text = stringResource(R.string.alias_sent_mail_desc),
-                        color = colors.text_muted,
-                        fontSize = 12.sp,
-                    )
-                }
-                Spacer(Modifier.width(AsterSpacing.sm))
-                Text(
-                    text = stringResource(R.string.alias_view_sent),
-                    color = colors.accent_blue,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
+    alias_card_body {
         alias_inline_field(
             label = stringResource(R.string.alias_panel_display_name),
             placeholder = stringResource(R.string.alias_panel_display_name_placeholder),
@@ -360,11 +313,17 @@ private fun alias_details_section(
             test_tag = "alias_field_note",
             on_save = { vm.update_alias_note(alias.id, it) },
         )
+    }
+    settings_row_gap()
+    alias_card_body {
         alias_websites_field(
             websites = alias.websites,
             on_add = { vm.add_alias_website(alias.id, it) },
             on_remove = { vm.remove_alias_website(alias.id, it) },
         )
+    }
+    settings_row_gap()
+    alias_card_body {
         alias_avatar_field(
             address = alias.address,
             profile_picture = alias.profile_picture,
@@ -525,10 +484,11 @@ internal fun alias_delivery_rule_note(note: AliasRuleDeliveryNote, selected_labe
     }
     Text(
         text = text,
-        color = if (note.matches_alias_delivery) colors.text_muted else colors.warning,
-        fontSize = 11.sp,
+        color = if (note.matches_alias_delivery) colors.text_tertiary else colors.warning,
+        fontSize = 13.sp,
         modifier = Modifier
             .fillMaxWidth()
+            .padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = AsterSpacing.sm)
             .testTag("alias_delivery_rule_note"),
     )
 }
@@ -548,10 +508,11 @@ internal fun alias_delivery_label_rule_note(note: AliasRuleLabelNote, selected_l
     }
     Text(
         text = text,
-        color = if (note.matches_alias_label) colors.text_muted else colors.warning,
-        fontSize = 11.sp,
+        color = if (note.matches_alias_label) colors.text_tertiary else colors.warning,
+        fontSize = 13.sp,
         modifier = Modifier
             .fillMaxWidth()
+            .padding(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = AsterSpacing.sm)
             .testTag("alias_delivery_label_rule_note"),
     )
 }
@@ -571,142 +532,80 @@ internal fun alias_delivery_picker(
     run_menu: (@Composable () -> Unit)? = null,
     apply_section: (@Composable () -> Unit)? = null,
 ) {
-    val colors = AsterMaterial.colors
-    var menu_open by remember { mutableStateOf(false) }
-    var label_menu_open by remember { mutableStateOf(false) }
+    val inbox_label = stringResource(R.string.folder_inbox)
+    val archive_label = stringResource(R.string.folder_archive)
+    val none_label = stringResource(R.string.alias_delivery_label_none)
 
-    Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-        panel_section_title(stringResource(R.string.alias_delivery_title))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.alias_delivery_folder_title),
-                    color = colors.text_primary,
-                    fontSize = 13.sp,
+    Column(modifier = Modifier.fillMaxWidth()) {
+        alias_select_row(
+            title = stringResource(R.string.alias_delivery_folder_title),
+            subtitle = stringResource(R.string.alias_delivery_folder_subtitle),
+            value = selected_label,
+            test_tag = "alias_delivery_folder_selector",
+            trailing = run_menu,
+        ) { expanded, dismiss ->
+            aster_menu(expanded = expanded, on_dismiss = dismiss) {
+                aster_menu_item(
+                    label = inbox_label,
+                    selected = selected_label == inbox_label,
+                    on_click = {
+                        dismiss()
+                        on_select_inbox()
+                    },
                 )
-                panel_hint_text(stringResource(R.string.alias_delivery_folder_subtitle))
-            }
-            Spacer(Modifier.width(AsterSpacing.sm))
-            Box {
-                Row(
-                    modifier = Modifier
-                        .clip(AsterShapes.control)
-                        .background(field_surface_color(colors), AsterShapes.control)
-                        .clickable { menu_open = true }
-                        .padding(horizontal = 12.dp, vertical = 10.dp)
-                        .testTag("alias_delivery_folder_selector"),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = selected_label,
-                        color = colors.text_primary,
-                        fontSize = 13.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Icon(
-                        imageVector = TablerIcons.ChevronDown,
-                        contentDescription = null,
-                        tint = colors.text_muted,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-                aster_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
+                aster_menu_item(
+                    label = archive_label,
+                    selected = selected_label == archive_label,
+                    on_click = {
+                        dismiss()
+                        on_select_archive()
+                    },
+                )
+                folders.forEach { folder ->
+                    val folder_name = folder.encrypted_name.orEmpty()
                     aster_menu_item(
-                        label = stringResource(R.string.folder_inbox),
-                        selected = selected_label == stringResource(R.string.folder_inbox),
+                        label = folder_name,
+                        selected = folder_name.isNotBlank() && folder_name == selected_label,
                         on_click = {
-                            menu_open = false
-                            on_select_inbox()
+                            dismiss()
+                            on_select_folder(folder.label_token)
                         },
                     )
-                    aster_menu_item(
-                        label = stringResource(R.string.folder_archive),
-                        selected = selected_label == stringResource(R.string.folder_archive),
-                        on_click = {
-                            menu_open = false
-                            on_select_archive()
-                        },
-                    )
-                    folders.forEach { folder ->
-                        val folder_name = folder.encrypted_name.orEmpty()
-                        aster_menu_item(
-                            label = folder_name,
-                            selected = folder_name.isNotBlank() && folder_name == selected_label,
-                            on_click = {
-                                menu_open = false
-                                on_select_folder(folder.label_token)
-                            },
-                        )
-                    }
                 }
             }
-            run_menu?.invoke()
         }
         rule_delivery?.let { alias_delivery_rule_note(it, selected_label) }
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.alias_delivery_label_title),
-                    color = colors.text_primary,
-                    fontSize = 13.sp,
+        settings_row_gap()
+        alias_select_row(
+            title = stringResource(R.string.alias_delivery_label_title),
+            subtitle = stringResource(R.string.alias_delivery_label_subtitle),
+            value = selected_label_name,
+            test_tag = "alias_delivery_label_selector",
+            trailing = if (run_menu != null) {
+                { Spacer(Modifier.size(ALIAS_RUN_MENU_SIZE)) }
+            } else {
+                null
+            },
+        ) { expanded, dismiss ->
+            aster_menu(expanded = expanded, on_dismiss = dismiss) {
+                aster_menu_item(
+                    label = none_label,
+                    selected = selected_label_name == none_label,
+                    on_click = {
+                        dismiss()
+                        on_select_delivery_label(null)
+                    },
                 )
-                panel_hint_text(stringResource(R.string.alias_delivery_label_subtitle))
-            }
-            Spacer(Modifier.width(AsterSpacing.sm))
-            Box {
-                Row(
-                    modifier = Modifier
-                        .clip(AsterShapes.control)
-                        .background(field_surface_color(colors), AsterShapes.control)
-                        .clickable { label_menu_open = true }
-                        .padding(horizontal = 12.dp, vertical = 10.dp)
-                        .testTag("alias_delivery_label_selector"),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = selected_label_name,
-                        color = colors.text_primary,
-                        fontSize = 13.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Icon(
-                        imageVector = TablerIcons.ChevronDown,
-                        contentDescription = null,
-                        tint = colors.text_muted,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-                aster_menu(
-                    expanded = label_menu_open,
-                    on_dismiss = { label_menu_open = false },
-                ) {
+                tags.forEach { tag ->
                     aster_menu_item(
-                        label = stringResource(R.string.alias_delivery_label_none),
-                        selected = selected_label_name == stringResource(R.string.alias_delivery_label_none),
+                        label = tag.encrypted_name,
+                        selected = tag.encrypted_name == selected_label_name,
                         on_click = {
-                            label_menu_open = false
-                            on_select_delivery_label(null)
+                            dismiss()
+                            on_select_delivery_label(tag.tag_token)
                         },
                     )
-                    tags.forEach { tag ->
-                        aster_menu_item(
-                            label = tag.encrypted_name,
-                            selected = tag.encrypted_name == selected_label_name,
-                            on_click = {
-                                label_menu_open = false
-                                on_select_delivery_label(tag.tag_token)
-                            },
-                        )
-                    }
                 }
-            }
-            if (run_menu != null) {
-                Spacer(Modifier.size(ALIAS_RUN_MENU_SIZE))
             }
         }
         rule_label?.let { alias_delivery_label_rule_note(it, selected_label_name) }
@@ -753,9 +652,9 @@ internal fun alias_apply_existing_menu(
             modifier = Modifier.testTag("alias_delivery_menu_button"),
         ) {
             if (busy) {
-                CircularProgressIndicator(
+                org.astermail.android.design.components.aster_spinner(
                     modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp,
+                    stroke_width = 2.dp,
                     color = colors.text_muted,
                 )
             } else {
@@ -800,10 +699,11 @@ internal fun alias_apply_existing_status_text(run: AliasRun?, unsupported: Boole
     alias_apply_existing_status(run, unsupported)?.let { status ->
         Text(
             text = status,
-            color = colors.text_muted,
-            fontSize = 11.sp,
+            color = colors.text_tertiary,
+            fontSize = 13.sp,
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)
                 .testTag("alias_apply_existing_status"),
         )
     }
@@ -812,24 +712,40 @@ internal fun alias_apply_existing_status_text(run: AliasRun?, unsupported: Boole
 @Composable
 private fun alias_stats_section(detail: AliasDetailState) {
     if (detail.stats_locked) {
-        panel_locked_section(stringResource(R.string.alias_stats_title))
+        alias_card_hint(stringResource(R.string.alias_feature_locked))
         return
     }
     val stats = detail.stats ?: return
-    Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-        panel_section_title(stringResource(R.string.alias_stats_title))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
-        ) {
-            alias_stat_cell(stringResource(R.string.alias_stats_received), stats.received, Modifier.weight(1f))
-            alias_stat_cell(stringResource(R.string.alias_stats_forwarded), stats.forwarded, Modifier.weight(1f))
-            alias_stat_cell(stringResource(R.string.alias_stats_blocked), stats.blocked, Modifier.weight(1f))
-            alias_stat_cell(stringResource(R.string.alias_stats_replied), stats.replied, Modifier.weight(1f))
+    val large_text = LocalDensity.current.fontScale > 1.3f
+    val cells = listOf(
+        stringResource(R.string.alias_stats_received) to stats.received,
+        stringResource(R.string.alias_stats_forwarded) to stats.forwarded,
+        stringResource(R.string.alias_stats_blocked) to stats.blocked,
+        stringResource(R.string.alias_stats_replied) to stats.replied,
+    )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
+        verticalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+    ) {
+        cells.chunked(if (large_text) 2 else 4).forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            ) {
+                row.forEach { (label, value) ->
+                    alias_stat_cell(label, value, Modifier.weight(1f))
+                }
+            }
         }
         val created = format_panel_date(stats.created_at)
         if (created.isNotBlank()) {
-            panel_hint_text(stringResource(R.string.alias_stats_created, created))
+            Text(
+                text = stringResource(R.string.alias_stats_created, created),
+                color = AsterMaterial.colors.text_tertiary,
+                fontSize = 13.sp,
+            )
         }
     }
 }
@@ -837,20 +753,22 @@ private fun alias_stats_section(detail: AliasDetailState) {
 @Composable
 private fun alias_stat_cell(label: String, value: Long, modifier: Modifier = Modifier) {
     val colors = AsterMaterial.colors
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
-            .padding(vertical = AsterSpacing.sm),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    Column(modifier = modifier) {
         Text(
             text = value.toString(),
             color = colors.text_primary,
-            fontSize = 15.sp,
+            fontSize = 20.sp,
+            lineHeight = 24.sp,
             fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
         )
-        Text(text = label, color = colors.text_muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(
+            text = label,
+            color = colors.text_tertiary,
+            fontSize = 12.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

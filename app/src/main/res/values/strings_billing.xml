@@ -155,4 +155,19 @@
     <string name="save_offer_action">Keep my plan at %1$d%% off</string>
     <string name="save_offer_hint">After the discount ends, your plan renews at its regular price. This offer is available once per account.</string>
     <string name="save_offer_failed">We could not apply the discount. Try again.</string>
+    <string name="billing_compare_upgrade_to">Upgrade to %1$s</string>
+    <string name="billing_compare_switch_to">Switch to %1$s</string>
+    <string name="billing_compare_downgrade_to">Downgrade to %1$s</string>
+    <string name="billing_compare_gains_title">What %1$s adds</string>
+    <string name="billing_compare_you_have">You have %1$s</string>
+    <string name="billing_compare_not_in_plan">Not in your plan</string>
+    <string name="billing_compare_everything_in">Everything in %1$s</string>
+    <string name="billing_compare_free_forever">Free forever</string>
+    <string name="billing_compare_free_note">To move to Free, cancel your plan.</string>
+    <string name="billing_compare_tagline_free">Private email to get started</string>
+    <string name="billing_compare_tagline_star">More room and up to 5 domains</string>
+    <string name="billing_compare_tagline_nova">Unlimited aliases and 30 domains</string>
+    <string name="billing_compare_tagline_supernova">The most storage and support</string>
+    <string name="billing_compare_tagline_duo">Two accounts, one bill</string>
+    <string name="billing_compare_tagline_family">Up to six people, one plan</string>
 </resources>

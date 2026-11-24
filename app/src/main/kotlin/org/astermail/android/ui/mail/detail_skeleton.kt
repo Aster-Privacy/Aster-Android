@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -56,6 +57,8 @@ import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_appearance
 import org.astermail.android.design.components.shimmer_state
+import org.astermail.android.design.components.skeleton_paragraph
+import org.astermail.android.design.components.skeleton_reveal
 import org.astermail.android.design.acrylic_backdrop
 import org.astermail.android.ui.common.page_surface
 
@@ -65,12 +68,13 @@ private fun detail_skeleton_card(
     card_color: Color,
     is_first: Boolean,
     is_last: Boolean,
+    modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) }
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(
                 start = inbox_card_horizontal_margin,
@@ -134,12 +138,18 @@ fun detail_skeleton(modifier: Modifier = Modifier, message_count: Int = 1) {
     val collapsed = (message_count - 1).coerceIn(0, 3)
     val card_count = collapsed + 1
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .graphicsLayer()
             .page_surface(colors),
     ) {
+      Column(
+          modifier = Modifier
+              .fillMaxSize()
+              .navigationBarsPadding()
+              .skeleton_reveal(),
+      ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -196,32 +206,25 @@ fun detail_skeleton(modifier: Modifier = Modifier, message_count: Int = 1) {
             card_color = card_color,
             is_first = card_count == 1,
             is_last = true,
+            modifier = Modifier.weight(1f, fill = false),
         ) {
             detail_skeleton_sender_row(state, shape, 36.dp)
-            Column(
+            skeleton_paragraph(
+                state = state,
+                max_lines = 9,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = inbox_card_content_padding)
-                    .padding(bottom = AsterSpacing.lg),
-            ) {
-                val widths = listOf(1f, 0.95f, 1f, 0.85f, 0.92f, 0.5f)
-                widths.forEach { fraction ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(fraction)
-                            .height(13.dp)
-                            .shimmer(state, shape),
-                    )
-                    Spacer(Modifier.height(8.dp))
-                }
-            }
+                    .padding(top = AsterSpacing.xs, bottom = AsterSpacing.lg),
+            )
         }
+      }
     }
 }
 
 @Composable
 fun remember_detail_skeleton_phase(thread_key: String, wanted: Boolean): SkeletonPhase =
-    key(thread_key) { remember_skeleton_phase(wanted = wanted, rows_imminent = false).value }
+    key(thread_key) { remember_skeleton_phase(wanted = wanted).value }
 
 @Composable
 fun Modifier.detail_content_handoff(thread_key: String, phase: SkeletonPhase): Modifier =
@@ -248,18 +251,14 @@ fun detail_skeleton_layer(phase: SkeletonPhase, modifier: Modifier = Modifier, m
 @Composable
 fun email_body_skeleton(modifier: Modifier = Modifier) {
     val state = shimmer_state()
-    val shape = RoundedCornerShape(6.dp)
-
-    Column(modifier = modifier.graphicsLayer().padding(horizontal = 8.dp, vertical = AsterSpacing.md)) {
-        val widths = listOf(1f, 0.95f, 1f, 0.85f, 1f, 0.9f, 1f, 0.7f, 1f, 0.5f)
-        widths.forEach { fraction ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(fraction)
-                    .height(13.dp)
-                    .shimmer(state, shape),
-            )
-            Spacer(Modifier.height(8.dp))
-        }
-    }
+    skeleton_paragraph(
+        state = state,
+        max_lines = email_body_skeleton_max_lines,
+        modifier = modifier
+            .skeleton_reveal()
+            .padding(horizontal = 8.dp)
+            .padding(top = AsterSpacing.md, bottom = AsterSpacing.sm),
+    )
 }
+
+private const val email_body_skeleton_max_lines = 30

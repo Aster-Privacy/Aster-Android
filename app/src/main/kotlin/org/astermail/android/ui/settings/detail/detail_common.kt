@@ -253,6 +253,8 @@ internal fun detail_scaffold(
     trailing: (@Composable () -> Unit)? = null,
     scroll_state: ScrollState? = null,
     scrollable: Boolean = true,
+    on_refresh: (suspend () -> Unit)? = null,
+    refresh_enabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = AsterMaterial.colors
@@ -274,23 +276,29 @@ internal fun detail_scaffold(
             },
         )
 
-        if (scrollable) {
-            val anchor_host = remember_settings_anchor_host(effective_scroll)
-            CompositionLocalProvider(local_settings_anchor_host provides anchor_host) {
+        org.astermail.android.ui.settings.settings_pull_refresh_box(
+            on_refresh = on_refresh,
+            enabled = refresh_enabled,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            if (scrollable) {
+                val anchor_host = remember_settings_anchor_host(effective_scroll)
+                CompositionLocalProvider(local_settings_anchor_host provides anchor_host) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .vertical_scroll_with_indicator(effective_scroll)
+                            .settings_search_content(anchor_host)
+                            .padding(AsterSpacing.lg),
+                        content = content,
+                    )
+                }
+            } else {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .vertical_scroll_with_indicator(effective_scroll)
-                        .settings_search_content(anchor_host)
-                        .padding(AsterSpacing.lg),
+                    modifier = Modifier.fillMaxSize(),
                     content = content,
                 )
             }
-        } else {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                content = content,
-            )
         }
     }
 }
@@ -301,27 +309,42 @@ internal fun embeddable_detail_scaffold(
     title: String,
     on_back: () -> Unit,
     scrollable: Boolean = true,
+    on_refresh: (suspend () -> Unit)? = null,
+    refresh_enabled: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     if (!embedded) {
-        detail_scaffold(title = title, on_back = on_back, scrollable = scrollable, content = content)
+        detail_scaffold(
+            title = title,
+            on_back = on_back,
+            scrollable = scrollable,
+            on_refresh = on_refresh,
+            refresh_enabled = refresh_enabled,
+            content = content,
+        )
         return
     }
-    if (scrollable) {
-        val scroll_state = rememberScrollState()
-        val anchor_host = remember_settings_anchor_host(scroll_state)
-        CompositionLocalProvider(local_settings_anchor_host provides anchor_host) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .vertical_scroll_with_indicator(scroll_state)
-                    .settings_search_content(anchor_host)
-                    .padding(AsterSpacing.lg),
-                content = content,
-            )
+    org.astermail.android.ui.settings.settings_pull_refresh_box(
+        on_refresh = on_refresh,
+        enabled = refresh_enabled,
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        if (scrollable) {
+            val scroll_state = rememberScrollState()
+            val anchor_host = remember_settings_anchor_host(scroll_state)
+            CompositionLocalProvider(local_settings_anchor_host provides anchor_host) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .vertical_scroll_with_indicator(scroll_state)
+                        .settings_search_content(anchor_host)
+                        .padding(AsterSpacing.lg),
+                    content = content,
+                )
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxSize(), content = content)
         }
-    } else {
-        Column(modifier = Modifier.fillMaxSize(), content = content)
     }
 }
 
@@ -336,7 +359,7 @@ internal fun preferences_load_placeholder() {
             modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
             contentAlignment = Alignment.Center,
         ) {
-            CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+            settings_load_spinner()
         }
 
         return

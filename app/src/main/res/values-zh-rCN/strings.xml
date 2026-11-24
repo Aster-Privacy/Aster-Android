@@ -1580,6 +1580,10 @@
     <string name="send_email_to_sender">写信给该发件人</string>
     <string name="add_to_contacts">保存到联系人</string>
     <string name="remove_from_contacts">从联系人中移除</string>
+    <string name="sender_action_new_message">新邮件</string>
+    <string name="sender_action_add_contact">添加联系人</string>
+    <string name="sender_action_view_contact">查看联系人</string>
+    <string name="sender_action_in_contacts">已在联系人中</string>
     <string name="contact_added_named">已将 %1$s 保存到联系人</string>
     <string name="contact_removed_named">已将 %1$s 从联系人中移除</string>
     <string name="blocked_content_details_title">已拦截的内容</string>

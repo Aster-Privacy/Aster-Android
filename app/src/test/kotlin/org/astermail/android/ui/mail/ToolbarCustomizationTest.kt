@@ -135,4 +135,18 @@ class ToolbarCustomizationTest {
             )
         }
     }
+
+    @Test
+    fun read_slot_flipped_to_unread_does_not_repeat_an_unread_slot() {
+        val shown = resolve_selection_toolbar(listOf("unread", "folder", "label", "read"), false, selection_all_read = true)
+        assertEquals(4, shown.size)
+        assertEquals(1, shown.count { it.id == "unread" })
+        assertEquals(shown.map { it.id }.distinct(), shown.map { it.id })
+    }
+
+    @Test
+    fun hidden_slot_is_not_backfilled() {
+        val shown = resolve_selection_toolbar(listOf("trash", "category", "label", "read"), false, is_available = { it != "category" })
+        assertEquals(listOf("trash", "label", "read"), shown.map { it.id })
+    }
 }

@@ -54,9 +54,9 @@ fun RegisterGeneratingStep(extended_wait: Boolean = false) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 color = colors.accent_blue,
-                strokeWidth = 3.dp,
+                stroke_width = 3.dp,
                 modifier = Modifier.size(40.dp),
             )
             Spacer(Modifier.height(AsterSpacing.xl))

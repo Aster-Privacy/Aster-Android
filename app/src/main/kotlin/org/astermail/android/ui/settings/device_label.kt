@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -247,4 +248,32 @@ fun device_client_glyph(browser: String, kind: DeviceClientKind, size_dp: Int = 
         tint = colors.text_secondary,
         modifier = Modifier.size(size_dp.dp),
     )
+}
+
+fun device_client_tint(kind: DeviceClientKind): Color = when (kind) {
+    DeviceClientKind.bridge -> Color(0xFF14B8A6)
+    DeviceClientKind.tablet -> Color(0xFFA855F7)
+    DeviceClientKind.phone -> Color(0xFF22C55E)
+    DeviceClientKind.desktop_app -> Color(0xFFF59E0B)
+    DeviceClientKind.browser -> Color(0xFF3B82F6)
+    DeviceClientKind.desktop -> Color(0xFF6366F1)
+}
+
+@Composable
+fun device_client_tile(browser: String, kind: DeviceClientKind) {
+    val tint = device_client_tint(kind)
+    val logo = browser_logo_res(browser)
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+            .background(tint.copy(alpha = 0.16f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (logo != null) {
+            Image(painter = painterResource(logo), contentDescription = null, modifier = Modifier.size(22.dp))
+        } else {
+            Icon(imageVector = device_client_icon(kind), contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
+        }
+    }
 }

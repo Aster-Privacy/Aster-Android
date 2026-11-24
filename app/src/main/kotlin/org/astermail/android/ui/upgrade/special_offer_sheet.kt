@@ -1108,10 +1108,10 @@ private fun SpecialOfferDepthButton(label: String, is_loading: Boolean, enabled:
             contentAlignment = Alignment.Center,
         ) {
             if (is_loading) {
-                CircularProgressIndicator(
+                org.astermail.android.design.components.aster_spinner(
                     modifier = Modifier.size(20.dp),
                     color = Color.White,
-                    strokeWidth = 2.dp,
+                    stroke_width = 2.dp,
                 )
             } else {
                 Text(

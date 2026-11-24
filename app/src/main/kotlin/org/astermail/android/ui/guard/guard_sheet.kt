@@ -20,7 +20,6 @@
 //
 package org.astermail.android.ui.guard
 
-import android.os.Build
 import android.text.format.DateUtils
 import android.view.WindowManager
 import androidx.compose.animation.AnimatedVisibility
@@ -80,6 +79,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -95,7 +95,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindowProvider
-import androidx.core.view.WindowCompat
 import compose.icons.TablerIcons
 import compose.icons.tablericons.BrandAndroid
 import compose.icons.tablericons.BrandApple
@@ -110,6 +109,7 @@ import java.time.Instant
 import java.util.Locale
 import kotlinx.coroutines.delay
 import org.astermail.android.R
+import org.astermail.android.ui.settings.detail.info_dialog_button
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterShapes
@@ -119,6 +119,10 @@ import org.astermail.android.design.components.AsterDestructiveButton
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.components.aster_host_window
+import org.astermail.android.design.components.aster_popup_scrim_alpha
+import org.astermail.android.design.components.prepare_popup_window
+import org.astermail.android.ui.common.app_toast_host
 import org.astermail.android.ui.common.aster_sheet_shape
 import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.mail.chip_background
@@ -208,23 +212,17 @@ fun guard_relative_time(iso: String, now: Long): String? {
 @Composable
 private fun guard_dialog_window() {
     val view = LocalView.current
+    val context = LocalContext.current
     val colors = AsterMaterial.colors
     SideEffect {
         val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-        window.setDimAmount(0.32f)
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-            @Suppress("DEPRECATION")
-            window.statusBarColor = android.graphics.Color.TRANSPARENT
-            @Suppress("DEPRECATION")
-            window.navigationBarColor = android.graphics.Color.TRANSPARENT
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) window.isNavigationBarContrastEnforced = false
-        WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars =
-            sheet_container_color(colors).luminance() > 0.5f
+        prepare_popup_window(
+            window = window,
+            host = aster_host_window(context),
+            light_navigation_bars = sheet_container_color(colors).luminance() > 0.5f,
+            full_window = true,
+        )
         view.filterTouchesWhenObscured = true
     }
 }
@@ -235,6 +233,11 @@ fun guard_sheet_frame(content: @Composable ColumnScope.() -> Unit) {
     val colors = AsterMaterial.colors
     val visible = remember { MutableTransitionState(false) }
     visible.targetState = true
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = aster_popup_scrim_alpha)),
+    ) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -270,10 +273,12 @@ fun guard_sheet_frame(content: @Composable ColumnScope.() -> Unit) {
             }
         }
     }
+    app_toast_host(nested = true)
+    }
 }
 
 @Composable
-fun guard_wordmark(modifier: Modifier = Modifier, height: Dp = 22.dp) {
+fun guard_wordmark(modifier: Modifier = Modifier, height: Dp = 32.dp) {
     Image(
         painter = painterResource(R.drawable.aster_wordmark),
         contentDescription = stringResource(R.string.guard_logo_description),
@@ -282,6 +287,36 @@ fun guard_wordmark(modifier: Modifier = Modifier, height: Dp = 22.dp) {
             .height(height)
             .aspectRatio(guard_wordmark_ratio),
     )
+}
+
+@Composable
+fun guard_page_hero(title: String, body: String? = null, info: String? = null) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.lg, bottom = AsterSpacing.xl),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        guard_wordmark()
+        Spacer(Modifier.height(AsterSpacing.xl))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = title,
+                color = AsterMaterial.colors.text_primary,
+                fontSize = 22.sp,
+                lineHeight = 28.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f, fill = false).semantics { heading() },
+            )
+            if (info != null) {
+                Spacer(Modifier.width(AsterSpacing.xs))
+                info_dialog_button(title = title, description = info)
+            }
+        }
+        if (body != null) {
+            Spacer(Modifier.height(AsterSpacing.xs))
+            guard_body_text(body, Modifier.fillMaxWidth())
+        }
+    }
 }
 
 @Composable

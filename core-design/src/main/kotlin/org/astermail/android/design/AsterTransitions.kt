@@ -70,8 +70,8 @@ object AsterMotionSpec {
     const val fade_from = 0.8f
     const val expand_ms = 400
     const val collapse_ms = 250
-    const val reduced_fade_ms = 150
-    const val reduced_fade_out_ms = 75
+    const val reduced_fade_ms = 0
+    const val reduced_fade_out_ms = 0
     const val icon_from = 0.8f
     const val fade_in_ms = 150
     const val fade_out_ms = 75
@@ -90,14 +90,14 @@ private val fade_enter_alpha_easing = aster_threshold_easing(AsterEasing.emphasi
 
 fun aster_fade_in(reduce_motion: Boolean = false): EnterTransition =
     if (reduce_motion) {
-        fadeIn(tween(AsterMotionSpec.reduced_fade_ms, easing = LinearEasing))
+        EnterTransition.None
     } else {
         fadeIn(tween(AsterMotionSpec.fade_enter_ms, easing = fade_enter_alpha_easing))
     }
 
 fun aster_fade_out(reduce_motion: Boolean = false): ExitTransition =
     if (reduce_motion) {
-        fadeOut(tween(AsterMotionSpec.reduced_fade_out_ms, easing = LinearEasing))
+        ExitTransition.None
     } else {
         fadeOut(tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.emphasized_accelerate))
     }
@@ -329,7 +329,7 @@ fun aster_animate_color(target: Color, label: String = "aster_color", duration_m
     val reduce = aster_reduce_motion()
     return animateColorAsState(
         targetValue = target,
-        animationSpec = tween(if (reduce) AsterMotionSpec.reduced_fade_ms else duration_ms, easing = AsterEasing.standard),
+        animationSpec = if (reduce) snap() else tween(duration_ms, easing = AsterEasing.standard),
         label = label,
     )
 }

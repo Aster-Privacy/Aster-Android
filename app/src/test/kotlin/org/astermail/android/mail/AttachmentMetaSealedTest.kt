@@ -226,6 +226,68 @@ class AttachmentMetaSealedTest {
     }
 
     @Test
+    fun received_row_from_a_sender_that_sealed_a_manifest_is_verified() {
+        val content = "board minutes".toByteArray(Charsets.UTF_8)
+        val plan = plan_sealed_attachments(
+            listOf(
+                org.astermail.android.api.send.ExternalAttachmentPayload(
+                    data = b64(content),
+                    filename = "minutes.pdf",
+                    content_type = "application/pdf",
+                    size_bytes = content.size.toLong(),
+                ),
+            ),
+            { java.util.Base64.getDecoder().decode(it) },
+        )!!
+        val planned_key = b64(plan.key_for(0))
+        val bundle = build_subject_bundle_text("Minutes", "<p>See attached</p>", null, plan.manifest)
+        plan.wipe()
+        InboundAttachmentKeyStore.register_sealed_manifest(
+            "item-planned",
+            extract_subject_bundle(bundle).attachment_manifest,
+        )
+        val row = """{"filename":"row.exe","content_type":"application/x-msdownload","session_key":"c2VydmVy"}"""
+
+        val meta = repo.decrypt_attachment_meta(
+            b64(row.toByteArray(Charsets.UTF_8)),
+            b64(ByteArray(12)),
+            "item-planned",
+            0,
+            99L,
+        )
+
+        assertEquals("minutes.pdf", meta.filename)
+        assertEquals("application/pdf", meta.content_type)
+        assertEquals(planned_key, meta.session_key)
+        assertEquals(content.size.toLong(), meta.size_bytes)
+        assertFalse(meta.is_unverified)
+    }
+
+    @Test
+    fun received_row_from_a_sender_without_a_manifest_stays_unverified() {
+        val bundle = build_subject_bundle_text("Minutes", "<p>See attached</p>", null)
+        assertFalse(
+            InboundAttachmentKeyStore.register_sealed_manifest(
+                "item-legacy",
+                extract_subject_bundle(bundle).attachment_manifest,
+            ),
+        )
+        val row = """{"filename":"minutes.pdf","content_type":"application/pdf","session_key":"c2VydmVy"}"""
+
+        val meta = repo.decrypt_attachment_meta(
+            b64(row.toByteArray(Charsets.UTF_8)),
+            b64(ByteArray(12)),
+            "item-legacy",
+            0,
+            99L,
+        )
+
+        assertEquals("minutes.pdf", meta.filename)
+        assertEquals("c2VydmVy", meta.session_key)
+        assertTrue(meta.is_unverified)
+    }
+
+    @Test
     fun sent_row_in_plain_json_is_refused() {
         val plaintext = """{"filename":"forged.txt","content_type":"text/plain","session_key":"c2VydmVy"}"""
         val encoded = b64(plaintext.toByteArray(Charsets.UTF_8))

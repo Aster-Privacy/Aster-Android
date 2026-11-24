@@ -233,7 +233,18 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         }.apply { name = "aster-prefs-warm" }.start()
     }
 
+    private fun start_database_open() {
+        Thread {
+            runCatching {
+                EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
+                    .database()
+                    .get()
+            }
+        }.apply { name = "aster-db-open" }.start()
+    }
+
     private fun start_deferred_startup() {
+        start_database_open()
         Thread {
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND)
             runCatching { prime_profile_resolver() }
@@ -249,11 +260,6 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
                 org.astermail.android.notifications.PersistentPushService.start_if_enabled(this)
             }
             runCatching { org.astermail.android.notifications.UnifiedPushState.sync_registration(this) }
-            runCatching {
-                EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
-                    .database()
-                    .get()
-            }
         }.apply { name = "aster-startup" }.start()
     }
 

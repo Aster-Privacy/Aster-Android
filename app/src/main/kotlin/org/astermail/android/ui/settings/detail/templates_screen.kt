@@ -74,6 +74,7 @@ import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.templates.DecryptedTemplate
 import org.astermail.android.templates.TemplatesViewModel
 import org.astermail.android.util.clip_units
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun TemplatesScreen(
@@ -121,13 +122,15 @@ fun TemplatesScreen(
         trailing = {
             AsterGhostButton(label = stringResource(R.string.new_label), onClick = { vm.start_new() })
         },
+        on_refresh = { vm.join_launched { vm.load() } },
+        refresh_enabled = !state.is_saving && pending_delete == null,
     ) {
         if (state.is_loading && state.items.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                settings_load_spinner()
             }
             return@detail_scaffold
         }
@@ -322,7 +325,7 @@ private fun template_editor(
         on_back = on_back,
         trailing = {
             if (is_saving) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(18.dp))
+                org.astermail.android.design.components.aster_spinner(color = colors.accent_blue, modifier = Modifier.size(18.dp))
             } else {
                 AsterGhostButton(label = stringResource(R.string.save), onClick = on_save)
             }

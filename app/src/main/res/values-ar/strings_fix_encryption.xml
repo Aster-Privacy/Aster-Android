@@ -3,4 +3,8 @@
     <string name="fix_enc_codes_share_title">رموز الاسترداد</string>
     <string name="fix_enc_codes_file_note">يعمل كل رمز مرة واحدة. احتفظ بهذا الملف في مكان آمن.</string>
     <string name="fix_enc_codes_save_failed">لا يمكنك حفظ الملف الآن. انسخ الرموز بدلاً من ذلك.</string>
+    <string name="enc_hero_status_protected">محمي</string>
+    <string name="enc_hero_status_attention">يحتاج إلى انتباه</string>
+    <string name="enc_hero_summary">رسائلك مشفرة تمامًا بين الطرفين بمفتاح لا يملكه أحد سواك.</string>
+    <string name="enc_hero_summary_missing">هذا الجهاز لا يحتوي على مفتاحك. سجّل الدخول مرة أخرى لاستعادته.</string>
 </resources>

@@ -77,6 +77,7 @@ import org.astermail.android.settings.DecryptedSignature
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.settings.signature_sender_id
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun SignatureScreen(
@@ -205,6 +206,14 @@ fun SignatureScreen(
     detail_scaffold(
         title = stringResource(R.string.signature),
         on_back = on_back,
+        on_refresh = {
+            vm.join_launched {
+                vm.load_aliases(force = true)
+                vm.load_signature()
+                vm.load_preferences(force = true)
+            }
+        },
+        refresh_enabled = !fitting_signature && state.save_status != org.astermail.android.settings.SaveStatus.SAVING,
     ) {
         preferences_save_error_banner()
         section_label(stringResource(R.string.your_signature))

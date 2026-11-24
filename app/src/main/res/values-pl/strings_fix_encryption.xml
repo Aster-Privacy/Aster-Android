@@ -3,4 +3,8 @@
     <string name="fix_enc_codes_share_title">Kody odzyskiwania</string>
     <string name="fix_enc_codes_file_note">Każdy kod działa raz. Przechowuj ten plik w bezpiecznym miejscu.</string>
     <string name="fix_enc_codes_save_failed">Nie można teraz zapisać pliku. Zamiast tego skopiuj kody.</string>
+    <string name="enc_hero_status_protected">Chronione</string>
+    <string name="enc_hero_status_attention">Wymaga uwagi</string>
+    <string name="enc_hero_summary">Twoje wiadomości są szyfrowane end-to-end kluczem, który masz tylko Ty.</string>
+    <string name="enc_hero_summary_missing">To urządzenie nie ma Twojego klucza. Zaloguj się ponownie, aby go przywrócić.</string>
 </resources>

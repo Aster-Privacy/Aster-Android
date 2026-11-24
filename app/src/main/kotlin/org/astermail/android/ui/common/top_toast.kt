@@ -21,11 +21,12 @@ package org.astermail.android.ui.common
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.fadeIn
@@ -49,7 +50,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.getValue
@@ -74,8 +74,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Job
@@ -114,6 +113,10 @@ fun next_toast_key(): Long = toast_key_counter.incrementAndGet()
 private val toast_control_size = 32.dp
 
 private val toast_max_width = 560.dp
+
+private const val toast_enter_ms = 220
+
+private const val toast_swap_ms = 140
 
 @Composable
 private fun toast_action(
@@ -182,49 +185,50 @@ fun top_toast_overlay(
     state: TopToastState?,
     on_dismiss: (TopToastState) -> Unit,
     on_hold: (TopToastState, Boolean) -> Unit = { _, _ -> },
+    fill_width: Boolean = true,
+    top_padding: Dp? = null,
 ) {
     var last_state by remember { mutableStateOf<TopToastState?>(null) }
     if (state != null) last_state = state
     val reduce_motion = aster_reduce_motion()
-    Box(modifier = Modifier.fillMaxWidth().statusBarsPadding(), contentAlignment = Alignment.TopCenter) {
+    val frame = if (fill_width) Modifier.fillMaxWidth() else Modifier
+    val placed = if (top_padding != null) frame.padding(top = top_padding) else frame.statusBarsPadding()
+    Box(modifier = placed, contentAlignment = Alignment.TopCenter) {
         AnimatedVisibility(
             visible = state != null,
             enter = if (reduce_motion) {
                 aster_fade_in(true)
             } else {
                 slideInVertically(
-                    animationSpec = spring(
-                        dampingRatio = AsterSpring.spatial_damping,
-                        stiffness = AsterSpring.fast_spatial_stiffness,
-                        visibilityThreshold = IntOffset(1, 1),
-                    ),
-                    initialOffsetY = { -it },
-                ) + fadeIn(animationSpec = AsterSpring.fast_effects()) + scaleIn(
-                    animationSpec = AsterSpring.fast_spatial(),
-                    initialScale = 0.92f,
-                    transformOrigin = TransformOrigin(0.5f, 0f),
-                )
+                    animationSpec = tween(toast_enter_ms, easing = AsterEasing.emphasized_decelerate),
+                    initialOffsetY = { -it / 2 },
+                ) + fadeIn(animationSpec = tween(toast_enter_ms, easing = AsterEasing.standard_decelerate))
             },
             exit = if (reduce_motion) {
                 aster_fade_out(true)
             } else {
                 slideOutVertically(
                     animationSpec = tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.emphasized_accelerate),
-                    targetOffsetY = { -it },
+                    targetOffsetY = { -it / 2 },
                 ) +
-                    fadeOut(animationSpec = tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.emphasized_accelerate)) +
-                    scaleOut(
-                        animationSpec = tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.emphasized_accelerate),
-                        targetScale = 0.94f,
-                        transformOrigin = TransformOrigin(0.5f, 0f),
-                    )
+                    fadeOut(animationSpec = tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.emphasized_accelerate))
             },
         ) {
             val shown = last_state ?: return@AnimatedVisibility
-            key(shown.key) {
+            AnimatedContent(
+                targetState = shown,
+                contentKey = { it.key },
+                contentAlignment = Alignment.TopCenter,
+                transitionSpec = {
+                    fadeIn(tween(toast_swap_ms)) togetherWith
+                        fadeOut(tween(toast_swap_ms)) using
+                        SizeTransform(clip = false) { _, _ -> snap() }
+                },
+                label = "toast_swap",
+            ) { target ->
                 toast_card(
-                    toast = shown,
-                    is_current = state?.key == shown.key,
+                    toast = target,
+                    is_current = state?.key == target.key,
                     on_dismiss = on_dismiss,
                     on_hold = on_hold,
                 )

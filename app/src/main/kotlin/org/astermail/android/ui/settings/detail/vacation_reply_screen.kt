@@ -60,6 +60,7 @@ import org.astermail.android.billing.PlanLimitsViewModel
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
+import org.astermail.android.design.components.aster_show
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDestructiveButton
 import org.astermail.android.design.components.AsterSwitch
@@ -67,6 +68,7 @@ import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.ui.common.picker_theme_res
 import org.astermail.android.vacation.VacationReplyViewModel
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun VacationReplyScreen(
@@ -98,7 +100,12 @@ fun VacationReplyScreen(
         )
     }
 
-    detail_scaffold(title = stringResource(R.string.vacation_reply), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.vacation_reply),
+        on_back = on_back,
+        on_refresh = { vm.join_launched { vm.load(quiet = true) } },
+        refresh_enabled = !state.is_loading && !state.is_busy && !state.dirty,
+    ) {
         if (plan_vm.is_feature_locked("has_vacation_reply") && !plan_state.is_loading) {
             UpgradeGate(
                 title = stringResource(R.string.vacation_reply),
@@ -115,7 +122,7 @@ fun VacationReplyScreen(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                settings_load_spinner()
             }
             return@detail_scaffold
         }
@@ -318,7 +325,7 @@ private fun vacation_date_row(
                         dialog.datePicker.maxDate = it
                     }
                     dialog.with_account_week_start()
-                    dialog.show()
+                    dialog.aster_show()
                 }
                 .padding(AsterSpacing.lg),
             verticalAlignment = Alignment.CenterVertically,

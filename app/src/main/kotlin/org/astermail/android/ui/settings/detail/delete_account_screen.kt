@@ -190,10 +190,10 @@ private fun second_factor_placeholder() {
             .defaultMinSize(minHeight = 56.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CircularProgressIndicator(
+        org.astermail.android.design.components.aster_spinner(
             modifier = Modifier.size(16.dp),
             color = colors.text_tertiary,
-            strokeWidth = 2.dp,
+            stroke_width = 2.dp,
         )
         Spacer(Modifier.width(AsterSpacing.sm))
         Text(

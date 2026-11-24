@@ -208,6 +208,83 @@ internal fun declares_light_background(body: String): Boolean =
         COLOR_TOKEN.findAll(value).any { reads_as_light_surface(it.value) }
     }
 
+private const val PLAIN_TEXT_IMAGE_LIMIT = 2
+
+private const val PLAIN_WHITE_LUMINANCE = 0.85
+
+internal fun reads_as_plain_light_text(body: String): Boolean = reads_as_plain_text(body, allow_unstyled = false)
+
+internal fun reads_as_plain_table_correspondence(body: String): Boolean = try {
+    when {
+        BACKGROUND_ATTRIBUTE.containsMatchIn(body) -> false
+        else -> {
+            val doc = org.jsoup.Jsoup.parseBodyFragment(body)
+            when {
+                doc.select("style").any { BACKGROUND_SOURCE.containsMatchIn(it.data()) } -> false
+                doc.select("table, thead, tbody, tfoot, tr, td, th")
+                    .any { BACKGROUND_SOURCE.containsMatchIn(it.attr("style")) } -> false
+                else -> reads_as_plain_text(body, allow_unstyled = true)
+            }
+        }
+    }
+} catch (_: Throwable) {
+    false
+}
+
+private val BGCOLOR_ATTRIBUTE = Regex("<[^>]*\\sbgcolor\\s*=", RegexOption.IGNORE_CASE)
+
+private val BACKGROUND_ATTRIBUTE = Regex("<[^>]*\\sbackground\\s*=", RegexOption.IGNORE_CASE)
+
+private fun reads_as_plain_text(body: String, allow_unstyled: Boolean): Boolean = try {
+    val doc = org.jsoup.Jsoup.parseBodyFragment(body)
+    val decorated = doc.select("img").size
+    val sources = BACKGROUND_SOURCE.findAll(body).map { match -> match.groupValues[1].ifEmpty { match.groupValues[2] } }.toList()
+    when {
+        decorated > PLAIN_TEXT_IMAGE_LIMIT -> false
+        BGCOLOR_ATTRIBUTE.containsMatchIn(body) -> false
+        sources.isEmpty() -> allow_unstyled && doc.body().text().isNotBlank()
+        sources.any { declares_background_image("background:$it") } -> false
+        doc.select("[background]").isNotEmpty() -> false
+        doc.body().text().isBlank() -> false
+        else -> sources.all { value ->
+            val tokens = COLOR_TOKEN.findAll(value).map { it.value }.toList()
+            val bare = value.trim().removeSuffix("!important").trim().lowercase()
+            if (tokens.isEmpty()) {
+                bare in PLAIN_NEUTRAL_BACKGROUNDS
+            } else {
+                tokens.all { token -> is_translucent(token) || reads_as_neutral_white(token) }
+            }
+        }
+    }
+} catch (_: Throwable) {
+    false
+}
+
+private fun reads_as_neutral_white(raw: String): Boolean {
+    val value = raw.trim().lowercase()
+    if (value == "white") return true
+    val channels = when {
+        value.startsWith("#") -> {
+            val hex = value.drop(1)
+            val expanded = when (hex.length) {
+                3, 4 -> hex.take(3).map { "$it$it" }.joinToString("")
+                6, 8 -> hex.take(6)
+                else -> return false
+            }
+            val parsed = expanded.toLongOrNull(16) ?: return false
+            listOf((parsed shr 16) and 0xFF, (parsed shr 8) and 0xFF, parsed and 0xFF).map { it.toDouble() }
+        }
+        value.startsWith("rgb") -> functional_components(value).take(3).takeIf { it.size == 3 } ?: return false
+        else -> return false
+    }
+    val spread = channels.max() - channels.min()
+    return spread <= PLAIN_WHITE_SPREAD && (color_luminance(value) ?: 0.0) >= PLAIN_WHITE_LUMINANCE
+}
+
+private const val PLAIN_WHITE_SPREAD = 24.0
+
+private val PLAIN_NEUTRAL_BACKGROUNDS = setOf("transparent", "none", "inherit", "initial", "unset", "window", "")
+
 internal fun is_page_surface(raw: String): Boolean {
     val value = color_luminance(raw) ?: return false
     return value >= PAGE_SURFACE_LUMINANCE_LIMIT

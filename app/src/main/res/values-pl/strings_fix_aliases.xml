@@ -17,4 +17,22 @@
     <string name="alias_import_change_file">Zmień plik</string>
     <string name="alias_import_remove_file">Usuń plik</string>
     <string name="alias_note_placeholder_short">Gdzie go używasz</string>
+    <string name="alias_status_section">Stan</string>
+    <string name="alias_receive_mail">Odbieraj pocztę</string>
+    <string name="alias_receive_mail_on">Poczta wysłana na ten adres trafia do Ciebie.</string>
+    <string name="alias_receive_mail_off">Wstrzymano. Nowa poczta na ten adres nie jest dostarczana.</string>
+    <string name="alias_pin_subtitle">Utrzymuj ten alias na górze listy.</string>
+    <string name="alias_danger_zone">Strefa zagrożenia</string>
+    <string name="alias_delete_row_subtitle">Trwale usuń ten adres.</string>
+    <string name="alias_protection_section">Ochrona</string>
+    <string name="alias_automation_section">Automatyzacja</string>
+    <string name="alias_pin_mode_title">Tryb</string>
+    <string name="alias_remove_entry_a11y">Usuń %1$s</string>
+    <string name="alias_create_action">Utwórz alias</string>
+    <string name="alias_usage_near">Zbliżasz się do limitu aliasów.</string>
+    <string name="alias_usage_full">Osiągnięto limit aliasów.</string>
+    <string name="alias_offline_banner">Jesteś offline. Zmiany zsynchronizują się po ponownym połączeniu.</string>
+    <string name="alias_menu_pause">Wstrzymaj</string>
+    <string name="alias_menu_resume">Wznów</string>
+    <string name="alias_directory_auto_create_a11y">Automatycznie twórz aliasy dla %1$s</string>
 </resources>

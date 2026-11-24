@@ -112,7 +112,15 @@ import org.astermail.android.folders.is_folder_protected
 import org.astermail.android.labels.readable_label_name
 import org.astermail.android.labels.readable_tag_icon
 import org.astermail.android.mail.InboxItem
-import org.astermail.android.ui.common.page_surface
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import org.astermail.android.ui.common.app_toast
+import org.astermail.android.ui.common.system_confirms_copy
+import org.astermail.android.ui.common.write_sensitive_to_clipboard
+import org.astermail.android.ui.theme.local_accessibility
 
 internal val detail_chip_text_size = 10.sp
 internal val detail_chip_line_height = 14.sp
@@ -297,7 +305,6 @@ internal fun detail_subject_line(
     tags: List<TagItem>,
     max_lines: Int,
     on_overflow: (Boolean) -> Unit,
-    selection_state: subject_selection_state,
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
@@ -362,7 +369,6 @@ internal fun detail_subject_line(
     val chip_gap_px = remember(subject_style, density.density, density.fontScale) {
         measurer.measure(detail_chip_placeholder_gap, subject_style).size.width.toFloat()
     }
-    val selection_line_px = with(density) { detail_subject_line_height.toPx() }
     var chip_slots by remember { mutableStateOf<List<Rect?>>(emptyList()) }
     BoxWithConstraints(modifier = modifier) {
         val has_bounded_width = constraints.hasBoundedWidth
@@ -407,42 +413,21 @@ internal fun detail_subject_line(
         }
         Column {
             Box {
-                selectable_subject(state = selection_state) {
-                    Text(
-                        text = text,
-                        inlineContent = inline_content,
-                        color = colors.text_primary,
-                        fontSize = detail_subject_text_size,
-                        lineHeight = detail_subject_line_height,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = max_lines,
-                        overflow = TextOverflow.Ellipsis,
-                        onTextLayout = { layout ->
-                            on_overflow(chips_below || layout.hasVisualOverflow)
-                            chip_slots = layout.placeholderRects
-                        },
-                        modifier = Modifier.testTag("detail_subject_line"),
-                    )
-                }
-                if (selection_state.has_selection && !chips_below) {
-                    chips.indices.forEach { index ->
-                        val slot = chip_slots.getOrNull(index) ?: return@forEach
-                        Box(
-                            modifier = Modifier
-                                .offset {
-                                    IntOffset(
-                                        (slot.left - chip_gap_px).roundToInt(),
-                                        (slot.center.y - selection_line_px / 2f).roundToInt(),
-                                    )
-                                }
-                                .size(
-                                    width = with(density) { (slot.width + chip_gap_px).toDp() },
-                                    height = with(density) { selection_line_px.toDp() },
-                                )
-                                .page_surface(colors),
-                        )
-                    }
-                }
+                Text(
+                    text = text,
+                    inlineContent = inline_content,
+                    color = colors.text_primary,
+                    fontSize = detail_subject_text_size,
+                    lineHeight = detail_subject_line_height,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = max_lines,
+                    overflow = TextOverflow.Ellipsis,
+                    onTextLayout = { layout ->
+                        on_overflow(chips_below || layout.hasVisualOverflow)
+                        chip_slots = layout.placeholderRects
+                    },
+                    modifier = Modifier.testTag("detail_subject_line"),
+                )
                 if (!chips_below) {
                     chips.forEachIndexed { index, chip ->
                         val slot = chip_slots.getOrNull(index) ?: return@forEachIndexed
@@ -500,6 +485,40 @@ internal fun strip_subject_chip_placeholders(copied: String): String =
         .replace(detail_chip_placeholder_gap + detail_chip_placeholder_text, "")
         .replace(detail_chip_placeholder_text, "")
         .trimEnd()
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+internal fun Modifier.subject_press_actions(
+    expandable: Boolean,
+    on_toggle_expand: () -> Unit,
+    verification_code: String?,
+): Modifier {
+    if (!expandable && verification_code == null) return this
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+    val haptic_enabled = local_accessibility.current.haptic_enabled
+    val copy_label = stringResource(R.string.copy_code)
+    val copied_message = stringResource(R.string.code_copied)
+    val failed_message = stringResource(R.string.copy_failed)
+    val on_long_click: (() -> Unit)? = verification_code?.let { code ->
+        {
+            if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            val copied = write_sensitive_to_clipboard(context, context.getString(R.string.app_name), code)
+            when {
+                !copied -> app_toast.show(failed_message)
+                !system_confirms_copy() -> app_toast.show(copied_message)
+            }
+        }
+    }
+    return this.combinedClickable(
+        interactionSource = null,
+        indication = if (expandable) androidx.compose.foundation.LocalIndication.current else null,
+        onClick = { if (expandable) on_toggle_expand() },
+        onLongClick = on_long_click,
+        onLongClickLabel = if (verification_code != null) copy_label else null,
+        hapticFeedbackEnabled = false,
+    )
+}
 
 @Stable
 internal class subject_selection_state {

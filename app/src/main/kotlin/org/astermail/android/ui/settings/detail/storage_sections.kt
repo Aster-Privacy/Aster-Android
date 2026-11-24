@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -229,7 +230,7 @@ internal fun storage_usage_bar(
             .fillMaxWidth()
             .height(12.dp)
             .clip(RoundedCornerShape(999.dp))
-            .background(colors.bg_hover)
+            .background(colors.text_primary.copy(alpha = progress_track_alpha))
             .testTag("storage_usage_bar"),
     ) {
         if (fraction > 0f) {
@@ -237,6 +238,7 @@ internal fun storage_usage_bar(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(fraction)
+                        .widthIn(min = 24.dp)
                         .fillMaxHeight()
                         .background(fallback_color),
                 )
@@ -244,6 +246,7 @@ internal fun storage_usage_bar(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(fraction)
+                        .widthIn(min = 24.dp)
                         .fillMaxHeight(),
                     horizontalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
@@ -556,9 +559,9 @@ private fun cleanup_row(
         }
         Spacer(Modifier.width(AsterSpacing.sm))
         if (is_busy) {
-            CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 color = colors.accent_blue,
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
                 modifier = Modifier.size(18.dp),
             )
         } else {

@@ -167,7 +167,7 @@ internal fun image_attachment_viewer(
     }
     val zoom = remember_zoom_state(bytes)
     when (val current = decoded) {
-        image_decode_state.loading -> CircularProgressIndicator(
+        image_decode_state.loading -> org.astermail.android.design.components.aster_spinner(
             color = Color.White,
             modifier = Modifier.size(36.dp),
         )
@@ -208,7 +208,7 @@ internal fun text_attachment_viewer(bytes: ByteArray) {
     }
     val loaded = lines
     if (loaded == null) {
-        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(36.dp))
+        org.astermail.android.design.components.aster_spinner(color = Color.White, modifier = Modifier.size(36.dp))
         return
     }
     var font_sp by rememberSaveable { mutableFloatStateOf(TEXT_VIEWER_DEFAULT_FONT_SP) }

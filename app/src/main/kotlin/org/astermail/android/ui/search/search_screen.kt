@@ -59,6 +59,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.key
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -202,7 +203,7 @@ private fun body_index_banner(indexed: Int, total: Int) {
                 .height(3.dp)
                 .clip(SquircleShape(2.dp)),
             color = colors.accent_blue,
-            trackColor = colors.bg_secondary,
+            trackColor = colors.text_primary.copy(alpha = 0.14f),
             gapSize = 0.dp,
             drawStopIndicator = {},
         )
@@ -341,7 +342,11 @@ fun SearchScreen(
 
     BackHandler(enabled = sheet_open) { close_open_sheets() }
 
-    BackHandler(enabled = select_mode && !sheet_open) { exit_select_mode() }
+    key(select_mode) {
+        if (select_mode) {
+            BackHandler(enabled = !sheet_open) { exit_select_mode() }
+        }
+    }
 
     val reduce_motion = org.astermail.android.design.aster_reduce_motion()
 
@@ -756,10 +761,10 @@ fun SearchScreen(
         }
 
         if (has_query && search_state.is_indexing) {
-            androidx.compose.material3.LinearProgressIndicator(
+            org.astermail.android.design.components.aster_linear_progress(
                 modifier = Modifier.fillMaxWidth().height(2.dp),
                 color = colors.accent_blue,
-                trackColor = Color.Transparent,
+                track_color = Color.Transparent,
             )
         }
 
@@ -778,10 +783,10 @@ fun SearchScreen(
                     horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
                 ) {
                     if (!index_paused) {
-                        CircularProgressIndicator(
+                        org.astermail.android.design.components.aster_spinner(
                             color = colors.accent_blue,
                             modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
+                            stroke_width = 2.dp,
                         )
                     }
                     Text(
@@ -1592,13 +1597,15 @@ internal fun search_select_bottom_bar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                custom_actions.forEach { action_id ->
-                    val action = org.astermail.android.ui.mail.selection_toolbar_action_for(
-                        action_id,
-                        selection_all_starred,
-                        selection_all_read,
-                        selection_all_trashed,
-                    ) ?: return@forEach
+                val shared_label_size = remember { androidx.compose.runtime.mutableFloatStateOf(11f) }
+                androidx.compose.runtime.CompositionLocalProvider(local_search_label_size provides shared_label_size) {
+                org.astermail.android.ui.mail.resolve_selection_toolbar(
+                    custom_actions,
+                    selection_all_starred,
+                    selection_all_read,
+                    selection_all_trashed,
+                ).forEach { action ->
+                    val action_id = action.id
                     search_select_action(
                         icon = action.icon,
                         label = stringResource(action.label_res),
@@ -1615,10 +1622,13 @@ internal fun search_select_bottom_bar(
                     on_click = on_more,
                     test_tag = "search_sel_action_more",
                 )
+                }
             }
         }
     }
 }
+
+private val local_search_label_size = androidx.compose.runtime.compositionLocalOf<androidx.compose.runtime.MutableFloatState?> { null }
 
 @Composable
 private fun androidx.compose.foundation.layout.RowScope.search_select_action(
@@ -1647,11 +1657,13 @@ private fun androidx.compose.foundation.layout.RowScope.search_select_action(
             tint = resolved_tint,
             modifier = Modifier.size(22.dp),
         )
-        var label_size by remember(label) { mutableStateOf(11.sp) }
+        val shared_size = local_search_label_size.current
+        var own_size by remember(label) { mutableStateOf(11f) }
+        val label_size = shared_size?.floatValue ?: own_size
         Text(
             text = label,
             color = resolved_tint,
-            fontSize = label_size,
+            fontSize = label_size.sp,
             lineHeight = 13.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
@@ -1659,8 +1671,8 @@ private fun androidx.compose.foundation.layout.RowScope.search_select_action(
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             overflow = TextOverflow.Ellipsis,
             onTextLayout = { result ->
-                if (result.hasVisualOverflow && label_size.value > 8f) {
-                    label_size = (label_size.value - 0.5f).sp
+                if (result.hasVisualOverflow && label_size > 8f) {
+                    if (shared_size != null) shared_size.floatValue = label_size - 0.5f else own_size = label_size - 0.5f
                 }
             },
         )

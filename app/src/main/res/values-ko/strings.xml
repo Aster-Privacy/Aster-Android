@@ -1580,6 +1580,10 @@
     <string name="send_email_to_sender">이 발신자에게 메일 쓰기</string>
     <string name="add_to_contacts">연락처에 저장</string>
     <string name="remove_from_contacts">연락처에서 제거</string>
+    <string name="sender_action_new_message">새 메시지</string>
+    <string name="sender_action_add_contact">연락처 추가</string>
+    <string name="sender_action_view_contact">연락처 보기</string>
+    <string name="sender_action_in_contacts">연락처에 있음</string>
     <string name="contact_added_named">%1$s을(를) 연락처에 저장했습니다</string>
     <string name="contact_removed_named">%1$s을(를) 연락처에서 삭제했습니다</string>
     <string name="blocked_content_details_title">차단된 콘텐츠</string>

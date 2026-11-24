@@ -63,6 +63,7 @@ import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun AutoForwardScreen(
@@ -108,7 +109,15 @@ fun AutoForwardScreen(
         vm.clear_forwarding_notice()
     }
 
-    detail_scaffold(title = stringResource(R.string.auto_forward_title), on_back = on_back) {
+    val forward_dirty = enabled != (active_rule?.enabled ?: true) ||
+        target != (active_rule?.target_address ?: "") ||
+        keep_copy != (active_rule?.keep_copy ?: true)
+    detail_scaffold(
+        title = stringResource(R.string.auto_forward_title),
+        on_back = on_back,
+        on_refresh = { vm.join_launched { vm.load_forwarding_rules() } },
+        refresh_enabled = !forward_dirty && state.save_status != SaveStatus.SAVING,
+    ) {
         if (plan_vm.is_feature_locked("has_auto_forwarding") && !plan_state.is_loading) {
             UpgradeGate(
                 title = stringResource(R.string.auto_forward_title),
@@ -133,7 +142,7 @@ fun AutoForwardScreen(
                 modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                settings_load_spinner()
             }
         } else {
             if (active_rule != null) {

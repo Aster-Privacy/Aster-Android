@@ -212,10 +212,7 @@ fun FilteredInboxScreen(
             val skeleton_now = folder_cache_skeleton_allowed(inbox_state.cache_pending, threads.size) &&
                 !has_rows &&
                 (inbox_state.is_loading || !showing_requested)
-            val skeleton_phase by remember_skeleton_phase(
-                wanted = skeleton_now,
-                rows_imminent = !showing_requested,
-            )
+            val skeleton_phase by remember_skeleton_phase(wanted = skeleton_now)
             val awaiting_disk_rows = showing_requested && inbox_state.cache_pending && threads.isEmpty()
             val handoff = Modifier.skeleton_handoff(skeleton_phase)
             val row_geometry = remember_row_geometry(skeleton_geometry_of(settings_state.preferences))

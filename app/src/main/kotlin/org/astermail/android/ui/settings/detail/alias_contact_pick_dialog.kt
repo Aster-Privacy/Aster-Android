@@ -189,9 +189,9 @@ internal fun alias_contact_pick_dialog(
                             .testTag("alias_pick_loading"),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator(
+                        org.astermail.android.design.components.aster_spinner(
                             color = colors.accent_blue,
-                            strokeWidth = 2.dp,
+                            stroke_width = 2.dp,
                             modifier = Modifier.size(24.dp),
                         )
                     }

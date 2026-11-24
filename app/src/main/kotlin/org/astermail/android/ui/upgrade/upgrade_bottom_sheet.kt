@@ -283,7 +283,7 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
                     LinearProgressIndicator(
                         progress = { (storage.percentage_used / 100.0).coerceIn(0.0, 1.0).toFloat() },
                         color = if (storage.is_locked) colors.danger else colors.warning,
-                        trackColor = colors.border_secondary,
+                        trackColor = colors.text_primary.copy(alpha = 0.14f),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(6.dp)
@@ -355,7 +355,7 @@ fun UpgradeHost(on_navigate_to_billing: () -> Unit) {
                             } else 1f
                         },
                         color = colors.danger,
-                        trackColor = colors.border_secondary,
+                        trackColor = colors.text_primary.copy(alpha = 0.14f),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(6.dp)

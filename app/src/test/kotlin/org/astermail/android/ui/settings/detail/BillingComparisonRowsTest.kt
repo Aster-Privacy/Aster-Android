@@ -51,10 +51,19 @@ class BillingComparisonRowsTest {
     }
 
     @Test
-    fun row_differs_only_when_values_change_across_columns() {
-        val codes = listOf("free", "star", "nova", "supernova")
-        assertTrue(compare_row_differs(feed.row("storage")!!, codes))
-        assertFalse(compare_row_differs(feed.row("key_rotation")!!, codes))
-        assertFalse(compare_row_differs(feed.row("storage")!!, listOf("nova")))
+    fun row_gain_only_when_the_plan_adds_something() {
+        assertTrue(compare_row_gain(feed.row("storage")!!, "nova", "free"))
+        assertFalse(compare_row_gain(feed.row("key_rotation")!!, "nova", "free"))
+        assertFalse(compare_row_gain(feed.row("storage")!!, "family", "supernova"))
+        assertTrue(compare_row_gain(feed.row("family_members")!!, "duo", "supernova"))
+    }
+
+    @Test
+    fun start_page_is_the_next_tier_in_the_same_group() {
+        val codes = listOf("free", "star", "nova", "supernova", "duo", "family")
+        assertEquals(1, compare_start_index(codes, "star", "free"))
+        assertEquals(3, compare_start_index(codes, "nova", "nova"))
+        assertEquals(3, compare_start_index(codes, "supernova", "supernova"))
+        assertEquals(5, compare_start_index(codes, "duo", "duo"))
     }
 }

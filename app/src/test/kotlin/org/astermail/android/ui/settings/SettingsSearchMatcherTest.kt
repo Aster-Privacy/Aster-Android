@@ -199,6 +199,69 @@ class SettingsSearchMatcherTest {
     }
 
     @Test
+    fun stop_words_are_ignored_when_other_words_match() {
+        val rows = arrayOf(candidate("Confirm before exiting", keywords = listOf("double tap", "exit")), candidate("Theme"))
+        assertEquals(listOf("Confirm before exiting"), labels("how to turn off double tap", *rows))
+        assertEquals(listOf("Theme"), labels("change my theme", *rows))
+        assertTrue(labels("turn off", *rows).isEmpty())
+    }
+
+    @Test
+    fun plurals_and_singulars_match_exactly() {
+        assertEquals("category", settings_search_stem("categories"))
+        assertEquals("alias", settings_search_stem("aliases"))
+        assertEquals("alias", settings_search_stem("alias"))
+        assertEquals("address", settings_search_stem("addresses"))
+        assertEquals("device", settings_search_stem("devices"))
+        val rows = arrayOf(candidate("Inbox categories", screen_id = "a"), candidate("Category", screen_id = "b"))
+        assertEquals(setOf("Inbox categories", "Category"), labels("category", *rows).toSet())
+        assertEquals(listOf("Category", "Inbox categories"), labels("category", *rows))
+    }
+
+    @Test
+    fun joined_words_match_spaced_labels() {
+        val rows = arrayOf(candidate("Sign out everywhere"), candidate("Theme"))
+        assertEquals(listOf("Sign out everywhere"), labels("signout", *rows))
+    }
+
+    @Test
+    fun short_tokens_with_digits_need_an_exact_or_prefix_match() {
+        val rows = arrayOf(candidate("Two-factor", keywords = listOf("2fa", "totp")), candidate("24 hour clock"))
+        assertEquals(listOf("Two-factor"), labels("2fa", *rows))
+        assertTrue(labels("3fa", *rows).isEmpty())
+    }
+
+    @Test
+    fun multi_word_queries_combine_label_and_keywords() {
+        val rows = arrayOf(candidate("Sound", keywords = listOf("ringtone")), candidate("Ringtone picker", screen_id = "x"))
+        assertEquals(listOf("Sound"), labels("sound ringtone", *rows))
+    }
+
+    @Test
+    fun exit_toggle_is_found_by_its_synonyms() {
+        val label = settings_search_fixture.text(org.astermail.android.R.string.confirm_back_exit)
+        listOf(
+            "exit", "double tap", "press back twice", "close app", "quit", "turn off double tap exit",
+            "disable double back",
+        ).forEach { assert_finds(it, "behavior", label, top = 3) }
+    }
+
+    @Test
+    fun synonyms_reach_their_settings_on_the_real_index() {
+        assert_finds("log out everywhere", "sessions", top = 3)
+        assert_finds("cancel subscription", "billing", top = 3)
+        assert_finds("reduce animations", "accessibility", top = 3)
+        assert_finds("quick actions", "behavior", top = 3)
+        assert_finds("ringtone", "notifications", top = 3)
+        assert_finds("how do i change my password", "password", top = 3)
+        assert_finds("turn on 2fa", "two_factor", top = 3)
+        assert_finds("categories", "behavior", top = 5)
+        assert_finds("smtp", "smtp_tokens", top = 3)
+        assert_finds("hide my email", "aliases", top = 3)
+        assert_finds("dkim", "domains", top = 3)
+    }
+
+    @Test
     fun word_order_and_accents_work_on_the_real_index() {
         assert_finds("send undo", "behavior")
         assert_finds("REPLY VACATÍON", "vacation_reply")

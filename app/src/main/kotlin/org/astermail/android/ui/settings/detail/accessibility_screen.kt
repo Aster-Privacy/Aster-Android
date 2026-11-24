@@ -72,6 +72,7 @@ import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.theme.ThemeViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 private fun access_toggle_row(
@@ -150,7 +151,7 @@ fun AccessibilityScreen(
         focus_visible = false
     }
 
-    LaunchedEffect(prefs, state.preferences_authoritative) {
+    LaunchedEffect(prefs, state.preferences_authoritative, prefs_loaded) {
         if (prefs != null && state.preferences_authoritative && !prefs_loaded) {
             prefs_loaded = true
             font_size = prefs.font_size_scale
@@ -234,6 +235,11 @@ fun AccessibilityScreen(
         title = stringResource(R.string.settings_accessibility),
         on_back = on_back,
         scroll_state = scroll_state,
+        on_refresh = {
+            vm.join_launched { vm.load_preferences(force = true) }
+            if (save_trigger == 0) prefs_loaded = false
+        },
+        refresh_enabled = save_trigger == 0,
     ) {
         preferences_save_error_banner()
         if (prefs == null || !state.preferences_authoritative) {

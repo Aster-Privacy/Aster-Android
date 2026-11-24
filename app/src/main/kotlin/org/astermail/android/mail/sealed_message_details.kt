@@ -21,11 +21,14 @@
 
 package org.astermail.android.mail
 
+import java.security.MessageDigest
+import java.security.SecureRandom
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -156,13 +159,60 @@ internal fun build_subject_bundle_text(
     subject: String,
     body: String,
     details: SealedMessageDetails?,
+    attachment_manifest: JSONArray? = null,
 ): String {
     val existing = extract_subject_bundle(body)
     return ASTER_SUBJECT_BUNDLE_PREFIX + JSONObject().apply {
         put("s", subject.ifBlank { existing.subject.orEmpty() })
         put("b", existing.body)
+        if (attachment_manifest != null && attachment_manifest.length() > 0) {
+            put("attachment_manifest", attachment_manifest)
+        }
         if (details != null) put("details", serialize_sealed_details(details))
     }.toString()
+}
+
+internal const val SEALED_ATTACHMENT_DEFAULT_CONTENT_TYPE = "application/octet-stream"
+
+internal class SealedAttachmentPlan(
+    val session_keys: List<ByteArray>,
+    val manifest: JSONArray,
+) {
+    fun key_for(seq: Int): ByteArray = session_keys[seq].copyOf()
+
+    fun wipe() {
+        for (key in session_keys) key.fill(0)
+    }
+}
+
+private fun sealed_sha256_hex(bytes: ByteArray): String =
+    MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it.toInt() and 0xff) }
+
+internal fun plan_sealed_attachments(
+    attachments: List<ExternalAttachmentPayload>,
+    decode: (String) -> ByteArray,
+    random: SecureRandom = SecureRandom(),
+): SealedAttachmentPlan? {
+    if (attachments.isEmpty()) return null
+    val session_keys = ArrayList<ByteArray>(attachments.size)
+    val manifest = JSONArray()
+    for ((seq, attachment) in attachments.withIndex()) {
+        val raw = decode(attachment.data)
+        val key = ByteArray(32).also { random.nextBytes(it) }
+        session_keys.add(key)
+        manifest.put(JSONObject().apply {
+            put("seq", seq)
+            put("key", java.util.Base64.getEncoder().encodeToString(key))
+            put("size", raw.size.toLong())
+            put("sha256", sealed_sha256_hex(raw))
+            put("filename", attachment.filename)
+            put("content_type", attachment.content_type.ifBlank { SEALED_ATTACHMENT_DEFAULT_CONTENT_TYPE })
+            attachment.content_id?.takeIf { it.isNotEmpty() }?.let { put("content_id", it) }
+            put("is_inline", attachment.content_id != null)
+        })
+        raw.fill(0)
+    }
+    return SealedAttachmentPlan(session_keys, manifest)
 }
 
 internal fun carries_sealed_details(

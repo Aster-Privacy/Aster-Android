@@ -206,6 +206,7 @@
     <string name="guard_security_row_on">Aster Guard is on</string>
     <string name="guard_security_row_off">Turn it on to approve sign-ins and hold risky changes from this phone</string>
     <string name="guard_changes_title">Held changes</string>
+    <string name="guard_changes_subtitle">Changes to your account wait here before they take effect.</string>
     <string name="guard_changes_body">These changes to your account are waiting before they take effect. If you didn\'t make one, cancel it.</string>
     <string name="guard_changes_empty">When someone changes forwarding, recovery, or your password, the change waits here first so you can stop it.</string>
     <string name="guard_changes_applies_at">This takes effect on %1$s.</string>

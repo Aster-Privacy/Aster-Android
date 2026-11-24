@@ -220,4 +220,80 @@ class SealedAttachmentManifestTest {
         assertEquals(0, parsed.attachment_manifest!!.getJSONObject(0).getInt("seq"))
         assertNull(extract_subject_bundle(bare_outer).attachment_manifest)
     }
+
+    private fun outgoing(content: ByteArray, name: String, content_id: String? = null) =
+        org.astermail.android.api.send.ExternalAttachmentPayload(
+            data = b64(content),
+            filename = name,
+            content_type = if (content_id != null) "image/png" else "",
+            size_bytes = content.size.toLong(),
+            content_id = content_id,
+        )
+
+    private fun java_decode(data: String): ByteArray = java.util.Base64.getDecoder().decode(data)
+
+    @Test
+    fun a_sent_bundle_carries_a_manifest_that_opens_each_attachment() {
+        val image = byteArrayOf(1, 2, 3, 4, 5)
+        val plan = plan_sealed_attachments(
+            listOf(outgoing(payload, "figures.txt"), outgoing(image, "logo.png", "cid-logo")),
+            ::java_decode,
+        )!!
+        val first_key = plan.key_for(0)
+        val second_key = plan.key_for(1)
+        val text = build_subject_bundle_text(
+            "Figures",
+            "<p>Attached</p>",
+            build_sealed_details("Me", listOf("you@astermail.org"), emptyList()),
+            plan.manifest,
+        )
+        plan.wipe()
+
+        val parsed = extract_subject_bundle(text)
+        assertEquals("<p>Attached</p>", parsed.body)
+        assertTrue(InboundAttachmentKeyStore.register_sealed_manifest(item, parsed.attachment_manifest))
+
+        val first = InboundAttachmentKeyStore.entry(item, 0)!!
+        assertTrue(first.sealed)
+        assertEquals("figures.txt", first.filename)
+        assertEquals("application/octet-stream", first.content_type)
+        assertEquals(payload.size.toLong(), first.size)
+        assertEquals(sha256_hex(payload), first.sha256)
+        assertFalse(first.is_inline)
+        val second = InboundAttachmentKeyStore.entry(item, 1)!!
+        assertEquals("cid-logo", second.content_id)
+        assertTrue(second.is_inline)
+
+        assertArrayEquals(payload, open(seal(payload, first_key, MailRepository.attachment_data_aad(0))))
+        assertArrayEquals(image, open(seal(image, second_key, MailRepository.attachment_data_aad(1)), seq = 1))
+        try {
+            open(seal(image, first_key, MailRepository.attachment_data_aad(0)))
+            fail("expected AttachmentIntegrityException")
+        } catch (_: AttachmentIntegrityException) {
+        }
+    }
+
+    @Test
+    fun wiping_a_plan_clears_its_keys_but_keeps_handed_out_copies() {
+        val plan = plan_sealed_attachments(listOf(outgoing(payload, "figures.txt")), ::java_decode)!!
+        val copy = plan.key_for(0)
+
+        plan.wipe()
+
+        assertTrue(plan.session_keys[0].all { it == 0.toByte() })
+        assertFalse(copy.all { it == 0.toByte() })
+    }
+
+    @Test
+    fun a_bundle_without_attachments_carries_no_manifest() {
+        assertNull(plan_sealed_attachments(emptyList(), ::java_decode))
+
+        val text = build_subject_bundle_text("Hi", "<p>Hi</p>", null, null)
+        val empty = build_subject_bundle_text("Hi", "<p>Hi</p>", null, JSONArray())
+
+        assertNull(extract_subject_bundle(text).attachment_manifest)
+        assertNull(extract_subject_bundle(empty).attachment_manifest)
+        assertFalse(InboundAttachmentKeyStore.register_sealed_manifest(item, extract_subject_bundle(text).attachment_manifest))
+        assertFalse(InboundAttachmentKeyStore.is_sealed(item))
+    }
 }

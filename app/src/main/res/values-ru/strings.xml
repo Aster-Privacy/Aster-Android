@@ -1592,6 +1592,10 @@
     <string name="send_email_to_sender">Написать этому отправителю</string>
     <string name="add_to_contacts">Сохранить в контакты</string>
     <string name="remove_from_contacts">Удалить из контактов</string>
+    <string name="sender_action_new_message">Новое сообщение</string>
+    <string name="sender_action_add_contact">Добавить контакт</string>
+    <string name="sender_action_view_contact">Открыть контакт</string>
+    <string name="sender_action_in_contacts">В контактах</string>
     <string name="contact_added_named">%1$s сохранён в контактах</string>
     <string name="contact_removed_named">%1$s удалён из контактов</string>
     <string name="blocked_content_details_title">Заблокированное содержимое</string>
