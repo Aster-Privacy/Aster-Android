@@ -109,6 +109,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -1102,52 +1103,63 @@ private fun compose_screen_content(
         subject = stringResource(R.string.compose_quote_header_subject),
         to = stringResource(R.string.compose_quote_header_to),
     )
-    val forward_seed_html = remember(is_forward_quote, quoted_html, quoted_meta, quoted_to, forward_labels) {
-        if (!is_forward_quote || quoted_html == null) {
-            null
-        } else {
-            val (forward_from, forward_ts, forward_subject) = quoted_meta ?: Triple("", "", "")
-            build_forward_inner_html(
-                build_forward_header_html(
-                    forward_labels,
-                    forward_header_values(
-                        from = forward_from,
-                        date = format_quote_timestamp(forward_ts),
-                        subject = forward_subject,
-                        to = quoted_to,
-                    ),
+    val quoted_original_cache by produceState<Pair<String, String>?>(initialValue = null, quoted_html) {
+        val raw = quoted_html
+        value = if (raw == null) null else raw to withContext(Dispatchers.Default) { sanitize_quoted_original(raw) }
+    }
+    val ready_quoted_html = quoted_original_cache?.takeIf { it.first == quoted_html }?.second
+
+    fun displayed_quoted_html(): String? =
+        ready_quoted_html ?: quoted_html?.let { sanitize_quoted_original(it) }
+
+    fun forward_seed_for(original_html: String): String {
+        val (forward_from, forward_ts, forward_subject) = quoted_meta ?: Triple("", "", "")
+        return build_forward_inner_html(
+            build_forward_header_html(
+                forward_labels,
+                forward_header_values(
+                    from = forward_from,
+                    date = format_quote_timestamp(forward_ts),
+                    subject = forward_subject,
+                    to = quoted_to,
                 ),
-                quoted_html,
-            )
-        }
+            ),
+            original_html,
+        )
+    }
+
+    val forward_seed_html = remember(is_forward_quote, ready_quoted_html, quoted_meta, quoted_to, forward_labels) {
+        if (!is_forward_quote) null else ready_quoted_html?.let { forward_seed_for(it) }
     }
 
     fun forward_block_for_send(): String? {
-        val seed = forward_seed_html ?: return null
-        return wrap_forward_block(forward_edited_html ?: seed)
+        if (!is_forward_quote) return null
+        val inner = forward_edited_html
+            ?: forward_seed_html
+            ?: displayed_quoted_html()?.let { forward_seed_for(it) }
+            ?: return null
+        return wrap_forward_block(inner)
     }
 
-    val quote_header_from = stringResource(R.string.compose_quote_header_from)
-    val quote_header_date = stringResource(R.string.compose_quote_header_date)
-    val quote_header_subject = stringResource(R.string.compose_quote_header_subject)
+    val reply_labels = reply_quote_labels(
+        from = stringResource(R.string.compose_quote_header_from),
+        date = stringResource(R.string.compose_quote_header_date),
+        subject = stringResource(R.string.compose_quote_header_subject),
+    )
 
-    val reply_seed_html = remember(is_forward_quote, quoted_html, quoted_meta, quote_header_from, quote_header_date, quote_header_subject) {
-        if (is_forward_quote) return@remember null
-        val qh = quoted_html ?: return@remember null
+    fun reply_seed_for(original_html: String): String {
         val (from_addr, ts, subj) = quoted_meta ?: Triple("", "", "")
-        "<div class=\"aster_quote_attr gmail_attr\" style=\"color:#555;font-size:13px\">" +
-            "<div><b>${escape_html(quote_header_from)}</b> ${escape_html(from_addr)}</div>" +
-            "<div><b>${escape_html(quote_header_date)}</b> ${escape_html(format_quote_timestamp(ts))}</div>" +
-            "<div><b>${escape_html(quote_header_subject)}</b> ${escape_html(subj)}</div>" +
-            "</div>" +
-            "<blockquote class=\"gmail_quote\" style=\"margin:8px 0 0;padding-left:12px;border-left:2px solid #ccc;color:#555;font-size:13px\">" +
-            qh +
-            "</blockquote>"
+        return build_reply_quote_html(reply_labels, from_addr, format_quote_timestamp(ts), subj, original_html)
+    }
+
+    val reply_seed_html = remember(is_forward_quote, ready_quoted_html, quoted_meta, reply_labels) {
+        if (is_forward_quote) null else ready_quoted_html?.let { reply_seed_for(it) }
     }
     var reply_edited_html by remember(effective_mode, quoted_html) { mutableStateOf<String?>(null) }
 
     fun reply_quote_block(): String? {
-        val seed = reply_seed_html ?: return null
+        if (is_forward_quote) return null
+        val seed = reply_seed_html ?: displayed_quoted_html()?.let { reply_seed_for(it) } ?: return null
         val inner = reply_edited_html ?: seed
         if (html_to_plain_text(inner).isBlank()) return null
         return wrap_forward_block(inner)
@@ -1973,7 +1985,7 @@ private fun compose_screen_content(
         image_html_for.forEach { (idx, html) ->
             body_html = body_html.replace("[[ASTER_IMG_${idx}]]", html)
         }
-        body_html = body_html.replace(Regex(IMG_TOKEN_PATTERN), "")
+        body_html = strip_outgoing_markers(body_html.replace(Regex(IMG_TOKEN_PATTERN), ""))
 
         val embedded_image_payloads = inline_image_payloads.filter { body_html.contains(it.data) }
         return Triple(body_html, attachment_payloads + embedded_image_payloads, !branding_footer_kept)
