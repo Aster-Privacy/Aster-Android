@@ -33,12 +33,16 @@ import kotlin.coroutines.cancellation.CancellationException
 class StartupPrefetch<K : Any, V : Any>(
     private val scope: CoroutineScope,
     private val dispatcher: CoroutineDispatcher,
+    private val ready: suspend () -> Unit = {},
 ) {
     private val pending = ConcurrentHashMap<K, Deferred<V?>>()
 
     fun start(key: K, loader: suspend () -> V) {
         pending.computeIfAbsent(key) {
-            scope.async(dispatcher) { runCatching { loader() }.getOrNull() }
+            scope.async(dispatcher) {
+                ready()
+                runCatching { loader() }.getOrNull()
+            }
         }
     }
 

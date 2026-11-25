@@ -24,6 +24,7 @@ package org.astermail.android.mail
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.FolderRowDao
@@ -57,6 +58,7 @@ class FolderCacheStore @Inject constructor(
     private val prefetched = StartupPrefetch<String, List<InboxItem>>(
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob()),
         Dispatchers.IO,
+        ready = { org.astermail.android.storage.SecurePrefs.warm_complete.first { it } },
     )
 
     fun prefetch(folder: String) {

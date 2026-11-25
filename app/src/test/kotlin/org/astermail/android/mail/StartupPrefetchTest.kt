@@ -45,6 +45,22 @@ class StartupPrefetchTest {
     }
 
     @Test
+    fun loader_waits_for_ready_gate() = runTest {
+        val ready = CompletableDeferred<Unit>()
+        val prefetch = StartupPrefetch<String, Int>(
+            this,
+            UnconfinedTestDispatcher(testScheduler),
+            ready = { ready.await() },
+        )
+        val loads = AtomicInteger()
+        prefetch.start("inbox") { loads.incrementAndGet() }
+        assertEquals(0, loads.get())
+        ready.complete(Unit)
+        assertEquals(1, prefetch.take("inbox"))
+        assertEquals(1, loads.get())
+    }
+
+    @Test
     fun start_twice_loads_once() = runTest {
         val prefetch = StartupPrefetch<String, Int>(this, UnconfinedTestDispatcher(testScheduler))
         val loads = AtomicInteger()
