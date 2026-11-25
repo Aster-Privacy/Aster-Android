@@ -170,24 +170,25 @@ object MimeParser {
         val headers = mutableMapOf<String, String>()
         val lines = raw.split(Regex("\\r?\\n"))
         var current_key = ""
-        var current_value = ""
+        val current_value = StringBuilder()
 
         for (line in lines) {
             if (line.startsWith(" ") || line.startsWith("\t")) {
-                if (current_key.isNotEmpty()) current_value += " " + line.trim()
+                if (current_key.isNotEmpty()) current_value.append(' ').append(line.trim())
             } else {
                 if (current_key.isNotEmpty()) {
-                    headers[current_key.lowercase(java.util.Locale.ROOT)] = current_value
+                    headers[current_key.lowercase(java.util.Locale.ROOT)] = current_value.toString()
                 }
                 val colon = line.indexOf(':')
                 if (colon > 0) {
                     current_key = line.substring(0, colon).trim()
-                    current_value = line.substring(colon + 1).trim()
+                    current_value.setLength(0)
+                    current_value.append(line.substring(colon + 1).trim())
                 }
             }
         }
         if (current_key.isNotEmpty()) {
-            headers[current_key.lowercase(java.util.Locale.ROOT)] = current_value
+            headers[current_key.lowercase(java.util.Locale.ROOT)] = current_value.toString()
         }
         return headers
     }
