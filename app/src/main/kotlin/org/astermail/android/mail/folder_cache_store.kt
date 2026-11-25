@@ -110,7 +110,7 @@ class FolderCacheStore @Inject constructor(
         return withContext(Dispatchers.IO) { read_rows(folder, limit) }
     }
 
-    private fun read_rows(folder: String, limit: Int): List<InboxItem> =
+    private suspend fun read_rows(folder: String, limit: Int): List<InboxItem> =
         runCatching { dao.rows_for_folder(folder, limit).map { it.to_inbox_item() } }.getOrDefault(emptyList())
 
     suspend fun save(folder: String, items: List<InboxItem>, cached_at: Long) {
