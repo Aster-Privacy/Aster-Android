@@ -375,7 +375,7 @@ fun EmailRow(
                     if (shows_official_badge) {
                         official_badge(
                             modifier = Modifier.padding(start = 4.dp),
-                            size = 18.dp,
+                            size = 22.dp,
                             interactive = false,
                         )
                     }
@@ -777,7 +777,7 @@ fun ThreadInboxRow(
                     if (shows_official_badge) {
                         official_badge(
                             modifier = Modifier.padding(start = 4.dp),
-                            size = 18.dp,
+                            size = 22.dp,
                             interactive = false,
                         )
                     }

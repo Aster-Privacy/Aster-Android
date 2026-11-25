@@ -94,7 +94,7 @@ fun is_official_sender(msg: ThreadMessage): Boolean = is_official_sender(
 @Composable
 fun official_badge(
     modifier: Modifier = Modifier,
-    size: Dp = 20.dp,
+    size: Dp = 24.dp,
     interactive: Boolean = true,
 ) {
     var show_info by remember { mutableStateOf(false) }

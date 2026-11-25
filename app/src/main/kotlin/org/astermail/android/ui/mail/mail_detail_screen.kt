@@ -3419,7 +3419,7 @@ internal fun expanded_message(
                                     contentDescription = stringResource(R.string.sender_verified_badge),
                                     tint = colors.accent_blue,
                                     modifier = Modifier
-                                        .size(20.dp)
+                                        .size(24.dp)
                                         .clip(CircleShape)
                                         .clickable { show_sender_verified = true },
                                 )

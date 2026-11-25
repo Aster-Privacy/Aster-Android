@@ -307,7 +307,7 @@ internal fun sender_identity_badge(
                 imageVector = icon,
                 contentDescription = null,
                 tint = tint,
-                modifier = Modifier.size(14.dp),
+                modifier = Modifier.size(16.dp),
             )
             Spacer(Modifier.width(6.dp))
         }
