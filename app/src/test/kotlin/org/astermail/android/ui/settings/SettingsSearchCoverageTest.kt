@@ -22,6 +22,7 @@
 package org.astermail.android.ui.settings
 
 import java.io.File
+import org.astermail.android.translation.translation_supported
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -152,8 +153,11 @@ class SettingsSearchCoverageTest {
             .flatMap { listOf(it.label_res, it.screen_title_res) }
             .mapNotNull { settings_search_fixture.string_names[it] }
             .toSet()
+        val hidden_in_flavor = if (translation_supported) emptySet() else
+            translation_search_titles.mapNotNull { settings_search_fixture.string_names[it] }.toSet()
         val missing = shown.filter { (name, _) ->
             name !in indexed &&
+                name !in hidden_in_flavor &&
                 name !in not_settings &&
                 !settings_search_fixture.english.getValue(name).contains('%')
         }

@@ -39,6 +39,8 @@ _ui*.xml
 !/scripts/check_fdroid_assets.sh
 !/scripts/sync_translations.py
 !/scripts/update_iana_tlds.py
+!/scripts/update_dependency_checksums.sh
+!/scripts/add_aapt2_checksums.py
 /.test_artifacts/
 /test_screenshots/
 /my-downloads/

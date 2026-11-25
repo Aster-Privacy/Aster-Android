@@ -30,7 +30,7 @@ internal data class settings_index_entry(
     val is_screen_title: Boolean,
 )
 
-private val translation_search_titles = setOf(
+internal val translation_search_titles = setOf(
     R.string.section_translation,
     R.string.translate_incoming_label,
     R.string.translate_incoming_subtitle,
