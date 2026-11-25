@@ -513,7 +513,7 @@ class device_contact_upload_test {
         val result = upload_device_contacts(
             phone,
             create = { contact ->
-                if (contact.name == "Ben") Result.failure(IllegalStateException("offline")) else Result.success(Unit)
+                if (contact.name == "Ben") Result.failure<Unit>(IllegalStateException("offline")) else Result.success(Unit)
             },
         )
         val reconciled = phone.filterNot { it in result.unsent.toSet() }
@@ -527,7 +527,7 @@ class device_contact_upload_test {
         val result = upload_device_contacts(
             phone,
             create = { contact ->
-                if (contact.name == "A") Result.success(Unit) else Result.failure(ApiError.PlanLimitExceeded("limit", null))
+                if (contact.name == "A") Result.success(Unit) else Result.failure<Unit>(ApiError.PlanLimitExceeded("limit", null))
             },
         )
         assertTrue(result.limit_reached)
