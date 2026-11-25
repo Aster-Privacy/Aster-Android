@@ -115,7 +115,8 @@ class ExternalAccountsViewModel @Inject constructor(
         val keys = listOfNotNull(storage_key()) + StorageWriteKey.read_keys(session_keys)
         val seen = mutableSetOf<String>()
         return keys.filter { key ->
-            val fresh = key.size == 32 && seen.add(StorageWriteKey.encode_key(key))
+            val fresh = key.size == 32 && !StorageWriteKey.is_public_mail_kek(key) &&
+                seen.add(StorageWriteKey.encode_key(key))
             if (!fresh) key.fill(0)
             fresh
         }
@@ -131,14 +132,12 @@ class ExternalAccountsViewModel @Inject constructor(
                         val keys = read_keys()
                         try {
                             res.accounts.mapNotNull { acct ->
-                                StorageWriteKey.open_noting_constants(session_keys, keys) { subset ->
-                                    decrypt_account_data_with_keys(
-                                        encrypted_account_data = acct.encrypted_account_data,
-                                        account_data_nonce = acct.account_data_nonce,
-                                        integrity_hash = acct.integrity_hash,
-                                        keys = subset,
-                                    )
-                                }?.let { acct.account_token to it }
+                                decrypt_account_data_with_keys(
+                                    encrypted_account_data = acct.encrypted_account_data,
+                                    account_data_nonce = acct.account_data_nonce,
+                                    integrity_hash = acct.integrity_hash,
+                                    keys = keys,
+                                )?.let { acct.account_token to it }
                             }.toMap()
                         } finally {
                             keys.forEach { it.fill(0) }
@@ -180,6 +179,10 @@ class ExternalAccountsViewModel @Inject constructor(
                         account_data_nonce = encrypted.account_data_nonce,
                         integrity_hash = encrypted.integrity_hash,
                     ))
+                }
+                if (!is_expected_authorize_url(provider, response.authorize_url)) {
+                    _state.value = _state.value.copy(connecting_provider = null, error = ExternalAccountsError.OAUTH_FAILED)
+                    return@launch
                 }
                 _state.value = _state.value.copy(authorize_url = response.authorize_url)
             } catch (c: kotlinx.coroutines.CancellationException) {

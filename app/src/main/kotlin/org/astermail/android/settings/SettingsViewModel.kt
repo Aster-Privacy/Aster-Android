@@ -4378,11 +4378,25 @@ class SettingsViewModel @Inject constructor(
     }
 
     private suspend fun converge_require_encryption(server_value: Boolean) {
-        val prefs = _state.value.preferences ?: return
-        if (prefs.require_encryption == server_value) return
-        if (prefs_load_succeeded && (!account_uses_encrypted_prefs || _state.value.preferences_authoritative)) {
-            save_preferences(prefs.copy(require_encryption = server_value))
+        val local = (_state.value.preferences ?: read_cached_preferences())?.require_encryption
+        val effective = org.astermail.android.mail.RequireEncryptionFloor.effective(local, server_value) ?: server_value
+        if (effective != server_value) {
+            _state.update { it.copy(encryption_settings = it.encryption_settings?.copy(require_encryption = effective)) }
         }
+        val prefs = _state.value.preferences ?: return
+        val next = org.astermail.android.mail.RequireEncryptionFloor.local_after_server_load(
+            prefs.require_encryption,
+            server_value,
+        )
+        if (prefs.require_encryption == next) return
+        if (prefs_load_succeeded && (!account_uses_encrypted_prefs || _state.value.preferences_authoritative)) {
+            save_preferences(prefs.copy(require_encryption = next))
+        }
+    }
+
+    private fun raise_shown_require_encryption(prefs: UserPreferences) {
+        if (!prefs.require_encryption) return
+        _state.update { it.copy(encryption_settings = it.encryption_settings?.copy(require_encryption = true)) }
     }
 
     private fun converge_encrypt_by_default(server_value: Boolean) {
@@ -4499,6 +4513,13 @@ class SettingsViewModel @Inject constructor(
     fun toggle_require_encryption() {
         val current = _state.value.encryption_settings?.require_encryption ?: false
         val next = !current
+        val prefs_writable = _state.value.preferences != null &&
+            prefs_load_succeeded &&
+            (!account_uses_encrypted_prefs || _state.value.preferences_authoritative)
+        if (!next && !prefs_writable) {
+            report_preferences_locked()
+            return
+        }
         _state.update { it.copy(encryption_settings = it.encryption_settings?.copy(require_encryption = next)) }
         viewModelScope.launch {
             val saved = try {
@@ -6286,6 +6307,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun mirror_synced_preferences(prefs: UserPreferences) {
+        raise_shown_require_encryption(prefs)
         val result = runCatching {
             org.astermail.android.notifications.MailPollingWorker
                 .set_muted_folder_tokens(context, prefs.muted_folder_tokens)

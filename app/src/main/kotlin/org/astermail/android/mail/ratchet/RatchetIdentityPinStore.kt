@@ -465,6 +465,7 @@ class RatchetIdentityPinStore @Inject constructor(
         sender_identity_key: String,
         recipient: RatchetRecipientData,
         message_id: String?,
+        sender_known: Boolean = true,
     ): BootstrapClaim {
         val ephemeral = recipient.ephemeral_key
         if (sender_identity_key.isBlank() || ephemeral.isNullOrBlank() ||
@@ -490,6 +491,7 @@ class RatchetIdentityPinStore @Inject constructor(
                     key,
                     message,
                     System.currentTimeMillis(),
+                    may_evict = sender_known,
                 )
                 if (outcome.changed &&
                     !prefs.edit().putString(slot, outcome.record.to_json().toString()).commit() &&

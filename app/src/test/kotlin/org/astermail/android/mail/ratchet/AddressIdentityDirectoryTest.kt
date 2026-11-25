@@ -338,6 +338,48 @@ class AddressIdentityDirectoryTest {
     }
 
     @Test
+    fun `inbound rotation endorsed by a remembered earlier key is accepted`() = runTest {
+        val earlier = checkNotNull(AddressIdentity.derive_sender_identity(peer_previous_jwk, peer_alias))
+        val entry = peer_entry(listOf(peer_previous_jwk))
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } returns entry
+        val endorsed = new_directory().is_sender_entry_endorsed(
+            "peer",
+            peer_alias,
+            entry.kem_identity_key,
+            listOf("fp:" + earlier.identity_public),
+        )
+        assertTrue(endorsed)
+        coVerify(exactly = 0) { ratchet_api.fetch_prekey_bundle(any(), any()) }
+    }
+
+    @Test
+    fun `inbound rotation without a known endorser is not accepted`() = runTest {
+        val entry = peer_entry()
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } returns entry
+        coEvery { ratchet_api.fetch_prekey_bundle(any(), any()) } returns peer_account()
+        val endorsed = new_directory().is_sender_entry_endorsed(
+            "peer",
+            peer_alias,
+            entry.kem_identity_key,
+            listOf("fp:someone-else"),
+        )
+        assertFalse(endorsed)
+    }
+
+    @Test
+    fun `inbound key that differs from the published entry is not accepted`() = runTest {
+        val earlier = checkNotNull(AddressIdentity.derive_sender_identity(peer_previous_jwk, peer_alias))
+        coEvery { ratchet_api.fetch_address_prekey_bundle(any(), any()) } returns peer_entry(listOf(peer_previous_jwk))
+        val endorsed = new_directory().is_sender_entry_endorsed(
+            "peer",
+            peer_alias,
+            RatchetCrypto.b64_encode(RatchetCrypto.generate_p256_keypair().public_raw),
+            listOf("fp:" + earlier.identity_public),
+        )
+        assertFalse(endorsed)
+    }
+
+    @Test
     fun `unendorsed replacement of a rooted pin is rejected`() = runTest {
         pinned = "fp:someone-else"
         rooted = true

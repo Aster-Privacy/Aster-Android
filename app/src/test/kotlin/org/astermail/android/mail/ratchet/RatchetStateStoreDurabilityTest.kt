@@ -32,6 +32,7 @@ import org.astermail.android.storage.SecurePrefs
 import org.astermail.android.storage.SessionKeyStore
 import org.junit.After
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -89,6 +90,26 @@ class RatchetStateStoreDurabilityTest {
             "retired ratchet state must not open under a public constant",
             retired.any { key -> derived.any { it.contentEquals(key) } },
         )
+    }
+
+    @Test
+    fun `state master keys never include the stored login proof`() {
+        io.mockk.mockkStatic(android.util.Base64::class)
+        every { android.util.Base64.encodeToString(any(), any()) } answers {
+            java.util.Base64.getEncoder().encodeToString(firstArg())
+        }
+        val proof = ByteArray(32) { (it * 3 + 5).toByte() }
+        val data_kek = ByteArray(32) { (it * 7 + 1).toByte() }
+        val keys = SessionKeyStore(null)
+        keys.put(proof.copyOf())
+        keys.put_data_kek(data_kek.copyOf())
+        keys.put_legacy_keks(listOf(java.util.Base64.getEncoder().encodeToString(proof)))
+
+        val candidates = RatchetStateStore(mockk(relaxed = true), keys).master_key_candidates()
+
+        io.mockk.unmockkStatic(android.util.Base64::class)
+        assertFalse(candidates.any { it.contentEquals(proof) })
+        assertTrue(candidates.any { it.contentEquals(data_kek) })
     }
 
     private fun sample_state(): RatchetState = RatchetState(

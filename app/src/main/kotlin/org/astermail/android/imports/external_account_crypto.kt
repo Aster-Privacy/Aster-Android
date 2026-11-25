@@ -99,7 +99,7 @@ fun decrypt_account_data_with_keys(
     account_data_nonce: String,
     integrity_hash: String?,
     keys: List<ByteArray>,
-): ExternalAccountData? = keys.firstNotNullOfOrNull { key ->
+): ExternalAccountData? = keys.filterNot(org.astermail.android.crypto.StorageWriteKey::is_public_mail_kek).firstNotNullOfOrNull { key ->
     try {
         decrypt_account_data(encrypted_account_data, account_data_nonce, key, integrity_hash)
     } catch (cancelled: java.util.concurrent.CancellationException) {

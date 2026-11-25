@@ -166,6 +166,8 @@ fun absorb_vault_markers(store: SessionKeyStore, vault: JSONObject) {
 }
 
 fun absorb_rotated_vault(store: SessionKeyStore, vault: JSONObject, sealed: SealedVault) {
+    if (is_rolled_back_vault(vault, store.vault_generation_floor())) return
+    store.raise_vault_generation_floor(vault_generation(vault))
     store.put_encrypted_vault(sealed.encrypted_vault, sealed.vault_nonce, sealed.kdf_iterations)
     absorb_retired_marker(store, vault)
     absorb_vault_markers(store, vault)
@@ -295,6 +297,7 @@ fun session_vault_updater(
         if (!sealed.from_server) StorageRekeyService.note_vault_keys(vault)
     },
     local_keys = { local_storage_keys(store) },
+    generation_floor = { store.vault_generation_floor() },
 )
 
 @Singleton
@@ -615,6 +618,7 @@ class StorageRekeyService @Inject constructor(
         },
         local_keys = { local_storage_keys(session_key_store) },
         upgrade_on_rotation = true,
+        generation_floor = { session_key_store.vault_generation_floor() },
     )
 
     fun is_unlocked(): Boolean {
@@ -654,6 +658,7 @@ class StorageRekeyService @Inject constructor(
             decode_b64(encoded)?.takeIf { it.size == RESEAL_KEY_LENGTH }
         }
         val expected = view.data_kek.orEmpty()
+        val refused_old = listOfNotNull(session_key_store.get())
         val reseal = try {
             run_storage_reseal(
                 view = view,
@@ -664,6 +669,7 @@ class StorageRekeyService @Inject constructor(
                 is_cancelled = is_cancelled,
                 extra_old_keys = extra_old,
                 gate = { check_rekey_gate(api) },
+                refused_old_keys = refused_old,
             )
         } finally {
             extra_old.forEach { it.fill(0) }
@@ -685,9 +691,11 @@ class StorageRekeyService @Inject constructor(
                 still_current = { vault_rotator.server_storage_key_matches(expected) },
                 is_cancelled = is_cancelled,
                 gate = { check_rekey_gate(api) },
+                refused_old_keys = refused_old,
             )
         } finally {
             legacy_keys.forEach { it.fill(0) }
+            refused_old.forEach { it.fill(0) }
         }
         val constants_done_key = PUBLIC_CONSTANT_SWEEP_STEP + "_done_" + user_id
         val sweep_prefs = prefs
