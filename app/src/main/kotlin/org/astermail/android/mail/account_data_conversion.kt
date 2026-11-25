@@ -51,7 +51,9 @@ import org.astermail.android.api.keys.ConversionWriteResult
 import org.astermail.android.api.keys.ConvertAttachmentMetaRequest
 import org.astermail.android.api.keys.ConvertSentEnvelopeRequest
 import org.astermail.android.api.keys.KeysApi
+import org.astermail.android.api.mail.AttachmentMetaItem
 import org.astermail.android.api.mail.AttachmentResponse
+import org.astermail.android.api.mail.ImportedPasswordMetaPage
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.mail.MailItem
 import org.astermail.android.api.mail.MailItemsListResponse
@@ -442,8 +444,56 @@ class AccountDataConversion internal constructor(
             cursor = page.next_cursor
             if (!page.has_more || cursor.isNullOrEmpty() || items.isEmpty()) break
         }
+        if (converted_attachments < status.remaining_attachments) {
+            val complete = convert_imported_attachments(keys, counts, deadline)
+            report()
+            if (!complete) return counts.snapshot() to false
+        }
         return counts.snapshot() to true
     }
+
+    private suspend fun convert_imported_attachments(
+        keys: ConversionKeys,
+        counts: Counts,
+        deadline: Long?,
+    ): Boolean {
+        var after: String? = null
+        while (true) {
+            val page = list_imported_page(after) ?: return false
+            for (row in page.attachments) {
+                if (!keys_still_current(keys) || (deadline != null && now_ms() >= deadline)) return false
+                counts.checked += 1
+                counts.tally(convert_attachment_row(imported_attachment(row), keys))
+                yield()
+            }
+            val next = page.next_cursor
+            if (next.isNullOrEmpty() || next == after || page.attachments.isEmpty()) return true
+            after = next
+        }
+    }
+
+    private suspend fun list_imported_page(after: String?): ImportedPasswordMetaPage? {
+        repeat(LISTING_ATTEMPTS) {
+            try {
+                return mail_api.list_imported_password_meta(after, PAGE_SIZE)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Throwable) {
+            }
+        }
+        return null
+    }
+
+    private fun imported_attachment(row: AttachmentMetaItem) = AttachmentResponse(
+        id = row.id,
+        mail_item_id = row.mail_item_id,
+        encrypted_data = "",
+        data_nonce = "",
+        encrypted_meta = row.encrypted_meta,
+        meta_nonce = row.meta_nonce,
+        size_bytes = row.size_bytes,
+        seq_num = row.seq_num,
+    )
 
     private suspend fun list_sent_page(cursor: String?): MailItemsListResponse {
         var last_error: Throwable? = null

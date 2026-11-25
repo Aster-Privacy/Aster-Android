@@ -114,7 +114,7 @@ class ChangePasswordViewModel @Inject constructor(
         viewModelScope.launch {
             val result = auth_repository.change_password(s.current_password, s.new_password)
             result.onSuccess { summary ->
-                session_key_store.get_user_id()?.let { locked_sent_mail_store.write(it, summary.unreadable) }
+                session_key_store.get_user_id()?.let { locked_sent_mail_store.write(it, summary.locked_after_reseal()) }
                 val notice = when {
                     summary.failed > 0 -> context.getString(R.string.password_change_background_reencrypt_failed)
                     summary.unreadable > 0 -> context.resources.getQuantityString(

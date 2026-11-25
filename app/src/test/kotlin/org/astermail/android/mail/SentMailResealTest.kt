@@ -30,9 +30,11 @@ import io.mockk.slot
 import java.util.Base64
 import kotlinx.coroutines.test.runTest
 import org.astermail.android.api.mail.AttachmentListResponse
+import org.astermail.android.api.mail.AttachmentMetaItem
 import org.astermail.android.api.mail.AttachmentResponse
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.mail.MailItem
+import org.astermail.android.api.mail.ImportedPasswordMetaPage
 import org.astermail.android.api.mail.MailItemsListResponse
 import org.astermail.android.api.mail.UpdateAttachmentMetaRequest
 import org.astermail.android.api.mail.UpdateMailItemEnvelopeRequest
@@ -91,7 +93,7 @@ class SentMailResealTest {
                 envelope_nonce = Base64.getEncoder().encodeToString(ByteArray(12)),
             ),
         )
-        val api = mockk<MailApi>()
+        val api = mail_api()
         coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
             MailItemsListResponse(items = items, has_more = false)
         val written = mutableMapOf<String, UpdateMailItemEnvelopeRequest>()
@@ -107,7 +109,7 @@ class SentMailResealTest {
 
     @Test
     fun reseals_sender_attachment_meta_with_the_envelope() = runTest {
-        val api = mockk<MailApi>()
+        val api = mail_api()
         coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
             MailItemsListResponse(
                 items = listOf(sent_item("a", SentMailResealCrypto.seal("a".toByteArray(), old_pass)).copy(has_attachments = true)),
@@ -153,7 +155,7 @@ class SentMailResealTest {
 
     @Test
     fun leaves_pgp_and_already_resealed_attachment_meta_alone() = runTest {
-        val api = mockk<MailApi>()
+        val api = mail_api()
         coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
             MailItemsListResponse(
                 items = listOf(sent_item("a", SentMailResealCrypto.seal("a".toByteArray(), old_pass)).copy(has_attachments = true)),
@@ -180,7 +182,7 @@ class SentMailResealTest {
 
     @Test
     fun still_fails_on_attachment_meta_it_cannot_open() = runTest {
-        val api = mockk<MailApi>()
+        val api = mail_api()
         coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
             MailItemsListResponse(
                 items = listOf(sent_item("a", SentMailResealCrypto.seal("a".toByteArray(), old_pass)).copy(has_attachments = true)),
@@ -199,7 +201,7 @@ class SentMailResealTest {
 
     @Test
     fun reseals_password_sealed_attachment_meta_on_a_converted_item() = runTest {
-        val api = mockk<MailApi>()
+        val api = mail_api()
         val converted = MailItem(
             id = "a",
             item_type = "sent",
@@ -230,7 +232,7 @@ class SentMailResealTest {
 
     @Test
     fun skips_a_converted_item_without_attachments() = runTest {
-        val api = mockk<MailApi>()
+        val api = mail_api()
         coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
             MailItemsListResponse(
                 items = listOf(MailItem(id = "a", item_type = "sent", encrypted_envelope = "pgp", envelope_nonce = "")),
@@ -258,7 +260,7 @@ class SentMailResealTest {
         )
         val level_two_with_files = level_two.copy(id = "two-files", has_attachments = true)
         val old_copy = sent_item("one", SentMailResealCrypto.seal("moved".toByteArray(), old_pass))
-        val api = mockk<MailApi>()
+        val api = mail_api()
         coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
             MailItemsListResponse(items = listOf(level_two, level_two_with_files, old_copy), has_more = false)
         coEvery { api.list_attachments("two-files") } returns AttachmentListResponse(
@@ -297,7 +299,7 @@ class SentMailResealTest {
             envelope_nonce = "",
             has_attachments = true,
         )
-        val api = mockk<MailApi>()
+        val api = mail_api()
         coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
             MailItemsListResponse(items = listOf(converted), has_more = false)
         val legacy_nonce = Base64.getEncoder().encodeToString(ByteArray(12) { 7 })
@@ -325,6 +327,87 @@ class SentMailResealTest {
         assertEquals(zeros, SentMailResealCrypto.resealed_meta_nonce_b64(null, null))
         assertEquals(zeros, SentMailResealCrypto.resealed_meta_nonce_b64(SentMailResealCrypto.sentinel_nonce_b64(), "AQ=="))
     }
+
+    @Test
+    fun reseals_attachment_details_on_imported_mail() = runTest {
+        val api = mail_api()
+        coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = emptyList(), has_more = false)
+        val meta_text = "{\"filename\":\"report.pdf\"}".toByteArray()
+        val random_nonce = Base64.getEncoder().encodeToString(ByteArray(12) { (it + 1).toByte() })
+        coEvery { api.list_imported_password_meta(null, any()) } returns ImportedPasswordMetaPage(
+            attachments = listOf(
+                imported_row("imp-old", SentMailResealCrypto.seal(meta_text, old_pass), random_nonce),
+                imported_row("imp-new", SentMailResealCrypto.seal(meta_text, new_pass), random_nonce),
+            ),
+            next_cursor = "imp-new",
+        )
+        coEvery { api.list_imported_password_meta("imp-new", any()) } returns ImportedPasswordMetaPage(
+            attachments = listOf(
+                imported_row("imp-lost", SentMailResealCrypto.seal(meta_text, "older".toByteArray()), random_nonce),
+            ),
+            next_cursor = null,
+        )
+        val meta = slot<UpdateAttachmentMetaRequest>()
+        coEvery { api.update_attachment_meta("imp-old", capture(meta)) } returns Unit
+
+        val summary = SentMailResealer(api).run(old_pass, new_pass)
+
+        assertEquals(SentMailResealSummary(rewritten = 1, locked_attachments = 1), summary)
+        assertEquals(1, summary.locked_after_reseal())
+        assertEquals(random_nonce, meta.captured.meta_nonce)
+        assertArrayEquals(meta_text, SentMailResealCrypto.open(meta.captured.encrypted_meta, new_pass))
+        coVerify(exactly = 1) { api.update_attachment_meta(any(), any()) }
+    }
+
+    @Test
+    fun counts_a_failed_imported_listing_or_write_as_failed() = runTest {
+        val api = mail_api()
+        coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = emptyList(), has_more = false)
+        coEvery { api.list_imported_password_meta(null, any()) } returns ImportedPasswordMetaPage(
+            attachments = listOf(
+                imported_row("imp-a", SentMailResealCrypto.seal("{}".toByteArray(), old_pass), "AQIDBAUGBwgJCgsM"),
+            ),
+            next_cursor = "imp-a",
+        )
+        coEvery { api.list_imported_password_meta("imp-a", any()) } throws IllegalStateException("offline")
+        coEvery { api.update_attachment_meta("imp-a", any()) } throws IllegalStateException("rejected")
+
+        val summary = SentMailResealer(api).run(old_pass, new_pass)
+
+        assertEquals(SentMailResealSummary(failed = 2), summary)
+        coVerify(exactly = 3) { api.list_imported_password_meta("imp-a", any()) }
+    }
+
+    @Test
+    fun stops_imported_paging_when_the_cursor_does_not_advance() = runTest {
+        val api = mail_api()
+        coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = emptyList(), has_more = false)
+        val already_new = imported_row("imp-a", SentMailResealCrypto.seal("{}".toByteArray(), new_pass), "AQIDBAUGBwgJCgsM")
+        coEvery { api.list_imported_password_meta(null, any()) } returns
+            ImportedPasswordMetaPage(attachments = listOf(already_new), next_cursor = "imp-a")
+        coEvery { api.list_imported_password_meta("imp-a", any()) } returns
+            ImportedPasswordMetaPage(attachments = listOf(already_new), next_cursor = "imp-a")
+
+        val summary = SentMailResealer(api).run(old_pass, new_pass)
+
+        assertEquals(SentMailResealSummary(), summary)
+        coVerify(exactly = 1) { api.list_imported_password_meta("imp-a", any()) }
+    }
+
+    private fun mail_api(): MailApi = mockk<MailApi>().also {
+        coEvery { it.list_imported_password_meta(any(), any()) } returns ImportedPasswordMetaPage()
+    }
+
+    private fun imported_row(id: String, encrypted_meta: String, meta_nonce: String) = AttachmentMetaItem(
+        id = id,
+        mail_item_id = "mail-$id",
+        encrypted_meta = encrypted_meta,
+        meta_nonce = meta_nonce,
+        size_bytes = 10,
+    )
 
     private fun attachment(id: String, encrypted_meta: String) = AttachmentResponse(
         id = id,
