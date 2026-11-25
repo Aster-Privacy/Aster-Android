@@ -33,4 +33,6 @@
     <string name="persistent_push_autostart_subtitle">Alguns telemóveis fecham as ligações em segundo plano. Nas definições do sistema, permita que o Aster Mail arranque automaticamente e desative as restrições de bateria.</string>
     <string name="notif_delivery_section">Entrega</string>
     <string name="notif_action_unlock_required">Desbloqueie o dispositivo e tente novamente.</string>
+    <string name="notif_actions_section">Ações das notificações</string>
+    <string name="notif_actions_description">Escolha até 3 ações para mostrar nas notificações de email. Se uma mensagem incluir um código, Copiar código ocupa um lugar.</string>
 </resources>

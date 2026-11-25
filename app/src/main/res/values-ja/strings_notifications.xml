@@ -33,4 +33,6 @@
     <string name="persistent_push_autostart_subtitle">一部のスマートフォンはバックグラウンド接続を終了します。システム設定で Aster Mail の自動起動を許可し、バッテリー制限をオフにしてください。</string>
     <string name="notif_delivery_section">配信</string>
     <string name="notif_action_unlock_required">デバイスのロックを解除してから、もう一度お試しください。</string>
+    <string name="notif_actions_section">通知のアクション</string>
+    <string name="notif_actions_description">メール通知に表示するアクションを3つまで選択します。メッセージにコードが含まれる場合は、「コードをコピー」が1つ分を使います。</string>
 </resources>

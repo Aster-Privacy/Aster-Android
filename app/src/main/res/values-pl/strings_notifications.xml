@@ -33,4 +33,6 @@
     <string name="persistent_push_autostart_subtitle">Niektóre telefony zamykają połączenia w tle. W ustawieniach systemowych zezwól aplikacji Aster Mail na automatyczne uruchamianie i wyłącz ograniczenia baterii.</string>
     <string name="notif_delivery_section">Dostarczanie</string>
     <string name="notif_action_unlock_required">Odblokuj urządzenie i spróbuj ponownie.</string>
+    <string name="notif_actions_section">Działania w powiadomieniach</string>
+    <string name="notif_actions_description">Wybierz maksymalnie 3 działania wyświetlane w powiadomieniach o poczcie. Jeśli wiadomość zawiera kod, Kopiuj kod zajmuje jedno miejsce.</string>
 </resources>

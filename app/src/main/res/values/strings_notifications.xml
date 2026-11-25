@@ -33,4 +33,6 @@
     <string name="persistent_push_autostart_subtitle">Some phones close background connections. In system settings, allow Aster Mail to start automatically and turn off any battery restrictions.</string>
     <string name="notif_delivery_section">Delivery</string>
     <string name="notif_action_unlock_required">Unlock your device, and then try again.</string>
+    <string name="notif_actions_section">Notification actions</string>
+    <string name="notif_actions_description">Choose up to 3 actions to show on mail notifications. If a message includes a code, Copy code takes one spot.</string>
 </resources>

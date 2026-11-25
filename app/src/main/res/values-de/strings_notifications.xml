@@ -33,4 +33,6 @@
     <string name="persistent_push_autostart_subtitle">Manche Telefone schließen Hintergrundverbindungen. Erlauben Sie Aster Mail in den Systemeinstellungen den automatischen Start und deaktivieren Sie alle Akkubeschränkungen.</string>
     <string name="notif_delivery_section">Zustellung</string>
     <string name="notif_action_unlock_required">Entsperren Sie Ihr Gerät und versuchen Sie es dann erneut.</string>
+    <string name="notif_actions_section">Benachrichtigungsaktionen</string>
+    <string name="notif_actions_description">Wählen Sie bis zu 3 Aktionen für E-Mail-Benachrichtigungen aus. Wenn eine Nachricht einen Code enthält, belegt Code kopieren einen Platz.</string>
 </resources>

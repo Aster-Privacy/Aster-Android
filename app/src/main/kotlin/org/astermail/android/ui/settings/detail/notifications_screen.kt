@@ -58,6 +58,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import org.astermail.android.R
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.notifications.MailPollingWorker
+import org.astermail.android.notifications.NotificationActionChoices
 import org.astermail.android.ui.common.picker_theme_res
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -123,6 +124,9 @@ fun NotificationsScreen(
     var vibrate by remember(prefs_seeded) { mutableStateOf(prefs?.vibrate ?: true) }
     var new_email by remember(prefs_seeded) { mutableStateOf(prefs?.notify_new_email ?: true) }
     var replies by remember(prefs_seeded) { mutableStateOf(prefs?.notify_replies ?: true) }
+    var actions by remember(prefs_seeded) {
+        mutableStateOf(NotificationActionChoices.sanitize(prefs?.notification_actions))
+    }
     var quiet_hours by remember(prefs_seeded) { mutableStateOf(prefs?.quiet_hours_enabled ?: false) }
     var quiet_hours_start by remember(prefs_seeded) { mutableStateOf(prefs?.quiet_hours_start?.takeIf { it.isNotBlank() } ?: "22:00") }
     var quiet_hours_end by remember(prefs_seeded) { mutableStateOf(prefs?.quiet_hours_end?.takeIf { it.isNotBlank() } ?: "07:00") }
@@ -157,6 +161,8 @@ fun NotificationsScreen(
             vibrate = prefs.vibrate
             new_email = prefs.notify_new_email
             replies = prefs.notify_replies
+            actions = NotificationActionChoices.sanitize(prefs.notification_actions)
+            MailPollingWorker.set_notification_actions(context, actions)
             quiet_hours = prefs.quiet_hours_enabled
             quiet_hours_start = prefs.quiet_hours_start.takeIf { it.isNotBlank() } ?: "22:00"
             quiet_hours_end = prefs.quiet_hours_end.takeIf { it.isNotBlank() } ?: "07:00"
@@ -175,6 +181,8 @@ fun NotificationsScreen(
         vibrate = base.vibrate
         new_email = base.notify_new_email
         replies = base.notify_replies
+        actions = NotificationActionChoices.sanitize(base.notification_actions)
+        MailPollingWorker.set_notification_actions(context, actions)
         quiet_hours = base.quiet_hours_enabled
         quiet_hours_start = base.quiet_hours_start.takeIf { it.isNotBlank() } ?: "22:00"
         quiet_hours_end = base.quiet_hours_end.takeIf { it.isNotBlank() } ?: "07:00"
@@ -195,6 +203,7 @@ fun NotificationsScreen(
                 vibrate = vibrate,
                 notify_new_email = new_email,
                 notify_replies = replies,
+                notification_actions = actions,
                 quiet_hours_enabled = quiet_hours,
                 quiet_hours_start = quiet_hours_start,
                 quiet_hours_end = quiet_hours_end,
@@ -376,6 +385,33 @@ fun NotificationsScreen(
                     ) { offer_vm.set_enabled(it) }
                 }
             }
+            v_gap(AsterSpacing.lg)
+            section_label(stringResource(R.string.notif_actions_section))
+            Text(
+                text = stringResource(R.string.notif_actions_description),
+                color = colors.text_tertiary,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(
+                    start = AsterSpacing.lg,
+                    end = AsterSpacing.lg,
+                    bottom = AsterSpacing.sm,
+                ),
+            )
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                NotificationActionChoices.ALL.forEachIndexed { index, choice ->
+                    settings_toggle_row(
+                        title = stringResource(notification_action_label(choice)),
+                        checked = choice in actions,
+                        enabled = NotificationActionChoices.can_select(actions, choice),
+                        test_tag = "notification_action_" + choice,
+                    ) {
+                        actions = NotificationActionChoices.toggle(actions, choice)
+                        save_trigger++
+                        MailPollingWorker.set_notification_actions(context, actions)
+                    }
+                    if (index < NotificationActionChoices.ALL.size - 1) settings_row_gap(modifier = Modifier)
+                }
+            }
             if (prefs.inbox_categories_enabled) {
                 val muted_categories = prefs.muted_notification_categories
                 val rows = buildList {
@@ -449,6 +485,13 @@ fun NotificationsScreen(
         }
         v_gap(AsterSpacing.xxl)
     }
+}
+
+private fun notification_action_label(choice: String): Int = when (choice) {
+    NotificationActionChoices.ARCHIVE -> R.string.archive
+    NotificationActionChoices.TRASH -> R.string.delete
+    NotificationActionChoices.MARK_READ -> R.string.mark_read_action
+    else -> R.string.report_spam
 }
 
 internal fun notifications_screen_ready(
