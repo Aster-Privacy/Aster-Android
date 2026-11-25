@@ -149,13 +149,18 @@ fun open_with_any(keys: MutableList<ByteArray>, ciphertext: ByteArray, nonce: By
     return null
 }
 
-fun collect_old_storage_raws(view: VaultKeyView, extra: List<ByteArray> = emptyList()): MutableList<ByteArray> {
+fun collect_old_storage_raws(
+    view: VaultKeyView,
+    extra: List<ByteArray> = emptyList(),
+    refused: List<ByteArray> = emptyList(),
+): MutableList<ByteArray> {
     val current = decode_b64(view.data_kek)?.takeIf { it.size == RESEAL_KEY_LENGTH }
     val out = ArrayList<ByteArray>()
     fun consider(raw: ByteArray?) {
         if (raw == null) return
         val rejected = raw.size != RESEAL_KEY_LENGTH ||
             StorageWriteKey.is_public_mail_kek(raw) ||
+            refused.any { it.size == raw.size && MessageDigest.isEqual(it, raw) } ||
             (current != null && MessageDigest.isEqual(raw, current)) ||
             out.any { MessageDigest.isEqual(it, raw) }
         if (rejected) {
@@ -223,14 +228,18 @@ class ResealKeys(
     }
 }
 
-fun build_reseal_keys(view: VaultKeyView, extra_old: List<ByteArray> = emptyList()): ResealKeys? {
+fun build_reseal_keys(
+    view: VaultKeyView,
+    extra_old: List<ByteArray> = emptyList(),
+    refused_old: List<ByteArray> = emptyList(),
+): ResealKeys? {
     if (!view.data_kek_random) return null
     val raw = decode_b64(view.data_kek) ?: return null
     if (raw.size != RESEAL_KEY_LENGTH) {
         raw.fill(0)
         return null
     }
-    return ResealKeys(raw, collect_old_storage_raws(view, extra_old), StorageWriteKey.public_mail_kek_raws())
+    return ResealKeys(raw, collect_old_storage_raws(view, extra_old, refused_old), StorageWriteKey.public_mail_kek_raws())
 }
 
 fun opens_under_new(keys: ResealKeys, ciphertext_b64: String?, nonce_b64: String?): Boolean {

@@ -156,9 +156,12 @@ object StorageWriteKey {
     )
 
     fun lookup_keys(store: SessionKeyStore): List<ByteArray> =
-        dedupe(
-            listOfNotNull(write_key(store)) + kept_decrypt_keks(store) + legacy_password_keys(store) +
-                public_mail_kek_raws(),
+        without_login_proof(
+            store,
+            dedupe(
+                listOfNotNull(write_key(store)) + kept_decrypt_keks(store) + legacy_password_keys(store) +
+                    public_mail_kek_raws(),
+            ),
         )
 
     fun note_if_public(store: SessionKeyStore, key: ByteArray) {
@@ -184,12 +187,43 @@ object StorageWriteKey {
     }
 
     fun read_keys(store: SessionKeyStore): List<ByteArray> =
-        dedupe(
-            listOfNotNull(write_key(store), store.get_data_kek()) +
-                kept_decrypt_keks(store) +
-                legacy_read_keys(store) +
-                public_mail_kek_raws(),
+        without_login_proof(
+            store,
+            dedupe(
+                listOfNotNull(write_key(store), store.get_data_kek()) +
+                    kept_decrypt_keks(store) +
+                    legacy_read_keys(store) +
+                    public_mail_kek_raws(),
+            ),
         )
+
+    fun is_login_proof(store: SessionKeyStore, key: ByteArray): Boolean {
+        val proof = store.get() ?: return false
+        return try {
+            proof.size == key.size && MessageDigest.isEqual(proof, key)
+        } finally {
+            proof.fill(0)
+        }
+    }
+
+    fun without_login_proof(store: SessionKeyStore, keys: List<ByteArray>): List<ByteArray> {
+        val proof = store.get() ?: return keys
+        return try {
+            drop_retired_keys(keys, listOf(proof))
+        } finally {
+            proof.fill(0)
+        }
+    }
+
+    fun unverified_login_proof_key(store: SessionKeyStore): ByteArray? {
+        if (store.legacy_storage_keys_retired()) return null
+        val proof = store.get() ?: return null
+        if (proof.size != KEY_LENGTH || is_public_mail_kek(proof)) {
+            proof.fill(0)
+            return null
+        }
+        return proof
+    }
 
     fun drop_retired_keys(keys: List<ByteArray>, retired: List<ByteArray>): List<ByteArray> {
         if (retired.isEmpty()) return keys
@@ -215,12 +249,19 @@ object StorageWriteKey {
         }
         val password_keys = legacy_password_keys(store)
         if (password_keys.isEmpty()) return null
-        return dedupe(password_keys + listOfNotNull(store.get()))
+        return without_login_proof(store, dedupe(password_keys))
     }
 
     fun retire_legacy_keys(store: SessionKeyStore, swept_keys: List<ByteArray>): Boolean {
         val hashes = retirement_hashes(swept_keys) ?: return false
-        return store.retire_legacy_storage_keys(hashes)
+        val proof_hash = store.get()?.let { proof ->
+            try {
+                retired_key_hash(proof)
+            } finally {
+                proof.fill(0)
+            }
+        }
+        return store.retire_legacy_storage_keys((hashes + listOfNotNull(proof_hash)).distinct())
     }
 
     private val unrecorded_backfills: MutableSet<SessionKeyStore> =
@@ -242,7 +283,9 @@ object StorageWriteKey {
     }
 
     private fun kept_decrypt_keks(store: SessionKeyStore): List<ByteArray> {
-        if (!store.legacy_storage_keys_retired()) return store.get_decrypt_keks().mapNotNull(::decode_legacy_key)
+        if (!store.legacy_storage_keys_retired()) {
+            return without_login_proof(store, store.get_decrypt_keks().mapNotNull(::decode_legacy_key))
+        }
         backfill_retired_hashes(store)
         val keks = store.get_decrypt_keks().mapNotNull(::decode_legacy_key)
         val known_retired = listOfNotNull(store.get()) +
@@ -267,7 +310,7 @@ object StorageWriteKey {
         if (store.legacy_storage_keys_retired()) {
             emptyList()
         } else {
-            dedupe(legacy_password_keys(store) + listOfNotNull(store.get()))
+            dedupe(legacy_password_keys(store))
         }
 
     private fun legacy_password_keys(store: SessionKeyStore): List<ByteArray> {

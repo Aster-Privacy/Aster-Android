@@ -5478,7 +5478,7 @@ class MailRepository @Inject constructor(
         data_kek?.fill(0)
         return encoded + "|" + session_key_store.get_storage_kdf_version() + "|" +
             StorageWriteKey.with_public_fallback(session_key_store.get_decrypt_keks()).joinToString(",") + "|" +
-            session_key_store.mail_legacy_retired()
+            session_key_store.mail_legacy_retired() + "|" + session_key_store.legacy_storage_keys_retired()
     }
 
     private fun metadata_key_set(): MetadataKeySet {
@@ -5491,12 +5491,14 @@ class MailRepository @Inject constructor(
         if (!session_key_store.mail_legacy_retired()) {
             masters.addAll(StorageWriteKey.read_keys(session_key_store))
             kek_candidates().filter { it.size == 32 }.forEach { masters.add(it.copyOf()) }
+            StorageWriteKey.unverified_login_proof_key(session_key_store)?.let { masters.add(it) }
         }
         val keys = ArrayList<ByteArray>()
         val public_indices = HashSet<Int>()
         for (master in masters) {
             val derived = derive_metadata_key(master)
-            val from_constant = StorageWriteKey.is_public_mail_kek(master)
+            val from_constant = StorageWriteKey.is_public_mail_kek(master) ||
+                StorageWriteKey.is_login_proof(session_key_store, master)
             master.fill(0)
             if (keys.none { it.contentEquals(derived) }) {
                 if (from_constant) public_indices.add(keys.size)

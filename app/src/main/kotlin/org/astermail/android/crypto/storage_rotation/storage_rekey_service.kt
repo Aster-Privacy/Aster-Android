@@ -654,6 +654,7 @@ class StorageRekeyService @Inject constructor(
             decode_b64(encoded)?.takeIf { it.size == RESEAL_KEY_LENGTH }
         }
         val expected = view.data_kek.orEmpty()
+        val refused_old = listOfNotNull(session_key_store.get())
         val reseal = try {
             run_storage_reseal(
                 view = view,
@@ -664,6 +665,7 @@ class StorageRekeyService @Inject constructor(
                 is_cancelled = is_cancelled,
                 extra_old_keys = extra_old,
                 gate = { check_rekey_gate(api) },
+                refused_old_keys = refused_old,
             )
         } finally {
             extra_old.forEach { it.fill(0) }
@@ -685,9 +687,11 @@ class StorageRekeyService @Inject constructor(
                 still_current = { vault_rotator.server_storage_key_matches(expected) },
                 is_cancelled = is_cancelled,
                 gate = { check_rekey_gate(api) },
+                refused_old_keys = refused_old,
             )
         } finally {
             legacy_keys.forEach { it.fill(0) }
+            refused_old.forEach { it.fill(0) }
         }
         val constants_done_key = PUBLIC_CONSTANT_SWEEP_STEP + "_done_" + user_id
         val sweep_prefs = prefs

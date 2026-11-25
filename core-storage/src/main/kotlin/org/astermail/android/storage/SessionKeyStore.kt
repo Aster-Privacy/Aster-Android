@@ -81,6 +81,10 @@ class SessionKeyStore(context: Context? = null) {
 
     private val scheduled_untagged_file = KeyPinFile(pin_context, scheduled_untagged_prefs_name)
 
+    private val storage_legacy_retired_file = KeyPinFile(pin_context, storage_legacy_retired_prefs_name)
+
+    private val storage_legacy_retired_pins = HashMap<String, List<String>>()
+
     private val scheduled_untagged_snapshots = HashMap<String, ScheduledUntaggedSnapshot>()
 
     private val legacy_folder_kdf_pin_prefs: SharedPreferences? =
@@ -286,6 +290,7 @@ class SessionKeyStore(context: Context? = null) {
                 ratchet_pq_identity_secret = p.getString(key_ratchet_pq_identity_priv, null)
                 ratchet_pq_identity_public = p.getString(key_ratchet_pq_identity_pub, null)
                 external_pgp_blob = p.getString(key_external_pgp_blob, null)
+                if (legacy_storage_keys_retired) pin_storage_retirement_locked(retired_storage_key_hashes)
             }.onFailure { t ->
                 if (org.astermail.android.storage.BuildConfig.DEBUG) {
                     android.util.Log.e("SessionKeyStore", "Failed to load session keys", t)
@@ -720,7 +725,7 @@ class SessionKeyStore(context: Context? = null) {
 
     fun get_legacy_keks(): List<String>? {
         synchronized(lock) {
-            return legacy_keks?.let { RetiredStorageKeys.not_retired(it, retired_storage_key_hashes) }
+            return legacy_keks?.let { RetiredStorageKeys.not_retired(it, retired_hashes_locked()) }
         }
     }
 
@@ -902,7 +907,7 @@ class SessionKeyStore(context: Context? = null) {
         synchronized(lock) {
             return RetiredStorageKeys.not_retired(
                 (legacy_keks.orEmpty() + account_keks.orEmpty()).distinct(),
-                retired_storage_key_hashes,
+                retired_hashes_locked(),
             )
         }
     }
@@ -949,13 +954,45 @@ class SessionKeyStore(context: Context? = null) {
             if (!committed) return false
             retired_storage_key_hashes = merged
             legacy_storage_keys_retired = true
+            pin_storage_retirement_locked(merged)
             return true
         }
     }
 
-    fun legacy_storage_keys_retired(): Boolean = legacy_storage_keys_retired
+    fun legacy_storage_keys_retired(): Boolean = synchronized(lock) {
+        legacy_storage_keys_retired || pinned_storage_retirement_locked() != null
+    }
 
-    fun retired_storage_key_hashes(): List<String> = retired_storage_key_hashes
+    fun retired_storage_key_hashes(): List<String> = synchronized(lock) { retired_hashes_locked() }
+
+    private fun retired_hashes_locked(): List<String> {
+        val pinned = pinned_storage_retirement_locked() ?: return retired_storage_key_hashes
+        return (retired_storage_key_hashes + pinned).distinct()
+    }
+
+    private fun pinned_storage_retirement_locked(): List<String>? {
+        val owner_id = user_id?.takeIf { it.isNotBlank() } ?: return null
+        storage_legacy_retired_pins[owner_id]?.let { return it }
+        if (!storage_legacy_retired_file.readable()) return null
+        val saved = runCatching { storage_legacy_retired_file.prefs?.getString(owner_id, null) }.getOrNull()
+            ?: return null
+        val hashes = saved.split("\n").filter { it.isNotBlank() }
+        storage_legacy_retired_pins[owner_id] = hashes
+        return hashes
+    }
+
+    private fun pin_storage_retirement_locked(hashes: List<String>) {
+        val owner_id = user_id?.takeIf { it.isNotBlank() } ?: return
+        val known = pinned_storage_retirement_locked()
+        val merged = (known.orEmpty() + hashes.filter { it.isNotBlank() }).distinct()
+        if (known == merged) return
+        storage_legacy_retired_pins[owner_id] = merged
+        storage_legacy_retired_file.readable()
+        val saved = runCatching {
+            storage_legacy_retired_file.prefs?.edit()?.putString(owner_id, merged.joinToString("\n"))?.commit() == true
+        }.getOrDefault(false)
+        if (!saved && pin_context != null) android.util.Log.w("SessionKeyStore", "retirement pin kept in memory only")
+    }
 
     fun put_prekey_seal(key: ByteArray?, migrated: Boolean) {
         synchronized(lock) {
@@ -1114,6 +1151,7 @@ class SessionKeyStore(context: Context? = null) {
         const val mail_legacy_retired_prefs_name = "aster_mail_legacy_retired_secure"
         const val folder_key_pins_prefs_name = "aster_folder_key_pins_secure"
         const val scheduled_untagged_prefs_name = "aster_scheduled_untagged_secure"
+        const val storage_legacy_retired_prefs_name = "aster_storage_legacy_retired_secure"
         private const val legacy_folder_kdf_pins_prefs_name = "folder_kdf_pins"
         const val max_folder_key_pin = 2
         private const val key_session_key = "session_key"
