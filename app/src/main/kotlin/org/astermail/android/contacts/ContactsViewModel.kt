@@ -1118,6 +1118,52 @@ class ContactsViewModel @Inject constructor(
         }
     }
 
+    fun set_selection_favorite(on_complete: ((Boolean) -> Unit)? = null) {
+        val selected = _state.value.selected_contacts
+        val target = favorite_target(selected)
+        if (target == null || mutation_in_flight) {
+            on_complete?.invoke(false)
+            return
+        }
+        val changes = contacts_needing_favorite(selected, target)
+        if (changes.isEmpty()) {
+            _state.value = _state.value.copy(selected_ids = emptySet())
+            on_complete?.invoke(true)
+            return
+        }
+        mutation_in_flight = true
+        val change_ids = changes.map { it.id }.toSet()
+        _state.value = _state.value.copy(
+            contacts = apply_favorite(_state.value.contacts, change_ids, target),
+            error = null,
+        )
+        viewModelScope.launch {
+            val failed = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+            val gate = kotlinx.coroutines.sync.Semaphore(bulk_delete_concurrency)
+            kotlinx.coroutines.coroutineScope {
+                changes.map { contact ->
+                    async {
+                        val outcome = gate.withPermit {
+                            repository.update_contact(contact.id, contact.copy(is_favorite = target))
+                        }
+                        if (outcome.isFailure) failed.add(contact.id)
+                    }
+                }.awaitAll()
+            }
+            mutation_in_flight = false
+            val failed_ids = failed.toSet()
+            if (failed_ids.isEmpty()) {
+                _state.value = _state.value.copy(selected_ids = emptySet())
+                on_complete?.invoke(true)
+            } else {
+                _state.value = _state.value.copy(
+                    contacts = apply_favorite(_state.value.contacts, failed_ids, !target),
+                )
+                on_complete?.invoke(false)
+            }
+        }
+    }
+
     fun delete_selection(on_complete: ((Boolean) -> Unit)? = null) {
         val ids = _state.value.selected_ids.toList()
         if (ids.isEmpty() || mutation_in_flight) {

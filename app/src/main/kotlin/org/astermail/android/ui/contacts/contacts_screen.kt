@@ -335,6 +335,34 @@ fun ContactsScreen(
                                     on_compose_selection()
                                 },
                             )
+                            val favorite_target = org.astermail.android.contacts.favorite_target(
+                                ui_state.selected_contacts,
+                            )
+                            if (favorite_target != null) {
+                                aster_menu_item(
+                                    label = stringResource(
+                                        if (favorite_target) {
+                                            R.string.contacts_add_to_favorites
+                                        } else {
+                                            R.string.contacts_remove_from_favorites
+                                        },
+                                    ),
+                                    icon = TablerIcons.Star,
+                                    test_tag = "bulk_favorite",
+                                    on_click = {
+                                        show_bulk_menu = false
+                                        vm.set_selection_favorite { ok ->
+                                            if (!ok) {
+                                                Toast.makeText(
+                                                    context,
+                                                    context.getString(R.string.contacts_favorites_failed),
+                                                    Toast.LENGTH_SHORT,
+                                                ).show()
+                                            }
+                                        }
+                                    },
+                                )
+                            }
                             aster_menu_item(
                                 label = stringResource(R.string.add_to_group),
                                 icon = TablerIcons.Users,
