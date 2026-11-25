@@ -307,12 +307,18 @@ private fun push_large_icon(
     runBlocking {
         withTimeoutOrNull(NOTIFICATION_AVATAR_RUN_BUDGET_MS + PUSH_AVATAR_GRACE_MS) {
             val budget = NotificationAvatarBudget()
-            warm_avatar_trust(
+            prepare_sender_avatars(
                 settings = settings,
                 content_hidden = false,
-                budget = budget,
+                trust_budget = NotificationAvatarBudget(),
+                picture_budget = budget,
                 ready = org.astermail.android.security.SenderTrustStore::contacts_ready,
                 warm = { entry.notification_contacts().get().warm_sender_trust() },
+                prefetch = {
+                    avatar_prefetch_email(trust_message, shown_email)?.let { email ->
+                        org.astermail.android.mail.AsterProfileResolverHolder.shared?.resolve_pictures(listOf(email))
+                    }
+                },
             )
             val plan = runCatching {
                 plan_notification_avatar(

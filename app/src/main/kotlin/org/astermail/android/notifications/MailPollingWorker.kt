@@ -437,12 +437,22 @@ class MailPollingWorker(
                 runCatching { repo.cached_avatar_preferences() }.getOrNull(),
             )
             val avatar_budget = NotificationAvatarBudget()
-            warm_avatar_trust(
+            prepare_sender_avatars(
                 settings = avatar_settings,
                 content_hidden = content_hidden,
-                budget = avatar_budget,
+                trust_budget = NotificationAvatarBudget(),
+                picture_budget = avatar_budget,
                 ready = org.astermail.android.security.SenderTrustStore::contacts_ready,
                 warm = { entry?.notification_contacts()?.get()?.warm_sender_trust() ?: false },
+                prefetch = {
+                    val emails = (listOf(fresh) + also_arrived).mapNotNull { item ->
+                        avatar_prefetch_email(
+                            org.astermail.android.ui.mail.inbox_item_trust_message(item),
+                            org.astermail.android.ui.mail.displayed_sender_email(item.display_sender_email, item.sender_email),
+                        )
+                    }
+                    org.astermail.android.mail.AsterProfileResolverHolder.shared?.resolve_pictures(emails)
+                },
             )
             val posted = post_message_notification(
                 item_id = fresh.id,

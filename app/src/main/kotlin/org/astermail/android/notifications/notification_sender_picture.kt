@@ -24,6 +24,8 @@ package org.astermail.android.notifications
 import java.net.URI
 import java.util.Locale
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withTimeoutOrNull
@@ -104,6 +106,31 @@ internal suspend fun warm_avatar_trust(
     if (runCatching { ready() }.getOrDefault(false)) return true
     within_avatar_budget(budget) { warm() }
     return runCatching { ready() }.getOrDefault(false)
+}
+
+internal suspend fun prepare_sender_avatars(
+    settings: NotificationAvatarSettings,
+    content_hidden: Boolean,
+    trust_budget: NotificationAvatarBudget,
+    picture_budget: NotificationAvatarBudget,
+    ready: () -> Boolean,
+    warm: suspend () -> Boolean,
+    prefetch: suspend () -> Unit,
+): Boolean {
+    if (content_hidden || !settings.show_pictures) return false
+    return coroutineScope {
+        val lookup = if (settings.low_network) null else async { within_avatar_budget(picture_budget) { prefetch() } }
+        val trusted = warm_avatar_trust(settings, content_hidden, trust_budget, ready, warm)
+        lookup?.await()
+        trusted
+    }
+}
+
+internal fun avatar_prefetch_email(message: SenderTrustMessage?, shown_email: String): String? {
+    if (message == null || message.is_external != false) return null
+    val lower = shown_email.trim().lowercase(Locale.ROOT)
+    if (!lower.contains('@') || !is_aster_domain(lower.substringAfter('@', ""))) return null
+    return lower
 }
 
 internal fun push_trust_message(
