@@ -5,7 +5,7 @@ What's new:
 
 Fixed:
 
-- Threads open at their final height, without blank space under images.
+- Threads open at their final height, and verified badges are larger.
 - Unsubscribe works for more senders and shows one result when you're done.
-- App lock appears right away when you open the app.
-- Trusted devices load the first time you open them.
+- Your inbox and App lock appear sooner when you open the app.
+- An edited reply subject stays when you switch reply modes.
