@@ -22,8 +22,10 @@
 package org.astermail.android.notifications
 
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.astermail.android.security.SenderTrustContext
+import org.astermail.android.security.SenderTrustMessage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -278,5 +280,107 @@ class NotificationSenderPictureTest {
         assertEquals("robin@astermail.org", ready.email)
         assertTrue(ready.allow_profile_picture)
         assertTrue(ready.aster_domain)
+    }
+
+    private fun cold_budget() = NotificationAvatarBudget(total_ms = 300L, per_fetch_ms = 250L)
+
+    @Test
+    fun a_slow_trust_warm_no_longer_starves_the_profile_lookup() = runBlocking {
+        var ready = false
+        val profiles = mutableMapOf<String, String>()
+        val picture_budget = cold_budget()
+        val trusted = prepare_sender_avatars(
+            settings = settings,
+            content_hidden = false,
+            trust_budget = cold_budget(),
+            picture_budget = picture_budget,
+            ready = { ready },
+            warm = {
+                delay(220L)
+                ready = true
+                true
+            },
+            prefetch = {
+                delay(150L)
+                profiles["sender@astermail.org"] = "data:image/png;base64,iVBORw0KGgo="
+            },
+        )
+        val icon = sender_icon_or_initials(
+            picture = {
+                resolve_sender_picture(
+                    known_url = { profiles["sender@astermail.org"] },
+                    lookup_url = { null },
+                    load = { _, _ -> "picture" },
+                    api_host = api_host,
+                    budget = picture_budget,
+                )
+            },
+            initials = { "initials" },
+        )
+        assertTrue(trusted)
+        assertEquals("picture", icon)
+    }
+
+    @Test
+    fun hidden_content_skips_the_trust_warm_and_the_profile_lookup() = runBlocking {
+        var warmed = false
+        var fetched = false
+        val trusted = prepare_sender_avatars(
+            settings = settings,
+            content_hidden = true,
+            trust_budget = cold_budget(),
+            picture_budget = cold_budget(),
+            ready = { true },
+            warm = {
+                warmed = true
+                true
+            },
+            prefetch = { fetched = true },
+        )
+        assertFalse(trusted)
+        assertFalse(warmed)
+        assertFalse(fetched)
+    }
+
+    @Test
+    fun low_network_skips_the_profile_lookup() = runBlocking {
+        var fetched = false
+        val trusted = prepare_sender_avatars(
+            settings = NotificationAvatarSettings(show_pictures = true, low_network = true),
+            content_hidden = false,
+            trust_budget = cold_budget(),
+            picture_budget = cold_budget(),
+            ready = { true },
+            warm = { true },
+            prefetch = { fetched = true },
+        )
+        assertTrue(trusted)
+        assertFalse(fetched)
+    }
+
+    @Test
+    fun a_hung_profile_lookup_ends_within_its_budget() = runBlocking {
+        val started = System.currentTimeMillis()
+        val trusted = prepare_sender_avatars(
+            settings = settings,
+            content_hidden = false,
+            trust_budget = cold_budget(),
+            picture_budget = cold_budget(),
+            ready = { true },
+            warm = { true },
+            prefetch = { awaitCancellation() },
+        )
+        assertTrue(trusted)
+        assertTrue(System.currentTimeMillis() - started < 1_000L)
+    }
+
+    @Test
+    fun only_internal_aster_senders_are_looked_up() {
+        val internal = SenderTrustMessage(sender_email = "a@astermail.org", is_external = false)
+        assertEquals("sender@aster.cx", avatar_prefetch_email(internal, " Sender@Aster.cx "))
+        assertNull(avatar_prefetch_email(internal.copy(is_external = true), "sender@aster.cx"))
+        assertNull(avatar_prefetch_email(internal.copy(is_external = null), "sender@aster.cx"))
+        assertNull(avatar_prefetch_email(internal, "sender@example.com"))
+        assertNull(avatar_prefetch_email(null, "sender@aster.cx"))
     }
 }
