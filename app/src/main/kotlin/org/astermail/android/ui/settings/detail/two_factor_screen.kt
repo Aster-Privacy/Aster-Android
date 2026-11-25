@@ -22,7 +22,6 @@
 package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
-import org.astermail.android.design.acrylic
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
@@ -34,7 +33,6 @@ import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -223,20 +221,10 @@ private fun idle_panel(state: org.astermail.android.twofactor.TwoFactorUiState, 
 @Composable
 private fun two_factor_status_pill(enabled: Boolean) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(8.dp)
-    Box(
-        modifier = Modifier
-            .acrylic(colors, shape, colors.bg_secondary)
-            .border(1.dp, colors.border_primary, shape)
-            .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
-    ) {
-        Text(
-            text = if (enabled) stringResource(R.string.enabled) else stringResource(R.string.disabled),
-            color = colors.text_secondary,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-    }
+    org.astermail.android.ui.settings.device_badge(
+        label = if (enabled) stringResource(R.string.enabled) else stringResource(R.string.disabled),
+        color = if (enabled) org.astermail.android.design.AsterColors.success else colors.text_tertiary,
+    )
 }
 
 @Composable

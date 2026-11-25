@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.astermail.android.ui.search.search_subject_text
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -409,8 +410,9 @@ internal fun detail_subject_line(
                 ).lineCount
             }
         }
+        val search_subject = search_subject_text(subject)
         val text = buildAnnotatedString {
-            append(subject)
+            if (search_subject != null) append(search_subject) else append(subject)
             if (!chips_below) {
                 chips.forEach { chip ->
                     append(detail_chip_placeholder_gap)

@@ -16,4 +16,12 @@
         <item quantity="many">قبل %d يومًا</item>
         <item quantity="other">قبل %d يوم</item>
     </plurals>
+    <plurals name="search_match_count">
+        <item quantity="zero">%d تطابق</item>
+        <item quantity="one">تطابق واحد</item>
+        <item quantity="two">تطابقان</item>
+        <item quantity="few">%d تطابقات</item>
+        <item quantity="many">%d تطابقًا</item>
+        <item quantity="other">%d تطابق</item>
+    </plurals>
 </resources>

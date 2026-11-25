@@ -143,8 +143,19 @@ class AppLockStore @Inject constructor(
         }
     }
 
-    private val _is_locked = MutableStateFlow(false)
+    private val _is_locked = MutableStateFlow(marker_present())
     val is_locked: StateFlow<Boolean> = _is_locked.asStateFlow()
+
+    private val _reveal_started = MutableStateFlow(false)
+    val reveal_started: StateFlow<Boolean> = _reveal_started.asStateFlow()
+
+    fun begin_reveal() {
+        _reveal_started.value = true
+    }
+
+    fun cancel_reveal() {
+        _reveal_started.value = false
+    }
 
     private val _config_version = MutableStateFlow(0)
     val config_version: StateFlow<Int> = _config_version.asStateFlow()
@@ -222,6 +233,7 @@ class AppLockStore @Inject constructor(
     }
 
     private fun engage_lock() {
+        _reveal_started.value = false
         _is_locked.value = true
         runCatching { org.astermail.android.folders.folder_lock_store.lock_all() }
         org.astermail.android.mail.message_preloader.clear()
@@ -236,6 +248,7 @@ class AppLockStore @Inject constructor(
     fun mark_session_unlocked() {
         session.mark_unlocked()
         _is_locked.value = false
+        _reveal_started.value = false
     }
 
     fun check_on_foreground() {

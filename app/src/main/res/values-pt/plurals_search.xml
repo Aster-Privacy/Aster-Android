@@ -10,4 +10,9 @@
         <item quantity="many">há %d dias</item>
         <item quantity="other">há %d dias</item>
     </plurals>
+    <plurals name="search_match_count">
+        <item quantity="one">%d correspondência</item>
+        <item quantity="many">%d correspondências</item>
+        <item quantity="other">%d correspondências</item>
+    </plurals>
 </resources>

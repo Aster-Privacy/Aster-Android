@@ -12,4 +12,10 @@
         <item quantity="many">%d дней назад</item>
         <item quantity="other">%d дня назад</item>
     </plurals>
+    <plurals name="search_match_count">
+        <item quantity="one">%d совпадение</item>
+        <item quantity="few">%d совпадения</item>
+        <item quantity="many">%d совпадений</item>
+        <item quantity="other">%d совпадения</item>
+    </plurals>
 </resources>

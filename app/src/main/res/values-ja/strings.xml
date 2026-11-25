@@ -1252,6 +1252,11 @@
     <string name="bulk_unsubscribe_failed">一括購読解除に失敗しました</string>
     <string name="unsubscribe_in_progress">購読を解除しています</string>
     <string name="subscription_hero_summary">アクティブな送信者 %1$s 人、購読解除 %2$s 人、メール %3$s 件</string>
+    <string name="unsubscribe_rate_limited">購読解除のリクエストが多すぎます。1 分後にもう一度お試しください。</string>
+    <string name="unsubscribe_opened_in_browser">この送信者はウェブサイトでのみ購読を解除できます。ブラウザで開いたページで手続きを完了してください。</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="other">%d 人の送信者の購読を解除できませんでした</item>
+    </plurals>
     <plurals name="unsubscribe_needs_manual_count">
         <item quantity="other">%d 人の送信者は、各ウェブサイトで購読を解除する必要があります</item>
     </plurals>
@@ -3743,4 +3748,9 @@
     <string name="mail_low_priority">優先度: 低</string>
     <string name="official_sender">Aster公式アドレス</string>
     <string name="official_sender_desc">このメッセージはAsterの公式アドレスから送信されています。Asterがメールでパスワードやリカバリーフレーズを尋ねることはありません。</string>
+    <string name="search_match_position">%1$d / %2$d</string>
+    <string name="search_match_position_description">%2$d 件中 %1$d 件目の一致</string>
+    <string name="search_match_previous">前の一致</string>
+    <string name="search_match_next">次の一致</string>
+    <string name="search_match_clear">ハイライトを消去</string>
 </resources>

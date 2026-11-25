@@ -1,0 +1,11 @@
+What's new:
+
+- Search terms are highlighted in the message you open, with buttons to move between matches.
+- Contacts can hold events such as anniversaries, and you can favorite several at once.
+
+Fixed:
+
+- Threads open at their final height, without blank space under images.
+- Unsubscribe works for more senders and shows one result when you're done.
+- App lock appears right away when you open the app.
+- Trusted devices load the first time you open them.

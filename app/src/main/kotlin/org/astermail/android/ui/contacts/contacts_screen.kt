@@ -544,10 +544,10 @@ fun ContactsScreen(
                                         show_bulk_menu = false
                                         vm.set_selection_favorite { ok ->
                                             if (!ok) {
-                                                Toast.makeText(
+                                                android.widget.Toast.makeText(
                                                     context,
                                                     context.getString(R.string.contacts_favorites_failed),
-                                                    Toast.LENGTH_SHORT,
+                                                    android.widget.Toast.LENGTH_SHORT,
                                                 ).show()
                                             }
                                         }

@@ -1258,6 +1258,14 @@
     <string name="bulk_unsubscribe_failed">Не удалось выполнить массовую отписку</string>
     <string name="unsubscribe_in_progress">Отмена подписки</string>
     <string name="subscription_hero_summary">Активные отправители: %1$s, отписано: %2$s, писем: %3$s</string>
+    <string name="unsubscribe_rate_limited">Вы отправили слишком много запросов на отписку. Повторите попытку через минуту.</string>
+    <string name="unsubscribe_opened_in_browser">От этого отправителя можно отписаться только на его сайте. Завершите отписку на странице, которая открылась в браузере.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">Не удалось отписаться от %d отправителя</item>
+        <item quantity="few">Не удалось отписаться от %d отправителей</item>
+        <item quantity="many">Не удалось отписаться от %d отправителей</item>
+        <item quantity="other">Не удалось отписаться от %d отправителя</item>
+    </plurals>
     <plurals name="unsubscribe_needs_manual_count">
         <item quantity="one">От %d отправителя нужно отписаться на его сайте</item>
         <item quantity="few">От %d отправителей нужно отписаться на их сайтах</item>
@@ -3833,4 +3841,9 @@
     <string name="mail_low_priority">Низкий приоритет</string>
     <string name="official_sender">Официальный адрес Aster</string>
     <string name="official_sender_desc">Это сообщение отправлено с официального адреса Aster. Aster никогда не запрашивает пароль или фразу восстановления по электронной почте.</string>
+    <string name="search_match_position">%1$d из %2$d</string>
+    <string name="search_match_position_description">Совпадение %1$d из %2$d</string>
+    <string name="search_match_previous">Предыдущее совпадение</string>
+    <string name="search_match_next">Следующее совпадение</string>
+    <string name="search_match_clear">Убрать выделение</string>
 </resources>

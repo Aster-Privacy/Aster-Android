@@ -872,6 +872,21 @@ private fun reveal_orphaned_quotes(root: Element) {
     }
 }
 
+internal fun reply_without_quote(body: String): String? = try {
+    val root = Jsoup.parseBodyFragment(body).body()
+    collapse_first_quote(root, "")
+    val quoted = root.select(".aster-quoted-content").filter { it.closest(".aster-forwarded-content") == null }
+    if (quoted.isEmpty()) {
+        null
+    } else {
+        quoted.forEach { it.remove() }
+        root.select(".aster-quote-toggle").remove()
+        if (root.text().isBlank()) null else root.html()
+    }
+} catch (_: Throwable) {
+    null
+}
+
 private fun collapse_quoted_content(root: Element, forwarded_label: String) {
     collapse_first_quote(root, forwarded_label)
     reveal_orphaned_quotes(root)

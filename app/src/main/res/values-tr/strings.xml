@@ -1254,6 +1254,12 @@
     <string name="bulk_unsubscribe_failed">Toplu abonelik iptali başarısız</string>
     <string name="unsubscribe_in_progress">Abonelik iptal ediliyor</string>
     <string name="subscription_hero_summary">%1$s etkin gönderen, %2$s abonelik iptal edildi, %3$s e-posta</string>
+    <string name="unsubscribe_rate_limited">Çok fazla abonelikten çıkma isteği gönderdiniz. Bir dakika sonra tekrar deneyin.</string>
+    <string name="unsubscribe_opened_in_browser">Bu gönderen yalnızca kendi web sitesinde abonelikten çıkmanıza izin veriyor. İşlemi tarayıcınızda açılan sayfada tamamlayın.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">%d gönderenin aboneliğinden çıkılamadı</item>
+        <item quantity="other">%d gönderenin aboneliğinden çıkılamadı</item>
+    </plurals>
     <plurals name="unsubscribe_needs_manual_count">
         <item quantity="one">%d gönderen için aboneliği web sitesinden iptal etmeniz gerekiyor</item>
         <item quantity="other">%d gönderen için aboneliği web sitelerinden iptal etmeniz gerekiyor</item>
@@ -3767,4 +3773,9 @@
     <string name="mail_low_priority">Düşük öncelik</string>
     <string name="official_sender">Resmi Aster adresi</string>
     <string name="official_sender_desc">Bu mesaj resmi bir Aster adresinden gönderildi. Aster parolanızı veya kurtarma ifadenizi asla e-posta ile istemez.</string>
+    <string name="search_match_position">%1$d / %2$d</string>
+    <string name="search_match_position_description">Eşleşme %1$d / %2$d</string>
+    <string name="search_match_previous">Önceki eşleşme</string>
+    <string name="search_match_next">Sonraki eşleşme</string>
+    <string name="search_match_clear">Vurguları temizle</string>
 </resources>

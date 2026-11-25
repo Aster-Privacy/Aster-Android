@@ -1254,6 +1254,12 @@
     <string name="bulk_unsubscribe_failed">Bulksgewijs uitschrijven mislukt</string>
     <string name="unsubscribe_in_progress">Afmelden</string>
     <string name="subscription_hero_summary">%1$s actieve afzenders, %2$s afgemeld, %3$s e-mails</string>
+    <string name="unsubscribe_rate_limited">Je hebt te veel afmeldverzoeken verstuurd. Probeer het over een minuut opnieuw.</string>
+    <string name="unsubscribe_opened_in_browser">Bij deze afzender kun je je alleen afmelden op de website. Rond het af op de pagina die in je browser is geopend.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">Afmelden bij %d afzender is mislukt</item>
+        <item quantity="other">Afmelden bij %d afzenders is mislukt</item>
+    </plurals>
     <plurals name="unsubscribe_needs_manual_count">
         <item quantity="one">Voor %d afzender moet je je afmelden op de website</item>
         <item quantity="other">Voor %d afzenders moet je je afmelden op hun websites</item>
@@ -3767,4 +3773,9 @@
     <string name="mail_low_priority">Lage prioriteit</string>
     <string name="official_sender">Officieel Aster-adres</string>
     <string name="official_sender_desc">Dit bericht komt van een officieel Aster-adres. Aster vraagt je nooit per e-mail om je wachtwoord of herstelzin.</string>
+    <string name="search_match_position">%1$d van %2$d</string>
+    <string name="search_match_position_description">Overeenkomst %1$d van %2$d</string>
+    <string name="search_match_previous">Vorige overeenkomst</string>
+    <string name="search_match_next">Volgende overeenkomst</string>
+    <string name="search_match_clear">Markeringen wissen</string>
 </resources>

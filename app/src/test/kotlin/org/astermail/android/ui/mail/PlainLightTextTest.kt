@@ -165,4 +165,34 @@ class PlainLightTextTest {
     fun bgcolor_cells_are_not_plain_text() {
         assertFalse(reads_as_plain_light_text("<table><tr><td bgcolor=\"#f2f2f2\"><p>Plain line</p></td></tr></table>"))
     }
+
+    private fun dark_page(body: String): String = build_email_html(
+        body = body,
+        is_dark = true,
+        fg_hex = "#E8E8E8",
+        link_hex = "#8ab4f8",
+        forwarded_label = "Forwarded message",
+        image_failed_label = "Image unavailable",
+        force_dark_emails = false,
+        dyslexia_font = false,
+        translate_mode = "off",
+    )
+
+    @Test
+    fun plain_reply_over_designed_quote_stays_dark() {
+        val quoted = "<table width=\"600\" bgcolor=\"#ffffff\"><tr><td style=\"background-color:#1a56db\">" +
+            "<img src=\"a\"><img src=\"b\"><img src=\"c\">Verify your account</td></tr></table>"
+        val body = "<div class=\"WordSection1\"><p class=\"MsoNormal\">Thanks, we blocked the sender.</p>" +
+            "<div style=\"border:none;border-top:solid #E1E1E1 1.0pt;padding:3.0pt 0in 0in 0in\">" +
+            "<p class=\"MsoNormal\"><b>From:</b> Aster Team<br><b>Sent:</b> Tuesday<br><b>Subject:</b> Phishing scam</p></div>" +
+            quoted + "</div>"
+        assertFalse(dark_page(body).contains("data-white=\"1\""))
+    }
+
+    @Test
+    fun designed_mail_without_quote_keeps_white_page() {
+        val body = "<table width=\"600\" bgcolor=\"#ffffff\"><tr><td style=\"background-color:#1a56db\">" +
+            "<img src=\"a\"><img src=\"b\"><img src=\"c\">Sale</td></tr></table>"
+        assertTrue(dark_page(body).contains("data-white=\"1\""))
+    }
 }

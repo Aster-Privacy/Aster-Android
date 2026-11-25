@@ -245,7 +245,7 @@ fun sender_profile_sheet(
                         )
                         if (shows_official) {
                             Spacer(Modifier.width(6.dp))
-                            official_badge(size = 18.dp)
+                            official_badge(size = 22.dp)
                         }
                     }
                     if (display_name != null) {

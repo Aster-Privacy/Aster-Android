@@ -1638,6 +1638,12 @@
     </plurals>
     <string name="unsubscribe_in_progress">सदस्यता रद्द की जा रही है</string>
     <string name="subscription_hero_summary">%1$s सक्रिय प्रेषक, %2$s की सदस्यता रद्द, %3$s ईमेल</string>
+    <string name="unsubscribe_rate_limited">आपने सदस्यता छोड़ने के बहुत अधिक अनुरोध भेजे हैं। एक मिनट बाद फिर से कोशिश करें।</string>
+    <string name="unsubscribe_opened_in_browser">यह प्रेषक आपको केवल अपनी वेबसाइट पर सदस्यता छोड़ने देता है। अपने ब्राउज़र में खुले पेज पर प्रक्रिया पूरी करें।</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">%d प्रेषक की सदस्यता नहीं छोड़ी जा सकी</item>
+        <item quantity="other">%d प्रेषकों की सदस्यता नहीं छोड़ी जा सकी</item>
+    </plurals>
     <plurals name="unsubscribe_needs_manual_count">
         <item quantity="one">%d प्रेषक की सदस्यता आपको उसकी वेबसाइट पर रद्द करनी होगी</item>
         <item quantity="other">%d प्रेषकों की सदस्यता आपको उनकी वेबसाइटों पर रद्द करनी होगी</item>
@@ -3659,4 +3665,9 @@
     <string name="mail_low_priority">निम्न प्राथमिकता</string>
     <string name="official_sender">आधिकारिक Aster पता</string>
     <string name="official_sender_desc">यह संदेश एक आधिकारिक Aster पते से है। Aster कभी भी ईमेल से आपका पासवर्ड या रिकवरी वाक्यांश नहीं मांगेगा।</string>
+    <string name="search_match_position">%2$d में से %1$d</string>
+    <string name="search_match_position_description">%2$d में से मिलान %1$d</string>
+    <string name="search_match_previous">पिछला मिलान</string>
+    <string name="search_match_next">अगला मिलान</string>
+    <string name="search_match_clear">हाइलाइट हटाएं</string>
 </resources>

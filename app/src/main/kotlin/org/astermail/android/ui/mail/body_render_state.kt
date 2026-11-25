@@ -33,6 +33,16 @@ internal const val BODY_HEIGHT_ROUNDING_CSS = 3
 
 internal const val LIVE_BODY_VIEW_CAPACITY = 6
 
+internal const val BODY_SETTLE_WAIT_MS = 280L
+
+internal const val QUOTE_ANCHOR_WINDOW_MS = 1500L
+
+internal fun quote_anchor_correction(before_y: Float, after_y: Float, min_px: Float = 1f): Float {
+    if (before_y.isNaN() || after_y.isNaN()) return 0f
+    val delta = after_y - before_y
+    return if (kotlin.math.abs(delta) >= min_px) delta else 0f
+}
+
 internal class body_generation_gate {
     private var current = 0
     private var released = false
@@ -81,6 +91,24 @@ internal fun body_height_cacheable(
 ): Boolean =
     accepted && painted && height_dp >= 1f &&
         (verdict == body_reading_verdict.grow || verdict == body_reading_verdict.settle)
+
+internal fun body_reading_exact(verdict: body_reading_verdict, view_css: Int, probe_css: Int): Boolean =
+    verdict == body_reading_verdict.grow ||
+        (verdict == body_reading_verdict.settle && view_css <= probe_css + BODY_HEIGHT_SLACK_CSS)
+
+internal fun body_height_trustworthy(exact: Boolean, load_finished: Boolean, height_dp: Float, exact_dp: Float): Boolean =
+    load_finished && height_dp >= 1f && (exact || kotlin.math.abs(height_dp - exact_dp) < 0.5f)
+
+internal fun needs_confirm_probe(
+    settled: Boolean,
+    trusted: Boolean,
+    measured: Boolean,
+    probing: Boolean,
+    last_exact: Boolean,
+): Boolean = !settled && !trusted && measured && !probing && !last_exact
+
+internal fun body_settle_wait_ms(trusted: Boolean, load_finished: Boolean): Long =
+    if (trusted || load_finished) 0L else BODY_SETTLE_WAIT_MS
 
 internal data class body_height_seed(val view_dp: Float?, val reserve_dp: Float, val measured: Boolean)
 

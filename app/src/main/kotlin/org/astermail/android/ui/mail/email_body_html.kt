@@ -221,20 +221,31 @@ internal fun build_email_html(
     } else {
         body
     }
-    val declares_light = body.contains(Regex("color-scheme\\s*:\\s*(?:light\\s+only|only\\s+light)\\b", RegexOption.IGNORE_CASE))
-    val declares_light_bg = is_html_body && body.contains(
-        Regex(
-            "(?:background(?:-color)?\\s*:\\s*(?:#fff(?:fff)?|white|rgb\\(\\s*25[0-5])|bgcolor\\s*=\\s*[\"']?(?:#fff(?:fff)?|white))",
-            RegexOption.IGNORE_CASE,
-        ),
-    )
+    fun reads_designed_light(source: String, layout: Boolean): Pair<Boolean, Boolean> {
+        val source_light = source.contains(Regex("color-scheme\\s*:\\s*(?:light\\s+only|only\\s+light)\\b", RegexOption.IGNORE_CASE))
+        val source_light_bg = is_html_body && source.contains(
+            Regex(
+                "(?:background(?:-color)?\\s*:\\s*(?:#fff(?:fff)?|white|rgb\\(\\s*25[0-5])|bgcolor\\s*=\\s*[\"']?(?:#fff(?:fff)?|white))",
+                RegexOption.IGNORE_CASE,
+            ),
+        )
+        val designed = source_light || source_light_bg || layout ||
+            background_reads_light(detect_body_background(source)) || (is_html_body && declares_light_background(source))
+        val plain = is_dark && is_html_body && !source_light && !force_dark_emails && if (layout) {
+            reads_as_plain_table_correspondence(source)
+        } else {
+            reads_as_plain_light_text(source)
+        }
+        return designed to plain
+    }
     val seeded_background = detect_body_background(render_body)
-    val designed_light = declares_light || declares_light_bg || has_newsletter_layout ||
-        background_reads_light(seeded_background) || (is_html_body && declares_light_background(render_body))
-    val plain_light = is_dark && is_html_body && !declares_light && !force_dark_emails && if (has_newsletter_layout) {
-        reads_as_plain_table_correspondence(render_body)
+    val reply_part = if (is_dark && is_html_body && !force_dark_emails) reply_without_quote(render_body) else null
+    val (designed_light, plain_light) = if (reply_part != null) {
+        val reply_tables = (reply_part.split(Regex("<table\\b", RegexOption.IGNORE_CASE)).size - 1) > 2 ||
+            reply_part.contains(Regex("<table[^>]*(?:width|bgcolor|background)\\s*=", RegexOption.IGNORE_CASE))
+        reads_designed_light(reply_part, reply_tables)
     } else {
-        reads_as_plain_light_text(render_body)
+        reads_designed_light(render_body, has_newsletter_layout)
     }
     val white_page = is_dark && is_html_body && designed_light && !force_dark_emails && !plain_light
     val simple_dark = is_dark && is_html_body && !white_page
@@ -290,9 +301,9 @@ a{color:$PAPER_LINK}
     }
 
     val table_css = if (has_newsletter_layout) {
-        "#m{max-width:100%!important;overflow-x:visible!important;box-sizing:border-box!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m div,#m p,#m blockquote,#m section,#m article,#m figure,#m picture,#m form,#m pre,#m hr,#m iframe,#m video,#m embed,#m object,#m svg,#m canvas,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}#m pre{white-space:pre-wrap!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
+        "#m{max-width:100%!important;overflow-x:visible!important;box-sizing:border-box!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m img[src^=\"data:image/gif;base64,R0lGODlhAQABAAAAACH5\"]:not([height]){height:0!important}#m div,#m p,#m blockquote,#m section,#m article,#m figure,#m picture,#m form,#m pre,#m hr,#m iframe,#m video,#m embed,#m object,#m svg,#m canvas,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}#m pre{white-space:pre-wrap!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
     } else {
-        "#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}#m [data-aster-long-token]{overflow-wrap:anywhere}#m div,#m p,#m blockquote,#m section,#m article,#m pre,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}"
+        "#m img[src^=\"data:image/gif;base64,R0lGODlhAQABAAAAACH5\"]:not([height]){height:0!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}#m [data-aster-long-token]{overflow-wrap:anywhere}#m div,#m p,#m blockquote,#m section,#m article,#m pre,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}"
     }
     val viewport_meta = EMAIL_VIEWPORT_META
     val color_scheme_meta = if (force_light) "<meta name=\"color-scheme\" content=\"light only\">" else ""

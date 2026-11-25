@@ -185,23 +185,36 @@ fun MailingListsScreen(
     LaunchedEffect(state.manual_prompt) {
         val prompt = state.manual_prompt ?: return@LaunchedEffect
         vm.dismiss_manual_prompt()
+        val open_prompt_url: () -> Boolean = {
+            try {
+                context.startActivity(
+                    android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(prompt.url))
+                        .addCategory(android.content.Intent.CATEGORY_BROWSABLE)
+                        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+                true
+            } catch (_: android.content.ActivityNotFoundException) {
+                false
+            } catch (_: SecurityException) {
+                false
+            }
+        }
+        if (is_web_unsubscribe_url(prompt.url)) {
+            if (open_prompt_url()) {
+                vm.confirm_manual_unsubscribe(prompt)
+                org.astermail.android.ui.common.app_toast.show(context.getString(R.string.unsubscribe_opened_in_browser))
+            } else {
+                org.astermail.android.ui.common.app_toast.show(context.getString(R.string.could_not_unsubscribe))
+            }
+            return@LaunchedEffect
+        }
         org.astermail.android.ui.common.app_toast.show(
             org.astermail.android.ui.common.TopToastState(
                 message = context.getString(R.string.unsubscribe_manual_required),
                 undo_label = context.getString(R.string.open_unsubscribe_page),
                 duration_ms = 15000L,
                 on_undo = {
-                    val opened = try {
-                        context.startActivity(
-                            android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(prompt.url))
-                                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
-                        )
-                        true
-                    } catch (_: android.content.ActivityNotFoundException) {
-                        false
-                    } catch (_: SecurityException) {
-                        false
-                    }
+                    val opened = open_prompt_url()
                     if (opened) {
                         vm.confirm_manual_unsubscribe(prompt)
                     } else {
@@ -1375,14 +1388,6 @@ private fun row_action_button(
         },
         label = "subscription_action_tint",
     )
-    val container by aster_animate_color(
-        target = when (phase) {
-            row_action_phase.succeeded -> colors.success.copy(alpha = 0.16f)
-            row_action_phase.failed -> colors.danger.copy(alpha = 0.16f)
-            else -> intent.copy(alpha = if (pressed) 0.2f else 0.1f)
-        },
-        label = "subscription_action_container",
-    )
     val shake = remember { androidx.compose.animation.core.Animatable(0f) }
     LaunchedEffect(phase) {
         if (phase != row_action_phase.failed || reduce_motion) {
@@ -1404,12 +1409,11 @@ private fun row_action_button(
         modifier = Modifier
             .size(48.dp)
             .graphicsLayer { translationX = shake.value }
-            .clip(AsterShapes.control)
-            .background(container)
+            .clip(androidx.compose.foundation.shape.CircleShape)
             .clickable(
                 enabled = phase == row_action_phase.idle || phase == row_action_phase.failed,
                 interactionSource = interaction_source,
-                indication = ripple(bounded = true, color = intent),
+                indication = ripple(bounded = true, color = colors.text_secondary),
                 role = androidx.compose.ui.semantics.Role.Button,
                 onClickLabel = label,
                 onClick = on_click,

@@ -79,9 +79,56 @@ private fun is_valid_url(url: String): Boolean {
     }
 }
 
-private val HEADER_MAILTO = Regex("""mailto:([^>,\s]+)""", RegexOption.IGNORE_CASE)
-private val HEADER_BRACKETED_HTTP = Regex("""<\s*(https?://[^>\s]+)\s*>""", RegexOption.IGNORE_CASE)
-private val HEADER_BARE_HTTP = Regex("""(https?://[^,\s>]+)""", RegexOption.IGNORE_CASE)
+private val HEADER_BRACKETED = Regex("""<([^<>]*)>""")
+private val HEADER_WHITESPACE = Regex("""\s+""")
+private const val MAX_HEADER_TARGET_LENGTH = 2048
+
+data class ListUnsubscribeTargets(
+    val web_links: List<String> = emptyList(),
+    val mailto_addresses: List<String> = emptyList(),
+) {
+    val https_link: String? get() = web_links.firstOrNull { is_https_url(it) }
+    val preferred_web_link: String? get() = https_link ?: web_links.firstOrNull()
+    val mailto: String? get() = mailto_addresses.firstOrNull()
+}
+
+private fun header_candidates(header: String): List<String> {
+    val bracketed = HEADER_BRACKETED.findAll(header).map { it.groupValues[1] }.toList()
+    val raw = if (bracketed.isNotEmpty()) bracketed else header.split(',')
+    return raw.map { HEADER_WHITESPACE.replace(it, "") }.filter { it.isNotEmpty() }
+}
+
+private fun web_target(candidate: String): String? {
+    val scheme = candidate.substringBefore(':', "").lowercase(java.util.Locale.ROOT)
+    if (scheme != "https" && scheme != "http") return null
+    val rest = candidate.substring(scheme.length)
+    if (!rest.startsWith("://")) return null
+    val host = rest.removePrefix("://").substringBefore('/').substringBefore('?').substringBefore('#')
+    if (host.isBlank() || host.contains('@')) return null
+    return candidate
+}
+
+private fun mailto_target(candidate: String): String? {
+    if (!candidate.startsWith("mailto:", ignoreCase = true)) return null
+    val address = candidate.substring("mailto:".length)
+    val recipient = address.substringBefore('?').replace("%40", "@", ignoreCase = true)
+    if (recipient.isBlank() || !recipient.contains('@') || recipient.startsWith('@') || recipient.endsWith('@')) {
+        return null
+    }
+    return address
+}
+
+fun parse_list_unsubscribe(header: String?): ListUnsubscribeTargets {
+    if (header.isNullOrBlank()) return ListUnsubscribeTargets()
+    val web = mutableListOf<String>()
+    val mail = mutableListOf<String>()
+    for (candidate in header_candidates(header)) {
+        if (candidate.length > MAX_HEADER_TARGET_LENGTH) continue
+        web_target(candidate)?.let { if (it !in web) web += it }
+        mailto_target(candidate)?.let { if (it !in mail) mail += it }
+    }
+    return ListUnsubscribeTargets(web, mail)
+}
 
 const val ONE_CLICK_POST_VALUE = "List-Unsubscribe=One-Click"
 
@@ -96,18 +143,6 @@ private fun is_https_url(url: String): Boolean {
 private fun is_dkim_acceptable(dkim_result: String?): Boolean {
     val normalized = dkim_result?.trim()
     return normalized.isNullOrEmpty() || normalized.equals("pass", ignoreCase = true)
-}
-
-private fun header_http_links(header: String): List<String> {
-    val bracketed = HEADER_BRACKETED_HTTP.findAll(header)
-        .map { it.groupValues[1] }
-        .filter { is_valid_url(it) }
-        .toList()
-    if (bracketed.isNotEmpty()) return bracketed
-    return HEADER_BARE_HTTP.findAll(header)
-        .map { it.groupValues[1] }
-        .filter { is_valid_url(it) }
-        .toList()
 }
 
 private fun find_body_unsubscribe_link(
@@ -157,10 +192,10 @@ fun detect_unsubscribe_info(
     val declared_post = if (post_declared) ONE_CLICK_POST_VALUE else null
 
     if (!list_unsubscribe.isNullOrBlank()) {
-        val mailto = HEADER_MAILTO.find(list_unsubscribe)?.groupValues?.get(1)
-        val http_links = header_http_links(list_unsubscribe)
-        val https_link = http_links.firstOrNull { is_https_url(it) }
-        val plain_link = http_links.firstOrNull()
+        val targets = parse_list_unsubscribe(list_unsubscribe)
+        val mailto = targets.mailto
+        val https_link = targets.https_link
+        val plain_link = targets.preferred_web_link
         when {
             post_declared && https_link != null && is_dkim_acceptable(dkim_result) ->
                 return UnsubscribeInfo(
@@ -224,10 +259,11 @@ fun get_manual_unsubscribe_url(info: UnsubscribeInfo): String? {
     info.unsubscribe_mailto?.let { return to_mailto_url(it) }
 
     val header = info.list_unsubscribe_header ?: return null
+    val targets = parse_list_unsubscribe(header)
     if (!one_click_only) {
-        header_http_links(header).firstOrNull()?.let { return it }
+        targets.preferred_web_link?.let { return it }
     }
-    val mailto = HEADER_MAILTO.find(header)?.groupValues?.get(1) ?: return null
+    val mailto = targets.mailto ?: return null
     return to_mailto_url(mailto)
 }
 

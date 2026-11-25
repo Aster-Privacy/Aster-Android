@@ -157,7 +157,6 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
         vm.clear_action_result()
     }
 
-    val devices_load_settled = remember_load_settled(state.is_loading)
     var show_revoke_all_confirm by remember { mutableStateOf(false) }
     var pending_revoke_session by remember { mutableStateOf<String?>(null) }
     val scroll_state = rememberScrollState()
@@ -178,14 +177,14 @@ fun TrustedDevicesScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}
         }
         v_gap(AsterSpacing.lg)
 
-        if (state.sessions.isEmpty() && (state.is_loading || !devices_load_settled)) {
+        if (state.sessions.isEmpty() && !state.sessions_load_failed && (state.sessions_loading || !state.sessions_loaded)) {
             section_label(stringResource(R.string.this_device))
             skeleton_card_list(rows = 1, leading_circle = true, trailing_width = 72.dp)
             v_gap(AsterSpacing.lg)
             section_label(stringResource(R.string.other_devices))
             skeleton_card_list(rows = 5, leading_circle = true, trailing_width = 72.dp)
         } else if (state.sessions.isEmpty()) {
-            load_failed_card(state.error ?: stringResource(R.string.could_not_load_devices)) {
+            load_failed_card(stringResource(R.string.could_not_load_devices)) {
                 vm.load_sessions()
             }
         } else {
@@ -2145,7 +2144,11 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
             )
         }
         org.astermail.android.settings.app_language.store_code(context, code)
-        if (!org.astermail.android.settings.app_language.platform_managed) activity?.recreate()
+        if (!org.astermail.android.settings.app_language.platform_managed && activity != null &&
+            !org.astermail.android.settings.app_language.refresh_in_place(activity)
+        ) {
+            activity.recreate()
+        }
     }
 
     detail_scaffold(title = stringResource(R.string.language), on_back = on_back) {

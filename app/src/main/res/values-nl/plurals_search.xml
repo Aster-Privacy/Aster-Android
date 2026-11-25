@@ -8,4 +8,8 @@
         <item quantity="one">%d dag geleden</item>
         <item quantity="other">%d dagen geleden</item>
     </plurals>
+    <plurals name="search_match_count">
+        <item quantity="one">%d overeenkomst</item>
+        <item quantity="other">%d overeenkomsten</item>
+    </plurals>
 </resources>

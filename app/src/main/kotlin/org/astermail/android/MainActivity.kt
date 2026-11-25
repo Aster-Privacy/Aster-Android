@@ -237,6 +237,9 @@ class MainActivity :
     @javax.inject.Inject
     lateinit var app_lock_store: org.astermail.android.security.AppLockStore
 
+    @javax.inject.Inject
+    lateinit var auth_repository: dagger.Lazy<org.astermail.android.auth.AuthRepository>
+
     private val lockdown_listener =
         android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
             runOnUiThread { enforce_secure_flag() }
@@ -267,6 +270,7 @@ class MainActivity :
             consume_share_intent(intent)
         }
         if (saved_instance_state == null) org.astermail.android.ui.common.first_frame_gate.arm()
+        if (app_lock_store.is_locked.value) org.astermail.android.ui.common.first_frame_gate.mark_ready()
         apply_boot_background()
         enableEdgeToEdge()
         org.astermail.android.ui.common.install_aster_motion_scale(this)
@@ -292,6 +296,7 @@ class MainActivity :
                         org.astermail.android.ui.common.aster_boot_placeholder(boot_background_argb)
                     }
                 }
+                app_lock_cover_layer()
             }
         }
         hold_first_frame_until_ready()
@@ -334,6 +339,25 @@ class MainActivity :
                 }
             },
         )
+    }
+
+    @androidx.compose.runtime.Composable
+    private fun app_lock_cover_layer() {
+        val locked = app_lock_store.is_locked.collectAsState()
+        val reveal_started = app_lock_store.reveal_started.collectAsState()
+        val storage_ready = secure_storage_ready.value
+        val signed_in = if (storage_ready) {
+            auth_repository.get().is_signed_in.collectAsState().value
+        } else {
+            true
+        }
+        val visible = org.astermail.android.ui.common.app_lock_cover_visible(
+            is_locked = locked.value,
+            reveal_started = reveal_started.value,
+            storage_ready = storage_ready,
+            signed_in = signed_in,
+        )
+        if (visible) org.astermail.android.ui.common.app_lock_cover(boot_background_argb)
     }
 
     private fun apply_boot_background() {

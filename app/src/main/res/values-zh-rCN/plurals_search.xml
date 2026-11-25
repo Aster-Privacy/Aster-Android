@@ -6,4 +6,7 @@
     <plurals name="search_days_ago">
         <item quantity="other">%d 天前</item>
     </plurals>
+    <plurals name="search_match_count">
+        <item quantity="other">%d 处匹配</item>
+    </plurals>
 </resources>

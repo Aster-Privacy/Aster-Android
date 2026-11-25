@@ -243,8 +243,32 @@ object app_language {
 
         val application = context.applicationContext ?: context
         val resources = application.resources
-        val configuration = Configuration(resources.configuration)
-        val code = stored_code(application)
+        val configuration = localized_configuration(application, resources.configuration)
+
+        resources.updateConfiguration(configuration, resources.displayMetrics)
+    }
+
+    @Suppress("DEPRECATION")
+    fun refresh_in_place(activity: android.app.Activity): Boolean {
+        if (platform_managed) return true
+
+        return runCatching {
+            val resources = activity.resources
+            val configuration = localized_configuration(activity.applicationContext ?: activity, resources.configuration)
+
+            resources.updateConfiguration(configuration, resources.displayMetrics)
+
+            val decor = activity.window.decorView
+
+            decor.layoutDirection = configuration.layoutDirection
+            decor.dispatchConfigurationChanged(Configuration(configuration))
+            true
+        }.getOrDefault(false)
+    }
+
+    private fun localized_configuration(context: Context, base: Configuration): Configuration {
+        val configuration = Configuration(base)
+        val code = stored_code(context)
 
         if (code != null && is_supported(code)) {
             val locale = to_locale(code)
@@ -262,6 +286,6 @@ object app_language {
             }
         }
 
-        resources.updateConfiguration(configuration, resources.displayMetrics)
+        return configuration
     }
 }

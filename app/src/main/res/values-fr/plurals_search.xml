@@ -10,4 +10,9 @@
         <item quantity="many">il y a %d jours</item>
         <item quantity="other">il y a %d jours</item>
     </plurals>
+    <plurals name="search_match_count">
+        <item quantity="one">%d occurrence</item>
+        <item quantity="many">%d occurrences</item>
+        <item quantity="other">%d occurrences</item>
+    </plurals>
 </resources>

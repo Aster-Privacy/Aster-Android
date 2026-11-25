@@ -37,7 +37,11 @@ internal class body_measure {
     var measured by mutableStateOf(false)
     var probing by mutableStateOf(false)
     var painted by mutableStateOf(false)
+    var settled by mutableStateOf(false)
     var view_is_known_height = false
+    var trusted = false
+    var last_exact = false
+    var exact_dp = 0f
     var load_generation = 0
         private set
     var loaded_built: String? = null
@@ -52,6 +56,10 @@ internal class body_measure {
         reserve_dp = seed.reserve_dp
         view_is_known_height = seed.view_dp != null
         measured = seed.measured
+        trusted = seed.view_dp != null
+        settled = false
+        last_exact = false
+        exact_dp = 0f
         probing = false
         painted = false
         started_ms = now_ms
@@ -62,8 +70,10 @@ internal class body_measure {
         load_generation = gate.next()
         painted = false
         probing = false
+        last_exact = false
         if (!keep_height) {
             measured = false
+            settled = false
             started_ms = now_ms
         }
         return load_generation
@@ -103,6 +113,8 @@ internal class body_view_holder(capacity: Int = LIVE_BODY_VIEW_CAPACITY) {
     val is_released: Boolean get() = released
 
     var on_quote_collapse: ((String, Float) -> Unit)? = null
+
+    var on_quote_anchor: ((Float) -> Boolean)? = null
 
     fun measure_for(key: String): body_measure {
         val held = entries.get(key)
@@ -171,6 +183,7 @@ internal class body_view_holder(capacity: Int = LIVE_BODY_VIEW_CAPACITY) {
     fun release_all() {
         released = true
         on_quote_collapse = null
+        on_quote_anchor = null
         entries.release_all()
         measures.values.forEach { it.gate.release() }
         measures.clear()
@@ -189,6 +202,7 @@ internal object retained_body_holders {
     fun keep(key: String, holder: body_view_holder, ctx: android.content.Context) {
         if (holder.is_released) return
         holder.on_quote_collapse = null
+        holder.on_quote_anchor = null
         holder.evict_detached_beyond(RETAINED_BODY_VIEWS_PER_THREAD)
         val previous = holders.remove(key)
         if (previous != null && previous !== holder) previous.release_all()

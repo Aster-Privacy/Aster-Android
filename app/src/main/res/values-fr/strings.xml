@@ -1313,6 +1313,12 @@
     <string name="bulk_unsubscribe_failed">Échec du désabonnement groupé</string>
     <string name="unsubscribe_in_progress">Désabonnement en cours</string>
     <string name="subscription_hero_summary">%1$s expéditeurs actifs, %2$s désabonnés, %3$s e-mails</string>
+    <string name="unsubscribe_rate_limited">Vous avez envoyé trop de demandes de désabonnement. Réessayez dans une minute.</string>
+    <string name="unsubscribe_opened_in_browser">Cet expéditeur ne vous permet de vous désabonner que sur son site web. Terminez sur la page ouverte dans votre navigateur.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">Impossible de vous désabonner de %d expéditeur</item>
+        <item quantity="other">Impossible de vous désabonner de %d expéditeurs</item>
+    </plurals>
     <plurals name="unsubscribe_needs_manual_count">
         <item quantity="one">%d expéditeur exige que vous vous désabonniez sur son site web</item>
         <item quantity="other">%d expéditeurs exigent que vous vous désabonniez sur leurs sites web</item>
@@ -3822,4 +3828,9 @@
     <string name="mail_low_priority">Priorité basse</string>
     <string name="official_sender">Adresse officielle Aster</string>
     <string name="official_sender_desc">Ce message provient d\'une adresse officielle Aster. Aster ne vous demandera jamais votre mot de passe ni votre phrase de récupération par e-mail.</string>
+    <string name="search_match_position">%1$d sur %2$d</string>
+    <string name="search_match_position_description">Occurrence %1$d sur %2$d</string>
+    <string name="search_match_previous">Occurrence précédente</string>
+    <string name="search_match_next">Occurrence suivante</string>
+    <string name="search_match_clear">Effacer le surlignage</string>
 </resources>

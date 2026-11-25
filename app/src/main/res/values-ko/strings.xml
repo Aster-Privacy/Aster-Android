@@ -1252,6 +1252,11 @@
     <string name="bulk_unsubscribe_failed">일괄 구독 취소에 실패했습니다</string>
     <string name="unsubscribe_in_progress">구독 취소 중</string>
     <string name="subscription_hero_summary">활성 발신자 %1$s명, 구독 취소 %2$s명, 이메일 %3$s개</string>
+    <string name="unsubscribe_rate_limited">구독 취소 요청을 너무 많이 보냈습니다. 1분 후에 다시 시도하세요.</string>
+    <string name="unsubscribe_opened_in_browser">이 발신자는 웹사이트에서만 구독을 취소할 수 있습니다. 브라우저에서 열린 페이지에서 완료하세요.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="other">발신자 %d명의 구독을 취소하지 못했습니다</item>
+    </plurals>
     <plurals name="unsubscribe_needs_manual_count">
         <item quantity="other">발신자 %d명은 해당 웹사이트에서 직접 구독을 취소해야 합니다</item>
     </plurals>
@@ -3736,4 +3741,9 @@
     <string name="mail_low_priority">낮은 중요도</string>
     <string name="official_sender">Aster 공식 주소</string>
     <string name="official_sender_desc">이 메시지는 Aster 공식 주소에서 발송되었습니다. Aster는 이메일로 비밀번호나 복구 문구를 요청하지 않습니다.</string>
+    <string name="search_match_position">%1$d/%2$d</string>
+    <string name="search_match_position_description">일치 항목 %2$d개 중 %1$d번째</string>
+    <string name="search_match_previous">이전 일치 항목</string>
+    <string name="search_match_next">다음 일치 항목</string>
+    <string name="search_match_clear">강조 표시 지우기</string>
 </resources>

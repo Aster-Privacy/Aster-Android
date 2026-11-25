@@ -196,13 +196,20 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         if (revealing) return
         revealing = true
         scope.launch {
-            reveal_alpha.animateTo(
-                0f,
-                tween(
-                    durationMillis = if (reduce_motion) AsterMotionSpec.reduced_fade_out_ms else AsterMotionSpec.fade_exit_ms,
-                    easing = AsterEasing.emphasized_accelerate,
-                ),
-            )
+            store.begin_reveal()
+            var finished = false
+            try {
+                reveal_alpha.animateTo(
+                    0f,
+                    tween(
+                        durationMillis = if (reduce_motion) AsterMotionSpec.reduced_fade_out_ms else AsterMotionSpec.fade_exit_ms,
+                        easing = AsterEasing.emphasized_accelerate,
+                    ),
+                )
+                finished = true
+            } finally {
+                if (!finished) store.cancel_reveal()
+            }
             store.mark_session_unlocked()
         }
     }

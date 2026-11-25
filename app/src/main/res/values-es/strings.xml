@@ -1257,6 +1257,12 @@
     <string name="bulk_unsubscribe_failed">No se pudieron cancelar las suscripciones</string>
     <string name="unsubscribe_in_progress">Cancelando suscripción</string>
     <string name="subscription_hero_summary">%1$s remitentes activos, %2$s cancelados, %3$s correos</string>
+    <string name="unsubscribe_rate_limited">Has enviado demasiadas solicitudes para cancelar suscripciones. Vuelve a intentarlo en un minuto.</string>
+    <string name="unsubscribe_opened_in_browser">Este remitente solo te permite cancelar la suscripción en su sitio web. Termina en la página que se abrió en tu navegador.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">No se pudo cancelar la suscripción de %d remitente</item>
+        <item quantity="other">No se pudo cancelar la suscripción de %d remitentes</item>
+    </plurals>
     <plurals name="unsubscribe_needs_manual_count">
         <item quantity="one">%d remitente requiere que canceles la suscripción en su sitio web</item>
         <item quantity="other">%d remitentes requieren que canceles la suscripción en sus sitios web</item>
@@ -3794,4 +3800,9 @@
     <string name="mail_low_priority">Prioridad baja</string>
     <string name="official_sender">Dirección oficial de Aster</string>
     <string name="official_sender_desc">Este mensaje proviene de una dirección oficial de Aster. Aster nunca te pedirá tu contraseña ni tu frase de recuperación por correo.</string>
+    <string name="search_match_position">%1$d de %2$d</string>
+    <string name="search_match_position_description">Coincidencia %1$d de %2$d</string>
+    <string name="search_match_previous">Coincidencia anterior</string>
+    <string name="search_match_next">Coincidencia siguiente</string>
+    <string name="search_match_clear">Quitar resaltado</string>
 </resources>

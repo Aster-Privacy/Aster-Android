@@ -202,6 +202,9 @@ data class AllowedSenderView(
 data class SettingsUiState(
     val user: UserInfo? = null,
     val sessions: List<SessionInfo> = emptyList(),
+    val sessions_loading: Boolean = false,
+    val sessions_loaded: Boolean = false,
+    val sessions_load_failed: Boolean = false,
     val revoking_session_ids: Set<String> = emptySet(),
     val revoking_all_sessions: Boolean = false,
     val sessions_held: org.astermail.android.guard.guard_held_notice? = null,
@@ -448,6 +451,7 @@ class SettingsViewModel @Inject constructor(
     internal var settings_load_backoff: List<Long> = settings_load_backoff_ms
     private var hardware_keys_job: kotlinx.coroutines.Job? = null
     private var trusted_devices_job: kotlinx.coroutines.Job? = null
+    private var sessions_job: kotlinx.coroutines.Job? = null
     private var audit_log_job: kotlinx.coroutines.Job? = null
 
     private val _state = MutableStateFlow(SettingsUiState())
@@ -938,20 +942,23 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun load_sessions() {
-        viewModelScope.launch {
-            _state.value = _state.value.copy(is_loading = true, error = null)
-            try {
-                val response = settings_api.list_sessions()
-                _state.value = _state.value.copy(
-                    sessions = response.sessions,
-                    is_loading = false,
-                )
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(
-                    is_loading = false,
-                    error = user_facing_error(t),
-                )
+        if (sessions_job?.isActive == true) return
+        _state.update { it.copy(sessions_loading = true, sessions_load_failed = false) }
+        sessions_job = viewModelScope.launch {
+            load_settings_resource(await_session = await_session_ready, backoff_ms = settings_load_backoff) {
+                settings_api.list_sessions()
+            }.onSuccess { response ->
+                _state.update {
+                    it.copy(
+                        sessions = response.sessions,
+                        sessions_loading = false,
+                        sessions_loaded = true,
+                        sessions_load_failed = false,
+                    )
+                }
+            }.onFailure { t ->
+                _state.update { it.copy(sessions_loading = false, sessions_load_failed = !it.sessions_loaded) }
+                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_sessions", t)
             }
         }
     }
@@ -1112,6 +1119,8 @@ class SettingsViewModel @Inject constructor(
         hardware_keys_job = null
         trusted_devices_job?.cancel()
         trusted_devices_job = null
+        sessions_job?.cancel()
+        sessions_job = null
         audit_log_job?.cancel()
         audit_log_job = null
         last_labels_load_ms.clear()

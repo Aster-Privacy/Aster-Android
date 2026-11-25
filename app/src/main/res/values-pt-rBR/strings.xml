@@ -1255,6 +1255,12 @@
     <string name="bulk_unsubscribe_failed">Falha ao cancelar inscrições em massa</string>
     <string name="unsubscribe_in_progress">Cancelando inscrição</string>
     <string name="subscription_hero_summary">%1$s remetentes ativos, %2$s cancelados, %3$s e-mails</string>
+    <string name="unsubscribe_rate_limited">Você enviou muitas solicitações de cancelamento de inscrição. Tente novamente em um minuto.</string>
+    <string name="unsubscribe_opened_in_browser">Este remetente só permite cancelar a inscrição no site dele. Conclua na página que foi aberta no seu navegador.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">Não foi possível cancelar a inscrição de %d remetente</item>
+        <item quantity="other">Não foi possível cancelar a inscrição de %d remetentes</item>
+    </plurals>
     <plurals name="unsubscribe_needs_manual_count">
         <item quantity="one">%d remetente exige que você cancele a inscrição no site dele</item>
         <item quantity="other">%d remetentes exigem que você cancele a inscrição nos sites deles</item>
@@ -3793,4 +3799,9 @@
     <string name="mail_low_priority">Prioridade baixa</string>
     <string name="official_sender">Endereço oficial da Aster</string>
     <string name="official_sender_desc">Esta mensagem é de um endereço oficial da Aster. A Aster nunca solicitará sua senha ou frase de recuperação por e-mail.</string>
+    <string name="search_match_position">%1$d de %2$d</string>
+    <string name="search_match_position_description">Correspondência %1$d de %2$d</string>
+    <string name="search_match_previous">Correspondência anterior</string>
+    <string name="search_match_next">Próxima correspondência</string>
+    <string name="search_match_clear">Limpar destaques</string>
 </resources>

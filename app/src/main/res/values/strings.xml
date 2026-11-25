@@ -1851,6 +1851,12 @@
     </plurals>
     <string name="unsubscribe_in_progress">Unsubscribing</string>
     <string name="subscription_hero_summary">%1$s active senders, %2$s unsubscribed, %3$s emails</string>
+    <string name="unsubscribe_rate_limited">You sent too many unsubscribe requests. Try again in a minute.</string>
+    <string name="unsubscribe_opened_in_browser">This sender only lets you unsubscribe on its website. Finish on the page that opened in your browser.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">Could not unsubscribe from %d sender</item>
+        <item quantity="other">Could not unsubscribe from %d senders</item>
+    </plurals>
     <plurals name="unsubscribe_needs_manual_count">
         <item quantity="one">%d sender needs you to unsubscribe on its website</item>
         <item quantity="other">%d senders need you to unsubscribe on their websites</item>
@@ -3820,4 +3826,9 @@
     <string name="mail_low_priority">Low priority</string>
     <string name="official_sender">Official Aster address</string>
     <string name="official_sender_desc">This message is from an official Aster address. Aster will never ask for your password or recovery phrase by email.</string>
+    <string name="search_match_position">%1$d of %2$d</string>
+    <string name="search_match_position_description">Match %1$d of %2$d</string>
+    <string name="search_match_previous">Previous match</string>
+    <string name="search_match_next">Next match</string>
+    <string name="search_match_clear">Clear highlights</string>
 </resources>

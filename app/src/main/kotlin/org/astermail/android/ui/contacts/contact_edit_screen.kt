@@ -223,7 +223,7 @@ fun ContactEditScreen(
             fields = listOf(
                 source?.company.orEmpty(),
                 source?.title.orEmpty(),
-                source?.birthday.orEmpty(),
+                event_fingerprint(initial_event_rows(source)),
                 source?.website.orEmpty(),
                 source?.twitter.orEmpty(),
                 source?.linkedin.orEmpty(),
@@ -239,7 +239,7 @@ fun ContactEditScreen(
         emails = emails,
         phones = phones,
         postals = postals,
-        fields = listOf(company, title, birthday, website, twitter, linkedin, notes),
+        fields = listOf(company, title, event_fingerprint(events), website, twitter, linkedin, notes),
         relations = relations,
         socials = socials,
         avatar_url = avatar_url,
@@ -609,6 +609,9 @@ private fun FormField(
 }
 
 private const val NOTES_SCROLL_DELAY_MS = 250L
+
+private fun event_fingerprint(events: List<EditableEvent>): String =
+    events.map { it.to_event() }.filter { it.date.isNotEmpty() }.joinToString("|") { "${it.kind}:${it.date}:${it.label}" }
 
 private fun contact_edit_fingerprint(
     name: String,

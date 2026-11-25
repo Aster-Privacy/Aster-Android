@@ -1255,6 +1255,12 @@
     <string name="bulk_unsubscribe_failed">Massenabmeldung fehlgeschlagen</string>
     <string name="unsubscribe_in_progress">Abmeldung läuft</string>
     <string name="subscription_hero_summary">%1$s aktive Absender, %2$s abbestellt, %3$s E-Mails</string>
+    <string name="unsubscribe_rate_limited">Du hast zu viele Abmeldeanfragen gesendet. Versuche es in einer Minute erneut.</string>
+    <string name="unsubscribe_opened_in_browser">Bei diesem Absender kannst du dich nur auf seiner Website abmelden. Schließe die Abmeldung auf der Seite ab, die sich in deinem Browser geöffnet hat.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">Abmeldung von %d Absender fehlgeschlagen</item>
+        <item quantity="other">Abmeldung von %d Absendern fehlgeschlagen</item>
+    </plurals>
     <plurals name="unsubscribe_needs_manual_count">
         <item quantity="one">Von %d Absender musst du dich auf dessen Website abmelden</item>
         <item quantity="other">Von %d Absendern musst du dich auf deren Websites abmelden</item>
@@ -3768,4 +3774,9 @@
     <string name="mail_low_priority">Niedrige Priorität</string>
     <string name="official_sender">Offizielle Aster-Adresse</string>
     <string name="official_sender_desc">Diese Nachricht stammt von einer offiziellen Aster-Adresse. Aster fragt dich niemals per E-Mail nach deinem Passwort oder deiner Wiederherstellungsphrase.</string>
+    <string name="search_match_position">%1$d von %2$d</string>
+    <string name="search_match_position_description">Treffer %1$d von %2$d</string>
+    <string name="search_match_previous">Vorheriger Treffer</string>
+    <string name="search_match_next">Nächster Treffer</string>
+    <string name="search_match_clear">Markierungen entfernen</string>
 </resources>

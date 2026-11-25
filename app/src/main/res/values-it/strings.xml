@@ -1256,6 +1256,12 @@
     <string name="bulk_unsubscribe_failed">Annullamento delle iscrizioni in blocco non riuscito</string>
     <string name="unsubscribe_in_progress">Annullamento iscrizione</string>
     <string name="subscription_hero_summary">%1$s mittenti attivi, %2$s disiscritti, %3$s email</string>
+    <string name="unsubscribe_rate_limited">Hai inviato troppe richieste di annullamento dell\'iscrizione. Riprova tra un minuto.</string>
+    <string name="unsubscribe_opened_in_browser">Questo mittente ti consente di annullare l\'iscrizione solo sul suo sito web. Completa l\'operazione nella pagina aperta nel browser.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">Impossibile annullare l\'iscrizione da %d mittente</item>
+        <item quantity="other">Impossibile annullare l\'iscrizione da %d mittenti</item>
+    </plurals>
     <plurals name="unsubscribe_needs_manual_count">
         <item quantity="one">Per %d mittente devi annullare l\'iscrizione sul suo sito web</item>
         <item quantity="other">Per %d mittenti devi annullare l\'iscrizione sui loro siti web</item>
@@ -3793,4 +3799,9 @@
     <string name="mail_low_priority">Priorità bassa</string>
     <string name="official_sender">Indirizzo ufficiale Aster</string>
     <string name="official_sender_desc">Questo messaggio proviene da un indirizzo ufficiale Aster. Aster non ti chiederà mai la password o la frase di recupero via email.</string>
+    <string name="search_match_position">%1$d di %2$d</string>
+    <string name="search_match_position_description">Corrispondenza %1$d di %2$d</string>
+    <string name="search_match_previous">Corrispondenza precedente</string>
+    <string name="search_match_next">Corrispondenza successiva</string>
+    <string name="search_match_clear">Rimuovi evidenziazione</string>
 </resources>

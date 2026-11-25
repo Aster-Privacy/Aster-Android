@@ -53,18 +53,22 @@ import org.astermail.android.api.subscriptions.SubscriptionsApi
 import org.astermail.android.api.subscriptions.TrackSubscriptionRequest
 import org.astermail.android.api.subscriptions.UnsubscribeRequest
 import org.astermail.android.ui.mail.UnsubscribeInfo
+import org.astermail.android.ui.mail.ProxyUnsubscribeResult
 import org.astermail.android.ui.mail.UnsubscribeOutcome
-import org.astermail.android.ui.mail.execute_unsubscribe
+import org.astermail.android.ui.mail.execute_unsubscribe_checked
 import org.astermail.android.ui.mail.get_manual_unsubscribe_url
 
 private const val SCAN_TIMEOUT_MS = 90_000L
 private const val TRACK_BUDGET_MS = 45_000L
 private const val subscription_page_size = 100
 private const val max_subscription_pages = 50
-private const val PRIME_WAIT_MS = 20_000L
+private const val PRIME_WAIT_MS = 3_000L
 private const val SUCCESS_HOLD_MS = 700L
 private const val FAILURE_HOLD_MS = 1_800L
-private const val BULK_CONCURRENCY = 4
+private const val UNSUBSCRIBE_CONCURRENCY = 4
+private const val ATTEMPT_TIMEOUT_MS = 140_000L
+private const val BATCH_SETTLE_MS = 350L
+private const val RATE_LIMIT_COOLDOWN_MS = 60_000L
 private const val LIST_CONCURRENCY = 4
 private const val TRACK_CONCURRENCY = 6
 internal const val PROVISIONAL_PREFIX = "scan:"
@@ -84,6 +88,7 @@ internal sealed interface UnsubscribeAttempt {
     ) : UnsubscribeAttempt
     data class manual(val url: String, val list_unsubscribe_header: String? = null) : UnsubscribeAttempt
     data object failed : UnsubscribeAttempt
+    data object rate_limited : UnsubscribeAttempt
 }
 
 data class MailingListsState(
@@ -142,6 +147,10 @@ class MailingListsViewModel @Inject constructor(
     private var load_job: Job? = null
     private var scan_job: Job? = null
     private var prime_job: Job? = null
+    private var flush_job: Job? = null
+    private val unsubscribe_gate = Semaphore(UNSUBSCRIBE_CONCURRENCY)
+    private val batch = UnsubscribeBatch()
+    @Volatile private var rate_limited_until = 0L
 
     val unsubscribed_tokens: StateFlow<Set<String>> = unsubscribed_store.tokens
 
@@ -413,16 +422,28 @@ class MailingListsViewModel @Inject constructor(
         _state.update { it.copy(is_scanning = false, scan_scanned = 0, scan_total = 0, scan_found = 0) }
     }
 
-    suspend fun proxy_unsubscribe(request: ProxyUnsubscribeRequest): Boolean {
+    suspend fun proxy_unsubscribe(request: ProxyUnsubscribeRequest): Boolean =
+        proxy_unsubscribe_checked(request) == ProxyUnsubscribeResult.accepted
+
+    suspend fun proxy_unsubscribe_checked(request: ProxyUnsubscribeRequest): ProxyUnsubscribeResult =
+        guarded_request { api.proxy_unsubscribe(request).success }
+
+    private fun is_rate_limited(): Boolean = SystemClock.elapsedRealtime() < rate_limited_until
+
+    private suspend fun guarded_request(call: suspend () -> Boolean): ProxyUnsubscribeResult {
+        if (is_rate_limited()) return ProxyUnsubscribeResult.rate_limited
         return try {
-            api.proxy_unsubscribe(request).success
-        } catch (e: kotlinx.coroutines.CancellationException) {
+            if (call()) ProxyUnsubscribeResult.accepted else ProxyUnsubscribeResult.rejected
+        } catch (e: CancellationException) {
             throw e
-        } catch (_: Throwable) {
-            false
+        } catch (t: Throwable) {
+            classify_unsubscribe_error(t).also { result ->
+                if (result == ProxyUnsubscribeResult.rate_limited) {
+                    rate_limited_until = SystemClock.elapsedRealtime() + RATE_LIMIT_COOLDOWN_MS
+                }
+            }
         }
     }
-
 
     private fun remember_info(found: List<DiscoveredSubscription>) {
         info_cache.put_all(
@@ -450,13 +471,14 @@ class MailingListsViewModel @Inject constructor(
 
     private suspend fun info_for(item: MailingListSubscription): UnsubscribeInfo? {
         info_cache.get(item.sender_email)?.let { return it }
+        if (item.has_list_unsubscribe && !item.id.startsWith(PROVISIONAL_PREFIX)) return null
         val job = prime_job?.takeIf { it.isActive } ?: scan_job?.takeIf { it.isActive } ?: return null
         withTimeoutOrNull(PRIME_WAIT_MS) { job.join() }
         return info_cache.get(item.sender_email)
     }
 
-    private suspend fun client_unsubscribe(info: UnsubscribeInfo): Boolean =
-        execute_unsubscribe(info) { request -> proxy_unsubscribe(request) } == UnsubscribeOutcome.unsubscribed
+    private suspend fun client_unsubscribe(info: UnsubscribeInfo): UnsubscribeOutcome =
+        execute_unsubscribe_checked(info) { request -> proxy_unsubscribe_checked(request) }
 
     private fun manual_or_failed(info: UnsubscribeInfo?): UnsubscribeAttempt {
         val url = info?.let { get_manual_unsubscribe_url(it) }?.takeIf { is_safe_unsubscribe_target(it) }
@@ -464,36 +486,40 @@ class MailingListsViewModel @Inject constructor(
         return UnsubscribeAttempt.manual(url, info.list_unsubscribe_header)
     }
 
-    private suspend fun server_unsubscribe(subscription_id: String): Boolean =
-        try {
-            api.unsubscribe(UnsubscribeRequest(subscription_id)).success
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Throwable) {
-            false
-        }
+    private suspend fun server_unsubscribe(subscription_id: String): ProxyUnsubscribeResult =
+        guarded_request { api.unsubscribe(UnsubscribeRequest(subscription_id)).success }
 
     private suspend fun attempt_unsubscribe(item: MailingListSubscription): UnsubscribeAttempt {
+        if (is_rate_limited()) return UnsubscribeAttempt.rate_limited
         val cached = info_for(item)
         if (cached != null) {
-            if (client_unsubscribe(cached)) {
-                return UnsubscribeAttempt.done(false, cached.list_unsubscribe_header)
+            return when (client_unsubscribe(cached)) {
+                UnsubscribeOutcome.unsubscribed -> UnsubscribeAttempt.done(false, cached.list_unsubscribe_header)
+                UnsubscribeOutcome.rate_limited -> UnsubscribeAttempt.rate_limited
+                UnsubscribeOutcome.manual_required -> manual_or_failed(cached)
             }
-            return manual_or_failed(cached)
         }
         val fallback = fallback_unsubscribe_info(item)
-        if (item.has_list_unsubscribe && server_unsubscribe(item.id)) {
-            return UnsubscribeAttempt.done(recorded_on_server = true)
+        if (item.has_list_unsubscribe && !item.id.startsWith(PROVISIONAL_PREFIX)) {
+            when (server_unsubscribe(item.id)) {
+                ProxyUnsubscribeResult.accepted -> return UnsubscribeAttempt.done(recorded_on_server = true)
+                ProxyUnsubscribeResult.rate_limited -> return UnsubscribeAttempt.rate_limited
+                ProxyUnsubscribeResult.rejected -> Unit
+            }
         }
-        if (fallback?.unsubscribe_mailto != null && client_unsubscribe(fallback)) {
-            return UnsubscribeAttempt.done(recorded_on_server = false)
+        if (fallback?.unsubscribe_mailto != null) {
+            when (client_unsubscribe(fallback)) {
+                UnsubscribeOutcome.unsubscribed -> return UnsubscribeAttempt.done(recorded_on_server = false)
+                UnsubscribeOutcome.rate_limited -> return UnsubscribeAttempt.rate_limited
+                UnsubscribeOutcome.manual_required -> Unit
+            }
         }
         return manual_or_failed(fallback)
     }
 
     private suspend fun safe_attempt(item: MailingListSubscription): UnsubscribeAttempt =
         try {
-            attempt_unsubscribe(item)
+            withTimeoutOrNull(ATTEMPT_TIMEOUT_MS) { attempt_unsubscribe(item) } ?: UnsubscribeAttempt.failed
         } catch (e: CancellationException) {
             throw e
         } catch (_: Throwable) {
@@ -551,42 +577,98 @@ class MailingListsViewModel @Inject constructor(
     fun unsubscribe(subscription_id: String) {
         val item = _state.value.items.firstOrNull { it.id == subscription_id } ?: return
         if (item.status != "active" || is_busy(subscription_id)) return
+        start_unsubscribes(listOf(item))
+    }
+
+    fun bulk_unsubscribe(requested_ids: List<String>) {
+        val requested = requested_ids.toSet()
+        val targets = _state.value.items.filter {
+            it.id in requested && it.status == "active" && !is_busy(it.id)
+        }.distinctBy { it.id }
+        if (targets.isEmpty()) return
+        start_unsubscribes(targets)
+    }
+
+    private fun start_unsubscribes(targets: List<MailingListSubscription>) {
+        val ids = targets.map { it.id }.toSet()
+        flush_job?.cancel()
+        flush_job = null
+        batch.begin(targets.size)
         _state.update {
             it.copy(
-                pending_ids = it.pending_ids + subscription_id,
-                failed_ids = it.failed_ids - subscription_id,
-                manual_prompt = it.manual_prompt?.takeIf { prompt -> prompt.subscription_id != subscription_id },
+                pending_ids = it.pending_ids + ids,
+                failed_ids = it.failed_ids - ids,
+                manual_prompt = it.manual_prompt?.takeIf { prompt -> prompt.subscription_id !in ids },
             )
         }
-        viewModelScope.launch {
-            try {
-                when (val attempt = safe_attempt(item)) {
-                    is UnsubscribeAttempt.done -> {
-                        record_success(item, attempt.recorded_on_server, attempt.list_unsubscribe_header)
-                        _state.update { it.copy(message = context.getString(R.string.toast_unsubscribed)) }
-                        settle_success(setOf(subscription_id))
-                    }
-                    is UnsubscribeAttempt.manual -> _state.update {
-                        it.copy(
-                            pending_ids = it.pending_ids - subscription_id,
-                            manual_prompt = ManualUnsubscribePrompt(
-                                subscription_id = item.id,
-                                sender_email = item.sender_email,
-                                sender_name = item.sender_name,
-                                url = attempt.url,
-                                list_unsubscribe_header = attempt.list_unsubscribe_header,
-                            ),
-                        )
-                    }
-                    UnsubscribeAttempt.failed -> {
-                        flash_failure(setOf(subscription_id))
-                        _state.update { it.copy(error = context.getString(R.string.could_not_unsubscribe)) }
-                    }
+        targets.forEach { item -> viewModelScope.launch { run_unsubscribe(item) } }
+    }
+
+    private suspend fun run_unsubscribe(item: MailingListSubscription) {
+        var kind = UnsubscribeResultKind.failed
+        var prompt: ManualUnsubscribePrompt? = null
+        try {
+            when (val attempt = unsubscribe_gate.withPermit { safe_attempt(item) }) {
+                is UnsubscribeAttempt.done -> {
+                    record_success(item, attempt.recorded_on_server, attempt.list_unsubscribe_header)
+                    kind = UnsubscribeResultKind.succeeded
+                    viewModelScope.launch { settle_success(setOf(item.id)) }
                 }
-            } finally {
-                _state.update { it.copy(pending_ids = it.pending_ids - subscription_id) }
+                is UnsubscribeAttempt.manual -> {
+                    kind = UnsubscribeResultKind.needs_website
+                    prompt = ManualUnsubscribePrompt(
+                        subscription_id = item.id,
+                        sender_email = item.sender_email,
+                        sender_name = item.sender_name,
+                        url = attempt.url,
+                        list_unsubscribe_header = attempt.list_unsubscribe_header,
+                    )
+                }
+                UnsubscribeAttempt.rate_limited -> {
+                    kind = UnsubscribeResultKind.rate_limited
+                    flash_failure(setOf(item.id))
+                }
+                UnsubscribeAttempt.failed -> flash_failure(setOf(item.id))
             }
+        } finally {
+            if (kind != UnsubscribeResultKind.succeeded) {
+                _state.update { it.copy(pending_ids = it.pending_ids - item.id) }
+            }
+            batch.finish(kind, prompt)
+            schedule_batch_summary()
         }
+    }
+
+    private fun schedule_batch_summary() {
+        if (!batch.is_idle) return
+        flush_job?.cancel()
+        flush_job = viewModelScope.launch {
+            delay(BATCH_SETTLE_MS)
+            val result = batch.drain() ?: return@launch
+            publish_batch(result)
+        }
+    }
+
+    private fun publish_batch(result: UnsubscribeBatchResult) {
+        val prompt = result.single_prompt
+        if (prompt != null) {
+            _state.update { it.copy(manual_prompt = prompt) }
+            return
+        }
+        val text = summarize_unsubscribe_tally(result.tally).joinToString("\n") { line -> summary_text(line) }
+        if (text.isNotEmpty()) _state.update { it.copy(message = text) }
+    }
+
+    private fun summary_text(line: UnsubscribeSummaryLine): String = when (line) {
+        UnsubscribeSummaryLine.unsubscribed_one -> context.getString(R.string.toast_unsubscribed)
+        is UnsubscribeSummaryLine.unsubscribed_many ->
+            context.resources.getQuantityString(R.plurals.unsubscribed_count, line.count, line.count)
+        is UnsubscribeSummaryLine.needs_website ->
+            context.resources.getQuantityString(R.plurals.unsubscribe_needs_manual_count, line.count, line.count)
+        UnsubscribeSummaryLine.failed_one -> context.getString(R.string.could_not_unsubscribe)
+        is UnsubscribeSummaryLine.failed_many ->
+            context.resources.getQuantityString(R.plurals.unsubscribe_failed_count, line.count, line.count)
+        UnsubscribeSummaryLine.rate_limited -> context.getString(R.string.unsubscribe_rate_limited)
     }
 
     fun confirm_manual_unsubscribe(prompt: ManualUnsubscribePrompt) {
@@ -599,59 +681,6 @@ class MailingListsViewModel @Inject constructor(
 
     fun dismiss_manual_prompt() {
         _state.update { it.copy(manual_prompt = null) }
-    }
-
-    fun bulk_unsubscribe(requested_ids: List<String>) {
-        val requested = requested_ids.toSet()
-        val targets = _state.value.items.filter {
-            it.id in requested && it.status == "active" && !is_busy(it.id)
-        }
-        if (targets.isEmpty()) return
-        val ids = targets.map { it.id }.toSet()
-        _state.update { it.copy(pending_ids = it.pending_ids + ids, failed_ids = it.failed_ids - ids) }
-        viewModelScope.launch {
-            try {
-                val semaphore = Semaphore(BULK_CONCURRENCY)
-                val results = coroutineScope {
-                    targets.map { item ->
-                        async { semaphore.withPermit { item to safe_attempt(item) } }
-                    }.awaitAll()
-                }
-                val succeeded = results.mapNotNull { (item, attempt) ->
-                    (attempt as? UnsubscribeAttempt.done)?.let { item to it }
-                }
-                succeeded.forEach { (item, attempt) ->
-                    record_success(item, attempt.recorded_on_server, attempt.list_unsubscribe_header)
-                }
-                val remaining = results.size - succeeded.size
-                flash_failure(results.filter { it.second !is UnsubscribeAttempt.done }.map { it.first.id }.toSet())
-                _state.update {
-                    it.copy(
-                        message = if (succeeded.isNotEmpty()) {
-                            context.resources.getQuantityString(
-                                R.plurals.unsubscribed_count,
-                                succeeded.size,
-                                succeeded.size,
-                            )
-                        } else {
-                            it.message
-                        },
-                        error = if (remaining > 0) {
-                            context.resources.getQuantityString(
-                                R.plurals.unsubscribe_needs_manual_count,
-                                remaining,
-                                remaining,
-                            )
-                        } else {
-                            it.error
-                        },
-                    )
-                }
-                settle_success(succeeded.map { it.first.id }.toSet())
-            } finally {
-                _state.update { it.copy(pending_ids = it.pending_ids - ids) }
-            }
-        }
     }
 
     fun reactivate(subscription_id: String) {

@@ -1258,6 +1258,14 @@
     <string name="bulk_unsubscribe_failed">Masowe anulowanie subskrypcji nie powiodło się</string>
     <string name="unsubscribe_in_progress">Anulowanie subskrypcji</string>
     <string name="subscription_hero_summary">Aktywni nadawcy: %1$s, anulowane: %2$s, e-maile: %3$s</string>
+    <string name="unsubscribe_rate_limited">Wysłano zbyt wiele próśb o anulowanie subskrypcji. Spróbuj ponownie za minutę.</string>
+    <string name="unsubscribe_opened_in_browser">Ten nadawca pozwala anulować subskrypcję tylko na swojej stronie. Dokończ na stronie, która otworzyła się w przeglądarce.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">Nie udało się anulować subskrypcji u %d nadawcy</item>
+        <item quantity="few">Nie udało się anulować subskrypcji u %d nadawców</item>
+        <item quantity="many">Nie udało się anulować subskrypcji u %d nadawców</item>
+        <item quantity="other">Nie udało się anulować subskrypcji u %d nadawcy</item>
+    </plurals>
     <plurals name="unsubscribe_needs_manual_count">
         <item quantity="one">%d nadawca wymaga anulowania subskrypcji na swojej stronie</item>
         <item quantity="few">%d nadawców wymaga anulowania subskrypcji na swoich stronach</item>
@@ -3833,4 +3841,9 @@
     <string name="mail_low_priority">Niski priorytet</string>
     <string name="official_sender">Oficjalny adres Aster</string>
     <string name="official_sender_desc">Ta wiadomość pochodzi z oficjalnego adresu Aster. Aster nigdy nie poprosi Cię e-mailem o hasło ani frazę odzyskiwania.</string>
+    <string name="search_match_position">%1$d z %2$d</string>
+    <string name="search_match_position_description">Dopasowanie %1$d z %2$d</string>
+    <string name="search_match_previous">Poprzednie dopasowanie</string>
+    <string name="search_match_next">Następne dopasowanie</string>
+    <string name="search_match_clear">Wyczyść wyróżnienia</string>
 </resources>

@@ -22,6 +22,7 @@
 package org.astermail.android.api.subscriptions
 
 import io.ktor.client.call.body
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -85,6 +86,7 @@ data class ProxyUnsubscribeResponse(
     val success: Boolean = false,
     val method: String = "",
     val message: String? = null,
+    val code: String? = null,
 )
 
 @Serializable
@@ -157,6 +159,8 @@ data class TrackSubscriptionResponse(
     val is_new: Boolean = false,
 )
 
+const val UNSUBSCRIBE_REQUEST_TIMEOUT_MS = 65_000L
+
 interface SubscriptionsApi {
     suspend fun list(
         limit: Int? = null,
@@ -206,6 +210,10 @@ class SubscriptionsApiImpl(private val client: ApiClient) : SubscriptionsApi {
 
     override suspend fun unsubscribe(request: UnsubscribeRequest): UnsubscribeResult {
         val response = client.http.post("${client.base_url}$base/unsubscribe") {
+            timeout {
+                requestTimeoutMillis = UNSUBSCRIBE_REQUEST_TIMEOUT_MS
+                socketTimeoutMillis = UNSUBSCRIBE_REQUEST_TIMEOUT_MS
+            }
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)
@@ -224,6 +232,10 @@ class SubscriptionsApiImpl(private val client: ApiClient) : SubscriptionsApi {
 
     override suspend fun proxy_unsubscribe(request: ProxyUnsubscribeRequest): ProxyUnsubscribeResponse {
         val response = client.http.post("${client.base_url}$base/proxy-unsubscribe") {
+            timeout {
+                requestTimeoutMillis = UNSUBSCRIBE_REQUEST_TIMEOUT_MS
+                socketTimeoutMillis = UNSUBSCRIBE_REQUEST_TIMEOUT_MS
+            }
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

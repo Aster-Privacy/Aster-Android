@@ -1262,6 +1262,16 @@
     <string name="bulk_unsubscribe_failed">فشل إلغاء الاشتراك المجمع</string>
     <string name="unsubscribe_in_progress">جارٍ إلغاء الاشتراك</string>
     <string name="subscription_hero_summary">%1$s من المرسلين النشطين، و%2$s تم إلغاء الاشتراك منهم، و%3$s من الرسائل</string>
+    <string name="unsubscribe_rate_limited">لقد أرسلت عددًا كبيرًا جدًا من طلبات إلغاء الاشتراك. حاول مرة أخرى بعد دقيقة.</string>
+    <string name="unsubscribe_opened_in_browser">لا يتيح لك هذا المرسل إلغاء الاشتراك إلا من موقعه الإلكتروني. أكمل العملية في الصفحة التي فُتحت في متصفحك.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="zero">تعذّر إلغاء الاشتراك من %d مرسل</item>
+        <item quantity="one">تعذّر إلغاء الاشتراك من مرسل واحد</item>
+        <item quantity="two">تعذّر إلغاء الاشتراك من مرسلَين</item>
+        <item quantity="few">تعذّر إلغاء الاشتراك من %d مرسلين</item>
+        <item quantity="many">تعذّر إلغاء الاشتراك من %d مرسلًا</item>
+        <item quantity="other">تعذّر إلغاء الاشتراك من %d مرسل</item>
+    </plurals>
     <plurals name="unsubscribe_needs_manual_count">
         <item quantity="zero">لا يوجد مرسلون يتطلبون إلغاء الاشتراك من مواقعهم</item>
         <item quantity="one">مرسل واحد يتطلب منك إلغاء الاشتراك من موقعه</item>
@@ -3898,4 +3908,9 @@
     <string name="mail_low_priority">أولوية منخفضة</string>
     <string name="official_sender">عنوان Aster الرسمي</string>
     <string name="official_sender_desc">هذه الرسالة من عنوان Aster رسمي. لن يطلب منك Aster كلمة المرور أو عبارة الاسترداد عبر البريد الإلكتروني أبدًا.</string>
+    <string name="search_match_position">%1$d من %2$d</string>
+    <string name="search_match_position_description">التطابق %1$d من %2$d</string>
+    <string name="search_match_previous">التطابق السابق</string>
+    <string name="search_match_next">التطابق التالي</string>
+    <string name="search_match_clear">مسح التمييز</string>
 </resources>

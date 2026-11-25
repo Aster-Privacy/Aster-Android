@@ -242,8 +242,6 @@ import org.astermail.android.ui.common.page_surface
 private val placeholder_body_height = 96.dp
 private const val thread_draft_remove_ms = 260L
 
-private val body_tag_regex = Regex("<[^>]{0,4000}>")
-private val body_image_tag_regex = Regex("<img", RegexOption.IGNORE_CASE)
 
 private val FITTED_VIEWPORT_WIDTH = Regex("name=\"viewport\" content=\"width=([0-9]{3,4})")
 
@@ -252,14 +250,15 @@ internal fun fitted_viewport_width(document: String): Int? =
 
 private val MEASURE_PROBE_HEIGHT = 24.dp
 
-private fun estimated_body_height(html: String, width_dp: Int): androidx.compose.ui.unit.Dp {
-    val sample = if (html.length > 40000) html.substring(0, 40000) else html
-    val text_length = body_tag_regex.replace(sample, " ").trim().length
-    val chars_per_line = (width_dp / 7).coerceAtLeast(24)
-    val lines = (text_length + chars_per_line - 1) / chars_per_line + 1
-    val images = body_image_tag_regex.findAll(sample).count().coerceAtMost(4)
-    return (lines * 19 + images * 120).coerceIn(24, 640).dp
-}
+internal fun failed_image_response(): android.webkit.WebResourceResponse =
+    android.webkit.WebResourceResponse(
+        "image/gif",
+        null,
+        404,
+        "Not Found",
+        mapOf("Cache-Control" to "no-store", "Access-Control-Allow-Origin" to "*"),
+        java.io.ByteArrayInputStream(ByteArray(0)),
+    )
 
 private fun escape_body_text(raw: String): String = raw
     .replace("&", "&amp;")
@@ -1339,6 +1338,7 @@ fun MailDetailScreen(
             if (card_reduce_motion) list_state.scrollToItem(index) else list_state.animateScrollToItem(index)
         }
     }
+    val search_controller = remember_detail_search_controller(email_id)
 
     val pending_anchor = remember { mutableStateOf<Triple<String, Int, Int>?>(null) }
     val toggle_tick = remember { mutableStateOf(0) }
@@ -1373,7 +1373,17 @@ fun MailDetailScreen(
                 list_state.dispatchRawDelta(-shift_px)
             }
         }
-        onDispose { body_holder.on_quote_collapse = null }
+        body_holder.on_quote_anchor = anchor@{ delta_px ->
+            if (body_holder.is_released || list_state.isScrollInProgress) return@anchor false
+            if ((delta_px > 0f && list_state.canScrollForward) || (delta_px < 0f && list_state.canScrollBackward)) {
+                list_state.dispatchRawDelta(delta_px)
+            }
+            true
+        }
+        onDispose {
+            body_holder.on_quote_collapse = null
+            body_holder.on_quote_anchor = null
+        }
     }
 
     batch_action_toast(mail_vm)
@@ -1466,6 +1476,18 @@ fun MailDetailScreen(
             val subject_count_format = stringResource(R.string.inbox_subject_with_count, subject_base, subject_thread_count)
             val subject_text = if (subject_thread_count > 1) subject_count_format else subject_base
             val subject_copy_value = translated_thread_subject?.ifBlank { null } ?: email?.subject?.ifBlank { null }
+            if (search_controller != null) detail_search_effects(
+                controller = search_controller,
+                messages = display_messages,
+                subject = subject_text,
+                layout_ready = open_layout != null,
+                thread_revealed = thread_revealed,
+                hidden_ids = hidden_id_set,
+                expanded_ids = current_expanded_ids,
+                list_state = list_state,
+                on_expand = { user_expanded_ids.value = it },
+                on_reveal_hidden = { hidden_group_revealed = true },
+            )
 
             if (email == null && load_requested && !thread_state.is_loading) {
                 Box(
@@ -1504,6 +1526,7 @@ fun MailDetailScreen(
             CompositionLocalProvider(
                 local_horizontal_pan_signal provides pan_signal,
                 local_body_view_holder provides body_holder,
+                org.astermail.android.ui.search.local_search_highlight provides search_controller?.session,
             ) {
             if (email != null) LazyColumn(
                 state = list_state,
@@ -1743,9 +1766,10 @@ fun MailDetailScreen(
                                     reaction_identity_for(msg.id),
                                     thread_state.messages.find { it.id == msg.id }?.raw_item?.routing_token,
                                 )
+                                show_toast(context.getString(R.string.unsubscribe_in_progress))
                                 scope.launch {
-                                    val outcome = execute_unsubscribe(info, unsubscribe_sender) { request ->
-                                        subscriptions_vm.proxy_unsubscribe(request)
+                                    val outcome = execute_unsubscribe_checked(info, unsubscribe_sender) { request ->
+                                        subscriptions_vm.proxy_unsubscribe_checked(request)
                                     }
                                     val record_unsubscribed = {
                                         subscriptions_vm.record_unsubscribed(
@@ -1760,11 +1784,38 @@ fun MailDetailScreen(
                                         show_toast(context.getString(R.string.toast_unsubscribed))
                                         return@launch
                                     }
+                                    if (outcome == UnsubscribeOutcome.rate_limited) {
+                                        dismissed_unsub_ids = dismissed_unsub_ids - msg.id
+                                        show_toast(context.getString(R.string.unsubscribe_rate_limited))
+                                        return@launch
+                                    }
                                     val manual_url = get_manual_unsubscribe_url(info)
                                         ?.takeIf { is_safe_unsubscribe_url(it) }
                                     if (manual_url == null) {
                                         dismissed_unsub_ids = dismissed_unsub_ids - msg.id
                                         show_toast(context.getString(R.string.could_not_unsubscribe))
+                                        return@launch
+                                    }
+                                    if (is_web_unsubscribe_url(manual_url)) {
+                                        val opened = try {
+                                            context.startActivity(
+                                                Intent(Intent.ACTION_VIEW, Uri.parse(manual_url))
+                                                    .addCategory(Intent.CATEGORY_BROWSABLE)
+                                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                                            )
+                                            true
+                                        } catch (cancelled: CancellationException) {
+                                            throw cancelled
+                                        } catch (_: Throwable) {
+                                            false
+                                        }
+                                        if (opened) {
+                                            record_unsubscribed()
+                                            show_toast(context.getString(R.string.unsubscribe_opened_in_browser))
+                                        } else {
+                                            dismissed_unsub_ids = dismissed_unsub_ids - msg.id
+                                            show_toast(context.getString(R.string.could_not_unsubscribe))
+                                        }
                                         return@launch
                                     }
                                     app_toast.show(
@@ -1874,6 +1925,9 @@ fun MailDetailScreen(
                 phase = detail_phase,
                 message_count = expected_message_count,
             )
+            if (search_controller != null && email != null) {
+                detail_search_overlay(search_controller, bottom_bar_height)
+            }
             }
 
             }
@@ -3363,7 +3417,7 @@ internal fun expanded_message(
                                     contentDescription = stringResource(R.string.sender_verified_badge),
                                     tint = colors.accent_blue,
                                     modifier = Modifier
-                                        .size(16.dp)
+                                        .size(20.dp)
                                         .clip(CircleShape)
                                         .clickable { show_sender_verified = true },
                                 )
@@ -3794,6 +3848,7 @@ internal fun expanded_message(
                     phishing_snapshot?.level == org.astermail.android.security.PhishingLevel.safe,
                 subject = translation_subject,
                 on_subject_translated = on_subject_translated,
+                search_key = msg.id,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
@@ -3964,6 +4019,7 @@ internal fun expanded_message(
                     phishing_snapshot?.level == org.astermail.android.security.PhishingLevel.safe,
                 subject = translation_subject,
                 on_subject_translated = on_subject_translated,
+                search_key = msg.id,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
@@ -4841,8 +4897,9 @@ internal fun unsubscribe_link(
         lineHeight = 16.sp,
         fontWeight = FontWeight.Medium,
         modifier = modifier
-            .clip(SquircleShape(4.dp))
+            .clip(SquircleShape(6.dp))
             .clickable(role = Role.Button, onClickLabel = label, onClick = on_unsubscribe)
+            .padding(horizontal = 6.dp, vertical = 4.dp)
             .semantics { contentDescription = label }
             .testTag("unsubscribe_link"),
     )
@@ -7373,6 +7430,27 @@ private fun translation_bar_line(
     }
 }
 
+private fun reveal_search_hit(
+    web_ref: Array<android.webkit.WebView?>,
+    fraction: Float,
+): Float? {
+    val web = web_ref[0] ?: return null
+    if (web.height <= 0) return null
+    @Suppress("DEPRECATION")
+    val px_per_css = web.scale.takeIf { it > 0f } ?: web.resources.displayMetrics.density
+    val content_px = (web.contentHeight * px_per_css).coerceAtLeast(web.height.toFloat())
+    val top_px = fraction.coerceIn(0f, 1f) * content_px
+    val inner_top = web.scrollY.toFloat()
+    if (content_px > web.height + 1 && (top_px < inner_top || top_px > inner_top + web.height * 0.8f)) {
+        val max_inner = (content_px - web.height).coerceAtLeast(0f)
+        val target = (top_px - web.height * 0.3f).coerceIn(0f, max_inner)
+        web.scrollTo(web.scrollX, target.toInt())
+    }
+    val location = IntArray(2)
+    web.getLocationInWindow(location)
+    return location[1] + top_px - web.scrollY
+}
+
 @Composable
 internal fun email_html_view(
     html: String,
@@ -7389,6 +7467,7 @@ internal fun email_html_view(
     allow_auto_translate: Boolean = true,
     subject: String? = null,
     on_subject_translated: (String?) -> Unit = {},
+    search_key: String? = null,
 ) {
     val webview_usable = org.astermail.android.ui.common.remember_webview_usable()
     LaunchedEffect(webview_usable) {
@@ -7693,12 +7772,18 @@ internal fun email_html_view(
     }
     val inline_ready = inline_complete || inline_wait_over
     val html_hash = remember(html, inline_sig) { html.hashCode() * 31 + inline_sig }
-    val base_height_key = remember(html_hash, allow_external, screen_width_dp, text_zoom, dyslexia_font, email_font_id, underline_links) {
-        ((html_cache.height_key(html_hash, allow_external, screen_width_dp, text_zoom) * 31L + (if (dyslexia_font) 1L else 0L)) *
-            31L + email_font_id.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L)
+    val base_height_key = remember(html_hash, allow_external, screen_width_dp, text_zoom, dyslexia_font, email_font_id, underline_links, is_dark, force_dark_emails) {
+        body_height_key(
+            html_cache.height_key(html_hash, allow_external, screen_width_dp, text_zoom),
+            dyslexia_font = dyslexia_font,
+            email_font_id = email_font_id,
+            underline_links = underline_links,
+            is_dark = is_dark,
+            force_dark = force_dark_emails,
+        )
     }
     val estimated_height = remember(html_hash, screen_width_dp) {
-        if (html.isEmpty()) placeholder_body_height else estimated_body_height(html, screen_width_dp)
+        if (html.isEmpty()) placeholder_body_height else estimated_body_height_dp(html, screen_width_dp).dp
     }
     val body_holder = local_body_view_holder.current
     val measure = remember(message_key, body_holder) {
@@ -7765,6 +7850,33 @@ internal fun email_html_view(
     var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { mutableStateOf<String?>(if (html.isEmpty()) null else html_cache.get(cache_key)) }
     val wants_white_page = remember(prebuilt_html) { prebuilt_html?.contains("data-white=\"1\"") == true }
 
+    val search_session = if (search_key != null) org.astermail.android.ui.search.local_search_highlight.current else null
+    val search_terms = search_session?.terms?.body.orEmpty()
+    val search_reduce_motion = org.astermail.android.design.aster_reduce_motion()
+    val search_accent = colors.accent_blue.toArgb()
+    var search_marked by remember { mutableStateOf<Pair<String, org.astermail.android.ui.search.marked_search_body>?>(null) }
+    LaunchedEffect(prebuilt_html, search_terms, is_dark, search_accent, search_reduce_motion) {
+        val base = prebuilt_html
+        if (base == null || search_terms.isEmpty() || search_session?.dismissed == true) {
+            search_marked = null
+            if (base != null && search_key != null) search_session?.report_count(search_key, 0)
+            return@LaunchedEffect
+        }
+        val marked = withContext(Dispatchers.Default) {
+            runCatching {
+                org.astermail.android.ui.search.mark_search_hits(base, search_terms, search_accent, is_dark, search_reduce_motion)
+            }.getOrNull()
+        } ?: org.astermail.android.ui.search.marked_search_body(base, 0)
+        search_marked = base to marked
+        if (search_key != null) search_session?.report_count(search_key, marked.hits)
+    }
+    val search_current_marked = search_marked?.takeIf { it.first == prebuilt_html }?.second
+    val shown_html: String? = when {
+        search_terms.isEmpty() || search_session?.dismissed == true -> prebuilt_html
+        search_current_marked != null -> search_current_marked.html
+        else -> null
+    }
+
     fun degrade_to_plain_text() {
         renderer_exhausted.value = true
         measure.probing = false
@@ -7807,13 +7919,17 @@ internal fun email_html_view(
                     } else {
                         measure.view_dp.coerceAtLeast(1f)
                     }
+                    val reading_exact = body_reading_exact(verdict, view_dp, probe_dp)
                     measure.view_dp = height
                     measure.view_is_known_height = true
+                    measure.last_exact = reading_exact
+                    if (reading_exact) measure.exact_dp = height
                     measure.probing = false
                     measure.measured = true
                     measure.quote.on_exact_height(height)
                     if (cacheable_load[0] && !measure.quote.is_expanded && !measure.quote.has_open &&
-                        body_height_cacheable(accepted, measure.painted, verdict, height)
+                        body_height_cacheable(accepted, measure.painted, verdict, height) &&
+                        body_height_trustworthy(reading_exact, visual_ready.value, height, measure.exact_dp)
                     ) {
                         body_height_cache.put(measure.height_key, height)
                     }
@@ -7855,6 +7971,9 @@ internal fun email_html_view(
     }
 
     val pending_quote_collapse = remember(measure) { arrayOfNulls<pending_collapse>(1) }
+    val quote_anchor_y = remember(measure) { floatArrayOf(Float.NaN) }
+    val quote_anchor_until = remember(measure) { longArrayOf(0L) }
+    val quote_anchor_generation = remember(measure) { intArrayOf(-1) }
 
     fun apply_pending_collapse() {
         val pending = pending_quote_collapse[0] ?: return
@@ -7873,8 +7992,17 @@ internal fun email_html_view(
         }
     }
 
-    LaunchedEffect(measure, base_height_key, measure.measured) {
-        if (measure.measured) on_ready()
+    LaunchedEffect(measure, base_height_key, measure.measured, measure.probing, visual_ready.value) {
+        if (measure.settled) {
+            on_ready()
+            return@LaunchedEffect
+        }
+        if (!measure.measured || measure.probing) return@LaunchedEffect
+        val wait_ms = body_settle_wait_ms(measure.trusted, visual_ready.value)
+        if (wait_ms > 0L) delay(wait_ms)
+        if (!measure.measured || measure.probing) return@LaunchedEffect
+        measure.settled = true
+        on_ready()
     }
 
     val proxy_base = REMOTE_IMAGE_PROXY_BASE
@@ -8018,6 +8146,20 @@ internal fun email_html_view(
         }
     }
 
+    if (search_key != null && search_session != null) {
+        val search_reveal_body = search_current_marked
+        val search_ready = visual_ready.value && measure.measured && !measure.probing &&
+            (search_reveal_body?.hits ?: 0) > 0 && measure.loaded_built == search_reveal_body?.html
+        DisposableEffect(search_key, search_session, search_ready, search_reveal_body) {
+            if (search_ready && search_reveal_body != null) {
+                search_session.register(search_key) { local ->
+                    reveal_search_hit(web_ref, search_reveal_body.fraction_of(local))
+                }
+            }
+            onDispose { search_session.unregister(search_key) }
+        }
+    }
+
     val translation_consent_version by TranslationDownloadPolicy.consent_version.collectAsStateWithLifecycle()
     LaunchedEffect(translation_consent_version) {
         val offer = translation_state as? TranslationBannerState.Offer ?: return@LaunchedEffect
@@ -8076,9 +8218,16 @@ internal fun email_html_view(
                                 else -> quote.close_all()
                             }
                             if (!changed) return@post
+                            if (link.action != QUOTE_COVER_ACTION && !last_window_y[0].isNaN()) {
+                                quote_anchor_y[0] = last_window_y[0]
+                                quote_anchor_until[0] = android.os.SystemClock.uptimeMillis() + QUOTE_ANCHOR_WINDOW_MS
+                            } else {
+                                quote_anchor_y[0] = Float.NaN
+                            }
                             if (link.action == QUOTE_OPEN_ACTION) {
                                 pending_quote_collapse[0] = null
                                 load_body(target, built, keep_quotes = true)
+                                quote_anchor_generation[0] = measure.load_generation
                                 return@post
                             }
                             val all_closed = !quote.has_open
@@ -8086,6 +8235,7 @@ internal fun email_html_view(
                             val collapsed = if (all_closed) quote.collapsed_height_dp else null
                             stale_content_dp[0] = if (collapsed != null) measure.view_dp else 0f
                             load_body(target, built, keep_quotes = true)
+                            quote_anchor_generation[0] = measure.load_generation
                             pending_quote_collapse[0] = pending_collapse(
                                 generation = measure.load_generation,
                                 collapsed_dp = collapsed,
@@ -8136,6 +8286,18 @@ internal fun email_html_view(
                                 if (!measure.accepts(generation)) return
                                 visual_ready.value = true
                                 read_body(body, generation)
+                                if (!body.destroyed && measure.accepts(generation) && needs_confirm_probe(
+                                        settled = measure.settled,
+                                        trusted = measure.trusted,
+                                        measured = measure.measured,
+                                        probing = measure.probing,
+                                        last_exact = measure.last_exact,
+                                    )
+                                ) {
+                                    body.forget_content_height()
+                                    measure.view_is_known_height = false
+                                    measure.probing = true
+                                }
                             }
                         },
                     )
@@ -8206,13 +8368,7 @@ internal fun email_html_view(
                         mapOf("Cache-Control" to "no-store", "Access-Control-Allow-Origin" to "*"),
                         stream,
                     )
-                fun transparent_pixel(): android.webkit.WebResourceResponse {
-                    val gif = android.util.Base64.decode(
-                        "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==",
-                        android.util.Base64.DEFAULT,
-                    )
-                    return image_response("image/gif", java.io.ByteArrayInputStream(gif))
-                }
+                fun transparent_pixel(): android.webkit.WebResourceResponse = failed_image_response()
                 val current_token = settings_vm.get_access_token()
                 if (current_token.isNullOrBlank()) return transparent_pixel()
                 val ctx = view?.context ?: return transparent_pixel()
@@ -8313,15 +8469,16 @@ internal fun email_html_view(
       val view_dp = measure.view_dp
       val probing_now = measure.probing
       val measured_now = measure.measured
-      var skeleton_due by remember(measure) { mutableStateOf(!measure.measured) }
-      LaunchedEffect(measure, measured_now, base_height_key) {
-          if (measured_now) {
+      val settled_now = measure.settled
+      var skeleton_due by remember(measure) { mutableStateOf(!measure.settled) }
+      LaunchedEffect(measure, settled_now, base_height_key) {
+          if (settled_now) {
               skeleton_due = false
               return@LaunchedEffect
           }
           val waited = android.os.SystemClock.uptimeMillis() - measure.started_ms
           delay((BODY_SKELETON_DELAY_MS - waited).coerceAtLeast(0L))
-          skeleton_due = show_body_skeleton(measure.measured, android.os.SystemClock.uptimeMillis() - measure.started_ms)
+          skeleton_due = show_body_skeleton(measure.settled, android.os.SystemClock.uptimeMillis() - measure.started_ms)
       }
       val hold_dp = when {
           renderer_exhausted.value -> 0f
@@ -8494,7 +8651,7 @@ internal fun email_html_view(
             update = { web_view ->
                 layout_tick.value
                 web_ref[0] = web_view
-                val built = prebuilt_html ?: return@AndroidView
+                val built = shown_html ?: return@AndroidView
                 web_view.settings.textZoom = text_zoom
                 web_view.settings.loadsImagesAutomatically = true
                 web_view.settings.blockNetworkImage = false
@@ -8524,6 +8681,19 @@ internal fun email_html_view(
                 .onGloballyPositioned { coords ->
                     if (!coords.isAttached) return@onGloballyPositioned
                     val window_y = coords.positionInWindow().y
+                    val anchor_y = quote_anchor_y[0]
+                    if (!anchor_y.isNaN()) {
+                        if (android.os.SystemClock.uptimeMillis() > quote_anchor_until[0] ||
+                            quote_anchor_generation[0] != measure.load_generation
+                        ) {
+                            quote_anchor_y[0] = Float.NaN
+                        } else if (measure.painted && !measure.probing) {
+                            val correction = quote_anchor_correction(anchor_y, window_y)
+                            if (correction != 0f && body_holder?.on_quote_anchor?.invoke(correction) != true) {
+                                quote_anchor_y[0] = Float.NaN
+                            }
+                        }
+                    }
                     val previous_y = last_window_y[0]
                     if (previous_y.isNaN() || kotlin.math.abs(window_y - previous_y) >= layout_density * BODY_REPAINT_STEP_DP) {
                         last_window_y[0] = window_y
@@ -8540,7 +8710,7 @@ internal fun email_html_view(
         )
         }
         androidx.compose.animation.AnimatedVisibility(
-            visible = !renderer_exhausted.value && skeleton_due && !measured_now,
+            visible = !renderer_exhausted.value && skeleton_due && !settled_now,
             enter = androidx.compose.animation.EnterTransition.None,
             exit = androidx.compose.animation.ExitTransition.None,
             modifier = Modifier

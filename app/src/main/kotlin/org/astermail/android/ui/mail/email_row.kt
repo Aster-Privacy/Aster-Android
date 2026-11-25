@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.astermail.android.ui.search.search_row_text
 import androidx.compose.animation.core.snap
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.indication
@@ -374,7 +375,7 @@ fun EmailRow(
                     if (shows_official_badge) {
                         official_badge(
                             modifier = Modifier.padding(start = 4.dp),
-                            size = 15.dp,
+                            size = 18.dp,
                             interactive = false,
                         )
                     }
@@ -765,7 +766,7 @@ fun ThreadInboxRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = sender_text,
+                        text = search_row_text(sender_text) { it.sender },
                         style = inbox_sender_text_style(),
                         color = sender_color,
                         fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
@@ -776,7 +777,7 @@ fun ThreadInboxRow(
                     if (shows_official_badge) {
                         official_badge(
                             modifier = Modifier.padding(start = 4.dp),
-                            size = 15.dp,
+                            size = 18.dp,
                             interactive = false,
                         )
                     }
@@ -858,7 +859,7 @@ fun ThreadInboxRow(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = subject_text,
+                        text = search_row_text(subject_text) { it.subject },
                         style = inbox_subject_text_style(),
                         color = subject_color,
                         fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
