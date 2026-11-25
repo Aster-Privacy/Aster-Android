@@ -113,6 +113,18 @@ class storage_palette_test {
     }
 
     @Test
+    fun accents_that_match_the_surface_are_lifted() {
+        assertEquals(
+            listOf("#636363", "#cdc0ff", "#39aecd", "#f8c97b", "#e08796", "#7bd4a4"),
+            build_storage_palette("#000000", "#121212", is_dark = true, high_contrast = false),
+        )
+        assertEquals(
+            listOf("#929292", "#57428d", "#0aa2c3", "#ad7c1c", "#9a4155", "#38874c"),
+            build_storage_palette("#ffffff", "#ffffff", is_dark = false, high_contrast = false),
+        )
+    }
+
+    @Test
     fun custom_accents_stay_distinct_across_the_hue_wheel() {
         val failures = mutableListOf<String>()
         for (is_dark in listOf(true, false)) {

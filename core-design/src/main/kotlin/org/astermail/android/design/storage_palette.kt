@@ -201,7 +201,7 @@ private fun readable_accent(accent: String, surface: String, is_dark: Boolean, m
     var lightness = start[0]
     var color = accent
     var step = 0
-    while (step < 40 && storage_contrast(color, surface) < minimum) {
+    while (step < 100 && storage_contrast(color, surface) < minimum) {
         lightness += if (is_dark) 0.01 else -0.01
         color = storage_oklch_to_hex(lightness, start[1], start[2])
         step++
