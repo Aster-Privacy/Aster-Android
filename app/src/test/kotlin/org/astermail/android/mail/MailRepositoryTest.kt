@@ -305,6 +305,58 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `a server false does not lower the local require encryption choice`() = runTest {
+        every { session_key_store.get_user_id() } returns "user_1"
+        val guarded = require_encryption_repo {
+            org.astermail.android.api.encryption.EncryptionSettings(require_encryption = false)
+        }
+        guarded.local_require_encryption_override = { true }
+
+        assertTrue(
+            guarded.send_reaction("msg_1", null, null, "friend@outside.example", "x")
+                .exceptionOrNull() is EncryptionRequiredException,
+        )
+        assertEquals(true, guarded.require_encryption_setting())
+        coVerify(exactly = 0) { send_api.react(any()) }
+    }
+
+    @Test
+    fun `a local require encryption choice holds while the setting is unreachable`() = runTest {
+        every { session_key_store.get_user_id() } returns "user_1"
+        val guarded = require_encryption_repo { throw java.net.UnknownHostException("offline") }
+        guarded.local_require_encryption_override = { true }
+
+        assertTrue(
+            guarded.send_reaction("msg_1", null, null, "friend@outside.example", "x")
+                .exceptionOrNull() is EncryptionRequiredException,
+        )
+    }
+
+    @Test
+    fun `the server can still raise the requirement over a local false`() = runTest {
+        every { session_key_store.get_user_id() } returns "user_1"
+        val guarded = require_encryption_repo {
+            org.astermail.android.api.encryption.EncryptionSettings(require_encryption = true)
+        }
+        guarded.local_require_encryption_override = { false }
+
+        assertEquals(true, guarded.require_encryption_setting())
+        guarded.local_require_encryption_override = { null }
+        assertEquals(true, guarded.require_encryption_setting())
+    }
+
+    @Test
+    fun `both sides off leaves the requirement off`() = runTest {
+        every { session_key_store.get_user_id() } returns "user_1"
+        val guarded = require_encryption_repo {
+            org.astermail.android.api.encryption.EncryptionSettings(require_encryption = false)
+        }
+        guarded.local_require_encryption_override = { false }
+
+        assertEquals(false, guarded.require_encryption_setting())
+    }
+
+    @Test
     fun `reaction to an Aster recipient without post-quantum keys asks for consent`() = runTest {
         every { session_key_store.has_ratchet_keys() } returns true
         coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any(), false) } throws
