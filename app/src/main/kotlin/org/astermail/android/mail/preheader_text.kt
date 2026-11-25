@@ -31,6 +31,8 @@ private const val PREHEADER_MIN_CHARS = 4
 
 private const val PREHEADER_MAX_CHARS = 600
 
+private const val PREHEADER_MAX_DEPTH = 64
+
 private val FILLER_RE = Regex(
     "[\\u200B-\\u200F\\u202A-\\u202E\\u2060\\u2066-\\u2069\\uFEFF\\u00AD\\u034F" +
         "\\u115F\\u1160\\u17B4\\u17B5\\u180E\\u3164\\uFFA0\\uFFF9-\\uFFFC]",
@@ -50,11 +52,6 @@ private val HIDDEN_STYLE_PATTERNS = listOf(
 
 private val HIDDEN_NAME_RE =
     Regex("(^|[\\s_-])(preheader|preview[-_]?text)([\\s_-]|$)", RegexOption.IGNORE_CASE)
-
-private val STYLE_BLOCK_RE =
-    Regex("<style\\b[^>]*>([\\s\\S]*?)</style>", RegexOption.IGNORE_CASE)
-
-private val CSS_RULE_RE = Regex("([^{}]+)\\{([^{}]*)\\}")
 
 private val CSS_CLASS_RE = Regex("\\.([A-Za-z0-9_-]+)")
 
@@ -110,19 +107,64 @@ private fun drop_at_rule_groups(css: String): String {
     return result.toString()
 }
 
+private fun style_block_contents(html: String): List<String> {
+    val blocks = mutableListOf<String>()
+    var from = 0
+    while (true) {
+        val open = html.indexOf("<style", from, ignoreCase = true)
+        if (open < 0) return blocks
+        val name_end = open + 6
+        if (name_end < html.length && (html[name_end].isLetterOrDigit() || html[name_end] == '_')) {
+            from = open + 1
+            continue
+        }
+        val tag_end = html.indexOf('>', name_end)
+        if (tag_end < 0) return blocks
+        val close = html.indexOf("</style>", tag_end + 1, ignoreCase = true)
+        if (close < 0) return blocks
+        blocks.add(html.substring(tag_end + 1, close))
+        from = close + 8
+    }
+}
+
+private fun index_of_brace(css: String, from: Int): Int {
+    for (index in from until css.length) if (css[index] == '{' || css[index] == '}') return index
+    return -1
+}
+
+private fun css_rules(css: String): List<Pair<String, String>> {
+    val rules = mutableListOf<Pair<String, String>>()
+    var pos = 0
+    while (pos < css.length) {
+        val open = index_of_brace(css, pos)
+        if (open < 0) break
+        if (css[open] == '}' || open == pos) {
+            pos = open + 1
+            continue
+        }
+        val close = index_of_brace(css, open + 1)
+        if (close < 0) break
+        if (css[close] == '{') {
+            pos = open + 1
+            continue
+        }
+        rules.add(css.substring(pos, open) to css.substring(open + 1, close))
+        pos = close + 1
+    }
+    return rules
+}
+
 private fun collect_hidden_selectors(html: String): HiddenSelectors {
     val classes = mutableSetOf<String>()
     val ids = mutableSetOf<String>()
 
-    for (block in STYLE_BLOCK_RE.findAll(html)) {
-        val css = drop_at_rule_groups(block.groupValues[1])
+    for (block in style_block_contents(html)) {
+        val css = drop_at_rule_groups(block)
 
-        for (rule in CSS_RULE_RE.findAll(css)) {
-            val declarations = rule.groupValues[2]
-
+        for ((rule_selectors, declarations) in css_rules(css)) {
             if (HIDDEN_STYLE_PATTERNS.none { it.containsMatchIn(declarations) }) continue
 
-            for (selector in rule.groupValues[1].split(",")) {
+            for (selector in rule_selectors.split(",")) {
                 val target = selector.trim().split(Regex("[\\s>+~]+")).lastOrNull() ?: continue
 
                 CSS_CLASS_RE.findAll(target).forEach { classes.add(it.groupValues[1].lowercase(java.util.Locale.ROOT)) }
@@ -162,7 +204,10 @@ private fun collect_leading_hidden_text(
     node: Element,
     selectors: HiddenSelectors,
     parts: MutableList<String>,
+    depth: Int = 0,
 ): Boolean {
+    if (depth >= PREHEADER_MAX_DEPTH) return true
+
     for (child in node.childNodes()) {
         if (child is TextNode) {
             if (strip_preview_filler(child.text()).isNotEmpty()) return true
@@ -181,7 +226,7 @@ private fun collect_leading_hidden_text(
             continue
         }
 
-        if (collect_leading_hidden_text(child, selectors, parts)) return true
+        if (collect_leading_hidden_text(child, selectors, parts, depth + 1)) return true
     }
 
     return false

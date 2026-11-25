@@ -23,8 +23,6 @@ package org.astermail.android.mail
 
 const val PREVIEW_MAX_LENGTH = 140
 
-private val ANY_TAG_PATTERN = Regex("<[^>]+>")
-
 private val INVISIBLE_CHAR_PATTERN = Regex("[\\u200B-\\u200F\\u202A-\\u202E\\u2060\\u2066-\\u2069\\uFEFF\\u00AD\\u034F\\u115F\\u1160\\u17B4\\u17B5\\u180E\\u3164\\uFFA0\\uFFF9-\\uFFFC]")
 
 private val WHITESPACE_RUN_PATTERN = Regex("\\s+")
@@ -68,23 +66,76 @@ private fun looks_like_bundle_fragment(text: String): Boolean {
 fun looks_like_ciphertext(text: String): Boolean =
     CIPHERTEXT_MARKERS.any { text.contains(it) } || looks_like_bundle_fragment(text)
 
+private fun is_pattern_space(c: Char): Boolean =
+    c == ' ' || c == '\t' || c == '\n' || c == '\u000B' || c == '\u000C' || c == '\r'
+
+private fun skip_pattern_spaces(text: String, from: Int): Int {
+    var index = from
+    while (index < text.length && is_pattern_space(text[index])) index++
+    return index
+}
+
+private fun ends_word(text: String, index: Int): Boolean =
+    index >= text.length || !(text[index].isLetterOrDigit() || text[index] == '_')
+
+private fun starts_with_at(text: String, index: Int, prefix: String): Boolean =
+    text.regionMatches(index, prefix, 0, prefix.length, ignoreCase = true)
+
+private fun replace_tags(text: String, replacement: String): String {
+    var lt = text.indexOf('<')
+    if (lt < 0) return text
+    val out = StringBuilder(text.length)
+    var copied = 0
+    while (lt >= 0) {
+        val gt = text.indexOf('>', lt + 1)
+        if (gt < 0) break
+        if (gt > lt + 1) {
+            out.append(text, copied, lt).append(replacement)
+            copied = gt + 1
+            lt = text.indexOf('<', copied)
+        } else {
+            lt = text.indexOf('<', gt)
+        }
+    }
+    out.append(text, copied, text.length)
+    return out.toString()
+}
+
 fun strip_body_html(html: String): String {
     var text = strip_non_rendered_blocks(strip_html_comments(html))
-    text = text.replace(ANY_TAG_PATTERN, " ")
+    text = replace_tags(text, " ")
     text = decode_html_entities_for_preview(text)
     text = strip_non_rendered_blocks(text)
-    text = text.replace(ANY_TAG_PATTERN, " ")
+    text = replace_tags(text, " ")
     text = text.replace(INVISIBLE_CHAR_PATTERN, "")
     text = text.replace(WHITESPACE_RUN_PATTERN, " ")
     return text.trim()
 }
 
-private val HTML_TAG_PATTERN = Regex(
-    "<\\s*(?:/?)(?:html|body|div|p|br|span|a|blockquote|table|tbody|tr|td|th|ul|ol|li|h[1-6]|img|b|i|u|em|strong|pre|code|font|hr)(?=[\\s/>])[^>]*>",
-    RegexOption.IGNORE_CASE,
+private val HTML_TAG_NAMES = listOf(
+    "html", "body", "div", "p", "br", "span", "a", "blockquote", "table", "tbody", "tr", "td", "th",
+    "ul", "ol", "li", "h1", "h2", "h3", "h4", "h5", "h6", "img", "b", "i", "u", "em", "strong", "pre",
+    "code", "font", "hr",
 )
 
-private val HTML_DOCUMENT_PATTERN = Regex("<\\s*(?:html|body)(?=[\\s/>])[^>]*>", RegexOption.IGNORE_CASE)
+private val HTML_DOCUMENT_TAG_NAMES = listOf("html", "body")
+
+private fun ends_html_tag_name(text: String, index: Int): Boolean =
+    index < text.length && (is_pattern_space(text[index]) || text[index] == '/' || text[index] == '>')
+
+private fun has_html_tag(text: String, names: List<String>, allow_closing: Boolean): Boolean {
+    val last_gt = text.lastIndexOf('>')
+    var lt = text.indexOf('<')
+    while (lt in 0 until last_gt) {
+        var name_start = skip_pattern_spaces(text, lt + 1)
+        if (allow_closing && name_start < text.length && text[name_start] == '/') name_start++
+        if (names.any { starts_with_at(text, name_start, it) && ends_html_tag_name(text, name_start + it.length) }) {
+            return true
+        }
+        lt = text.indexOf('<', lt + 1)
+    }
+    return false
+}
 
 private val HTML_CLOSING_PATTERN = Regex(
     "</\\s*(?:html|body|div|p|span|a|blockquote|table|tbody|tr|td|th|ul|ol|li|h[1-6]|b|i|u|em|strong|pre|code|font)\\s*>",
@@ -94,8 +145,8 @@ private val HTML_CLOSING_PATTERN = Regex(
 private val HTML_BREAK_PATTERN = Regex("<\\s*br\\s*/?>", RegexOption.IGNORE_CASE)
 
 fun looks_like_html_body(text: String): Boolean {
-    if (HTML_DOCUMENT_PATTERN.containsMatchIn(text)) return true
-    if (!HTML_TAG_PATTERN.containsMatchIn(text)) return false
+    if (has_html_tag(text, HTML_DOCUMENT_TAG_NAMES, false)) return true
+    if (!has_html_tag(text, HTML_TAG_NAMES, true)) return false
     return HTML_CLOSING_PATTERN.containsMatchIn(text) || HTML_BREAK_PATTERN.containsMatchIn(text)
 }
 
@@ -104,7 +155,7 @@ fun html_to_plain_text(html: String): String {
     text = text.replace(BREAK_TAG_PATTERN, "\n")
     text = text.replace(BLOCK_CLOSE_PATTERN, "\n")
     text = text.replace(HR_TAG_PATTERN, "\n")
-    text = text.replace(ANY_TAG_PATTERN, "")
+    text = replace_tags(text, "")
     text = decode_html_entities(text)
     text = text.replace("\r\n", "\n").replace('\r', '\n')
     text = text.replace(SPACE_RUN_PATTERN, " ")
@@ -217,37 +268,91 @@ fun take_whole_chars(text: String, max_length: Int): String {
     return text.substring(0, end)
 }
 
-private val QUOTE_BLOCK_START_PATTERN = Regex(
-    "<\\s*(?:div|blockquote)\\b[^>]*class\\s*=\\s*[\"'][^\"']*" +
-        "(?:aster_quote|gmail_quote|protonmail_quote|yahoo_quoted|moz-cite-prefix)" +
-        "[^\"']*[\"'][^>]*>",
-    RegexOption.IGNORE_CASE,
-)
+private val QUOTE_BLOCK_TAG_NAMES = listOf("div", "blockquote")
 
-fun strip_quoted_html(html: String): String {
-    val match = QUOTE_BLOCK_START_PATTERN.find(html) ?: return html
-    return html.substring(0, match.range.first)
+private val QUOTE_BLOCK_CLASSES = listOf("aster_quote", "gmail_quote", "protonmail_quote", "yahoo_quoted", "moz-cite-prefix")
+
+private val QUOTE_ATTR_TAG_NAMES = listOf("div")
+
+private val QUOTE_ATTR_CLASSES = listOf("aster_quote_attr", "gmail_attr")
+
+private fun is_quote_char(c: Char): Boolean = c == '"' || c == '\''
+
+private fun index_of_quote_char(text: String, from: Int): Int {
+    for (index in from until text.length) if (is_quote_char(text[index])) return index
+    return -1
 }
 
-private val QUOTE_ATTR_START_PATTERN = Regex(
-    "<\\s*div\\b[^>]*class\\s*=\\s*[\"'][^\"']*(?:aster_quote_attr|gmail_attr)[^\"']*[\"'][^>]*>",
-    RegexOption.IGNORE_CASE,
-)
+private fun quote_class_value_end(html: String, from: Int, tag_close: Int, last_gt: Int, classes: List<String>): Int {
+    var value_end = -1
+    for (at in from..tag_close - 5) {
+        if (!starts_with_at(html, at, "class")) continue
+        var index = skip_pattern_spaces(html, at + 5)
+        if (index >= html.length || html[index] != '=') continue
+        index = skip_pattern_spaces(html, index + 1)
+        if (index >= html.length || !is_quote_char(html[index])) continue
+        val close_quote = index_of_quote_char(html, index + 1)
+        if (close_quote < 0 || close_quote >= last_gt) continue
+        val value = html.substring(index + 1, close_quote)
+        if (classes.any { value.contains(it, ignoreCase = true) }) value_end = close_quote
+    }
+    return value_end
+}
 
-private val DIV_TAG_PATTERN = Regex("<\\s*(/?)\\s*div\\b[^>]*>", RegexOption.IGNORE_CASE)
+private fun find_quote_tag(html: String, names: List<String>, classes: List<String>): IntRange? {
+    val last_gt = html.lastIndexOf('>')
+    var lt = html.indexOf('<')
+    while (lt in 0 until last_gt) {
+        val name_start = skip_pattern_spaces(html, lt + 1)
+        val name = names.firstOrNull { starts_with_at(html, name_start, it) && ends_word(html, name_start + it.length) }
+        if (name == null) {
+            lt = html.indexOf('<', lt + 1)
+            continue
+        }
+        val name_end = name_start + name.length
+        val tag_close = html.indexOf('>', name_end)
+        val value_end = quote_class_value_end(html, name_end, tag_close, last_gt, classes)
+        if (value_end >= 0) return lt..html.indexOf('>', value_end + 1)
+        lt = html.indexOf('<', tag_close)
+    }
+    return null
+}
 
-fun has_quote_attribution(html: String): Boolean = QUOTE_ATTR_START_PATTERN.containsMatchIn(html)
+private class DivTag(val closing: Boolean, val end: Int)
+
+private fun find_div_tag(html: String, from: Int): DivTag? {
+    var lt = html.indexOf('<', from)
+    while (lt >= 0) {
+        var name_start = skip_pattern_spaces(html, lt + 1)
+        val closing = name_start < html.length && html[name_start] == '/'
+        if (closing) name_start = skip_pattern_spaces(html, name_start + 1)
+        if (starts_with_at(html, name_start, "div") && ends_word(html, name_start + 3)) {
+            val gt = html.indexOf('>', name_start + 3)
+            return if (gt < 0) null else DivTag(closing, gt)
+        }
+        lt = html.indexOf('<', lt + 1)
+    }
+    return null
+}
+
+fun strip_quoted_html(html: String): String {
+    val match = find_quote_tag(html, QUOTE_BLOCK_TAG_NAMES, QUOTE_BLOCK_CLASSES) ?: return html
+    return html.substring(0, match.first)
+}
+
+fun has_quote_attribution(html: String): Boolean =
+    find_quote_tag(html, QUOTE_ATTR_TAG_NAMES, QUOTE_ATTR_CLASSES) != null
 
 fun strip_quote_attribution(html: String): String {
-    val start = QUOTE_ATTR_START_PATTERN.find(html) ?: return html
+    val start = find_quote_tag(html, QUOTE_ATTR_TAG_NAMES, QUOTE_ATTR_CLASSES) ?: return html
     var depth = 1
-    var index = start.range.last + 1
+    var index = start.last + 1
     while (depth > 0) {
-        val tag = DIV_TAG_PATTERN.find(html, index) ?: return html.substring(0, start.range.first)
-        depth += if (tag.groupValues[1] == "/") -1 else 1
-        index = tag.range.last + 1
+        val tag = find_div_tag(html, index) ?: return html.substring(0, start.first)
+        depth += if (tag.closing) -1 else 1
+        index = tag.end + 1
     }
-    return html.substring(0, start.range.first) + html.substring(index)
+    return html.substring(0, start.first) + html.substring(index)
 }
 
 fun thread_card_preview(body_html: String?, display_body: String): String {
