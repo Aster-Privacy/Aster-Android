@@ -1149,7 +1149,7 @@ private fun compose_screen_content(
 
     fun reply_seed_for(original_html: String): String {
         val (from_addr, ts, subj) = quoted_meta ?: Triple("", "", "")
-        return build_reply_quote_html(reply_labels, from_addr, format_quote_timestamp(ts), subj, original_html)
+        return build_reply_quote_html(reply_labels, from_addr, format_quote_timestamp(ts), subj, remove_unsendable_quote_images(original_html))
     }
 
     val reply_seed_html = remember(is_forward_quote, ready_quoted_html, quoted_meta, reply_labels) {
