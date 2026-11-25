@@ -141,6 +141,7 @@ import org.astermail.android.api.settings.AliasDirectory
 import org.astermail.android.api.settings.AliasInfo
 import org.astermail.android.api.settings.DeletedAliasInfo
 import org.astermail.android.api.settings.CustomDomainAddressInfo
+import org.astermail.android.api.settings.DomainAddressWebsitesRow
 import org.astermail.android.api.settings.AliasPreferences
 import org.astermail.android.api.settings.AliasRun
 import org.astermail.android.api.settings.AllowSenderRequest
@@ -383,7 +384,7 @@ private fun <T> keep_settled_rows(
     val previous_by_id = previous.filterNot(failed).associateBy(id_of)
     return fresh.mapNotNull { row -> if (!failed(row)) row else previous_by_id[id_of(row)] }
 }
-private const val MAX_ALIAS_WEBSITES = 10
+private const val MAX_ALIAS_WEBSITES = ALIAS_WEBSITES_MAX_COUNT
 private const val IMPORT_BATCH_SIZE = 100
 private const val ALIAS_RUN_POLL_MIN_MS = 1200L
 private const val ALIAS_RUN_POLL_MAX_MS = 8000L
@@ -1588,13 +1589,20 @@ class SettingsViewModel @Inject constructor(
                         }
                     addr.copy(encrypted_local_part = local_part, encrypted_display_name = display_name)
                 }
+                val with_websites = apply_domain_address_websites(
+                    addresses = decrypted,
+                    rows_by_domain = fetch_domain_address_websites(decrypted),
+                    previous = _state.value.custom_domain_addresses,
+                    domain_id_of = ::domain_address_domain_id,
+                    decrypt = ::decrypt_alias_field,
+                )
                 val keys_pending = decrypted.any { it.decryption_failed } &&
                     classify_decrypt_failure(readiness_before, capture_decrypt_readiness(session_key_store)) ==
                     DecryptVerdict.pending
                 val shown = if (keys_pending) {
-                    keep_settled_rows(decrypted, _state.value.custom_domain_addresses, { it.id }, { it.decryption_failed })
+                    keep_settled_rows(with_websites, _state.value.custom_domain_addresses, { it.id }, { it.decryption_failed })
                 } else {
-                    decrypted
+                    with_websites
                 }
                 prime_own_domain_address_avatars(shown)
                 _state.value = _state.value.copy(
@@ -2374,6 +2382,105 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private fun domain_address_domain_id(addr: CustomDomainAddressInfo): String? =
+        addr.domain_id.ifBlank { null } ?: resolve_domain_id(addr.domain_name)
+
+    private suspend fun fetch_domain_address_websites(
+        addresses: List<CustomDomainAddressInfo>,
+    ): Map<String, List<DomainAddressWebsitesRow>> {
+        val domain_ids = addresses
+            .filter { !it.decryption_failed }
+            .mapNotNull { domain_address_domain_id(it) }
+            .distinct()
+        if (domain_ids.isEmpty()) return emptyMap()
+        return coroutineScope {
+            domain_ids.map { domain_id ->
+                async {
+                    try {
+                        domain_id to settings_api.list_domain_addresses(domain_id).addresses
+                    } catch (t: Throwable) {
+                        if (t is kotlinx.coroutines.CancellationException) throw t
+                        null
+                    }
+                }
+            }.awaitAll().filterNotNull().toMap()
+        }
+    }
+
+    fun update_domain_address_websites(address_id: String, websites: String) {
+        val current = _state.value.custom_domain_addresses.firstOrNull { it.id == address_id } ?: return
+        if (current.decryption_failed || !current.websites_loaded) return
+        val domain_id = domain_address_domain_id(current) ?: return
+        val cleaned = sanitize_alias_text(websites)
+        val normalized_list = split_websites_input(cleaned)
+        if (cleaned.isNotBlank() && normalized_list.isEmpty()) {
+            _state.value = _state.value.copy(action_result = context.getString(R.string.alias_website_invalid))
+            return
+        }
+        _state.update { s ->
+            s.copy(
+                custom_domain_addresses = s.custom_domain_addresses.map {
+                    if (it.id == address_id) it.copy(websites = normalized_list) else it
+                },
+            )
+        }
+        viewModelScope.launch {
+            try {
+                val sealed = if (normalized_list.isEmpty()) {
+                    null
+                } else {
+                    encrypt_alias_field(serialize_websites_payload(normalized_list))
+                }
+                settings_api.update_domain_address_websites(domain_id, address_id, sealed?.first, sealed?.second)
+                _state.update { s ->
+                    s.copy(
+                        custom_domain_addresses = s.custom_domain_addresses.map {
+                            if (it.id == address_id) {
+                                it.copy(encrypted_websites = sealed?.first, websites_nonce = sealed?.second)
+                            } else {
+                                it
+                            }
+                        },
+                        action_result = context.getString(R.string.alias_websites_updated),
+                    )
+                }
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { s ->
+                    s.copy(
+                        custom_domain_addresses = s.custom_domain_addresses.map {
+                            if (it.id == address_id) it.copy(websites = current.websites) else it
+                        },
+                        action_result = user_facing_error(t),
+                    )
+                }
+            }
+        }
+    }
+
+    fun add_domain_address_website(address_id: String, website: String) {
+        val current = _state.value.custom_domain_addresses.firstOrNull { it.id == address_id } ?: return
+        if (!current.websites_loaded) return
+        val normalized = validate_alias_website_input(sanitize_alias_text(website))
+        if (normalized == null) {
+            _state.value = _state.value.copy(action_result = context.getString(R.string.alias_website_invalid))
+            return
+        }
+        if (current.websites.contains(normalized)) return
+        if (current.websites.size >= MAX_ALIAS_WEBSITES) {
+            _state.value = _state.value.copy(action_result = context.getString(R.string.alias_websites_limit_reached))
+            return
+        }
+        update_domain_address_websites(address_id, (current.websites + normalized).joinToString(", "))
+    }
+
+    fun remove_domain_address_website(address_id: String, website: String) {
+        val current = _state.value.custom_domain_addresses.firstOrNull { it.id == address_id } ?: return
+        val remaining = current.websites.filter { it != website }
+        if (remaining.size == current.websites.size) return
+        update_domain_address_websites(address_id, remaining.joinToString(", "))
+    }
+
     fun add_alias_website(alias_id: String, website: String) {
         val current = _state.value.aliases.firstOrNull { it.id == alias_id } ?: return
         val normalized = validate_alias_website_input(sanitize_alias_text(website))
@@ -2402,42 +2509,11 @@ class SettingsViewModel @Inject constructor(
 
     private fun normalize_website_url(raw: String): String? = normalize_alias_website_url(raw)
 
-    private fun split_websites_input(raw: String): List<String> {
-        if (raw.isBlank()) return emptyList()
-        return raw.split(Regex("[,;\\n]"))
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .mapNotNull { normalize_website_url(it) }
-            .distinct()
-            .take(MAX_ALIAS_WEBSITES)
-    }
+    private fun split_websites_input(raw: String): List<String> = split_alias_websites_input(raw)
 
-    private fun serialize_websites_payload(websites: List<String>): String {
-        val array = kotlinx.serialization.json.JsonArray(
-            websites.map { kotlinx.serialization.json.JsonPrimitive(it) },
-        )
-        return array.toString()
-    }
+    private fun serialize_websites_payload(websites: List<String>): String = serialize_alias_websites_payload(websites)
 
-    private fun websites_payload_to_list(raw: String): List<String> {
-        val parsed = try {
-            kotlinx.serialization.json.Json.parseToJsonElement(raw)
-        } catch (t: Throwable) {
-            if (t is kotlinx.coroutines.CancellationException) throw t
-            null
-        }
-        val entries = if (parsed is kotlinx.serialization.json.JsonArray) {
-            parsed.mapNotNull { (it as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull }
-        } else {
-            raw.split(Regex("[,;\\n]"))
-        }
-        return entries
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .mapNotNull { normalize_website_url(it) }
-            .distinct()
-            .take(MAX_ALIAS_WEBSITES)
-    }
+    private fun websites_payload_to_list(raw: String): List<String> = parse_alias_websites_payload(raw)
 
     private fun is_valid_email(email: String): Boolean {
         val at = email.indexOf('@')
