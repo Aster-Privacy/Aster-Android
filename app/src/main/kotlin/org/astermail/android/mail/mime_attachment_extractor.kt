@@ -64,7 +64,6 @@ object MimeAttachmentExtractor {
     private val ENCODED_WORD_GAP = Regex("(=\\?[^?\\s]+\\?[BbQq]\\?[^?\\s]*\\?=)\\s+(?==\\?)")
     private val QUOTED_ESCAPE = Regex("\\\\(.)")
     private val QP_SOFT_BREAK = Regex("=[ \\t]*\\r?\\n")
-    private val QP_TRAILING_SPACE = Regex("[ \\t]+(?=\\r?\\n)")
     private val QP_HARD_BREAK = Regex("\\r?\\n")
     private val CONTROL_CHARS = Regex("[\\u0000-\\u001f\\u007f]")
     private val SIMPLE_SUBTYPE = Regex("^[a-z0-9]{1,8}$")
@@ -244,9 +243,29 @@ object MimeAttachmentExtractor {
         return runCatching { java.util.Base64.getDecoder().decode(padded) }.getOrNull()
     }
 
+    private fun strip_trailing_line_space(text: String): String {
+        val out = StringBuilder(text.length)
+        var run_start = -1
+        for (index in text.indices) {
+            val c = text[index]
+            if (c == ' ' || c == '\t') {
+                if (run_start < 0) run_start = index
+                continue
+            }
+            if (run_start >= 0) {
+                val ends_line = c == '\n' || (c == '\r' && index + 1 < text.length && text[index + 1] == '\n')
+                if (!ends_line) out.append(text, run_start, index)
+                run_start = -1
+            }
+            out.append(c)
+        }
+        if (run_start >= 0) out.append(text, run_start, text.length)
+        return out.toString()
+    }
+
     private fun quoted_printable_decode(input: String): ByteArray {
         val unfolded = QP_SOFT_BREAK.replace(input, "")
-        val hard_breaks = QP_HARD_BREAK.replace(QP_TRAILING_SPACE.replace(unfolded, ""), "\r\n")
+        val hard_breaks = QP_HARD_BREAK.replace(strip_trailing_line_space(unfolded), "\r\n")
         return escaped_to_bytes(hard_breaks, '=', underscore_is_space = false)
     }
 
