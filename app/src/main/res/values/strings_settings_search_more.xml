@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_keywords_more_exit">exit, back, double tap, double back, press back twice, back button, close app, quit, leave app, exit app</string>
+    <string name="search_keywords_more_quick_actions">quick actions, quick filters, inbox buttons, header buttons, filter buttons</string>
+    <string name="search_keywords_more_reduce_motion">reduce motion, animations, motion, transitions, accessibility, motion sickness</string>
+    <string name="search_keywords_more_high_contrast">contrast, accessibility, vision, readability, low vision</string>
+    <string name="search_keywords_more_sign_out_everywhere">log out everywhere, sign out everywhere, sign out all devices, log out all devices, end sessions, remove devices</string>
+    <string name="search_keywords_more_cancel_plan">cancel subscription, cancel plan, downgrade, stop subscription, renewal, auto renew, billing</string>
+    <string name="search_keywords_more_sound">ringtone, notification sound, chime, alert sound, tone, sounds</string>
+</resources>

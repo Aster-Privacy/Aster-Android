@@ -1600,14 +1600,14 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `load_sessions error sets error message`() = runTest {
+    fun `load_sessions error marks sessions load failed`() = runTest {
         coEvery { settings_api.list_sessions() } throws ApiError.UnknownError("network error")
 
         vm.load_sessions()
         advanceUntilIdle()
 
-        assertFalse(vm.state.value.is_loading)
-        assertEquals("network error", vm.state.value.error)
+        assertFalse(vm.state.value.sessions_loading)
+        assertTrue(vm.state.value.sessions_load_failed)
         assertTrue(vm.state.value.sessions.isEmpty())
     }
 
@@ -1768,8 +1768,10 @@ class SettingsViewModelTest {
         vm.load_subscription()
         advanceUntilIdle()
 
-        assertFalse(vm.state.value.is_loading)
-        assertEquals("no subscription", vm.state.value.error)
+        assertFalse(vm.state.value.subscription_loading)
+        assertTrue(vm.state.value.subscription_load_failed)
+        assertNotNull(vm.state.value.subscription_error)
+        assertNull(vm.state.value.error)
         assertNull(vm.state.value.subscription)
     }
 
@@ -4761,10 +4763,10 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `load_sessions sets is_loading true during request`() = runTest {
+    fun `load_sessions sets sessions_loading true during request`() = runTest {
         var loading_during_request = false
         coEvery { settings_api.list_sessions() } coAnswers {
-            loading_during_request = vm.state.value.is_loading
+            loading_during_request = vm.state.value.sessions_loading
             SessionListResponse(emptyList())
         }
 
@@ -4772,7 +4774,8 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertTrue(loading_during_request)
-        assertFalse(vm.state.value.is_loading)
+        assertFalse(vm.state.value.sessions_loading)
+        assertTrue(vm.state.value.sessions_loaded)
     }
 
     @Test
@@ -5005,12 +5008,13 @@ class SettingsViewModelTest {
         coEvery { settings_api.get_subscription() } throws RuntimeException("fail")
         vm.load_subscription()
         advanceUntilIdle()
-        assertNotNull(vm.state.value.error)
+        assertNotNull(vm.state.value.subscription_error)
 
         coEvery { settings_api.get_subscription() } returns SubscriptionInfo(plan_name = "Star")
         vm.load_subscription()
         advanceUntilIdle()
-        assertNull(vm.state.value.error)
+        assertNull(vm.state.value.subscription_error)
+        assertFalse(vm.state.value.subscription_load_failed)
     }
 
     private fun preferences_vm(api: PreferencesApi): SettingsViewModel = SettingsViewModel(

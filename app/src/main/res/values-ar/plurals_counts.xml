@@ -104,4 +104,20 @@
         <item quantity="many">تم حظر %1$d متعقّبًا</item>
         <item quantity="other">تم حظر %1$d متعقّب</item>
     </plurals>
+    <plurals name="trash_emptied_count">
+        <item quantity="zero">تم حذف %d رسالة من سلة المهملات</item>
+        <item quantity="one">تم حذف رسالة واحدة من سلة المهملات</item>
+        <item quantity="two">تم حذف رسالتين من سلة المهملات</item>
+        <item quantity="few">تم حذف %d رسائل من سلة المهملات</item>
+        <item quantity="many">تم حذف %d رسالة من سلة المهملات</item>
+        <item quantity="other">تم حذف %d رسالة من سلة المهملات</item>
+    </plurals>
+    <plurals name="spam_emptied_count">
+        <item quantity="zero">تم حذف %d رسالة من الرسائل المزعجة</item>
+        <item quantity="one">تم حذف رسالة واحدة من الرسائل المزعجة</item>
+        <item quantity="two">تم حذف رسالتين من الرسائل المزعجة</item>
+        <item quantity="few">تم حذف %d رسائل من الرسائل المزعجة</item>
+        <item quantity="many">تم حذف %d رسالة من الرسائل المزعجة</item>
+        <item quantity="other">تم حذف %d رسالة من الرسائل المزعجة</item>
+    </plurals>
 </resources>

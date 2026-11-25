@@ -528,6 +528,7 @@ data class AttachmentMeta(
     val size_bytes: Long? = null,
     val is_placeholder: Boolean = false,
     val is_unverified: Boolean = false,
+    val verification_failed: Boolean = false,
 )
 
 data class DecryptedReaction(
@@ -755,6 +756,8 @@ class MailRepository @Inject constructor(
     fun identity_key_events(): kotlinx.coroutines.flow.StateFlow<Long> = session_key_store.identity_key_events()
 
     fun has_identity_key(): Boolean = !session_key_store.get_identity_key().isNullOrBlank()
+
+    fun session_locked(): Boolean = runCatching { session_key_store.is_locked() }.getOrDefault(false)
 
     fun key_readiness_events(): kotlinx.coroutines.flow.Flow<Long> = kotlinx.coroutines.flow.combine(
         session_key_store.identity_key_events(),
@@ -1051,6 +1054,45 @@ class MailRepository @Inject constructor(
             }
             decrypted.size
         }
+    }
+
+    suspend fun thread_body_index_rows(
+        thread_token: String,
+        expected_ids: Collection<String>,
+        on_bodies: ((Map<String, String>) -> Unit)? = null,
+    ): List<org.astermail.android.storage.search.MessageBodyIndexEntity> {
+        val cached = cached_thread_messages(thread_token)
+        val ready_ids = cached.orEmpty()
+            .filterNot { it.is_body_pending || it.is_pgp_placeholder }
+            .mapTo(HashSet()) { it.id }
+        val messages = if (cached != null && snapshot_covers(ready_ids, expected_ids)) {
+            cached
+        } else {
+            val response = mail_api.get_thread_messages(thread_token)
+            withContext(Dispatchers.Default) {
+                response.messages.distinctBy { it.id }.map { msg ->
+                    async { decrypt_thread_message(msg) }
+                }.awaitAll()
+            }
+        }
+        return withContext(Dispatchers.Default) {
+            if (on_bodies != null) {
+                val expected = expected_ids.toHashSet()
+                val bodies = messages.asSequence()
+                    .filter { it.id in expected }
+                    .filterNot { it.is_undecryptable || it.is_body_pending || it.is_pgp_placeholder }
+                    .mapNotNull { message -> message.body_html?.takeIf { it.isNotBlank() }?.let { message.id to it } }
+                    .toMap()
+                if (bodies.isNotEmpty()) runCatching { on_bodies(bodies) }
+            }
+            body_index_thread_rows(messages, expected_ids, InboundAttachmentKeyStore::filenames, System.currentTimeMillis())
+        }
+    }
+
+    suspend fun store_body_index_rows(rows: List<org.astermail.android.storage.search.MessageBodyIndexEntity>) {
+        if (rows.isEmpty()) return
+        val dao = body_index_dao_provider?.get() ?: return
+        withContext(Dispatchers.IO) { dao.replace_all(rows) }
     }
 
     fun cached_user_preferences(): UserPreferences? {
@@ -1741,30 +1783,21 @@ class MailRepository @Inject constructor(
         val delay_ms = clamp_undo_send_seconds(undo_seconds) * 1000L
         val pending_id = java.util.UUID.randomUUID().toString()
         val started_at_ms = System.currentTimeMillis()
-        if (!thread_token.isNullOrBlank()) {
-            optimistic_send_store.add(
-                OptimisticSend(
-                    pending_id = pending_id,
-                    account_id = session_key_store.get_user_id(),
-                    thread_token = thread_token,
-                    reply_to_id = reply_to_id?.takeIf { it.isNotBlank() },
-                    started_at_ms = started_at_ms,
-                    send_at_ms = started_at_ms + delay_ms,
-                    message = build_optimistic_send_message(
-                        pending_id = pending_id,
-                        started_at_ms = started_at_ms,
-                        sender_email = sender_email,
-                        sender_display_name = sender_display_name,
-                        to = to,
-                        cc = cc,
-                        bcc = bcc,
-                        subject = subject,
-                        body_html = body_html,
-                        has_attachments = attachments.isNotEmpty(),
-                    ),
-                ),
-            )
-        }
+        add_optimistic_send(
+            pending_id = pending_id,
+            started_at_ms = started_at_ms,
+            send_at_ms = started_at_ms + delay_ms,
+            thread_token = thread_token,
+            reply_to_id = reply_to_id,
+            sender_email = sender_email,
+            sender_display_name = sender_display_name,
+            to = to,
+            cc = cc,
+            bcc = bcc,
+            subject = subject,
+            body_html = body_html,
+            has_attachments = attachments.isNotEmpty(),
+        )
         val persisted = app_scope.async {
             runCatching {
                 persist_and_schedule_undo_send(
@@ -2019,11 +2052,121 @@ class MailRepository @Inject constructor(
         return true
     }
 
+    private fun add_optimistic_send(
+        pending_id: String,
+        started_at_ms: Long,
+        send_at_ms: Long,
+        thread_token: String?,
+        reply_to_id: String?,
+        sender_email: String?,
+        sender_display_name: String?,
+        to: List<String>,
+        cc: List<String>,
+        bcc: List<String>,
+        subject: String,
+        body_html: String,
+        has_attachments: Boolean,
+    ): Boolean {
+        val token = thread_token?.takeIf { it.isNotBlank() }
+        val parent = reply_to_id?.takeIf { it.isNotBlank() }
+        if (token == null && parent == null) return false
+        optimistic_send_store.add(
+            OptimisticSend(
+                pending_id = pending_id,
+                account_id = session_key_store.get_user_id(),
+                thread_token = token,
+                reply_to_id = parent,
+                started_at_ms = started_at_ms,
+                send_at_ms = send_at_ms,
+                message = build_optimistic_send_message(
+                    pending_id = pending_id,
+                    started_at_ms = started_at_ms,
+                    sender_email = sender_email,
+                    sender_display_name = sender_display_name,
+                    to = to,
+                    cc = cc,
+                    bcc = bcc,
+                    subject = subject,
+                    body_html = body_html,
+                    has_attachments = has_attachments,
+                ),
+            ),
+        )
+        return true
+    }
+
+    fun begin_direct_optimistic_send(
+        thread_token: String?,
+        reply_to_id: String?,
+        sender_email: String?,
+        sender_display_name: String?,
+        to: List<String>,
+        cc: List<String>,
+        bcc: List<String>,
+        subject: String,
+        body_html: String,
+        has_attachments: Boolean,
+    ): String? {
+        val pending_id = java.util.UUID.randomUUID().toString()
+        val started_at_ms = System.currentTimeMillis()
+        val added = add_optimistic_send(
+            pending_id = pending_id,
+            started_at_ms = started_at_ms,
+            send_at_ms = started_at_ms,
+            thread_token = thread_token,
+            reply_to_id = reply_to_id,
+            sender_email = sender_email,
+            sender_display_name = sender_display_name,
+            to = to,
+            cc = cc,
+            bcc = bcc,
+            subject = subject,
+            body_html = body_html,
+            has_attachments = has_attachments,
+        )
+        return pending_id.takeIf { added }
+    }
+
+    fun finish_direct_optimistic_send(pending_id: String?, delivered: Boolean, mail_item_id: String?) {
+        if (pending_id.isNullOrBlank()) return
+        if (delivered) {
+            commit_optimistic_send(pending_id, mail_item_id)
+        } else if (optimistic_send_store.get(pending_id)?.committed == false) {
+            optimistic_send_store.remove(pending_id)
+        }
+    }
+
     private fun commit_optimistic_send(pending_id: String, mail_item_id: String?) {
         if (!optimistic_send_store.mark_committed(pending_id, mail_item_id)) return
+        val committed = optimistic_send_store.get(pending_id)
+        if (committed != null) {
+            message_preloader.invalidate_thread(
+                committed.thread_token,
+                listOfNotNull(committed.reply_to_id),
+            )
+            app_scope.launch { patch_thread_snapshot_with_send(committed) }
+        }
         app_scope.launch {
             kotlinx.coroutines.delay(OPTIMISTIC_SEND_LINGER_MS)
             optimistic_send_store.remove(pending_id)
+        }
+    }
+
+    private val snapshot_patch_mutex = kotlinx.coroutines.sync.Mutex()
+
+    private suspend fun patch_thread_snapshot_with_send(send: OptimisticSend) {
+        val token = send.thread_token?.takeIf { it.isNotBlank() } ?: return
+        if (send.account_id != session_key_store.get_user_id()) return
+        snapshot_patch_mutex.withLock {
+            withContext(Dispatchers.IO) {
+                suspend fun stamp(): Long? =
+                    runCatching { thread_snapshot_dao.stamps(listOf(token)) }.getOrNull()?.firstOrNull()?.cached_at
+                val before = stamp() ?: return@withContext
+                val existing = cached_thread_messages(token)
+                val patched = thread_snapshot_with_sent_copy(existing, send) ?: return@withContext
+                if (stamp() != before) return@withContext
+                store_thread_snapshot(token, patched)
+            }
         }
     }
 
@@ -2693,6 +2836,9 @@ class MailRepository @Inject constructor(
         thread_snapshot_id_cache.clear()
         clear_key_trust_lookups()
         InboundAttachmentKeyStore.clear()
+        message_preloader.clear()
+        org.astermail.android.ui.mail.sanitized_html_memo.clear()
+        org.astermail.android.ui.mail.inline_images_memo.clear()
         org.astermail.android.ui.mail.InlineImageStore.clear()
         org.astermail.android.translation.TranslationMemory.clear()
         DecryptedMimeAttachments.clear()
@@ -3224,7 +3370,16 @@ class MailRepository @Inject constructor(
         all.toList()
     }
 
-    suspend fun fetch_thread(thread_token: String): Result<List<ThreadMessageDecrypted>> = runCatching {
+    suspend fun persist_opened_thread(thread_token: String, messages: List<ThreadMessageDecrypted>) {
+        if (messages.isEmpty()) return
+        withContext(Dispatchers.IO) {
+            store_message_bodies(messages)
+            store_thread_snapshot(thread_token, messages)
+            prefetch_sender_profiles(messages.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
+        }
+    }
+
+    suspend fun fetch_thread(thread_token: String, persist: Boolean = true): Result<List<ThreadMessageDecrypted>> = runCatching {
         val response = mail_api.get_thread_messages(thread_token)
         val thread_limit = org.astermail.android.api.network.thread_message_load_limit(
             org.astermail.android.api.network.low_network_state.active(),
@@ -3241,9 +3396,11 @@ class MailRepository @Inject constructor(
                 async { decrypt_thread_message(msg) }
             }.awaitAll()
             val healed = heal_undecryptable_thread_messages(decrypted)
-            store_message_bodies(healed)
-            store_thread_snapshot(thread_token, healed)
-            prefetch_sender_profiles(healed.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
+            if (persist) {
+                store_message_bodies(healed)
+                store_thread_snapshot(thread_token, healed)
+                prefetch_sender_profiles(healed.map { org.astermail.android.ui.mail.displayed_sender_email(it.display_sender_email, it.sender_email) })
+            }
             healed
         }
     }
@@ -4449,12 +4606,11 @@ class MailRepository @Inject constructor(
         Unit
     }
 
-    suspend fun empty_trash(): Result<Unit> =
-        run_or_queue(PendingActionKind.empty_trash, PendingActionPayload(), Unit) { empty_trash_now() }
+    suspend fun empty_trash(): Result<Int> =
+        run_or_queue(PendingActionKind.empty_trash, PendingActionPayload(), PENDING_UNKNOWN_COUNT) { empty_trash_now() }
 
-    private suspend fun empty_trash_now(): Result<Unit> = runCatching {
-        mail_api.empty_trash()
-        Unit
+    private suspend fun empty_trash_now(): Result<Int> = runCatching {
+        mail_api.empty_trash().deleted_count
     }
 
     suspend fun empty_spam(): Result<Int> =
@@ -5731,6 +5887,7 @@ class MailRepository @Inject constructor(
             size_bytes = size,
             is_placeholder = filename == null,
             is_unverified = row_unverified && shows_row_fields,
+            verification_failed = row_meta?.verification_failed == true && shows_row_fields,
         )
     }
 
@@ -5778,9 +5935,10 @@ class MailRepository @Inject constructor(
             val result = try_pgp_decrypt_own_account_result(text)
             val plaintext = result?.plaintext
             val signed = result?.signature == org.astermail.android.crypto.PgpSignatureStatus.VALID
+            val forged = result?.signature == org.astermail.android.crypto.PgpSignatureStatus.INVALID
             if (plaintext != null && (signed || !own_authored)) {
                 parse_attachment_meta_json(plaintext.toByteArray(Charsets.UTF_8))?.let { meta ->
-                    return if (signed) meta else meta.copy(is_unverified = true)
+                    return if (signed) meta else meta.copy(is_unverified = true, verification_failed = forged)
                 }
             }
         }
@@ -5939,7 +6097,7 @@ class MailRepository @Inject constructor(
                     content_id = meta.content_id,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
-                    is_unverified = meta.is_unverified,
+                    is_unverified = meta.verification_failed,
                 )
             }
         }
@@ -6008,7 +6166,7 @@ class MailRepository @Inject constructor(
                     content_id = meta.content_id,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
-                    is_unverified = meta.is_unverified,
+                    is_unverified = meta.verification_failed,
                 )
             }
             Result.success(DecryptedMimeAttachments.merge_into(mail_item_id, resolved))
@@ -6060,7 +6218,7 @@ class MailRepository @Inject constructor(
                     content_id = meta.content_id,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
-                    is_unverified = meta.is_unverified,
+                    is_unverified = meta.verification_failed,
                 ),
             )
         } catch (t: kotlin.coroutines.cancellation.CancellationException) {
@@ -6095,7 +6253,7 @@ class MailRepository @Inject constructor(
                     session_key = meta.session_key,
                     mail_item_id = att.mail_item_id,
                     seq_num = att.seq_num,
-                    is_unverified = meta.is_unverified,
+                    is_unverified = meta.verification_failed,
                 ),
                 data,
             ).let { Result.success(it) }
@@ -6940,8 +7098,11 @@ class MailRepository @Inject constructor(
         val sealed_fields_trusted =
             carries_sealed_details(ratchet_decrypted, is_unauthenticated, is_unconfirmed_sender)
         val sealed_details = bundle.details.takeIf { sealed_fields_trusted }
-        if (sealed_fields_trusted) {
-            InboundAttachmentKeyStore.register_sealed_manifest(message_id, attachment_manifest)
+        if (sealed_fields_trusted &&
+            InboundAttachmentKeyStore.register_sealed_manifest(message_id, attachment_manifest) &&
+            message_id != null
+        ) {
+            synchronized(attachment_meta_cache) { attachment_meta_cache.remove(message_id) }
         }
 
         return if (
@@ -7383,6 +7544,7 @@ class MailRepository @Inject constructor(
             }
             val hidden_bcc = hidden_internal_bcc(to, cc, bcc)
             val shared_internal = shared_targets(to, cc, bcc).filter { is_internal_recipient(it) }
+            val attachment_plan = plan_outbound_attachments(attachments)
             val wrapped = build_subject_bundle_text(
                 subject,
                 recipient_body_html,
@@ -7391,6 +7553,7 @@ class MailRepository @Inject constructor(
                     to = to,
                     cc = cc,
                 ),
+                attachment_plan?.manifest,
             )
             val sealed = seal_with_private_bcc(
                 from_addr,
@@ -7422,6 +7585,7 @@ class MailRepository @Inject constructor(
                     attachments,
                     from_addr,
                     sealing_recipients = shared_internal.takeIf { client_copies != null },
+                    attachment_plan = attachment_plan,
                 )
             } else {
                 emptyList()
@@ -7611,10 +7775,12 @@ class MailRepository @Inject constructor(
             val shared_internal = shared_targets(to, cc, bcc).filter { is_internal_recipient(it) }
 
             var recipient_bodies: Map<String, String>? = null
+            var attachment_plan: SealedAttachmentPlan? = null
             val ratchet_body = if (internal_recipients.isNotEmpty()) {
                 if (from_addr.isBlank() || !ensure_ratchet_keys_ready()) {
                     throw IllegalStateException(context.getString(R.string.e2e_keys_not_ready))
                 }
+                attachment_plan = plan_outbound_attachments(attachments)
                 val wrapped = build_subject_bundle_text(
                     subject,
                     recipient_body_html,
@@ -7623,6 +7789,7 @@ class MailRepository @Inject constructor(
                         to = to,
                         cc = cc,
                     ),
+                    attachment_plan?.manifest,
                 )
                 val sealed = seal_with_private_bcc(
                     from_addr,
@@ -7648,6 +7815,7 @@ class MailRepository @Inject constructor(
                     attachments,
                     from_addr,
                     hidden_bcc,
+                    attachment_plan,
                 )
             } else {
                 emptyList()
@@ -7945,11 +8113,30 @@ class MailRepository @Inject constructor(
         return keys
     }
 
+    private fun decode_attachment_data(data: String): ByteArray =
+        android.util.Base64.decode(data, android.util.Base64.DEFAULT)
+
+    internal fun plan_outbound_attachments(attachments: List<ExternalAttachmentPayload>): SealedAttachmentPlan? =
+        plan_sealed_attachments(attachments, ::decode_attachment_data)
+
     internal suspend fun build_internal_attachments(
         recipients: List<String>,
         attachments: List<ExternalAttachmentPayload>,
         sender_email: String? = null,
         hidden_bcc: List<String> = emptyList(),
+        attachment_plan: SealedAttachmentPlan? = null,
+    ): List<SendAttachmentPayload> = try {
+        build_internal_attachment_payloads(recipients, attachments, sender_email, hidden_bcc, attachment_plan)
+    } finally {
+        attachment_plan?.wipe()
+    }
+
+    private suspend fun build_internal_attachment_payloads(
+        recipients: List<String>,
+        attachments: List<ExternalAttachmentPayload>,
+        sender_email: String?,
+        hidden_bcc: List<String>,
+        attachment_plan: SealedAttachmentPlan?,
     ): List<SendAttachmentPayload> {
         val shared_keys = fetch_internal_public_keys(recipients, sender_email)
         val recipient_keys = if (shared_keys.isEmpty() && hidden_bcc.isNotEmpty()) {
@@ -7968,7 +8155,7 @@ class MailRepository @Inject constructor(
         }
         val own_seal = if (attachments.isEmpty()) null else own_seal_inputs()
         try {
-            return build_attachment_payloads(attachments, recipient_keys, own_seal, private_keys)
+            return build_attachment_payloads(attachments, recipient_keys, own_seal, private_keys, attachment_plan)
         } finally {
             own_seal?.second?.fill(' ')
         }
@@ -7979,6 +8166,19 @@ class MailRepository @Inject constructor(
         attachments: List<ExternalAttachmentPayload>,
         sender_email: String,
         sealing_recipients: List<String>? = null,
+        attachment_plan: SealedAttachmentPlan? = null,
+    ): List<SendAttachmentPayload> = try {
+        build_mixed_attachment_payloads(internal_recipients, attachments, sender_email, sealing_recipients, attachment_plan)
+    } finally {
+        attachment_plan?.wipe()
+    }
+
+    private suspend fun build_mixed_attachment_payloads(
+        internal_recipients: List<String>,
+        attachments: List<ExternalAttachmentPayload>,
+        sender_email: String,
+        sealing_recipients: List<String>?,
+        attachment_plan: SealedAttachmentPlan?,
     ): List<SendAttachmentPayload> {
         val seen = HashSet<String>()
         val unique = internal_recipients.filter { seen.add(normalize_own_address(it)) }
@@ -7998,7 +8198,7 @@ class MailRepository @Inject constructor(
         } ?: emptyList()
         val own_seal = own_seal_inputs()
         try {
-            return build_attachment_payloads(attachments, sealing_keys, own_seal, private_keys)
+            return build_attachment_payloads(attachments, sealing_keys, own_seal, private_keys, attachment_plan)
         } finally {
             own_seal?.second?.fill(' ')
         }
@@ -8009,11 +8209,16 @@ class MailRepository @Inject constructor(
         recipient_keys: List<String>,
         own_seal: Pair<String, CharArray>?,
         private_keys: Map<String, List<String>> = emptyMap(),
+        attachment_plan: SealedAttachmentPlan? = null,
     ): List<SendAttachmentPayload> {
+        if (attachment_plan != null && attachment_plan.session_keys.size != attachments.size) {
+            throw E2eEncryptionException(context.getString(R.string.e2e_encryption_failed))
+        }
         return attachments.mapIndexed { index, att ->
             try {
-                val raw = android.util.Base64.decode(att.data, android.util.Base64.DEFAULT)
-                val session_key = ByteArray(32).also { SecureRandom().nextBytes(it) }
+                val raw = decode_attachment_data(att.data)
+                val session_key = attachment_plan?.key_for(index)
+                    ?: ByteArray(32).also { SecureRandom().nextBytes(it) }
                 val data_nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
                 val encrypted_data = seal_attachment_data(raw, session_key, data_nonce, index)
 
@@ -8367,6 +8572,14 @@ class MailRepository @Inject constructor(
 
     private fun local_draft_server_id(key: String): String? =
         runCatching { local_draft_prefs.getString(key, null) }.getOrNull()?.takeIf { is_uuid(it) }
+
+    fun server_draft_id_for(draft_id: String?, session_id: String? = null): String? {
+        val resolved = session_id?.let { draft_session_ids[it] }
+            ?: draft_id?.takeIf { it.isNotBlank() }
+            ?: return null
+        return if (is_local_draft_id(resolved)) local_draft_server_id(resolved) else resolved
+    }
+
 
     private fun remember_local_draft(key: String, server_id: String) {
         runCatching {

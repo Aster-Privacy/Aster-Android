@@ -22,7 +22,6 @@
 package org.astermail.android.ui.mail
 
 import org.jsoup.Jsoup
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -43,23 +42,6 @@ class LongBodyScrollTest {
         assertFalse(body_keeps_vertical_drag(true, -10f, can_scroll_down = false, can_scroll_up = true, bottom_visible = true))
         assertFalse(body_keeps_vertical_drag(true, -10f, can_scroll_down = true, can_scroll_up = false, bottom_visible = false))
         assertFalse(body_keeps_vertical_drag(false, -10f, can_scroll_down = true, can_scroll_up = true, bottom_visible = true))
-    }
-
-    @Test
-    fun a_body_that_grows_after_load_is_measured_again() {
-        assertTrue(body_needs_regrowth(content_dp = 4000f, shown_dp = 1200f, max_dp = 20000f, slack_dp = 8f))
-        assertFalse(body_needs_regrowth(content_dp = 1205f, shown_dp = 1200f, max_dp = 20000f, slack_dp = 8f))
-        assertFalse(body_needs_regrowth(content_dp = 30000f, shown_dp = 19995f, max_dp = 20000f, slack_dp = 8f))
-        assertFalse(body_needs_regrowth(content_dp = 0f, shown_dp = 1200f, max_dp = 20000f, slack_dp = 8f))
-    }
-
-    @Test
-    fun a_locked_growth_guard_unlocks_when_images_change_the_ratio() {
-        val guard = body_growth_guard()
-        assertEquals(208, guard.settle(179, 208))
-        assertEquals(241, guard.settle(208, 241))
-        assertEquals(179, guard.settle(241, 279))
-        assertEquals(900, guard.settle(179, 900))
     }
 
     @Test

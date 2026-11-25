@@ -249,6 +249,7 @@ internal fun domain_purchase_manage_dialog(
             AsterDialogOutlineButton(
                 label = stringResource(R.string.close),
                 onClick = on_dismiss,
+                modifier = Modifier.weight(1f),
             )
             if (on_renew != null) {
                 AsterDialogPrimaryButton(
@@ -256,6 +257,7 @@ internal fun domain_purchase_manage_dialog(
                     onClick = on_renew,
                     enabled = !renewing,
                     is_loading = renewing,
+                    modifier = Modifier.weight(1f),
                 )
             }
         },

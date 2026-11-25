@@ -23,9 +23,9 @@ package org.astermail.android.ui.mail
 
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -85,8 +85,16 @@ object inbox_tools_pref {
     private fun prefs(context: Context) =
         context.applicationContext.getSharedPreferences(prefs_name, Context.MODE_PRIVATE)
 
+    @Volatile
+    private var loaded = false
+
     fun load(context: Context) {
         _visible.value = prefs(context).getBoolean(key_visible, true)
+        loaded = true
+    }
+
+    fun ensure_loaded(context: Context) {
+        if (!loaded) load(context)
     }
 
     fun set(context: Context, value: Boolean) {
@@ -98,7 +106,7 @@ object inbox_tools_pref {
 @Composable
 fun show_inbox_tools(): Boolean {
     val context = LocalContext.current
-    LaunchedEffect(context) { inbox_tools_pref.load(context) }
+    remember(context) { inbox_tools_pref.ensure_loaded(context) }
     val visible by inbox_tools_pref.visible.collectAsState()
     return visible
 }

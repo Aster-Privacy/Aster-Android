@@ -106,6 +106,7 @@ import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_state
+import org.astermail.android.design.components.skeleton_reveal
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.design.components.aster_menu_item
@@ -115,6 +116,7 @@ import org.astermail.android.settings.PrimaryAddressViewModel
 import org.astermail.android.settings.primary_address_reason_plan
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun ProfileScreen(
@@ -139,7 +141,7 @@ fun ProfileScreen(
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
-        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg.toString())
         vm.clear_action_result()
     }
 
@@ -254,10 +256,32 @@ fun ProfileScreen(
     val profile_loaded = user != null &&
         (state.subscription != null || state.subscription_load_failed) &&
         state.badge_preferences != null &&
-        state.badges_loaded
+        state.badges_loaded &&
+        address_state.eligibility_loaded
     val load_settled = remember_load_settled(!profile_loaded)
 
-    detail_scaffold(title = stringResource(R.string.profile), on_back = on_back) {
+    val display_name_dirty = display_name != (user?.display_name ?: live_account?.display_name ?: "")
+    detail_scaffold(
+        title = stringResource(R.string.profile),
+        on_back = on_back,
+        on_refresh = {
+            kotlinx.coroutines.coroutineScope {
+                launch { address_vm.join_launched { address_vm.load_eligibility() } }
+                launch {
+                    vm.join_launched {
+                        vm.load_profile(force = true)
+                        vm.load_aliases(force = true)
+                        vm.load_ghost_aliases()
+                        vm.load_custom_domain_addresses(force = true)
+                        vm.load_default_sender(force = true)
+                        vm.load_badges()
+                        vm.load_subscription(force = true)
+                    }
+                }
+            }
+        },
+        refresh_enabled = !display_name_dirty && !is_name_saving && !photo_busy,
+    ) {
         if (!profile_loaded && !load_settled) {
             profile_pulse_skeleton()
             return@detail_scaffold
@@ -296,9 +320,9 @@ fun ProfileScreen(
                                 .background(colors.bg_primary.copy(alpha = 0.60f)),
                             contentAlignment = Alignment.Center,
                         ) {
-                            CircularProgressIndicator(
+                            org.astermail.android.design.components.aster_spinner(
                                 modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp,
+                                stroke_width = 2.dp,
                                 color = colors.accent_blue,
                             )
                         }
@@ -379,10 +403,11 @@ fun ProfileScreen(
                 detail_row(
                     title = email,
                     subtitle = if (address_state.eligibility_loaded && address_state.eligible) {
-                        "$primary_address_label · $address_cadence_label"
+                        "$primary_address_label\n$address_cadence_label"
                     } else {
                         primary_address_label
                     },
+                    subtitle_min_lines = if (address_state.eligibility_loaded) 1 else 2,
                     icon = TablerIcons.At,
                     icon_tint = if (address_plan_locked) colors.text_tertiary else null,
                     muted = address_plan_locked,
@@ -572,7 +597,8 @@ private fun profile_pulse_skeleton() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clearAndSetSemantics {},
+            .clearAndSetSemantics {}
+            .skeleton_reveal(),
     ) {
         Column(
             modifier = Modifier

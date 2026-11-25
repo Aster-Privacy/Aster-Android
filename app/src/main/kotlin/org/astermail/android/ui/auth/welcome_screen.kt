@@ -61,7 +61,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
 import org.astermail.android.R
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
@@ -72,14 +74,7 @@ fun WelcomeScreen(
     on_create_account: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val context = LocalContext.current
-    val reduce_motion = remember {
-        Settings.Global.getFloat(
-            context.contentResolver,
-            Settings.Global.ANIMATOR_DURATION_SCALE,
-            1f,
-        ) == 0f
-    }
+    val reduce_motion = aster_reduce_motion()
 
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
@@ -177,14 +172,14 @@ private fun stagger_item(
     }
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(animationSpec = tween(durationMillis = 260, delayMillis = delay_ms)) +
+        enter = fadeIn(animationSpec = tween(durationMillis = 260, delayMillis = delay_ms, easing = AsterEasing.emphasized_decelerate)) +
             slideInVertically(
-                animationSpec = tween(durationMillis = 260, delayMillis = delay_ms),
+                animationSpec = tween(durationMillis = 260, delayMillis = delay_ms, easing = AsterEasing.emphasized_decelerate),
                 initialOffsetY = { it / 6 },
             ),
-        exit = fadeOut(animationSpec = tween(durationMillis = 180)) +
+        exit = fadeOut(animationSpec = tween(durationMillis = 180, easing = AsterEasing.emphasized_accelerate)) +
             slideOutVertically(
-                animationSpec = tween(durationMillis = 180),
+                animationSpec = tween(durationMillis = 180, easing = AsterEasing.emphasized_accelerate),
                 targetOffsetY = { it / 6 },
             ),
     ) {

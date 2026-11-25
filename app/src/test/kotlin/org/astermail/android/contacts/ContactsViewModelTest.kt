@@ -127,6 +127,8 @@ class ContactsViewModelTest {
         return cursor
     }
 
+    private val saved_identities = java.util.Collections.synchronizedList(mutableListOf<Set<String>>())
+
     private fun sync_device_over(existing: Contact, saved_baselines: MutableList<Set<String>>) {
         coEvery { repository.fetch_contacts() } returns Result.success(listOf(existing))
         every { repository.current_account() } returns "account_1"
@@ -143,7 +145,11 @@ class ContactsViewModelTest {
         every { prefs.getStringSet(any(), any()) } returns emptySet()
         every { prefs.edit() } returns editor
         every { editor.putStringSet(any(), any()) } answers {
-            saved_baselines.add(secondArg<Set<String>>().toSet())
+            if (firstArg<String>().startsWith("baseline_")) {
+                saved_baselines.add(secondArg<Set<String>>().toSet())
+            } else {
+                saved_identities.add(secondArg<Set<String>>().toSet())
+            }
             editor
         }
         val resolver = mockk<android.content.ContentResolver>(relaxed = true)
@@ -191,6 +197,7 @@ class ContactsViewModelTest {
             saved_baselines.size,
         )
         assertTrue(saved_baselines.single().isNotEmpty())
+        assertTrue("the synced device identities must be recorded", saved_identities.isNotEmpty())
     }
 
     private fun kotlinx.coroutines.test.TestScope.await_transfer() {
@@ -313,12 +320,12 @@ class ContactsViewModelTest {
         coEvery { repository.fetch_contact("c_42") } returns Result.success(contact)
 
         vm.load_contact("c_42")
-        assertTrue(vm.state.value.is_loading)
+        assertTrue(vm.state.value.contact_loading)
 
         advanceUntilIdle()
 
         val state = vm.state.value
-        assertFalse(state.is_loading)
+        assertFalse(state.contact_loading)
         assertNull(state.error)
         assertEquals("c_42", state.selected_contact?.id)
         assertEquals("Diana Prince", state.selected_contact?.name)
@@ -333,7 +340,7 @@ class ContactsViewModelTest {
         advanceUntilIdle()
 
         val state = vm.state.value
-        assertFalse(state.is_loading)
+        assertFalse(state.contact_loading)
         assertEquals("not found", state.error)
         assertNull(state.selected_contact)
     }

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_events">Gebeurtenissen</string>
+    <string name="contact_event_anniversary">Jubileum</string>
+    <string name="contact_add_event">Gebeurtenis toevoegen</string>
+    <string name="contact_remove_event">Gebeurtenis verwijderen</string>
+    <string name="contact_event_type">Type gebeurtenis</string>
+    <string name="contact_event_year_range">Voer een jaar in van %1$d tot %2$d</string>
+    <string name="contacts_add_to_favorites">Toevoegen aan favorieten</string>
+    <string name="contacts_remove_from_favorites">Verwijderen uit favorieten</string>
+    <string name="contacts_favorites_failed">Favorieten bijwerken is mislukt. Probeer het opnieuw.</string>
+    <string name="contacts_recently_added">Onlangs toegevoegd</string>
+    <string name="contacts_today">Vandaag</string>
+</resources>

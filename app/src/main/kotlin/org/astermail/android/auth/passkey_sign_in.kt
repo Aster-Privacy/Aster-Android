@@ -325,7 +325,7 @@ fun registration_request_json(options: PasskeyRegistrationOptions, compat: Boole
         .put("userVerification", "required")
     val request = JSONObject()
         .put("challenge", options.challenge)
-        .put("rp", JSONObject().put("name", options.rp.name.ifBlank { "AsterMail" }).put("id", options.rp.id))
+        .put("rp", JSONObject().put("name", options.rp.name.ifBlank { "Aster" }).put("id", options.rp.id))
         .put(
             "user",
             JSONObject()

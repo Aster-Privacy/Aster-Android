@@ -22,7 +22,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
 import android.os.PersistableBundle
-import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -65,7 +64,7 @@ fun write_sensitive_to_clipboard(context: Context, label: String, value: String)
 fun system_confirms_copy(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 
 fun show_copy_failed_toast(context: Context) {
-    Toast.makeText(context, context.getString(R.string.copy_failed), Toast.LENGTH_SHORT).show()
+    app_toast.show(context.getString(R.string.copy_failed))
 }
 
 fun show_copy_result_toast(context: Context, value: String, copied: Boolean) {
@@ -73,7 +72,7 @@ fun show_copy_result_toast(context: Context, value: String, copied: Boolean) {
 }
 
 fun show_copied_toast(context: Context, value: String) {
-    Toast.makeText(context, copied_toast_text(context, value), Toast.LENGTH_SHORT).show()
+    app_toast.show(copied_toast_text(context, value))
 }
 
 @Composable
@@ -89,7 +88,7 @@ fun remember_copy_action(): (label: String, value: String, toast: String) -> Uni
             }.isSuccess
             if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
             val message = if (copied) toast else context.getString(R.string.copy_failed)
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            app_toast.show(message)
         }
     }
 }

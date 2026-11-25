@@ -133,6 +133,22 @@ class BimiViewModel @Inject constructor(
         start_load(domain_id)
     }
 
+    suspend fun reload() {
+        val domain_id = _state.value.domain_id
+        if (domain_id.isEmpty() || load_job?.isActive == true || _state.value.busy) return
+        val gen = generation
+        try {
+            val view = bimi_api.get_bimi(domain_id)
+            if (!is_current(gen)) return
+            _state.update { it.copy(view = view, load_failed = false) }
+        } catch (t: CancellationException) {
+            throw t
+        } catch (_: Throwable) {
+            return
+        }
+        sync_auto_check()
+    }
+
     private fun start_load(domain_id: String) {
         val gen = next_generation()
         _state.value = BimiUiState(domain_id = domain_id)

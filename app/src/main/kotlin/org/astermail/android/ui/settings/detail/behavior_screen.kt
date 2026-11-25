@@ -34,8 +34,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.FastOutSlowInEasing
+import org.astermail.android.design.aster_reduce_motion
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -47,7 +46,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -105,6 +103,7 @@ import org.astermail.android.translation.language_display_name
 import org.astermail.android.translation.translation_language_codes
 import org.astermail.android.translation.translation_supported
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.settings.join_launched
 
 private const val retention_days_options_count = 8
 
@@ -344,7 +343,7 @@ fun BehaviorScreen(
     val toast_context = LocalContext.current
     LaunchedEffect(state.action_result) {
         val message = state.action_result ?: return@LaunchedEffect
-        Toast.makeText(toast_context, message, Toast.LENGTH_LONG).show()
+        org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = message.toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
         vm.clear_action_result()
     }
 
@@ -421,7 +420,17 @@ fun BehaviorScreen(
         onDispose { flush_on_exit.value() }
     }
 
-    detail_scaffold(title = stringResource(R.string.settings_behavior), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.settings_behavior),
+        on_back = on_back,
+        on_refresh = {
+            vm.join_launched {
+                vm.load_preferences(force = true)
+                vm.load_spam_settings()
+            }
+        },
+        refresh_enabled = save_trigger == 0,
+    ) {
         preferences_save_error_banner()
         if (!prefs_loaded) {
             preferences_load_placeholder()
@@ -554,7 +563,8 @@ fun BehaviorScreen(
                 }
             }
 
-            if (inbox_categories) {
+            SettingsExpand(visible = inbox_categories) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                 v_gap(AsterSpacing.lg)
                 category_settings_section(
                     enabled_categories = enabled_categories,
@@ -572,6 +582,7 @@ fun BehaviorScreen(
                     on_learn_change = { vm.set_learn_from_category_moves(it) },
                     on_forget_learned = { vm.forget_learned_category_senders() },
                 )
+                }
             }
 
             translation_settings_section(
@@ -655,8 +666,8 @@ fun BehaviorScreen(
                 )
                 AnimatedVisibility(
                     visible = undo_send,
-                    enter = expandVertically(tween(220, easing = FastOutSlowInEasing)) + fadeIn(tween(180)),
-                    exit = shrinkVertically(tween(200, easing = FastOutLinearInEasing)) + fadeOut(tween(140)),
+                    enter = settings_expand_in(aster_reduce_motion()),
+                    exit = org.astermail.android.design.aster_collapse_out(aster_reduce_motion()),
                 ) {
                     Column {
                         settings_row_gap(modifier = Modifier)
@@ -695,8 +706,8 @@ fun BehaviorScreen(
                 )
                 AnimatedVisibility(
                     visible = spam_filter_enabled,
-                    enter = expandVertically(tween(220, easing = FastOutSlowInEasing)) + fadeIn(tween(180)),
-                    exit = shrinkVertically(tween(200, easing = FastOutLinearInEasing)) + fadeOut(tween(140)),
+                    enter = settings_expand_in(aster_reduce_motion()),
+                    exit = org.astermail.android.design.aster_collapse_out(aster_reduce_motion()),
                 ) {
                     Column {
                         settings_row_gap(modifier = Modifier)
@@ -948,11 +959,7 @@ internal fun ColumnScope.translation_settings_section(
                             TranslationAssets.clear_cache(context)
                             TranslationDownloadPolicy.clear_consent(context)
                             on_packs_cleared()
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.translation_storage_removed),
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                            org.astermail.android.ui.common.app_toast.show(context.getString(R.string.translation_storage_removed).toString())
                         },
                     )
                 }
@@ -1018,7 +1025,7 @@ private fun phone_contacts_sync_section() {
         } else if (contacts_permission_blocked(context)) {
             show_settings_prompt = true
         } else {
-            Toast.makeText(context, context.getString(R.string.contact_sync_permission_denied), Toast.LENGTH_LONG).show()
+            org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = context.getString(R.string.contact_sync_permission_denied).toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
         }
     }
 

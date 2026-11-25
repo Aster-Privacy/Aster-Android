@@ -22,6 +22,7 @@
 package org.astermail.android.ui.mail
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
@@ -37,6 +38,7 @@ import java.util.TimeZone
 import org.astermail.android.util.clip_units
 import org.astermail.android.mail.thread_card_preview
 
+@Immutable
 data class Email(
     val id: String,
     val sender_name: String,
@@ -72,12 +74,14 @@ data class Email(
     val is_trashed: Boolean = false,
 )
 
+@Immutable
 data class list_folder_chip(
     val name: String,
     val icon: String,
     val color: Color,
 )
 
+@Immutable
 data class ThreadRow(
     val thread_id: String,
     val newest: Email,
@@ -566,6 +570,9 @@ private val re_strip_blank_lines = Regex("\\n{3,}")
 private val re_strip_spaces = Regex("[ \\t]+")
 
 private fun strip_html_simple(text: String): String {
+    if (text.indexOf('<') < 0 && text.indexOf('&') < 0) {
+        return text.replace(re_strip_blank_lines, "\n\n").replace(re_strip_spaces, " ").trim()
+    }
     var t = text
     t = t.replace(re_strip_style, "")
     t = t.replace(re_strip_script, "")

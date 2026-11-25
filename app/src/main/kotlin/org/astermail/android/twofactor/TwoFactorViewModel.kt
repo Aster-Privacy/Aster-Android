@@ -103,9 +103,9 @@ class TwoFactorViewModel @Inject constructor(
     private val _state = MutableStateFlow(TwoFactorUiState())
     val state: StateFlow<TwoFactorUiState> = _state.asStateFlow()
 
-    fun load_status() {
+    fun load_status(quiet: Boolean = false) {
         viewModelScope.launch {
-            _state.value = _state.value.copy(is_loading = true, error = null)
+            _state.value = _state.value.copy(is_loading = !quiet || _state.value.is_loading, error = null)
             val outcome = org.astermail.android.settings.load_settings_resource(await_session = { org.astermail.android.settings.await_settings_network(context) }) { totp_api.status() }
             _state.value = outcome.fold(
                 onSuccess = {

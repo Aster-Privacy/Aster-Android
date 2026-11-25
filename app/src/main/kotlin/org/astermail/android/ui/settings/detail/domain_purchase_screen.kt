@@ -24,12 +24,13 @@ package org.astermail.android.ui.settings.detail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.Check
+import compose.icons.tablericons.CircleCheck
+import compose.icons.tablericons.CircleX
 import compose.icons.tablericons.Clock
 import compose.icons.tablericons.CreditCard
 import compose.icons.tablericons.Lock
 import compose.icons.tablericons.Refresh
 import compose.icons.tablericons.Search
-import compose.icons.tablericons.X
 
 import android.content.Intent
 import android.net.Uri
@@ -103,10 +104,10 @@ import org.astermail.android.design.island_surface_color
 import org.astermail.android.design.tonal_surface_color
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterTextField
-import org.astermail.android.design.readable_on
 import org.astermail.android.settings.DomainPurchaseErrorKind
 import org.astermail.android.settings.DomainPurchaseUiState
 import org.astermail.android.settings.DomainPurchaseViewModel
+import org.astermail.android.ui.settings.join_launched
 
 private const val domain_min_query_length = 3
 private const val domain_results_page_size = 10
@@ -119,11 +120,7 @@ internal fun open_url(context: android.content.Context, url: String) {
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     } catch (_: Throwable) {
-        android.widget.Toast.makeText(
-            context,
-            context.getString(R.string.could_not_open_link),
-            android.widget.Toast.LENGTH_SHORT,
-        ).show()
+        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.could_not_open_link).toString())
     }
 }
 
@@ -172,6 +169,13 @@ fun DomainPurchaseScreen(
     detail_scaffold(
         title = stringResource(R.string.domain_purchase_title),
         on_back = { if (state.selected != null) vm.clear_selected() else on_back() },
+        on_refresh = {
+            vm.join_launched {
+                vm.retry_search()
+                vm.check_pending_order()
+            }
+        },
+        refresh_enabled = state.selected == null && !state.searching && !state.search_rate_limited,
     ) {
         if (state.selected == null) {
             purchase_search_content(vm = vm, state = state)
@@ -189,23 +193,16 @@ internal fun domain_status_disc(available: Boolean, size: Dp = 18.dp, unchecked:
         unchecked -> colors.warning
         else -> colors.danger
     }
-    Box(
-        modifier = Modifier
-            .size(size)
-            .background(disc, CircleShape),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = when {
-                available -> TablerIcons.Check
-                unchecked -> TablerIcons.Clock
-                else -> TablerIcons.X
-            },
-            contentDescription = null,
-            tint = readable_on(disc),
-            modifier = Modifier.size(size * 0.62f),
-        )
-    }
+    Icon(
+        imageVector = when {
+            available -> TablerIcons.CircleCheck
+            unchecked -> TablerIcons.Clock
+            else -> TablerIcons.CircleX
+        },
+        contentDescription = null,
+        tint = disc,
+        modifier = Modifier.size(size),
+    )
 }
 
 @Composable
@@ -243,9 +240,9 @@ internal fun domain_pill_button(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (is_loading) {
-            CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 modifier = Modifier.size(14.dp),
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
                 color = content_color,
             )
             Spacer(Modifier.width(6.dp))
@@ -292,9 +289,9 @@ internal fun domain_ghost_link(
         )
         if (is_loading) {
             Spacer(Modifier.width(8.dp))
-            CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 modifier = Modifier.size(14.dp),
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
                 color = colors.accent_blue,
             )
         }
@@ -353,9 +350,9 @@ private fun purchase_search_content(vm: DomainPurchaseViewModel, state: DomainPu
         },
         trailing_icon = if (state.searching) {
             {
-                CircularProgressIndicator(
+                org.astermail.android.design.components.aster_spinner(
                     modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp,
+                    stroke_width = 2.dp,
                     color = colors.text_muted,
                 )
             }

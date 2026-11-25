@@ -205,12 +205,13 @@
     <string name="guard_switches_paused">Запросы на вход приостановлены до %1$s.</string>
     <string name="guard_switches_missing_rescue">У вас нет кода восстановления. Создайте его, чтобы всегда иметь способ вернуться в аккаунт.</string>
     <string name="guard_switches_not_guard_device">Чтобы изменить эти настройки, используйте одно из ваших устройств Guard.</string>
-    <string name="guard_switches_canceled">Ничего не изменилось. Чтобы сохранить, подтвердите, что это вы.</string>
+    <string name="guard_switches_canceled">Изменения не сохранены. Чтобы сохранить их, подтвердите свою личность.</string>
     <string name="guard_switches_code_subtitle">Одобрить вход без уведомления</string>
     <string name="guard_devices_section">Устройства Guard</string>
     <string name="guard_devices_this_device">Этот телефон</string>
     <string name="guard_devices_unnamed">Устройство без названия</string>
     <string name="guard_devices_remove_prompt_subtitle">Удалить устройство Guard</string>
+    <string name="guard_devices_remove_confirm">%1$s больше не сможет подтверждать изменения в вашем аккаунте. Чтобы снова использовать его, подключитесь к Guard с этого устройства.</string>
     <string name="guard_security_row_off">Включите его, чтобы подтверждать входы и задерживать рискованные изменения с этого телефона</string>
     <string name="guard_changes_title">Задержанные изменения</string>
     <string name="guard_changes_body">Эти изменения в вашем аккаунте ждут, прежде чем вступить в силу. Если какое-то из них вы не вносили, отмените его.</string>
@@ -226,7 +227,7 @@
     <string name="guard_changes_step_up_required">Чтобы пропустить ожидание, используйте устройство, которым вы пользуетесь 7 дней или дольше, или ключ безопасности.</string>
     <string name="guard_changes_not_guard_device">Чтобы отменить или остановить изменение, используйте одно из ваших устройств Guard.</string>
     <string name="guard_changes_prompt_subtitle">Подтвердите это изменение в аккаунте</string>
-    <string name="guard_changes_prompt_canceled">Ничего не изменилось. Чтобы продолжить, подтвердите, что это вы.</string>
+    <string name="guard_changes_prompt_canceled">Чтобы продолжить, подтвердите свою личность.</string>
     <string name="guard_changes_done_canceled">Изменение отменено.</string>
     <string name="guard_changes_done_skipped">Изменение вступило в силу.</string>
     <string name="guard_changes_done_stopped">Восстановление остановлено.</string>

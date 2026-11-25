@@ -24,6 +24,9 @@ package org.astermail.android.ui.mail
 import org.astermail.android.mail.body_starts_with
 import org.astermail.android.mail.looks_like_html_body
 
+internal const val EMAIL_VIEWPORT_META =
+    "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no\">"
+
 private val WIDE_WIDTH_ATTRIBUTE_VALUE = Regex("""(?:[4-9]\d{2}|[1-9]\d{3})(?:\.\d+)?(?:px)?""", RegexOption.IGNORE_CASE)
 
 internal fun fit_wide_width_attributes(body: String): String {
@@ -193,7 +196,8 @@ internal fun build_email_html(
     email_font_id: String? = null,
     text_zoom: Int = 100,
     underline_links: Boolean = false,
-    fit_width_override: Int? = null,
+    hide_quote_label: String? = null,
+    show_quote_label: String? = null,
 ): String {
     val chip_scale = maxOf(1f, text_zoom.coerceIn(50, 300) / 100f)
     fun scaled_px(value: Float): String = String.format(java.util.Locale.US, "%.1fpx", value * chip_scale)
@@ -217,17 +221,33 @@ internal fun build_email_html(
     } else {
         body
     }
-    val declares_light = body.contains(Regex("color-scheme\\s*:\\s*(?:light\\s+only|only\\s+light)\\b", RegexOption.IGNORE_CASE))
-    val declares_light_bg = is_html_body && body.contains(
-        Regex(
-            "(?:background(?:-color)?\\s*:\\s*(?:#fff(?:fff)?|white|rgb\\(\\s*25[0-5])|bgcolor\\s*=\\s*[\"']?(?:#fff(?:fff)?|white))",
-            RegexOption.IGNORE_CASE,
-        ),
-    )
+    fun reads_designed_light(source: String, layout: Boolean): Pair<Boolean, Boolean> {
+        val source_light = source.contains(Regex("color-scheme\\s*:\\s*(?:light\\s+only|only\\s+light)\\b", RegexOption.IGNORE_CASE))
+        val source_light_bg = is_html_body && source.contains(
+            Regex(
+                "(?:background(?:-color)?\\s*:\\s*(?:#fff(?:fff)?|white|rgb\\(\\s*25[0-5])|bgcolor\\s*=\\s*[\"']?(?:#fff(?:fff)?|white))",
+                RegexOption.IGNORE_CASE,
+            ),
+        )
+        val designed = source_light || source_light_bg || layout ||
+            background_reads_light(detect_body_background(source)) || (is_html_body && declares_light_background(source))
+        val plain = is_dark && is_html_body && !source_light && !force_dark_emails && if (layout) {
+            reads_as_plain_table_correspondence(source)
+        } else {
+            reads_as_plain_light_text(source)
+        }
+        return designed to plain
+    }
     val seeded_background = detect_body_background(render_body)
-    val designed_light = declares_light || declares_light_bg || has_newsletter_layout ||
-        background_reads_light(seeded_background) || (is_html_body && declares_light_background(render_body))
-    val white_page = is_dark && is_html_body && designed_light && !force_dark_emails
+    val reply_part = if (is_dark && is_html_body && !force_dark_emails) reply_without_quote(render_body) else null
+    val (designed_light, plain_light) = if (reply_part != null) {
+        val reply_tables = (reply_part.split(Regex("<table\\b", RegexOption.IGNORE_CASE)).size - 1) > 2 ||
+            reply_part.contains(Regex("<table[^>]*(?:width|bgcolor|background)\\s*=", RegexOption.IGNORE_CASE))
+        reads_designed_light(reply_part, reply_tables)
+    } else {
+        reads_designed_light(render_body, has_newsletter_layout)
+    }
+    val white_page = is_dark && is_html_body && designed_light && !force_dark_emails && !plain_light
     val simple_dark = is_dark && is_html_body && !white_page
     val force_light = is_html_body && !simple_dark
     val chip_dark = is_dark && !white_page
@@ -266,6 +286,7 @@ ${image_paper_css()}
 """
         white_page -> """
 html,body{background-color:#ffffff!important}
+a{color:$PAPER_LINK}
 """
         else -> ""
     }
@@ -280,15 +301,11 @@ html,body{background-color:#ffffff!important}
     }
 
     val table_css = if (has_newsletter_layout) {
-        "#m{max-width:100%!important;overflow-x:visible!important;box-sizing:border-box!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m div,#m p,#m blockquote,#m section,#m article,#m figure,#m picture,#m form,#m pre,#m hr,#m iframe,#m video,#m embed,#m object,#m svg,#m canvas,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}#m pre{white-space:pre-wrap!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
+        "#m{max-width:100%!important;overflow-x:visible!important;box-sizing:border-box!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}#m table{max-width:100%!important;box-sizing:border-box!important}#m img{max-width:100%!important;height:auto!important}#m img[src^=\"data:image/gif;base64,R0lGODlhAQABAAAAACH5\"]:not([height]){height:0!important}#m div,#m p,#m blockquote,#m section,#m article,#m figure,#m picture,#m form,#m pre,#m hr,#m iframe,#m video,#m embed,#m object,#m svg,#m canvas,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}#m pre{white-space:pre-wrap!important}td,th{box-sizing:border-box!important;max-width:100%!important}#m,#m *{word-break:normal!important;overflow-wrap:break-word!important;word-wrap:break-word!important}#m a{overflow-wrap:anywhere!important}"
     } else {
-        "#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}#m [data-aster-long-token]{overflow-wrap:anywhere}#m div,#m p,#m blockquote,#m section,#m article,#m pre,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}"
+        "#m img[src^=\"data:image/gif;base64,R0lGODlhAQABAAAAACH5\"]:not([height]){height:0!important}#m [style*=\"nowrap\" i],#m [nowrap]{white-space:normal!important}table{max-width:100%!important;border-collapse:collapse;width:100%!important}td,th{overflow-wrap:break-word}#m [data-aster-long-token]{overflow-wrap:anywhere}#m div,#m p,#m blockquote,#m section,#m article,#m pre,#m input,#m textarea,#m select,#m button{box-sizing:border-box!important;max-width:100%!important}"
     }
-    val viewport_meta = if (fit_width_override != null) {
-        "<meta name=\"viewport\" content=\"width=$fit_width_override,maximum-scale=5,user-scalable=yes\">"
-    } else {
-        "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes\">"
-    }
+    val viewport_meta = EMAIL_VIEWPORT_META
     val color_scheme_meta = if (force_light) "<meta name=\"color-scheme\" content=\"light only\">" else ""
 
     val bq_border = if (simple_dark) "#4b5563" else "#dadce0"
@@ -304,17 +321,41 @@ html,body{background-color:#ffffff!important}
         ""
     }
     val dark_ready_body = when {
-        force_dark_emails -> lighten_dark_email_text(render_body)
+        force_dark_emails || plain_light -> lighten_dark_email_text(render_body)
         simple_dark -> lighten_dark_stylesheet_text(render_body)
         else -> render_body
     }
 
+    val page_ink = when {
+        simple_dark -> FORCED_DARK_INK
+        white_page -> "#111827"
+        has_newsletter_layout && is_html_body -> "#000000"
+        else -> fg_hex
+    }
+    val page_surface = if (is_dark && !white_page) DARK_PAGE_SURFACE else "#ffffff"
+    val painted_seed = seeded_background?.takeIf { seed ->
+        !force_dark_emails && keeps_readable_contrast(seed, page_ink)
+    }
+    val contrast_ready_body = if (is_html_body) {
+        enforce_text_contrast(
+            body = dark_ready_body,
+            page_background = painted_seed ?: page_surface,
+            page_ink = page_ink,
+            link_color = if (white_page) PAPER_LINK else link_hex,
+            forced_dark = force_dark_emails,
+        )
+    } else {
+        dark_ready_body
+    }
+
     val prepared_body = prepare_email_body(
-        body = dark_ready_body,
+        body = contrast_ready_body,
         forwarded_label = forwarded_label,
         image_failed_label = image_failed_label,
         is_newsletter = has_newsletter_layout,
         simple_dark = simple_dark,
+        hide_quote_label = hide_quote_label,
+        show_quote_label = show_quote_label,
     )
 
     val html_style = when {
@@ -353,13 +394,25 @@ a.aster-email-button,#m a.aster-email-button{white-space:nowrap!important;word-b
 .aster-quoted-content .aster_quote,.aster-quoted-content .gmail_quote,.aster-quoted-content .protonmail_quote,.aster-quoted-content .yahoo_quoted,.aster-quoted-content .moz-cite-prefix,.aster-forwarded-content .aster_quote,.aster-forwarded-content .gmail_quote,.aster-forwarded-content .protonmail_quote,.aster-forwarded-content .yahoo_quoted,.aster-forwarded-content .moz-cite-prefix{display:block;margin:0;padding:0}
 blockquote{margin:8px 0;padding-left:12px;border-left:2px solid $bq_border;color:$bq_color}
 details.aster-quoted-wrapper{margin-top:18px;margin-bottom:4px}
-.aster-quote-toggle{display:inline-flex;align-items:center;justify-content:center;min-height:${scaled_px(28f)};min-width:${scaled_px(44f)};padding:0 ${scaled_px(16f)};margin:0;border-radius:${scaled_px(14f)};border:none;outline:none;background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"};color:${if (chip_dark) "rgba(255,255,255,0.65)" else "rgba(0,0,0,0.55)"};cursor:pointer;font-family:inherit;font-size:0;letter-spacing:0;line-height:0;vertical-align:middle;user-select:none;list-style:none;-webkit-tap-highlight-color:transparent;transition:background 0.12s ease}
+.aster-quote-toggle{display:flex;width:max-content;white-space:nowrap;align-items:center;justify-content:center;min-height:${scaled_px(28f)};min-width:${scaled_px(44f)};padding:0 ${scaled_px(16f)};margin:0;border-radius:${scaled_px(14f)};border:none;outline:none;background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"};color:${if (chip_dark) "rgba(255,255,255,0.65)" else "rgba(0,0,0,0.55)"};cursor:pointer;font-family:inherit;font-size:0;letter-spacing:0;line-height:0;vertical-align:middle;user-select:none;list-style:none;-webkit-tap-highlight-color:transparent;position:relative}
 .aster-quote-toggle::-webkit-details-marker{display:none}
 .aster-quote-toggle::before{content:'';display:block;flex:none;width:${scaled_px(4f)};height:${scaled_px(4f)};border-radius:50%;background:currentColor;box-shadow:${scaled_px(-6.4f)} 0 0 currentColor,${scaled_px(6.4f)} 0 0 currentColor}
 .aster-quote-toggle::marker{content:''}
-.aster-quote-toggle:active,details[open].aster-quoted-wrapper>.aster-quote-toggle{background:${if (chip_dark) "rgba(255,255,255,0.2)" else "rgba(0,0,0,0.16)"}}
+.aster-quote-toggle,#m .aster-quote-toggle,details[open].aster-quoted-wrapper>.aster-quote-toggle{background:${if (chip_dark) "rgba(255,255,255,0.12)" else "rgba(0,0,0,0.08)"}!important;color:${if (chip_dark) "rgba(255,255,255,0.75)" else "rgba(0,0,0,0.65)"}!important}
+.aster-quote-toggle:active,#m .aster-quote-toggle:active{background:${if (chip_dark) "rgba(255,255,255,0.18)" else "rgba(0,0,0,0.12)"}!important}
 .aster-quoted-content{margin-top:14px;padding-top:14px;border-top:1px solid $detail_border;color:$bq_color;font-family:inherit;font-size:1em;line-height:1.45}
 .aster-quoted-content.aster-quoted-solo{margin-top:0;padding-top:0;border-top:none}
+a.aster-quote-close,a.aster-quote-cover{display:none}
+details[open].aster-quoted-wrapper>.aster-quote-toggle::before{display:none}
+details[open].aster-quoted-wrapper>.aster-quote-toggle>a.aster-quote-close,#m details[open].aster-quoted-wrapper>.aster-quote-toggle>a.aster-quote-close{display:flex;align-items:center;align-self:stretch;margin:0 -${scaled_px(16f)};padding:0 ${scaled_px(16f)};color:inherit!important;font-family:inherit;font-size:13px;font-weight:500;line-height:1;white-space:nowrap;text-decoration:none!important;-webkit-tap-highlight-color:transparent;pointer-events:auto}
+details[open].aster-quoted-wrapper>.aster-quote-toggle>a.aster-quote-close::after{content:'';position:absolute;top:-${scaled_px(8f)};right:-${scaled_px(8f)};bottom:-${scaled_px(8f)};left:-${scaled_px(8f)}}
+details[open].aster-quoted-wrapper>.aster-quote-toggle,details[open].aster-forwarded-collapse>summary{pointer-events:none}
+details.aster-forwarded-collapse>summary{position:relative}
+details.aster-quote-managed>summary{pointer-events:none!important}
+a.aster-quote-open,#m a.aster-quote-open{display:block!important;position:absolute!important;top:-${scaled_px(8f)}!important;right:-${scaled_px(8f)}!important;bottom:-${scaled_px(8f)}!important;left:-${scaled_px(8f)}!important;margin:0!important;padding:0!important;border:none!important;background:transparent!important;font-size:0!important;line-height:0!important;text-decoration:none!important;pointer-events:auto!important;-webkit-tap-highlight-color:transparent}
+details.aster-forwarded-collapse>summary>a.aster-quote-open,#m details.aster-forwarded-collapse>summary>a.aster-quote-open{top:0!important;right:0!important;bottom:0!important;left:0!important}
+details[open]>summary>a.aster-quote-open,#m details[open]>summary>a.aster-quote-open{display:none!important}
+details[open].aster-forwarded-collapse>summary>a.aster-quote-cover{display:block;position:absolute;top:0;right:0;bottom:0;left:0;pointer-events:auto}
 .aster-quoted-content .aster_quote_attr,.aster-quoted-content .gmail_attr{color:$bq_color;font-size:0.82em;margin-bottom:4px}
 .aster-quoted-content blockquote{margin:0;padding:0 0 0 12px;border-left:2px solid $bq_border2;color:$bq_color}
 .aster-quoted-content blockquote blockquote{border-left-color:$bq_border3}
@@ -374,7 +427,8 @@ $underline_css
 $dyslexia_css
 $dark_css
 $forced_dark_css
+${if (is_html_body && contrast_ready_body.contains(INK_ATTRIBUTE)) text_contrast_css() else ""}
 </style>
-</head><body style="$body_style"><div id="m"${if (seeded_background != null) " style=\"background-color:$seeded_background\"" else ""}>$prepared_body</div>
+</head><body style="$body_style"><div id="m"${if (painted_seed != null) " style=\"background-color:$painted_seed\"" else ""}>$prepared_body</div>
 </body></html>"""
 }

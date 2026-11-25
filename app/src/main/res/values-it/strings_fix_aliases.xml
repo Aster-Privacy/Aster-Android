@@ -17,4 +17,22 @@
     <string name="alias_import_change_file">Cambia file</string>
     <string name="alias_import_remove_file">Rimuovi file</string>
     <string name="alias_note_placeholder_short">Dove lo usi</string>
+    <string name="alias_status_section">Stato</string>
+    <string name="alias_receive_mail">Ricevi posta</string>
+    <string name="alias_receive_mail_on">La posta inviata a questo indirizzo ti raggiunge.</string>
+    <string name="alias_receive_mail_off">In pausa. La nuova posta inviata a questo indirizzo non viene recapitata.</string>
+    <string name="alias_pin_subtitle">Mantieni questo alias in cima all\'elenco.</string>
+    <string name="alias_danger_zone">Zona pericolosa</string>
+    <string name="alias_delete_row_subtitle">Rimuovi definitivamente questo indirizzo.</string>
+    <string name="alias_protection_section">Protezione</string>
+    <string name="alias_automation_section">Automazione</string>
+    <string name="alias_pin_mode_title">Modalità</string>
+    <string name="alias_remove_entry_a11y">Rimuovi %1$s</string>
+    <string name="alias_create_action">Crea alias</string>
+    <string name="alias_usage_near">Sei vicino al limite di alias.</string>
+    <string name="alias_usage_full">Hai raggiunto il limite di alias.</string>
+    <string name="alias_offline_banner">Sei offline. Le modifiche si sincronizzano quando ti riconnetti.</string>
+    <string name="alias_menu_pause">Metti in pausa</string>
+    <string name="alias_menu_resume">Riprendi</string>
+    <string name="alias_directory_auto_create_a11y">Crea automaticamente alias per %1$s</string>
 </resources>

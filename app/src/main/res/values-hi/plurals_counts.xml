@@ -52,4 +52,12 @@
         <item quantity="one">%1$d ट्रैकर रोका गया</item>
         <item quantity="other">%1$d ट्रैकर रोके गए</item>
     </plurals>
+    <plurals name="trash_emptied_count">
+        <item quantity="one">ट्रैश से %d संदेश हटाया गया</item>
+        <item quantity="other">ट्रैश से %d संदेश हटाए गए</item>
+    </plurals>
+    <plurals name="spam_emptied_count">
+        <item quantity="one">स्पैम से %d संदेश हटाया गया</item>
+        <item quantity="other">स्पैम से %d संदेश हटाए गए</item>
+    </plurals>
 </resources>

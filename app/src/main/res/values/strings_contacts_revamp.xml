@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contacts_close_search">Close search</string>
+    <string name="contacts_show_favorites_only">Show favorites only</string>
+    <string name="contacts_show_all">Show all contacts</string>
+</resources>

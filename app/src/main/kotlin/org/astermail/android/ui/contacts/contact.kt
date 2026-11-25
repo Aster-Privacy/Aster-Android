@@ -21,8 +21,12 @@
 
 package org.astermail.android.ui.contacts
 
+import org.astermail.android.contacts.ContactEvent
 import org.astermail.android.contacts.ContactRelation
 import org.astermail.android.contacts.ContactSocial
+import org.astermail.android.contacts.birthday_from_events
+import org.astermail.android.contacts.normalize_events
+import org.astermail.android.contacts.resolve_contact_events
 
 data class Contact(
     val id: String,
@@ -54,7 +58,16 @@ data class Contact(
     val addresses: List<ContactPostal> = emptyList(),
     val relations: List<ContactRelation>? = null,
     val social_networks: List<ContactSocial>? = null,
+    val events: List<ContactEvent>? = null,
+    val created_at: String = "",
 ) {
+    fun event_entries(): List<ContactEvent> = resolve_contact_events(events, birthday)
+
+    fun with_events(list: List<ContactEvent>): Contact {
+        val clean = normalize_events(list)
+        return copy(events = clean, birthday = birthday_from_events(clean))
+    }
+
     fun social_entries(): List<ContactSocial> = social_networks.orEmpty().filter { it.value.isNotBlank() }
 
     fun relation_entries(): List<ContactRelation> = relations.orEmpty().filter { it.value.isNotBlank() }

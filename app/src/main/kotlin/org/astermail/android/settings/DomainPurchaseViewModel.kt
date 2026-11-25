@@ -91,6 +91,7 @@ data class DomainPurchaseUiState(
     val checkout_url: String? = null,
     val orders: List<DomainOrder> = emptyList(),
     val orders_loading: Boolean = false,
+    val orders_loaded: Boolean = false,
     val cancelling_order_id: String? = null,
     val renewing_order_id: String? = null,
     val order_action_error: DomainPurchaseErrorKind? = null,
@@ -347,6 +348,7 @@ class DomainPurchaseViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         orders_loading = false,
+                        orders_loaded = true,
                         orders = response.orders.filter { order ->
                             order.order_type == "registration" &&
                                 order.status !in domain_order_hidden_statuses
@@ -356,7 +358,7 @@ class DomainPurchaseViewModel @Inject constructor(
             } catch (t: CancellationException) {
                 throw t
             } catch (_: Throwable) {
-                _state.update { it.copy(orders_loading = false) }
+                _state.update { it.copy(orders_loading = false, orders_loaded = true) }
             }
         }
     }

@@ -10,4 +10,9 @@
         <item quantity="many">%d giorni fa</item>
         <item quantity="other">%d giorni fa</item>
     </plurals>
+    <plurals name="search_match_count">
+        <item quantity="one">%d corrispondenza</item>
+        <item quantity="many">%d corrispondenze</item>
+        <item quantity="other">%d corrispondenze</item>
+    </plurals>
 </resources>

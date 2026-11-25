@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="billing_compare_upgrade_to">Passa a %1$s</string>
+    <string name="billing_compare_switch_to">Passa a %1$s</string>
+    <string name="billing_compare_downgrade_to">Passa a %1$s</string>
+    <string name="billing_compare_gains_title">Cosa aggiunge %1$s</string>
+    <string name="billing_compare_you_have">Hai %1$s</string>
+    <string name="billing_compare_not_in_plan">Non incluso nel tuo piano</string>
+    <string name="billing_compare_everything_in">Tutto ciò che c\'è in %1$s</string>
+    <string name="billing_compare_free_forever">Gratuito per sempre</string>
+    <string name="billing_compare_free_note">Per passare al piano Gratuito, annulla il tuo piano.</string>
+    <string name="billing_compare_tagline_free">Email privata per iniziare</string>
+    <string name="billing_compare_tagline_star">Più spazio e fino a 5 domini</string>
+    <string name="billing_compare_tagline_nova">Alias illimitati e 30 domini</string>
+    <string name="billing_compare_tagline_supernova">Il massimo di spazio e assistenza</string>
+    <string name="billing_compare_tagline_duo">Due account, una fattura</string>
+    <string name="billing_compare_tagline_family">Fino a sei persone, un piano</string>
+    <string name="contacts_close_search">Chiudi ricerca</string>
+    <string name="contacts_show_favorites_only">Mostra solo i preferiti</string>
+    <string name="contacts_show_all">Mostra tutti i contatti</string>
+    <string name="guard_changes_subtitle">Le modifiche al tuo account restano qui in attesa prima di diventare effettive.</string>
+    <string name="hide_quoted_text">Nascondi il testo citato</string>
+    <string name="show_quoted_text">Mostra il testo citato</string>
+    <string name="search_keywords_more_exit">esci, indietro, doppio tocco, doppio indietro, premi indietro due volte, tasto indietro, chiudi app, abbandona app, exit, back</string>
+    <string name="search_keywords_more_quick_actions">azioni rapide, filtri rapidi, pulsanti della posta in arrivo, pulsanti dell\'intestazione, pulsanti dei filtri, quick actions</string>
+    <string name="search_keywords_more_reduce_motion">riduci movimento, animazioni, movimento, transizioni, accessibilità, chinetosi, mal d\'auto, reduce motion</string>
+    <string name="search_keywords_more_high_contrast">contrasto, accessibilità, vista, leggibilità, ipovisione, contrast</string>
+    <string name="search_keywords_more_sign_out_everywhere">disconnetti ovunque, esci ovunque, disconnetti tutti i dispositivi, termina sessioni, rimuovi dispositivi, sign out</string>
+    <string name="search_keywords_more_cancel_plan">annulla abbonamento, annulla piano, piano inferiore, interrompi abbonamento, rinnovo, rinnovo automatico, fatturazione, cancel subscription</string>
+    <string name="search_keywords_more_sound">suoneria, suono di notifica, campanello, suono di avviso, tono, suoni, ringtone</string>
+</resources>

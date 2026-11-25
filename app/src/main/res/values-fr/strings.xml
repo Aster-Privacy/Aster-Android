@@ -297,7 +297,7 @@
     <string name="unsubscribed">désabonné</string>
     <string name="scanning">Analyse en cours...</string>
     <string name="no_mailing_lists">Aucune liste de diffusion</string>
-    <string name="scan_inbox_hint">Appuyez sur « Analyser la boîte de réception » pour trouver les newsletters et les expéditeurs marketing.</string>
+    <string name="scan_inbox_hint">Balayez vers le bas pour analyser votre boîte de réception et trouver les newsletters et les expéditeurs marketing.</string>
     <string name="active_tab">Actifs</string>
     <string name="unsubscribed_tab">Désabonnés</string>
     <string name="reactivate">Réactiver</string>
@@ -846,6 +846,7 @@
     <string name="unblock">Débloquer</string>
     <string name="block_a_sender">Bloquer un expéditeur</string>
     <string name="block_sender_hint">Saisissez une adresse e-mail ou un domaine. Les nouveaux messages iront directement dans les spams.</string>
+    <string name="block_sender_invalid">Saisissez une adresse e-mail ou un domaine comme example.com.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">Bloquer</string>
     <string name="blocked_domain">Domaine entier</string>
@@ -1310,6 +1311,18 @@
     <string name="unsubscribe_failed">Échec du désabonnement</string>
     <string name="unsubscribe_manual_required">Cet expéditeur ne prend pas en charge la désinscription automatique. Le lien dans l\'e-mail vous permet de le faire vous-même.</string>
     <string name="bulk_unsubscribe_failed">Échec du désabonnement groupé</string>
+    <string name="unsubscribe_in_progress">Désabonnement en cours</string>
+    <string name="subscription_hero_summary">%1$s expéditeurs actifs, %2$s désabonnés, %3$s e-mails</string>
+    <string name="unsubscribe_rate_limited">Vous avez envoyé trop de demandes de désabonnement. Réessayez dans une minute.</string>
+    <string name="unsubscribe_opened_in_browser">Cet expéditeur ne vous permet de vous désabonner que sur son site web. Terminez sur la page ouverte dans votre navigateur.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">Impossible de vous désabonner de %d expéditeur</item>
+        <item quantity="other">Impossible de vous désabonner de %d expéditeurs</item>
+    </plurals>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="one">%d expéditeur exige que vous vous désabonniez sur son site web</item>
+        <item quantity="other">%d expéditeurs exigent que vous vous désabonniez sur leurs sites web</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="one">%d expéditeur désabonné</item>
         <item quantity="many">%d expéditeurs désabonnés</item>
@@ -2152,10 +2165,15 @@
     <string name="reaction_remove_failed">Impossible de retirer la réaction</string>
     <string name="copy_address">Copier l\'adresse</string>
     <string name="sender_on_aster">Compte Aster</string>
+    <string name="sender_on_aster_logo">Compte %1$s</string>
     <string name="messages_from_sender">Trouver les messages de cet expéditeur</string>
     <string name="send_email_to_sender">Écrire à cet expéditeur</string>
     <string name="add_to_contacts">Enregistrer dans les contacts</string>
     <string name="remove_from_contacts">Retirer des contacts</string>
+    <string name="sender_action_new_message">Nouveau message</string>
+    <string name="sender_action_add_contact">Ajouter le contact</string>
+    <string name="sender_action_view_contact">Voir le contact</string>
+    <string name="sender_action_in_contacts">Dans les contacts</string>
     <string name="contact_added_named">%1$s enregistré dans les contacts</string>
     <string name="contact_removed_named">%1$s retiré des contacts</string>
     <string name="blocked_content_details_title">Contenu bloqué</string>
@@ -2402,6 +2420,11 @@
         <item quantity="one">%d nouvel abonnement trouvé</item>
         <item quantity="many">%d nouveaux abonnements trouvés</item>
         <item quantity="other">%d nouveaux abonnements trouvés</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">%1$s messages analysés sur %2$s, %3$s expéditeur trouvé</item>
+        <item quantity="many">%1$s messages analysés sur %2$s, %3$s expéditeurs trouvés</item>
+        <item quantity="other">%1$s messages analysés sur %2$s, %3$s expéditeurs trouvés</item>
     </plurals>
     <string name="reaction_info_title">Réaction</string>
     <string name="reaction_badge_label">Nouvelle réaction</string>
@@ -2910,6 +2933,8 @@
     <string name="contact_add_failed">Impossible d\'enregistrer %1$s dans les contacts</string>
     <string name="contact_remove_failed">Impossible de retirer %1$s des contacts</string>
     <string name="copy_failed">Rien n\'a été copié. Un autre essai devrait suffire.</string>
+    <string name="copy_subject">Copier l’objet</string>
+    <string name="subject_copied">Objet copié</string>
     <string name="create_label_subtitle">Marquez vos messages avec la couleur de votre choix</string>
     <string name="delete_signature_message">Supprimer « %1$s » ? Cette action est irréversible.</string>
     <string name="delete_vacation_reply_confirm">Votre message d\'absence et ses dates seront supprimés. Cette action est irréversible.</string>
@@ -3078,6 +3103,9 @@
     <string name="translation_storage_remove_all">Tout supprimer</string>
     <string name="translation_storage_removed">Packs linguistiques supprimés</string>
     <string name="translation_offer_download">Ce message est en %1$s. Le traduire télécharge un pack linguistique.</string>
+    <string name="translation_bar_translate_to">Traduire en %1$s</string>
+    <string name="translation_bar_translated_from">Traduit de : %1$s</string>
+    <string name="translation_bar_downloading">Téléchargement du pack de langue %1$s</string>
     <string name="contact_support">Contacter l\'assistance</string>
     <string name="domain_purchase_manage">Gérer</string>
     <string name="domain_purchase_cancel_payment_title">Annuler ce paiement ?</string>
@@ -3203,6 +3231,10 @@
     <string name="remove_photo">Supprimer la photo</string>
     <string name="add_photo">Ajouter une photo</string>
     <string name="photo_too_large">Choisissez une image plus petite</string>
+    <string name="contact_photo_unreadable">Aster ne peut pas ouvrir cette image. Essayez une autre photo.</string>
+    <string name="contact_discard_changes_title">Ignorer les modifications ?</string>
+    <string name="contact_discard_changes_message">Vos modifications de ce contact ne sont pas enregistrées.</string>
+    <string name="contact_keep_editing">Continuer la modification</string>
     <string name="no_contacts_yet">Pas encore de contacts</string>
     <string name="no_contacts_match">Aucun contact ne correspond à \"%1$s\"</string>
     <string name="no_contacts_in_trash">La corbeille est vide</string>
@@ -3765,6 +3797,13 @@
         <item quantity="other">%d contacts ajoutés</item>
     </plurals>
     <string name="body_index_status">Indexation du texte des messages pour la recherche : %1$d sur %2$d</string>
+    <string name="search_status_indexing_mail">Indexation des e-mails</string>
+    <string name="search_status_indexing_text">Indexation du texte des messages</string>
+    <string name="search_status_waiting_wifi">L\'indexation du texte reprend en Wi-Fi</string>
+    <string name="search_status_paused">Indexation en pause</string>
+    <string name="search_status_partial">Les résultats peuvent être incomplets</string>
+    <string name="search_status_count">%1$s sur %2$s</string>
+    <string name="search_refine_placeholder">Rechercher dans les résultats</string>
     <string name="mail_key_upgrade_title">Mise à jour de vos e-mails enregistrés</string>
     <string name="mail_key_upgrade_running">Aster Mail chiffre à nouveau vos messages enregistrés avec vos clés actuelles. Gardez cette fenêtre ouverte jusqu\'à la fin.</string>
     <string name="mail_key_upgrade_failed">Aster Mail n\'a pas pu terminer la mise à jour de vos messages enregistrés. Vos e-mails n\'ont pas été modifiés. Vérifiez votre connexion, puis réessayez.</string>
@@ -3789,10 +3828,21 @@
     <string name="attachment_unverified">Pièce jointe non vérifiée</string>
     <string name="confirm_back_exit">Confirmer avant de quitter</string>
     <string name="confirm_back_exit_subtitle">Appuyez deux fois sur Retour pour quitter l\'app depuis la boîte de réception</string>
+    <string name="toast_position_title">Position des alertes dans l\'app</string>
+    <string name="toast_position_subtitle">Emplacement des alertes pendant l\'utilisation de l\'app</string>
+    <string name="toast_position_top">Haut</string>
+    <string name="toast_position_bottom">Bas</string>
     <string name="mail_priority">Priorité</string>
     <string name="mail_priority_high">Haute</string>
     <string name="mail_priority_normal">Normale</string>
     <string name="mail_priority_low">Basse</string>
     <string name="mail_high_priority">Priorité haute</string>
     <string name="mail_low_priority">Priorité basse</string>
+    <string name="official_sender">Adresse officielle Aster</string>
+    <string name="official_sender_desc">Ce message provient d\'une adresse officielle Aster. Aster ne vous demandera jamais votre mot de passe ni votre phrase de récupération par e-mail.</string>
+    <string name="search_match_position">%1$d sur %2$d</string>
+    <string name="search_match_position_description">Occurrence %1$d sur %2$d</string>
+    <string name="search_match_previous">Occurrence précédente</string>
+    <string name="search_match_next">Occurrence suivante</string>
+    <string name="search_match_clear">Effacer le surlignage</string>
 </resources>

@@ -40,4 +40,10 @@
     <plurals name="trackers_blocked_count">
         <item quantity="other">已拦截 %1$d 个跟踪器</item>
     </plurals>
+    <plurals name="trash_emptied_count">
+        <item quantity="other">已从回收站删除 %d 封邮件</item>
+    </plurals>
+    <plurals name="spam_emptied_count">
+        <item quantity="other">已从垃圾邮件删除 %d 封邮件</item>
+    </plurals>
 </resources>

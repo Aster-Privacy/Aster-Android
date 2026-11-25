@@ -26,6 +26,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 const val max_retained_ratchet_key_sets = 32
+const val ratchet_history_max_bytes = 480 * 1024
 
 private val retained_key_fields = listOf(
     "ratchet_identity_key",
@@ -44,6 +45,49 @@ private fun pq_secret_of(entry: JSONObject): String =
 
 private fun holds_retained_keys(entry: JSONObject): Boolean =
     entry.text("ratchet_identity_key").isNotBlank() || pq_secret_of(entry).isNotBlank()
+
+private val pq_identity_fields = listOf(
+    "ratchet_pq_identity_key",
+    "ratchet_pq_identity_public",
+    "ratchet_pq_identity_seed",
+)
+
+private fun entry_bytes(entry: JSONObject): Int = entry.toString().length + 1
+
+private fun holds_same_pq_secret(holder: JSONObject, entry: JSONObject): Boolean {
+    if (pq_secret_of(holder).isBlank()) return false
+    return pq_identity_fields.any { field ->
+        val value = entry.text(field)
+        value.isNotBlank() && holder.text(field) == value
+    }
+}
+
+private fun pq_only_entry(entry: JSONObject): JSONObject {
+    val result = JSONObject()
+    for (field in pq_identity_fields) {
+        entry.text(field).takeIf { it.isNotBlank() }?.let { result.put(field, it) }
+    }
+    return result
+}
+
+fun keep_dropped_pq_secrets(kept: List<JSONObject>, dropped: List<JSONObject>): List<JSONObject> {
+    val result = kept.toMutableList()
+    for (entry in dropped) {
+        if (pq_secret_of(entry).isBlank()) continue
+        if (result.any { holds_same_pq_secret(it, entry) }) continue
+        result.add(pq_only_entry(entry))
+    }
+    return result
+}
+
+fun cap_retained_ratchet_keys(entries: List<JSONObject>, limit: Int = max_retained_ratchet_key_sets): List<JSONObject> {
+    val kept = entries.toMutableList()
+    var bytes = kept.sumOf { entry_bytes(it) }
+    while (kept.size > limit && bytes > ratchet_history_max_bytes) {
+        bytes -= entry_bytes(kept.removeAt(kept.size - 1))
+    }
+    return kept
+}
 
 private fun same_signed_prekey(a: JSONObject, b: JSONObject): Boolean {
     val a_public = a.text("ratchet_signed_prekey_public")
@@ -88,7 +132,7 @@ fun merge_retained_ratchet_keys(vararg sources: String?, limit: Int = max_retain
     }
     if (merged.isEmpty()) return null
     val result = JSONArray()
-    merged.take(limit).forEach { result.put(it) }
+    cap_retained_ratchet_keys(merged, limit).forEach { result.put(it) }
     return result.toString()
 }
 

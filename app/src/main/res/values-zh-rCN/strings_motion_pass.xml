@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="billing_compare_upgrade_to">升级到 %1$s</string>
+    <string name="billing_compare_switch_to">切换到 %1$s</string>
+    <string name="billing_compare_downgrade_to">降级到 %1$s</string>
+    <string name="billing_compare_gains_title">%1$s 新增的功能</string>
+    <string name="billing_compare_you_have">您已拥有 %1$s</string>
+    <string name="billing_compare_not_in_plan">不在您的套餐中</string>
+    <string name="billing_compare_everything_in">包含 %1$s 的全部功能</string>
+    <string name="billing_compare_free_forever">永久免费</string>
+    <string name="billing_compare_free_note">要改用免费套餐，请取消您的套餐。</string>
+    <string name="billing_compare_tagline_free">入门级私密邮箱</string>
+    <string name="billing_compare_tagline_star">更多空间，最多 5 个域名</string>
+    <string name="billing_compare_tagline_nova">无限别名和 30 个域名</string>
+    <string name="billing_compare_tagline_supernova">最多的存储空间和支持</string>
+    <string name="billing_compare_tagline_duo">两个账户，一张账单</string>
+    <string name="billing_compare_tagline_family">最多六人，一个套餐</string>
+    <string name="contacts_close_search">关闭搜索</string>
+    <string name="contacts_show_favorites_only">仅显示收藏</string>
+    <string name="contacts_show_all">显示所有联系人</string>
+    <string name="guard_changes_subtitle">对账户的更改会先在这里等待，然后才生效。</string>
+    <string name="hide_quoted_text">隐藏引用的文本</string>
+    <string name="show_quoted_text">显示引用的文本</string>
+    <string name="search_keywords_more_exit">退出, 返回, 双击, 两次返回, 按两次返回, 返回键, 关闭应用, 离开应用, exit, back</string>
+    <string name="search_keywords_more_quick_actions">快捷操作, 快速筛选, 收件箱按钮, 顶栏按钮, 筛选按钮, quick actions</string>
+    <string name="search_keywords_more_reduce_motion">减少动画, 动画, 动效, 过渡, 无障碍, 晕动症, reduce motion</string>
+    <string name="search_keywords_more_high_contrast">对比度, 无障碍, 视力, 可读性, 低视力, contrast</string>
+    <string name="search_keywords_more_sign_out_everywhere">在所有地方退出登录, 在所有设备上退出登录, 注销, 结束会话, 移除设备, sign out</string>
+    <string name="search_keywords_more_cancel_plan">取消订阅, 取消套餐, 降级, 停止订阅, 续订, 自动续订, 账单, cancel subscription</string>
+    <string name="search_keywords_more_sound">铃声, 通知音, 提示音, 警报声, 音调, 声音, ringtone</string>
+</resources>

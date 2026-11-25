@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.settings.detail
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -63,6 +64,8 @@ import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.field_surface_color
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.aster_shared_axis_slide_px
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterTextField
@@ -74,6 +77,7 @@ import org.astermail.android.settings.DecryptedSignature
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.settings.signature_sender_id
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun SignatureScreen(
@@ -98,7 +102,7 @@ fun SignatureScreen(
     LaunchedEffect(state.save_status) {
         if (state.save_status == org.astermail.android.settings.SaveStatus.ERROR) {
             val message = state.error ?: context.getString(R.string.settings_save_failed_banner)
-            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
+            org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = message.toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
             vm.reset_transient_state()
         }
     }
@@ -114,9 +118,17 @@ fun SignatureScreen(
         vm.load_preferences()
     }
 
-    if (editing != null || creating) {
+    val reduce_motion = aster_reduce_motion()
+    val slide_px = aster_shared_axis_slide_px()
+    AnimatedContent(
+        targetState = editing != null || creating,
+        transitionSpec = { settings_sub_screen_axis_x(forward = targetState, slide_px = slide_px, reduce_motion = reduce_motion) },
+        label = "signature_editor",
+    ) { editor_open ->
+    if (editor_open) {
+        val held_initial = remember { editing }
         signature_edit_modal(
-            initial = editing,
+            initial = held_initial,
             aliases = state.aliases,
             all_signatures = signatures,
             on_cancel = { editing = null; editing_id = null; creating = false },
@@ -131,11 +143,7 @@ fun SignatureScreen(
                     }
                     fitting_signature = false
                     if (content == null) {
-                        android.widget.Toast.makeText(
-                            context,
-                            context.getString(R.string.signature_too_large),
-                            android.widget.Toast.LENGTH_LONG,
-                        ).show()
+                        org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = context.getString(R.string.signature_too_large).toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
                         return@launch
                     }
                     val target = editing
@@ -190,12 +198,18 @@ fun SignatureScreen(
                 },
             )
         }
-        return
-    }
-
+    } else {
     detail_scaffold(
         title = stringResource(R.string.signature),
         on_back = on_back,
+        on_refresh = {
+            vm.join_launched {
+                vm.load_aliases(force = true)
+                vm.load_signature()
+                vm.load_preferences(force = true)
+            }
+        },
+        refresh_enabled = !fitting_signature && state.save_status != org.astermail.android.settings.SaveStatus.SAVING,
     ) {
         preferences_save_error_banner()
         section_label(stringResource(R.string.your_signature))
@@ -281,6 +295,8 @@ fun SignatureScreen(
             )
         }
         v_gap(AsterSpacing.xxl)
+    }
+    }
     }
 }
 
@@ -480,7 +496,7 @@ private fun signature_edit_modal(
         }
         if (initial != null) {
             v_gap(AsterSpacing.md)
-            AsterSecondaryButton(
+            org.astermail.android.design.components.AsterDestructiveButton(
                 label = stringResource(R.string.delete_signature),
                 onClick = on_delete,
             )

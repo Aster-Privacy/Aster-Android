@@ -22,25 +22,35 @@
 package org.astermail.android.templates
 
 import android.content.Context
-import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.astermail.android.R
 import org.astermail.android.api.templates.TemplateItem
 import org.astermail.android.api.templates.TemplatesApi
-import org.astermail.android.auth.open_with_storage_key_candidates
 import org.astermail.android.crypto.FieldFormat
 import org.astermail.android.crypto.StorageWriteKey
+import org.astermail.android.mail.is_secret_identity_key
 import org.astermail.android.storage.SessionKeyStore
+
+private const val TEMPLATE_KEY_POLL_MS = 300L
+const val TEMPLATE_KEY_SETTLE_MAX_MS = 20_000L
 
 const val TEMPLATE_FIELD_KIND = FieldFormat.KIND_TEMPLATE
 const val TEMPLATE_FIELD_NAME = "name"
@@ -57,7 +67,8 @@ data class DecryptedTemplate(
 
 data class TemplatesUiState(
     val items: List<DecryptedTemplate> = emptyList(),
-    val is_loading: Boolean = false,
+    val is_loading: Boolean = true,
+    val keys_pending: Boolean = false,
     val is_saving: Boolean = false,
     val error: String? = null,
     val load_error: String? = null,
@@ -69,6 +80,9 @@ data class TemplateLoadOutcome(
     val items: List<DecryptedTemplate>,
     val undecryptable_count: Int,
 )
+
+fun template_keys_pending(undecryptable_count: Int, keys_settled: Boolean, waited_ms: Long): Boolean =
+    undecryptable_count > 0 && !keys_settled && waited_ms < TEMPLATE_KEY_SETTLE_MAX_MS
 
 fun template_load_outcome(decrypted: List<DecryptedTemplate?>): TemplateLoadOutcome =
     TemplateLoadOutcome(
@@ -86,63 +100,123 @@ class TemplatesViewModel @Inject constructor(
     private val _state = MutableStateFlow(TemplatesUiState())
     val state: StateFlow<TemplatesUiState> = _state.asStateFlow()
 
+    private val open_lock = Mutex()
+    private var load_job: Job? = null
+    private var listing: List<TemplateItem>? = null
+    private var listing_generation = 0L
+    private var listed_at_ms = 0L
+    private var opened_epoch = -1L
+    private val deleted_ids = mutableSetOf<String>()
+
+    init {
+        watch_key_readiness()
+    }
+
     fun load() {
-        viewModelScope.launch {
+        load_job?.cancel()
+        load_job = viewModelScope.launch {
             _state.value = _state.value.copy(is_loading = true, error = null, load_error = null)
-            val result = runCatching {
-                val response = api.list()
-                withContext(Dispatchers.Default) {
-                    val key = derive_key() ?: first_read_key() ?: error("session expired")
-                    try {
-                        decrypt_all(response.templates, key)
-                    } finally {
-                        key.fill(0)
+            val fetched = try {
+                api.list().templates
+            } catch (t: Throwable) {
+                if (t is CancellationException) throw t
+                _state.value = _state.value.copy(
+                    is_loading = false,
+                    keys_pending = false,
+                    load_error = readable_error(t),
+                    undecryptable_count = 0,
+                )
+                return@launch
+            }
+            listing_generation += 1
+            listing = fetched.filterNot { it.id in deleted_ids }
+            listed_at_ms = System.currentTimeMillis()
+            open_listing()
+        }
+    }
+
+    private suspend fun open_listing() {
+        open_lock.withLock {
+            val current = listing ?: return
+            val generation = listing_generation
+            val epoch = readiness_epoch()
+            val settled = keys_settled()
+            val outcome = withContext(Dispatchers.Default) { open_with_session_keys(current) }
+            if (generation != listing_generation) return
+            opened_epoch = epoch
+            val pending = template_keys_pending(
+                outcome.undecryptable_count,
+                settled,
+                System.currentTimeMillis() - listed_at_ms,
+            )
+            _state.value = _state.value.copy(
+                is_loading = pending,
+                keys_pending = pending,
+                items = outcome.items.filterNot { it.id in deleted_ids },
+                undecryptable_count = if (pending) 0 else outcome.undecryptable_count,
+            )
+        }
+    }
+
+    private fun open_with_session_keys(items: List<TemplateItem>): TemplateLoadOutcome {
+        if (items.isEmpty()) return TemplateLoadOutcome(emptyList(), 0)
+        val keys = session_template_keys()
+        try {
+            val result = open_templates(items, keys)
+            result.opening_keys.forEach { StorageWriteKey.note_if_public(session_key_store, it) }
+            return result.outcome
+        } finally {
+            keys.forEach { it.fill(0) }
+        }
+    }
+
+    private fun session_template_keys(): List<ByteArray> {
+        val storage_keys = runCatching { StorageWriteKey.read_keys(session_key_store) }.getOrDefault(emptyList())
+        val identity_keys = runCatching {
+            buildList {
+                session_key_store.get_identity_key()?.let { add(it) }
+                session_key_store.get_previous_keys()?.let { addAll(it) }
+            }.filter(::is_secret_identity_key)
+        }.getOrDefault(emptyList())
+        return storage_keys + template_context_keys(identity_keys)
+    }
+
+    private fun watch_key_readiness() {
+        val events = runCatching {
+            combine(
+                session_key_store.identity_key_events(),
+                session_key_store.account_keys_ready_events(),
+                session_key_store.key_material_events(),
+            ) { identity, account, material -> identity + account + material }
+        }.getOrNull() ?: return
+        viewModelScope.launch {
+            while (true) {
+                try {
+                    if (_state.value.keys_pending) {
+                        withTimeoutOrNull(TEMPLATE_KEY_POLL_MS) { events.first { it != opened_epoch } }
+                        val waited_ms = System.currentTimeMillis() - listed_at_ms
+                        val unchanged = readiness_epoch() == opened_epoch
+                        if (unchanged && template_keys_pending(1, keys_settled(), waited_ms)) continue
+                    } else {
+                        combine(events, _state) { epoch, current ->
+                            current.keys_pending || (epoch != opened_epoch && current.undecryptable_count > 0)
+                        }.first { it }
+                        if (_state.value.keys_pending) continue
                     }
+                    if (load_job?.isActive != true) open_listing()
+                } catch (t: Throwable) {
+                    if (t is CancellationException) throw t
+                    delay(TEMPLATE_KEY_POLL_MS)
                 }
             }
-            _state.value = result.fold(
-                onSuccess = {
-                    _state.value.copy(
-                        is_loading = false,
-                        items = it.items.sortedBy { t -> t.sort_order },
-                        undecryptable_count = it.undecryptable_count,
-                    )
-                },
-                onFailure = {
-                    _state.value.copy(
-                        is_loading = false,
-                        load_error = readable_error(it),
-                        undecryptable_count = 0,
-                    )
-                },
-            )
         }
     }
 
-    private fun decrypt_all(items: List<TemplateItem>, key: ByteArray): TemplateLoadOutcome {
-        var fallback_keys: List<ByteArray>? = null
-        try {
-            return template_load_outcome(
-                items.map { item ->
-                    decrypt(item, key)?.also { StorageWriteKey.note_if_public(session_key_store, key) } ?: run {
-                        val keys = fallback_keys ?: fallback_template_keys(key).also { fallback_keys = it }
-                        open_with_storage_key_candidates(keys) { candidate ->
-                            decrypt(item, candidate)?.also { StorageWriteKey.note_if_public(session_key_store, candidate) }
-                        }
-                    }
-                },
-            )
-        } finally {
-            fallback_keys?.forEach { it.fill(0) }
-        }
-    }
+    private fun readiness_epoch(): Long =
+        runCatching { session_key_store.key_readiness_epoch() }.getOrDefault(0L)
 
-    private fun fallback_template_keys(primary: ByteArray): List<ByteArray> =
-        StorageWriteKey.read_keys(session_key_store).filter { candidate ->
-            val keep = !candidate.contentEquals(primary)
-            if (!keep) candidate.fill(0)
-            keep
-        }
+    private fun keys_settled(): Boolean =
+        runCatching { session_key_store.keys_settled() }.getOrDefault(true)
 
     fun start_new() {
         _state.value = _state.value.copy(
@@ -219,6 +293,8 @@ class TemplatesViewModel @Inject constructor(
             val outcome = runCatching { api.delete(id) }
             outcome.fold(
                 onSuccess = {
+                    deleted_ids.add(id)
+                    listing = listing?.filterNot { it.id == id }
                     _state.value = _state.value.copy(
                         is_saving = false,
                         items = _state.value.items.filter { it.id != id },
@@ -231,56 +307,11 @@ class TemplatesViewModel @Inject constructor(
         }
     }
 
-    private fun derive_key(): ByteArray? = StorageWriteKey.write_key(session_key_store)
-
-    private fun first_read_key(): ByteArray? {
-        val keys = StorageWriteKey.read_keys(session_key_store)
-        keys.drop(1).forEach { it.fill(0) }
-        return keys.firstOrNull()
-    }
-
-    private fun decrypt(item: TemplateItem, key: ByteArray): DecryptedTemplate? = runCatching {
-        DecryptedTemplate(
-            id = item.id,
-            name = decrypt_b64_to_string(item.encrypted_name, item.name_nonce, key, TEMPLATE_FIELD_NAME, item.id),
-            category = decrypt_b64_to_string(
-                item.encrypted_category,
-                item.category_nonce,
-                key,
-                TEMPLATE_FIELD_CATEGORY,
-                item.id,
-            ),
-            content = decrypt_b64_to_string(
-                item.encrypted_content,
-                item.content_nonce,
-                key,
-                TEMPLATE_FIELD_CONTENT,
-                item.id,
-            ),
-            sort_order = item.sort_order,
-        )
-    }.getOrNull()
-
-    private fun decrypt_b64_to_string(
-        ct_b64: String,
-        nonce_b64: String,
-        key: ByteArray,
-        field: String,
-        record_id: String,
-    ): String {
-        val ct = decode_b64_flex(ct_b64)
-        val nonce = decode_b64_flex(nonce_b64)
-        val plain = FieldFormat.decrypt(ct, nonce, key, TEMPLATE_FIELD_KIND, field, record_id)
-        return String(plain, Charsets.UTF_8)
-    }
-
-    private fun decode_b64_flex(input: String): ByteArray {
-        return runCatching { Base64.decode(input, Base64.DEFAULT) }
-            .recoverCatching { Base64.decode(input, Base64.URL_SAFE or Base64.NO_PADDING) }
-            .getOrThrow()
-    }
-
-    private fun next_order(): Int = (_state.value.items.maxOfOrNull { it.sort_order } ?: 0) + 1
+    private fun next_order(): Int =
+        maxOf(
+            _state.value.items.maxOfOrNull { it.sort_order } ?: 0,
+            listing?.maxOfOrNull { it.sort_order } ?: 0,
+        ) + 1
 
     private fun readable_error(t: Throwable): String =
         org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong))

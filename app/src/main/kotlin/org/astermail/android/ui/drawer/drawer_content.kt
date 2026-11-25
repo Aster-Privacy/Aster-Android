@@ -50,7 +50,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.delay
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.graphicsLayer
@@ -93,6 +92,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue
@@ -111,6 +111,8 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.ui.common.plan_ring
+import org.astermail.android.ui.common.plan_ring_gap
+import org.astermail.android.ui.common.plan_ring_stroke
 import org.astermail.android.ui.common.remember_has_paid_plan
 import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.ui.mail.avatar_colors_for
@@ -293,6 +295,9 @@ fun DrawerContent(
     api_folder_items: List<drawer_folder_item> = emptyList(),
     api_label_items: List<drawer_label_item> = emptyList(),
     api_alias_items: List<drawer_alias_item> = emptyList(),
+    folders_settled: Boolean = true,
+    labels_settled: Boolean = true,
+    aliases_settled: Boolean = true,
     accounts: List<StoredAccount> = emptyList(),
     current_account_id: String? = null,
     can_add_account: Boolean = true,
@@ -655,7 +660,7 @@ fun DrawerContent(
                             ) {
                                 androidx.compose.foundation.layout.Column {
                                     if (folder_items.isEmpty()) {
-                                        empty_section_hint(stringResource(R.string.no_folders_yet))
+                                        if (folders_settled) empty_section_hint(stringResource(R.string.no_folders_yet))
                                     } else {
                                         val root_count = root_folder_count(folder_items)
                                         val has_more_roots = root_count > folders_collapsed_root_count
@@ -781,7 +786,7 @@ fun DrawerContent(
                             ) {
                                 androidx.compose.foundation.layout.Column {
                                     if (label_items.isEmpty()) {
-                                        empty_section_hint(stringResource(R.string.no_labels_yet))
+                                        if (labels_settled) empty_section_hint(stringResource(R.string.no_labels_yet))
                                     } else {
                                         label_items.forEach { item ->
                                             Box {
@@ -855,7 +860,7 @@ fun DrawerContent(
                             ) {
                                 androidx.compose.foundation.layout.Column {
                                     if (alias_items.isEmpty()) {
-                                        empty_section_hint(stringResource(R.string.no_aliases_yet))
+                                        if (aliases_settled) empty_section_hint(stringResource(R.string.no_aliases_yet))
                                     } else {
                                         val collapsed_aliases = alias_items.take(aliases_collapsed_count)
                                         val extra_aliases = if (alias_items.size > aliases_collapsed_count) {
@@ -943,6 +948,13 @@ fun DrawerContent(
     androidx.compose.runtime.LaunchedEffect(current_account_id, show_workspace_sheet) {
         resubscribe_vm.load(current_account_id)
     }
+    val latest_open_workspace_sheet by androidx.compose.runtime.rememberUpdatedState(on_open_workspace_sheet)
+    androidx.compose.runtime.LaunchedEffect(current_account_id) {
+        latest_open_workspace_sheet()
+    }
+    val preloaded_paid_ids = remember_cached_paid_account_ids(
+        accounts.map { it.id }.filter { it != current_account_id },
+    )
 
     if (show_workspace_sheet) {
         val sheet_account = accounts.firstOrNull { it.id == current_account_id }
@@ -968,7 +980,7 @@ fun DrawerContent(
             on_resubscribe = {
                 show_workspace_sheet = false
                 resubscribe_vm.resubscribe { message ->
-                    android.widget.Toast.makeText(resubscribe_context, message, android.widget.Toast.LENGTH_SHORT).show()
+                    org.astermail.android.ui.common.app_toast.show(message.toString())
                 }
             },
             on_switch = { account ->
@@ -995,6 +1007,7 @@ fun DrawerContent(
                 show_workspace_sheet = false
                 on_logout_all()
             },
+            preloaded_paid_ids = preloaded_paid_ids,
         )
     }
 
@@ -2183,14 +2196,24 @@ private fun profile_menu_plan_badge(plan_code: String?) {
     val res = plan_badge_res(plan_code) ?: return
     val label = stringResource(res)
     val thanks = stringResource(R.string.plan_badge_thanks, label)
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val press_scale by animateFloatAsState(
+        targetValue = if (pressed) 0.97f else 1f,
+        animationSpec = tween(120),
+        label = "plan_badge_press",
+    )
     org.astermail.android.design.components.AsterPlanTag(
         text = label,
         plan = org.astermail.android.design.components.aster_plan_kind_of(plan_code),
         modifier = Modifier
-            .clip(androidx.compose.foundation.shape.RoundedCornerShape(percent = 50))
+            .graphicsLayer {
+                scaleX = press_scale
+                scaleY = press_scale
+            }
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = androidx.compose.material3.ripple(),
+                interactionSource = interaction,
+                indication = null,
             ) {
                 org.astermail.android.ui.common.app_toast.show(thanks)
             },
@@ -2274,6 +2297,20 @@ private fun profile_menu_tile(
     }
 }
 
+@Composable
+internal fun remember_cached_paid_account_ids(account_ids: List<String>): Set<String> {
+    val context = LocalContext.current
+    val paid_ids by androidx.compose.runtime.produceState(
+        initialValue = emptySet<String>(),
+        account_ids,
+    ) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            org.astermail.android.accounts.cached_paid_account_ids(context, account_ids)
+        }
+    }
+    return paid_ids
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun workspace_switcher_sheet(
@@ -2300,6 +2337,7 @@ internal fun workspace_switcher_sheet(
     on_open_storage: () -> Unit,
     on_logout: () -> Unit,
     on_logout_all: () -> Unit,
+    preloaded_paid_ids: Set<String>? = null,
 ) {
     val colors = AsterMaterial.colors
     val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -2324,6 +2362,7 @@ internal fun workspace_switcher_sheet(
         sheet_state = sheet_state,
         container_color = surface,
         drag_handle = { AsterDragHandle() },
+        animate_height = true,
     ) {
         Column(
             modifier = Modifier
@@ -2501,6 +2540,9 @@ internal fun workspace_switcher_sheet(
                 }
             }
 
+            val loaded_paid_ids = preloaded_paid_ids
+                ?: remember_cached_paid_account_ids(other_accounts.map { it.id })
+            val paid_other_ids = loaded_paid_ids.intersect(other_accounts.map { it.id }.toSet())
             other_accounts.forEach { account ->
                 val name = account.display_name?.takeIf { it.isNotBlank() }
                     ?: account.email.substringBefore('@')
@@ -2515,14 +2557,25 @@ internal fun workspace_switcher_sheet(
                         .padding(horizontal = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    SenderAvatar(
-                        email = account.email,
-                        name = name,
-                        size = 32.dp,
-                        profile_picture_url = account.profile_picture,
-                        profile_color = account.profile_color,
-                        use_contact_photo = false,
-                    )
+                    Box(
+                        modifier = if (paid_other_ids.isEmpty()) {
+                            Modifier
+                        } else {
+                            Modifier.size(32.dp + (plan_ring_stroke + plan_ring_gap) * 2)
+                        },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        plan_ring(size = 32.dp, enabled = account.id in paid_other_ids) {
+                            SenderAvatar(
+                                email = account.email,
+                                name = name,
+                                size = 32.dp,
+                                profile_picture_url = account.profile_picture,
+                                profile_color = account.profile_color,
+                                use_contact_photo = false,
+                            )
+                        }
+                    }
                     Spacer(Modifier.width(14.dp))
                     Column(
                         modifier = Modifier.weight(1f),
@@ -2607,6 +2660,7 @@ internal fun workspace_switcher_sheet(
                     )
                 }
             }
+            org.astermail.android.debugtools.debug_build_switcher_card(background = card)
             Spacer(Modifier.height(AsterSpacing.md))
         }
     }
@@ -2849,7 +2903,7 @@ private fun folder_expand_toggle(
     }
     val rotation by animateFloatAsState(
         targetValue = if (expanded) 0f else -90f,
-        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 240, easing = org.astermail.android.design.AsterEasing.emphasized_decelerate),
         label = "folder_chevron",
     )
     val description = if (expanded) {
@@ -2886,9 +2940,9 @@ private fun special_offer_drawer_entry(
     val colors = AsterMaterial.colors
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(tween(OFFER_ENTRY_ENTER_MS, easing = FastOutSlowInEasing)) +
-            expandVertically(tween(OFFER_ENTRY_ENTER_MS, easing = FastOutSlowInEasing)),
-        exit = fadeOut(tween(160)) + shrinkVertically(tween(200, easing = FastOutSlowInEasing)),
+        enter = fadeIn(tween(OFFER_ENTRY_ENTER_MS, easing = org.astermail.android.design.AsterEasing.emphasized_decelerate)) +
+            expandVertically(tween(OFFER_ENTRY_ENTER_MS, easing = org.astermail.android.design.AsterEasing.emphasized_decelerate)),
+        exit = org.astermail.android.design.aster_collapse_out(),
     ) {
         Row(
             modifier = Modifier
@@ -3303,31 +3357,17 @@ private fun storage_meter(used_percent: Float, label: String) {
 }
 
 private fun section_expand_enter(): androidx.compose.animation.EnterTransition =
-    androidx.compose.animation.expandVertically(
-        animationSpec = androidx.compose.animation.core.tween(
-            durationMillis = 220,
-            easing = androidx.compose.animation.core.FastOutSlowInEasing,
-        ),
-    ) + androidx.compose.animation.fadeIn(
-        animationSpec = androidx.compose.animation.core.tween(durationMillis = 180),
-    )
+    org.astermail.android.design.aster_expand_in()
 
 private fun section_expand_exit(): androidx.compose.animation.ExitTransition =
-    androidx.compose.animation.shrinkVertically(
-        animationSpec = androidx.compose.animation.core.tween(
-            durationMillis = 200,
-            easing = androidx.compose.animation.core.FastOutLinearInEasing,
-        ),
-    ) + androidx.compose.animation.fadeOut(
-        animationSpec = androidx.compose.animation.core.tween(durationMillis = 140),
-    )
+    org.astermail.android.design.aster_collapse_out()
 
 @Composable
 private fun show_more_row(text: String, expanded: Boolean, on_click: () -> Unit) {
     val colors = AsterMaterial.colors
     val chevron_rotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
-        animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 240, easing = org.astermail.android.design.AsterEasing.emphasized_decelerate),
         label = "chevron",
     )
     Row(

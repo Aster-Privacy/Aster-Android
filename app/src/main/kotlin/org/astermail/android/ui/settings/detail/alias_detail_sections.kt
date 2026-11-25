@@ -29,6 +29,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import compose.icons.tablericons.DotsVertical
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -36,6 +43,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,7 +89,12 @@ internal fun alias_inline_field(
     on_save: (String) -> Unit,
     locked: Boolean = false,
 ) {
-    var draft by remember(value) { mutableStateOf(value) }
+    var draft by remember { mutableStateOf(value) }
+    var synced by remember { mutableStateOf(value) }
+    LaunchedEffect(value) {
+        if (draft.trim() == synced.trim()) draft = value
+        synced = value
+    }
     Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs)) {
         AsterTextField(
             value = draft,
@@ -94,18 +107,16 @@ internal fun alias_inline_field(
                 .testTag(test_tag),
         )
         if (locked) {
-            panel_hint_text(stringResource(R.string.alias_feature_locked))
-        } else if (draft.trim() != value.trim()) {
             Text(
-                text = stringResource(R.string.save),
-                color = AsterMaterial.colors.accent_blue,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { on_save(draft) }
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .testTag("${test_tag}_save"),
+                text = stringResource(R.string.alias_feature_locked),
+                color = AsterMaterial.colors.text_tertiary,
+                fontSize = 13.sp,
+            )
+        } else if (draft.trim() != value.trim()) {
+            alias_text_action(
+                label = stringResource(R.string.save),
+                on_click = { on_save(draft) },
+                modifier = Modifier.testTag("${test_tag}_save"),
             )
         }
     }
@@ -144,11 +155,12 @@ internal fun alias_add_row(
                         AsterMaterial.colors.bg_secondary
                     },
                 )
-                .clickable(enabled = can_add) {
+                .clickable(enabled = can_add, role = Role.Button) {
                     on_add(draft)
                     draft = ""
                 }
-                .padding(horizontal = 10.dp, vertical = 10.dp)
+                .heightIn(min = 48.dp)
+                .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm)
                 .testTag("${test_tag}_button"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -181,49 +193,31 @@ internal fun alias_sender_pinning_section(
         panel_locked_section(stringResource(R.string.alias_sender_pinning_title))
         return
     }
-    val colors = AsterMaterial.colors
-    var menu_open by remember { mutableStateOf(false) }
-    Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-        panel_section_title(stringResource(R.string.alias_sender_pinning_title))
-        panel_hint_text(stringResource(R.string.alias_sender_pinning_description))
-        Box {
-            Row(
-                modifier = Modifier
-                    .clip(AsterShapes.control)
-                    .background(field_surface_color(colors), AsterShapes.control)
-                    .clickable { menu_open = true }
-                    .padding(horizontal = 12.dp, vertical = 10.dp)
-                    .testTag("alias_pin_mode_selector"),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(pin_mode_label(detail.pin_mode)),
-                    color = colors.text_primary,
-                    fontSize = 13.sp,
-                )
-                Spacer(Modifier.width(6.dp))
-                Icon(
-                    imageVector = TablerIcons.ChevronDown,
-                    contentDescription = null,
-                    tint = colors.text_muted,
-                    modifier = Modifier.size(16.dp),
-                )
-            }
-            aster_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
+    alias_card(
+        title = stringResource(R.string.alias_sender_pinning_title),
+        description = stringResource(R.string.alias_sender_pinning_description),
+    ) {
+        alias_select_row(
+            title = stringResource(R.string.alias_pin_mode_title),
+            value = stringResource(pin_mode_label(detail.pin_mode)),
+            test_tag = "alias_pin_mode_selector",
+        ) { expanded, dismiss ->
+            aster_menu(expanded = expanded, on_dismiss = dismiss) {
                 listOf(SENDER_PIN_MODE_OFF, SENDER_PIN_MODE_LOCK_FIRST, SENDER_PIN_MODE_ALLOWLIST).forEach { mode ->
                     aster_menu_item(
                         label = stringResource(pin_mode_label(mode)),
                         selected = mode == detail.pin_mode,
                         on_click = {
-                            menu_open = false
+                            dismiss()
                             vm.set_alias_pin_mode(alias_id, mode)
                         },
                     )
                 }
             }
         }
+        settings_row_gap()
         if (detail.pins.isEmpty()) {
-            panel_hint_text(stringResource(R.string.alias_pins_empty))
+            alias_card_hint(stringResource(R.string.alias_pins_empty))
         } else {
             detail.pins.forEach { pin ->
                 alias_entry_row(
@@ -233,26 +227,28 @@ internal fun alias_sender_pinning_section(
                 )
             }
         }
-        alias_add_row(
-            placeholder = stringResource(R.string.alias_pin_placeholder),
-            button_label = stringResource(R.string.alias_pin_add),
-            test_tag = "alias_pin_input",
-            enabled = !detail.busy,
-            on_add = { vm.add_alias_pin(alias_id, it) },
-        )
-        if (detail.pin_mode == SENDER_PIN_MODE_ALLOWLIST) {
-            var picker_open by remember { mutableStateOf(false) }
-            alias_add_from_contacts_button(
+        alias_card_body {
+            alias_add_row(
+                placeholder = stringResource(R.string.alias_pin_placeholder),
+                button_label = stringResource(R.string.alias_pin_add),
+                test_tag = "alias_pin_input",
                 enabled = !detail.busy,
-                on_click = { picker_open = true },
+                on_add = { vm.add_alias_pin(alias_id, it) },
             )
-            if (picker_open) {
-                alias_contact_pick_dialog(
-                    alias_id = alias_id,
-                    pins = detail.pins,
-                    vm = vm,
-                    on_dismiss = { picker_open = false },
+            if (detail.pin_mode == SENDER_PIN_MODE_ALLOWLIST) {
+                var picker_open by remember { mutableStateOf(false) }
+                alias_add_from_contacts_button(
+                    enabled = !detail.busy,
+                    on_click = { picker_open = true },
                 )
+                if (picker_open) {
+                    alias_contact_pick_dialog(
+                        alias_id = alias_id,
+                        pins = detail.pins,
+                        vm = vm,
+                        on_dismiss = { picker_open = false },
+                    )
+                }
             }
         }
     }
@@ -275,29 +271,28 @@ internal fun alias_entry_row(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
-            .padding(start = 12.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+            .heightIn(min = settings_row_min_height)
+            .padding(start = AsterSpacing.lg, end = AsterSpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = label,
             color = colors.text_primary,
-            fontSize = 12.sp,
+            fontSize = 15.sp,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+            overflow = TextOverflow.MiddleEllipsis,
             modifier = Modifier.weight(1f),
         )
         if (blocked) {
+            Spacer(Modifier.width(AsterSpacing.sm))
             panel_row_chip(stringResource(R.string.alias_pin_blocked))
-            Spacer(Modifier.width(4.dp))
         }
         trailing?.invoke()
         AsterIconButton(
             icon = TablerIcons.Trash,
-            content_description = stringResource(R.string.delete),
+            content_description = stringResource(R.string.alias_remove_entry_a11y, label),
             onClick = on_delete,
-            tint = colors.danger,
+            tint = colors.text_tertiary,
         )
     }
 }
@@ -309,32 +304,34 @@ internal fun alias_blocked_log_section(detail: AliasDetailState) {
         return
     }
     val colors = AsterMaterial.colors
-    Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-        panel_section_title(stringResource(R.string.alias_blocked_log_title))
+    alias_card(title = stringResource(R.string.alias_blocked_log_title)) {
         if (detail.blocked_events.isEmpty()) {
-            panel_hint_text(stringResource(R.string.alias_blocked_log_empty))
+            alias_card_hint(stringResource(R.string.alias_blocked_log_empty))
         } else {
-            detail.blocked_events.take(20).forEach { event ->
+            detail.blocked_events.take(20).forEachIndexed { index, event ->
+                if (index > 0) settings_row_gap()
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .heightIn(min = settings_row_min_height)
+                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)
+                        .semantics(mergeDescendants = true) {},
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = event.blocked_reason,
                         color = colors.text_primary,
-                        fontSize = 12.sp,
-                        maxLines = 1,
+                        fontSize = 14.sp,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
+                    Spacer(Modifier.width(AsterSpacing.md))
                     Text(
                         text = format_panel_date(event.created_at),
-                        color = colors.text_muted,
-                        fontSize = 11.sp,
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        maxLines = 1,
                     )
                 }
             }
@@ -353,11 +350,12 @@ internal fun alias_contacts_section(
         panel_locked_section(stringResource(R.string.alias_contacts_title))
         return
     }
-    Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-        panel_section_title(stringResource(R.string.alias_contacts_title))
-        panel_hint_text(stringResource(R.string.alias_contacts_description))
+    alias_card(
+        title = stringResource(R.string.alias_contacts_title),
+        description = stringResource(R.string.alias_contacts_description),
+    ) {
         if (detail.contacts.isEmpty()) {
-            panel_hint_text(stringResource(R.string.alias_contacts_empty))
+            alias_card_hint(stringResource(R.string.alias_contacts_empty))
         } else {
             detail.contacts.forEach { contact ->
                 alias_entry_row(
@@ -365,33 +363,29 @@ internal fun alias_contacts_section(
                     blocked = contact.is_blocked,
                     on_delete = { vm.delete_alias_contact(alias_id, contact.id) },
                     trailing = {
-                        Text(
-                            text = if (contact.is_blocked) {
+                        alias_text_action(
+                            label = if (contact.is_blocked) {
                                 stringResource(R.string.alias_contact_unblock)
                             } else {
                                 stringResource(R.string.alias_contact_block)
                             },
-                            color = AsterMaterial.colors.accent_blue,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable {
-                                    vm.set_alias_contact_blocked(alias_id, contact.id, !contact.is_blocked)
-                                }
-                                .padding(horizontal = 6.dp, vertical = 4.dp),
+                            on_click = {
+                                vm.set_alias_contact_blocked(alias_id, contact.id, !contact.is_blocked)
+                            },
                         )
                     },
                 )
             }
         }
-        alias_add_row(
-            placeholder = stringResource(R.string.alias_contact_placeholder),
-            button_label = stringResource(R.string.alias_contact_add),
-            test_tag = "alias_contact_input",
-            enabled = !detail.busy,
-            on_add = { vm.add_alias_contact(alias_id, it) },
-        )
+        alias_card_body {
+            alias_add_row(
+                placeholder = stringResource(R.string.alias_contact_placeholder),
+                button_label = stringResource(R.string.alias_contact_add),
+                test_tag = "alias_contact_input",
+                enabled = !detail.busy,
+                on_add = { vm.add_alias_contact(alias_id, it) },
+            )
+        }
     }
 }
 
@@ -406,28 +400,22 @@ internal fun alias_rules_section(
         return
     }
     var editor_open by remember { mutableStateOf(false) }
-    Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                panel_section_title(stringResource(R.string.alias_rules_title))
-                panel_hint_text(stringResource(R.string.alias_rules_description))
-            }
-            Text(
-                text = stringResource(R.string.alias_rule_add),
-                color = AsterMaterial.colors.accent_blue,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { editor_open = true }
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .testTag("alias_rule_add"),
+    alias_card(
+        title = stringResource(R.string.alias_rules_title),
+        description = stringResource(R.string.alias_rules_description),
+        header_action = {
+            alias_text_action(
+                label = stringResource(R.string.alias_rule_add),
+                on_click = { editor_open = true },
+                modifier = Modifier.testTag("alias_rule_add"),
             )
-        }
+        },
+    ) {
         if (detail.rules.isEmpty()) {
-            panel_hint_text(stringResource(R.string.alias_rules_empty))
+            alias_card_hint(stringResource(R.string.alias_rules_empty))
         } else {
-            detail.rules.forEach { rule ->
+            detail.rules.forEachIndexed { index, rule ->
+                if (index > 0) settings_row_gap()
                 alias_rule_row(alias_id, rule, vm)
             }
         }
@@ -446,43 +434,77 @@ internal fun alias_rules_section(
 @Composable
 private fun alias_rule_row(alias_id: String, rule: AliasRule, vm: SettingsViewModel) {
     val colors = AsterMaterial.colors
+    val haptics = LocalHapticFeedback.current
+    var menu_open by remember { mutableStateOf(false) }
+    val conditions = describe_rule_conditions(rule)
+    val actions = describe_rule_actions(rule)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .acrylic(colors, RoundedCornerShape(12.dp), colors.bg_secondary)
-            .padding(start = 12.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+            .heightIn(min = settings_row_min_height),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = describe_rule_conditions(rule),
-                color = colors.text_primary,
-                fontSize = 12.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            val actions = describe_rule_actions(rule)
-            if (actions.isNotBlank()) {
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .heightIn(min = settings_row_min_height)
+                .toggleable(
+                    value = rule.is_enabled,
+                    role = Role.Switch,
+                    onValueChange = {
+                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        vm.set_alias_rule_enabled(alias_id, rule.id, it)
+                    },
+                )
+                .padding(start = AsterSpacing.lg, end = AsterSpacing.sm, top = AsterSpacing.sm, bottom = AsterSpacing.sm)
+                .testTag("alias_rule_toggle_${rule.id}"),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = actions,
-                    color = colors.text_muted,
-                    fontSize = 11.sp,
-                    maxLines = 1,
+                    text = conditions,
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
+                )
+                if (actions.isNotBlank()) {
+                    Text(
+                        text = actions,
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
+            }
+            Spacer(Modifier.width(AsterSpacing.md))
+            AsterSwitch(checked = rule.is_enabled, onCheckedChange = null)
+        }
+        Box {
+            AsterIconButton(
+                icon = TablerIcons.DotsVertical,
+                content_description = stringResource(R.string.more_options),
+                onClick = { menu_open = true },
+                tint = colors.text_tertiary,
+                modifier = Modifier.testTag("alias_rule_menu_${rule.id}"),
+            )
+            aster_menu(expanded = menu_open, on_dismiss = { menu_open = false }) {
+                aster_menu_item(
+                    label = stringResource(R.string.delete),
+                    icon = TablerIcons.Trash,
+                    destructive = true,
+                    test_tag = "alias_rule_delete_${rule.id}",
+                    on_click = {
+                        menu_open = false
+                        vm.delete_alias_rule(alias_id, rule.id)
+                    },
                 )
             }
         }
-        AsterSwitch(
-            checked = rule.is_enabled,
-            onCheckedChange = { vm.set_alias_rule_enabled(alias_id, rule.id, it) },
-        )
-        AsterIconButton(
-            icon = TablerIcons.Trash,
-            content_description = stringResource(R.string.delete),
-            onClick = { vm.delete_alias_rule(alias_id, rule.id) },
-            tint = colors.danger,
-        )
+        Spacer(Modifier.width(AsterSpacing.xs))
     }
 }
 

@@ -55,9 +55,12 @@ private val secure_prefs_namespaces = listOf(
     "aster_ratchet_state_v1",
     "aster_ratchet_identity_pins",
     "aster_ratchet_plaintext_v1",
-    "aster_unifiedpush_secure",
     "aster_app_lock_biometric",
     "aster_app_lock_device",
+)
+
+private val deferred_secure_prefs_namespaces = listOf(
+    "aster_unifiedpush_secure",
     "aster_compose_seed",
     "aster_recent_emoji_v1",
     "aster_unsubscribed_sender_keys",
@@ -179,6 +182,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         }
         runCatching { org.astermail.android.ui.common.apply_app_night_mode(this) }
         start_secure_prefs_warm()
+        start_text_pattern_warm()
         start_category_patterns_warm()
         runCatching { start_inbox_prefetch() }
         org.astermail.android.ui.theme.custom_theme_image.init(this)
@@ -190,8 +194,11 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         )
         runCatching {
             val ep = EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
-            org.astermail.android.mail.AsterProfileResolverHolder.shared = ep.aster_profile_resolver()
+            val resolver = ep.aster_profile_resolver()
+            resolver.attach_store(noBackupFilesDir)
+            org.astermail.android.mail.AsterProfileResolverHolder.shared = resolver
         }
+        runCatching { org.astermail.android.ui.mail.favicon_miss_store.attach(this) }
         runCatching {
             EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
                 .ratchet_vault_flush_triggers()
@@ -228,12 +235,40 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         androidx.compose.ui.contentcapture.ContentCaptureManager.isEnabled = false
     }
 
+    private fun start_text_pattern_warm() {
+        Thread({
+            runCatching {
+                org.astermail.android.ui.mail.detect_inbox_order_hint(
+                    "Your order receipt has shipped",
+                    "Order #123-4567890-1234567 total: \$10.00 shipped, arriving Monday",
+                )
+            }
+        }, "aster-pattern-warm").apply {
+            priority = Thread.NORM_PRIORITY
+            start()
+        }
+    }
+
     private fun start_secure_prefs_warm() {
         Thread {
             runCatching {
-                org.astermail.android.storage.SecurePrefs.warm(this, secure_prefs_namespaces)
+                org.astermail.android.storage.SecurePrefs.warm(
+                    this,
+                    secure_prefs_namespaces,
+                    deferred_secure_prefs_namespaces,
+                )
             }
         }.apply { name = "aster-prefs-warm" }.start()
+    }
+
+    private fun start_database_open() {
+        Thread {
+            runCatching {
+                EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
+                    .database()
+                    .get()
+            }
+        }.apply { name = "aster-db-open" }.start()
     }
 
     private fun start_category_patterns_warm() {
@@ -250,6 +285,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
     }
 
     private fun start_deferred_startup() {
+        start_database_open()
         Thread {
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND)
             runCatching { prime_profile_resolver() }
@@ -265,11 +301,6 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
                 org.astermail.android.notifications.PersistentPushService.start_if_enabled(this)
             }
             runCatching { org.astermail.android.notifications.UnifiedPushState.sync_registration(this) }
-            runCatching {
-                EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
-                    .database()
-                    .get()
-            }
         }.apply { name = "aster-startup" }.start()
     }
 

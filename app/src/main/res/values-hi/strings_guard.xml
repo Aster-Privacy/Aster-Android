@@ -203,12 +203,13 @@
     <string name="guard_switches_paused">साइन-इन अनुरोध %1$s तक रोके गए हैं।</string>
     <string name="guard_switches_missing_rescue">आपके पास रेस्क्यू कोड नहीं है। खाते में वापस आने का तरीका हमेशा पास रखने के लिए एक कोड बनाएं।</string>
     <string name="guard_switches_not_guard_device">इन सेटिंग को बदलने के लिए अपने किसी Guard डिवाइस का इस्तेमाल करें।</string>
-    <string name="guard_switches_canceled">कुछ नहीं बदला। सेव करने के लिए पुष्टि करें कि यह आप हैं।</string>
+    <string name="guard_switches_canceled">आपके बदलाव सेव नहीं हुए। उन्हें सेव करने के लिए, अपनी पहचान की पुष्टि करें।</string>
     <string name="guard_switches_code_subtitle">बिना सूचना के साइन-इन स्वीकार करें</string>
     <string name="guard_devices_section">Guard डिवाइस</string>
     <string name="guard_devices_this_device">यह फ़ोन</string>
     <string name="guard_devices_unnamed">बिना नाम का डिवाइस</string>
     <string name="guard_devices_remove_prompt_subtitle">Guard डिवाइस हटाएं</string>
+    <string name="guard_devices_remove_confirm">%1$s अब आपके खाते में बदलावों को मंज़ूरी नहीं देगा। इसे फिर से इस्तेमाल करने के लिए, उस डिवाइस से Guard में शामिल हों।</string>
     <string name="guard_security_row_off">इस फ़ोन से साइन-इन स्वीकार करने और जोखिम भरे बदलाव रोकने के लिए इसे चालू करें</string>
     <string name="guard_changes_title">रोके गए बदलाव</string>
     <string name="guard_changes_body">आपके खाते के ये बदलाव लागू होने से पहले इंतज़ार कर रहे हैं। अगर इनमें से कोई बदलाव आपने नहीं किया, तो उसे रद्द करें।</string>
@@ -224,7 +225,7 @@
     <string name="guard_changes_step_up_required">इंतज़ार छोड़ने के लिए 7 दिन या उससे ज़्यादा समय से इस्तेमाल किया जा रहा डिवाइस या अपनी सुरक्षा कुंजी इस्तेमाल करें।</string>
     <string name="guard_changes_not_guard_device">बदलाव रद्द करने या रोकने के लिए अपने किसी Guard डिवाइस का इस्तेमाल करें।</string>
     <string name="guard_changes_prompt_subtitle">अपने खाते के इस बदलाव की पुष्टि करें</string>
-    <string name="guard_changes_prompt_canceled">कुछ नहीं बदला। जारी रखने के लिए पुष्टि करें कि यह आप हैं।</string>
+    <string name="guard_changes_prompt_canceled">जारी रखने के लिए, अपनी पहचान की पुष्टि करें।</string>
     <string name="guard_changes_done_canceled">बदलाव रद्द कर दिया गया।</string>
     <string name="guard_changes_done_skipped">बदलाव लागू हो गया।</string>
     <string name="guard_changes_done_stopped">रिकवरी रोक दी गई।</string>

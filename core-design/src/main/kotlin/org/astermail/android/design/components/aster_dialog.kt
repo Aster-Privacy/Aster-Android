@@ -51,12 +51,13 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ripple
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -67,22 +68,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.SecureFlagPolicy
-import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
-import org.astermail.android.design.AsterScale
-import org.astermail.android.design.AsterSlide
+import org.astermail.android.design.AsterMotionSpec
+import org.astermail.android.design.aster_fade_in
+import org.astermail.android.design.aster_fade_out
 import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.aster_threshold_easing
+import org.astermail.android.design.settled_safe_drawing_padding
 
 private val dialog_shape = SquircleShape(26.dp)
 private val dialog_button_shape = org.astermail.android.design.AsterShapes.control
@@ -104,42 +106,35 @@ private val dlg_red_border_bot = Color(0xFF991B1B)
 
 enum class DialogConfirmStyle { primary, destructive }
 
-private const val dialog_enter_ms = AsterDuration.dialog_enter
-private const val dialog_exit_ms = AsterDuration.dialog_exit
-private const val dialog_scrim_alpha = 0.46f
-private const val dialog_content_enter_delay_ms = 30
-private val dialog_enter_easing = AsterEasing.dialog_enter
-private val dialog_exit_easing = AsterEasing.dialog_exit
-private val dialog_scrim_easing = AsterEasing.scrim
-private val dialog_slide_from = AsterSlide.dialog_dp.dp
-
-private fun dialog_duration(visible: Boolean, reduce_motion: Boolean): Int = when {
-    reduce_motion -> AsterDuration.instant
-    visible -> dialog_enter_ms
-    else -> dialog_exit_ms
-}
-
-private fun dialog_scrim_duration(visible: Boolean, reduce_motion: Boolean): Int = when {
-    reduce_motion -> AsterDuration.instant
-    visible -> AsterDuration.scrim_enter
-    else -> AsterDuration.scrim_exit
-}
-
-private fun dialog_scrim_spec(visible: Boolean, reduce_motion: Boolean): TweenSpec<Float> = tween(
-    durationMillis = dialog_scrim_duration(visible, reduce_motion),
-    easing = dialog_scrim_easing,
+private const val dialog_scrim_alpha = 0.32f
+private val dialog_enter_alpha_easing = aster_threshold_easing(
+    AsterEasing.emphasized_decelerate,
+    0f,
+    AsterMotionSpec.fade_enter_threshold,
 )
 
-private fun dialog_content_spec(visible: Boolean, reduce_motion: Boolean): TweenSpec<Float> = tween(
-    durationMillis = dialog_duration(visible, reduce_motion),
-    delayMillis = if (visible && !reduce_motion) dialog_content_enter_delay_ms else AsterDuration.instant,
-    easing = if (visible) dialog_enter_easing else dialog_exit_easing,
-)
+private fun dialog_scrim_spec(visible: Boolean, reduce_motion: Boolean): TweenSpec<Float> = when {
+    reduce_motion && visible -> tween(AsterMotionSpec.reduced_fade_ms, easing = LinearEasing)
+    reduce_motion -> tween(AsterMotionSpec.reduced_fade_out_ms, easing = LinearEasing)
+    visible -> tween(AsterMotionSpec.fade_enter_ms, easing = AsterEasing.emphasized_decelerate)
+    else -> tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.emphasized_accelerate)
+}
 
-private fun dialog_scale(progress: Float): Float =
-    AsterScale.dialog_enter_from + (1f - AsterScale.dialog_enter_from) * progress
+private fun dialog_content_spec(visible: Boolean, reduce_motion: Boolean): TweenSpec<Float> = when {
+    reduce_motion && visible -> tween(AsterMotionSpec.reduced_fade_ms, easing = LinearEasing)
+    reduce_motion -> tween(AsterMotionSpec.reduced_fade_out_ms, easing = LinearEasing)
+    visible -> tween(AsterMotionSpec.fade_enter_ms, easing = dialog_enter_alpha_easing)
+    else -> tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.emphasized_accelerate)
+}
 
-private fun dialog_slide(progress: Float) = dialog_slide_from * (1f - progress)
+@Composable
+private fun dialog_enter_scale(reduce_motion: Boolean): Animatable<Float, *> {
+    val scale = remember { Animatable(if (reduce_motion) 1f else AsterMotionSpec.fade_from) }
+    LaunchedEffect(Unit) {
+        scale.animateTo(1f, tween(AsterMotionSpec.fade_enter_ms, easing = AsterEasing.emphasized_decelerate))
+    }
+    return scale
+}
 
 private val dialog_properties = DialogProperties(
     dismissOnBackPress = true,
@@ -162,20 +157,16 @@ private fun dialog_fill(colors: org.astermail.android.design.AsterSemanticColors
 @Composable
 private fun prepare_dialog_window() {
     val view = androidx.compose.ui.platform.LocalView.current
+    val context = androidx.compose.ui.platform.LocalContext.current
     androidx.compose.runtime.SideEffect {
         val window = (view.parent as? androidx.compose.ui.window.DialogWindowProvider)?.window ?: return@SideEffect
         window.setWindowAnimations(0)
-        window.setDimAmount(0f)
-        window.setLayout(
-            android.view.WindowManager.LayoutParams.MATCH_PARENT,
-            android.view.WindowManager.LayoutParams.MATCH_PARENT,
-        )
+        prepare_popup_window(window = window, host = aster_host_window(context), full_window = true)
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
-        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-            @Suppress("DEPRECATION")
-            window.statusBarColor = android.graphics.Color.TRANSPARENT
-            @Suppress("DEPRECATION")
-            window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            window.attributes = window.attributes.apply {
+                layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            }
         }
     }
 }
@@ -196,11 +187,11 @@ private fun dialog_scrim(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .safeDrawingPadding()
-                .imePadding(),
+                .settled_safe_drawing_padding(),
             contentAlignment = Alignment.Center,
             content = { content() },
         )
+        LocalAsterPopupOverlay.current()
     }
 }
 
@@ -228,8 +219,7 @@ fun AsterDialog(
         finishedListener = { if (!visible) on_dismiss() },
         label = "dialog_progress",
     )
-    val scale = dialog_scale(content_progress)
-    val slide = dialog_slide(content_progress)
+    val enter_scale = dialog_enter_scale(reduce_motion)
     val start_dismiss: () -> Unit = { if (!is_busy) visible = false }
     Dialog(onDismissRequest = start_dismiss, properties = dialog_properties) {
         prepare_dialog_window()
@@ -238,9 +228,11 @@ fun AsterDialog(
             modifier = Modifier
                 .widthIn(max = dialog_max_width)
                 .padding(horizontal = 16.dp)
-                .offset(y = slide)
-                .scale(scale)
-                .alpha(content_progress)
+                .graphicsLayer {
+                    alpha = content_progress
+                    scaleX = enter_scale.value
+                    scaleY = enter_scale.value
+                }
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -249,7 +241,7 @@ fun AsterDialog(
             shape = dialog_shape,
             color = dialog_fill(colors),
             tonalElevation = 0.dp,
-            shadowElevation = 18.dp,
+            shadowElevation = 6.dp,
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Column(
@@ -312,6 +304,7 @@ fun AsterAlertDialog(
     val reduce_motion = aster_reduce_motion()
     var visible by remember { mutableStateOf(false) }
     var pending_confirm by remember { mutableStateOf(false) }
+    var pending_secondary by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
     val scrim_progress by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
@@ -323,14 +316,20 @@ fun AsterAlertDialog(
         animationSpec = dialog_content_spec(visible, reduce_motion),
         finishedListener = {
             if (!visible) {
-                if (pending_confirm) on_confirm() else on_dismiss()
+                when {
+                    pending_confirm -> on_confirm()
+                    pending_secondary -> {
+                        on_secondary?.invoke()
+                        on_dismiss()
+                    }
+                    else -> on_dismiss()
+                }
             }
         },
         label = "alert_progress",
     )
-    val scale = dialog_scale(content_progress)
-    val slide = dialog_slide(content_progress)
-    val start_dismiss: () -> Unit = { pending_confirm = false; visible = false }
+    val enter_scale = dialog_enter_scale(reduce_motion)
+    val start_dismiss: () -> Unit = { pending_confirm = false; pending_secondary = false; visible = false }
     val start_confirm: () -> Unit = {
         if (dismiss_on_confirm) {
             pending_confirm = true
@@ -346,9 +345,11 @@ fun AsterAlertDialog(
             modifier = Modifier
                 .widthIn(max = dialog_max_width)
                 .padding(horizontal = 16.dp)
-                .offset(y = slide)
-                .scale(scale)
-                .alpha(content_progress)
+                .graphicsLayer {
+                    alpha = content_progress
+                    scaleX = enter_scale.value
+                    scaleY = enter_scale.value
+                }
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -357,7 +358,7 @@ fun AsterAlertDialog(
             shape = dialog_shape,
             color = dialog_fill(colors),
             tonalElevation = 0.dp,
-            shadowElevation = 18.dp,
+            shadowElevation = 6.dp,
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Column(
@@ -396,8 +397,9 @@ fun AsterAlertDialog(
                         AsterDialogOutlineButton(
                             label = secondary_label,
                             onClick = {
-                                on_secondary()
-                                start_dismiss()
+                                pending_confirm = false
+                                pending_secondary = true
+                                visible = false
                             },
                             enabled = !is_busy,
                         )
@@ -432,10 +434,13 @@ fun AsterAlertDialog(
 
 @Composable
 private fun dialog_button_label(label: String, color: Color, is_loading: Boolean) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
+    val reduce_motion = aster_reduce_motion()
+    val label_alpha by animateFloatAsState(
+        targetValue = if (is_loading) 0f else 1f,
+        animationSpec = dialog_content_spec(!is_loading, reduce_motion),
+        label = "dialog_button_label_alpha",
+    )
+    Box(contentAlignment = Alignment.Center) {
         Text(
             text = label,
             fontSize = 14.sp,
@@ -443,9 +448,13 @@ private fun dialog_button_label(label: String, color: Color, is_loading: Boolean
             color = color,
             maxLines = 1,
             softWrap = false,
+            modifier = Modifier.graphicsLayer { alpha = label_alpha },
         )
-        if (is_loading) {
-            Spacer(modifier = Modifier.width(6.dp))
+        AnimatedVisibility(
+            visible = is_loading,
+            enter = aster_fade_in(reduce_motion),
+            exit = aster_fade_out(reduce_motion),
+        ) {
             CircularProgressIndicator(
                 modifier = Modifier.size(16.dp),
                 color = color,
@@ -520,7 +529,11 @@ private fun dialog_depth_button(
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val a = if (interactive) 1f else 0.5f
-    val k = if (pressed) 0.9f else 1f
+    val k by animateFloatAsState(
+        targetValue = if (pressed) 0.9f else 1f,
+        animationSpec = tween(AsterMotionSpec.color_ms, easing = AsterEasing.standard),
+        label = "dialog_button_press",
+    )
     val fill = Brush.verticalGradient(
         colors = listOf(
             scale_color(fill_top, k, a),

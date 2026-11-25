@@ -59,9 +59,9 @@ class MailRulesViewModel @Inject constructor(
     private val _state = MutableStateFlow(MailRulesUiState())
     val state: StateFlow<MailRulesUiState> = _state.asStateFlow()
 
-    fun load(force_refresh: Boolean = false) {
+    fun load(force_refresh: Boolean = false, quiet: Boolean = false) {
         viewModelScope.launch {
-            if (force_refresh && _state.value.rules.isEmpty()) {
+            if (force_refresh && !quiet && _state.value.rules.isEmpty()) {
                 _state.value = _state.value.copy(is_loading = true, is_refreshing = true, error = null)
             } else if (force_refresh) {
                 _state.value = _state.value.copy(is_refreshing = true, error = null)
@@ -168,12 +168,13 @@ class MailRulesViewModel @Inject constructor(
         }
     }
 
-    fun delete_rule(rule_id: String) {
+    fun delete_rule(rule_id: String, on_done: (Boolean) -> Unit = {}) {
         val original = _state.value.rules
         _state.value = _state.value.copy(rules = original.filter { it.id != rule_id })
         viewModelScope.launch {
             try {
                 api.delete(rule_id)
+                on_done(true)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 val held = org.astermail.android.guard.guard_held_of(t)
@@ -182,6 +183,7 @@ class MailRulesViewModel @Inject constructor(
                 } else {
                     _state.value.copy(rules = original, error = R.string.rules_error_delete)
                 }
+                on_done(false)
             }
         }
     }

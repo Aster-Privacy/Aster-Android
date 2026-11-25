@@ -313,7 +313,17 @@ private fun in_ranges(code: Int, ranges: Array<IntRange>): Boolean {
     return false
 }
 
-private fun code_points(text: String): IntArray = text.codePoints().toArray()
+private fun code_points(text: String): IntArray {
+    val out = IntArray(text.length)
+    var count = 0
+    var index = 0
+    while (index < text.length) {
+        val code = text.codePointAt(index)
+        out[count++] = code
+        index += Character.charCount(code)
+    }
+    return if (count == out.size) out else out.copyOf(count)
+}
 
 private fun from_code_points(points: List<Int>): String {
     val out = StringBuilder(points.size)
@@ -1287,6 +1297,12 @@ private fun build_personal_context(own_addresses: List<String>, contacts: List<S
 
 @Volatile
 private var cached_personal_context: CachedPersonalContext? = null
+
+internal fun warm_personal_context(own_addresses: List<String>, contacts: List<SenderTrustContact>) {
+    personal_context_of(
+        SenderTrustInput(name = "", email = "", own_addresses = own_addresses, contacts = contacts),
+    )
+}
 
 private fun personal_context_of(input: SenderTrustInput): PersonalContext {
     val cached = cached_personal_context

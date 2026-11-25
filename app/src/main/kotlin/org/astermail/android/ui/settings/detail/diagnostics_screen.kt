@@ -28,7 +28,6 @@ import android.content.ClipDescription
 import android.content.Context
 import android.os.Build
 import android.os.PersistableBundle
-import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -70,7 +69,11 @@ fun DiagnosticsScreen(
     val copied_text = stringResource(R.string.copied_to_clipboard)
     val clip_label = stringResource(R.string.settings_diagnostics_clip_label)
 
-    detail_scaffold(title = stringResource(R.string.diagnostics), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.diagnostics),
+        on_back = on_back,
+        on_refresh = { crash_reports_on = crash_reports.read(context) },
+    ) {
         AsterCard(modifier = Modifier.fillMaxWidth()) {
             detail_row(title = stringResource(R.string.app_version), subtitle = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
             settings_row_gap()
@@ -109,7 +112,7 @@ fun DiagnosticsScreen(
                     clip.description.extras = extras
                 }
                 if (write_to_clipboard(context, clip)) {
-                    Toast.makeText(context, copied_text, Toast.LENGTH_SHORT).show()
+                    org.astermail.android.ui.common.app_toast.show(copied_text.toString())
                 } else {
                     show_copy_failed_toast(context)
                 }

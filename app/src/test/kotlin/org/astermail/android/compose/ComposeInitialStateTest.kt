@@ -26,6 +26,7 @@ import org.astermail.android.ui.compose.compose_identity_snapshot
 import org.astermail.android.ui.compose.compose_screen_args
 import org.astermail.android.ui.compose.compose_thread_message
 import org.astermail.android.ui.compose.compose_thread_snapshot
+import org.astermail.android.ui.compose.keeps_subject_on_mode_switch
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -278,5 +279,20 @@ class ComposeInitialStateTest {
             listOf("a@example.com", "b@example.com", "c@example.com"),
             state.to_chips,
         )
+    }
+
+    @Test
+    fun mode_switch_keeps_an_edited_subject() {
+        assertTrue(keeps_subject_on_mode_switch("Re: Plans moved to Friday", "Re: Plans"))
+    }
+
+    @Test
+    fun mode_switch_replaces_an_unedited_subject() {
+        assertFalse(keeps_subject_on_mode_switch(" Re: Plans ", "Re: Plans"))
+    }
+
+    @Test
+    fun mode_switch_refills_a_cleared_subject() {
+        assertFalse(keeps_subject_on_mode_switch("  ", "Re: Plans"))
     }
 }

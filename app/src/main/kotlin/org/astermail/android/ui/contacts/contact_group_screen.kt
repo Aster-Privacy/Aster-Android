@@ -21,7 +21,6 @@
 
 package org.astermail.android.ui.contacts
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,7 +37,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -189,7 +192,7 @@ fun ContactGroupScreen(
     LaunchedEffect(gone) {
         if (gone && !closing) {
             closing = true
-            Toast.makeText(context, context.getString(R.string.group_deleted), Toast.LENGTH_SHORT).show()
+            org.astermail.android.ui.common.app_toast.show(context.getString(R.string.group_deleted).toString())
             on_back()
         }
     }
@@ -202,11 +205,13 @@ fun ContactGroupScreen(
     val add_members_label = stringResource(R.string.add_members)
     val remove_label = stringResource(R.string.remove_from_group)
 
+    val nav_bottom = androidx.compose.foundation.layout.WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     Box(
         modifier = Modifier
             .fillMaxSize()
             .page_surface(colors)
-            .systemBarsPadding()
+            .statusBarsPadding()
+            .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.navigationBars.only(androidx.compose.foundation.layout.WindowInsetsSides.Horizontal))
             .testTag("contact_group_screen"),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -301,16 +306,17 @@ fun ContactGroupScreen(
                     title = stringResource(R.string.group_load_failed),
                     action_label = stringResource(R.string.retry),
                     on_action = { vm.load_groups() },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).padding(bottom = nav_bottom),
                     test_tag = "contact_group_failed",
                 )
                 group == null || body == GroupViewBody.loading -> Box(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .padding(bottom = nav_bottom),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator(
+                    org.astermail.android.design.components.aster_spinner(
                         color = colors.accent_blue,
                         modifier = Modifier.testTag("contact_group_loading"),
                     )
@@ -323,7 +329,7 @@ fun ContactGroupScreen(
                         vm.load_groups()
                         if (!ui_state.contacts_loaded) vm.load_contacts()
                     },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).padding(bottom = nav_bottom),
                     test_tag = "contact_group_failed",
                 )
                 body == GroupViewBody.empty -> group_view_message(
@@ -332,7 +338,7 @@ fun ContactGroupScreen(
                     subtitle = stringResource(R.string.group_empty_hint),
                     action_label = add_members_label,
                     on_action = { show_add = true },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).padding(bottom = nav_bottom),
                     test_tag = "contact_group_empty",
                 )
                 else -> LazyColumn(
@@ -340,10 +346,10 @@ fun ContactGroupScreen(
                     modifier = Modifier
                         .weight(1f)
                         .testTag("contact_group_members"),
-                    contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = 88.dp),
+                    contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = 88.dp + nav_bottom),
                 ) {
                     itemsIndexed(members, key = { _, contact -> contact.id }) { index, contact ->
-                        Box(modifier = Modifier.testTag("contact_group_member_" + contact.id)) {
+                        Box(modifier = Modifier.animateItem().testTag("contact_group_member_" + contact.id)) {
                             ContactRow(
                                 contact = contact,
                                 is_selected = false,
@@ -371,6 +377,7 @@ fun ContactGroupScreen(
                 text = { Text(text = add_members_label, fontWeight = FontWeight.Medium) },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
+                    .padding(bottom = nav_bottom)
                     .padding(AsterSpacing.lg)
                     .semantics { contentDescription = add_members_label }
                     .testTag("contact_group_add_fab"),
@@ -388,11 +395,7 @@ fun ContactGroupScreen(
                 vm.add_contacts_to_group(group.id, ids) { added ->
                     if (added > 0) {
                         show_add = false
-                        Toast.makeText(
-                            context,
-                            context.resources.getQuantityString(R.plurals.members_added, added, added),
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        org.astermail.android.ui.common.app_toast.show((context.resources.getQuantityString(R.plurals.members_added, added, added)).toString())
                     }
                 }
             },
@@ -407,7 +410,7 @@ fun ContactGroupScreen(
                 vm.update_group(group.id, name, color, icon) { ok ->
                     if (ok) {
                         show_edit = false
-                        Toast.makeText(context, context.getString(R.string.saved), Toast.LENGTH_SHORT).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.saved).toString())
                     }
                 }
             },
@@ -427,7 +430,7 @@ fun ContactGroupScreen(
                     show_delete = false
                     if (ok && !closing) {
                         closing = true
-                        Toast.makeText(context, context.getString(R.string.group_deleted), Toast.LENGTH_SHORT).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.group_deleted).toString())
                         on_back()
                     }
                 }
@@ -450,7 +453,7 @@ fun ContactGroupScreen(
                 pending_remove = null
                 vm.remove_contact_from_group(group_id, contact.id) { ok ->
                     if (ok) {
-                        Toast.makeText(context, context.getString(R.string.removed_from_group), Toast.LENGTH_SHORT).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.removed_from_group).toString())
                     }
                 }
             },

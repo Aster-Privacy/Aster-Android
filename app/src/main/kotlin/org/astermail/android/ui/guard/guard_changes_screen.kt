@@ -23,19 +23,20 @@ package org.astermail.android.ui.guard
 
 import androidx.annotation.PluralsRes
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -83,8 +84,10 @@ import org.astermail.android.guard.resolve
 import org.astermail.android.guard.label
 import org.astermail.android.ui.settings.detail.detail_scaffold
 import org.astermail.android.ui.settings.detail.error_banner
+import org.astermail.android.ui.settings.detail.info_dialog_button
 import org.astermail.android.ui.settings.detail.load_failed_card
 import org.astermail.android.ui.settings.detail.recommendation_note
+import org.astermail.android.ui.settings.detail.skeleton_hero_card
 
 @Composable
 fun guard_changes_host(
@@ -112,6 +115,7 @@ fun guard_changes_host(
         },
         on_not_me = on_not_me,
         on_change_password = on_change_password,
+        on_refresh = { view_model.load() },
     )
 }
 
@@ -127,23 +131,34 @@ fun guard_changes_screen(
     on_not_me: () -> Unit = {},
     on_change_password: (() -> Unit)? = null,
     on_skip_passkey: (String) -> Unit = {},
+    on_refresh: (suspend () -> Unit)? = null,
 ) {
-    detail_scaffold(title = stringResource(R.string.guard_changes_title), on_back = on_back) {
+    detail_scaffold(
+        title = "",
+        on_back = on_back,
+        on_refresh = on_refresh,
+        refresh_enabled = state.working_id == null,
+    ) {
+        if (guard_changes_shows_stopped(state.notice, on_change_password != null)) {
+            Spacer(Modifier.height(AsterSpacing.xl))
+            guard_result_block(
+                title = stringResource(R.string.guard_veto_done_title),
+                body = stringResource(R.string.guard_veto_done_body),
+                primary_label = stringResource(R.string.change_password),
+                on_primary = { on_change_password?.invoke() },
+                secondary_label = stringResource(R.string.done),
+                on_secondary = on_back,
+            )
+            return@detail_scaffold
+        }
+        guard_page_hero(
+            title = stringResource(R.string.guard_changes_title),
+            info = stringResource(R.string.guard_changes_body),
+        )
         when {
-            guard_changes_shows_stopped(state.notice, on_change_password != null) -> {
-                Spacer(Modifier.height(AsterSpacing.xl))
-                guard_result_block(
-                    title = stringResource(R.string.guard_veto_done_title),
-                    body = stringResource(R.string.guard_veto_done_body),
-                    primary_label = stringResource(R.string.change_password),
-                    on_primary = { on_change_password?.invoke() },
-                    secondary_label = stringResource(R.string.done),
-                    on_secondary = on_back,
-                )
-            }
             state.hidden -> error_banner(stringResource(R.string.guard_setup_unavailable))
-            state.load_failed && state.changes.isEmpty() -> load_failed_card(null, on_retry)
-            state.loading -> Unit
+            state.load_failed && !state.loaded -> load_failed_card(null, on_retry)
+            state.loading -> skeleton_hero_card(lines = 2, bar = true)
             else -> guard_changes_content(state, on_cancel, on_skip, on_stop, on_not_me, live, on_skip_passkey)
         }
     }
@@ -209,13 +224,6 @@ private fun guard_changes_content(
         recommendation_note(stringResource(R.string.guard_changes_not_guard_device))
         Spacer(Modifier.height(AsterSpacing.md))
     }
-    Text(
-        text = stringResource(R.string.guard_changes_body),
-        color = AsterMaterial.colors.text_secondary,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-    )
-    Spacer(Modifier.height(AsterSpacing.md))
     val now = Instant.ofEpochMilli(guard_now(60_000L, ticking = live))
     Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.md)) {
         state.changes.forEach { row ->
@@ -235,13 +243,37 @@ private fun guard_changes_content(
 
 @Composable
 private fun guard_changes_empty() {
-    Text(
-        text = stringResource(R.string.guard_changes_empty_title) + "\n" + stringResource(R.string.guard_changes_empty),
-        color = AsterMaterial.colors.text_secondary,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        modifier = Modifier.padding(horizontal = AsterSpacing.xs, vertical = AsterSpacing.lg),
-    )
+    val colors = AsterMaterial.colors
+    guard_card {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.xl),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Icon(
+                imageVector = TablerIcons.ShieldCheck,
+                contentDescription = null,
+                tint = colors.text_secondary,
+                modifier = Modifier.size(32.dp),
+            )
+            Spacer(Modifier.height(AsterSpacing.md))
+            Text(
+                text = stringResource(R.string.guard_changes_empty_title),
+                color = colors.text_primary,
+                fontSize = 16.sp,
+                lineHeight = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(AsterSpacing.xs))
+            Text(
+                text = stringResource(R.string.guard_changes_empty),
+                color = colors.text_secondary,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
 }
 
 private val guard_changes_success = setOf(
@@ -267,130 +299,118 @@ private fun guard_change_card(
     val working = state.working_id == row.id
     val urgent = row.kind.can_veto
     val tone = if (urgent) colors.warning else colors.accent_blue
+    val remaining = row.apply_after?.let { Duration.between(now, it) }
+    val chip_text = when {
+        remaining == null -> stringResource(R.string.guard_changes_applies_later)
+        remaining.isNegative || remaining.isZero -> stringResource(R.string.guard_changes_due_now)
+        else -> {
+            val amount = guard_wait_amount_for(remaining)
+            val span = pluralStringResource(amount.plural, amount.count, amount.count)
+            stringResource(if (urgent) R.string.guard_changes_completes_in else R.string.guard_changes_applies_in, span)
+        }
+    }
+    val info = listOfNotNull(
+        row.apply_after?.let {
+            stringResource(
+                if (urgent) R.string.guard_changes_completes_at else R.string.guard_changes_applies_at,
+                guard_format_instant(it),
+            )
+        },
+        if (urgent && state.is_guard_device) stringResource(R.string.guard_changes_recovery_hint) else null,
+        if (state.skip_needs_trust(row)) stringResource(R.string.guard_changes_skip_needs_trust) else null,
+    ).joinToString("\n\n")
+    val title = stringResource(row.kind.label())
     guard_card {
-        Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                guard_vector_tile(icon = row.kind.icon(), color = colors.text_secondary)
-                Spacer(Modifier.width(AsterSpacing.md))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(row.kind.label()),
-                        color = colors.text_primary,
-                        fontSize = 16.sp,
-                        lineHeight = 21.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    row.created_at?.let {
-                        Text(
-                            text = stringResource(R.string.guard_changes_requested_at, guard_format_instant(it)),
-                            color = colors.text_secondary,
-                            fontSize = 13.sp,
-                        )
-                    }
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(AsterSpacing.lg),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Icon(
+                    imageVector = row.kind.icon(),
+                    contentDescription = null,
+                    tint = colors.text_secondary,
+                    modifier = Modifier.size(32.dp).align(Alignment.Center),
+                )
+                if (info.isNotEmpty()) {
+                    Box(Modifier.align(Alignment.TopEnd)) { info_dialog_button(title = title, description = info) }
                 }
             }
             Spacer(Modifier.height(AsterSpacing.md))
-            val remaining = row.apply_after?.let { Duration.between(now, it) }
-            val chip_text = when {
-                remaining == null -> stringResource(R.string.guard_changes_applies_later)
-                remaining.isNegative || remaining.isZero -> stringResource(R.string.guard_changes_due_now)
-                else -> {
-                    val amount = guard_wait_amount_for(remaining)
-                    val span = pluralStringResource(amount.plural, amount.count, amount.count)
-                    stringResource(if (urgent) R.string.guard_changes_completes_in else R.string.guard_changes_applies_in, span)
-                }
+            Text(
+                text = title,
+                color = colors.text_primary,
+                fontSize = 17.sp,
+                lineHeight = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+            )
+            row.created_at?.let {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.guard_changes_requested_at, guard_format_instant(it)),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    textAlign = TextAlign.Center,
+                )
             }
+            Spacer(Modifier.height(AsterSpacing.md))
             guard_chip(text = chip_text, icon = TablerIcons.Clock, color = tone)
             guard_change_progress(row.created_at, row.apply_after, now)?.let { progress ->
                 Spacer(Modifier.height(AsterSpacing.md))
                 guard_progress_bar(progress = progress, color = tone)
             }
-            row.apply_after?.let {
-                Spacer(Modifier.height(AsterSpacing.sm))
-                Text(
-                    text = stringResource(
-                        if (urgent) R.string.guard_changes_completes_at else R.string.guard_changes_applies_at,
-                        guard_format_instant(it),
-                    ),
-                    color = colors.text_secondary,
-                    fontSize = 13.sp,
-                )
-            }
-            if (urgent && state.is_guard_device) {
-                Spacer(Modifier.height(AsterSpacing.sm))
-                Text(
-                    text = stringResource(R.string.guard_changes_recovery_hint),
-                    color = colors.text_secondary,
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp,
-                )
-            }
-            if (state.skip_needs_trust(row)) {
-                Spacer(Modifier.height(AsterSpacing.sm))
-                Text(
-                    text = stringResource(R.string.guard_changes_skip_needs_trust),
-                    color = colors.text_secondary,
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp,
-                )
-            }
             val show_cancel = state.can_cancel(row)
             val show_stop = state.can_stop(row)
             val show_skip = state.can_skip(row)
-            if (show_stop) {
-                Spacer(Modifier.height(AsterSpacing.md))
-                AsterAccentButton(
-                    label = stringResource(R.string.guard_changes_stop),
-                    onClick = on_stop,
-                    fill = colors.danger,
-                    content_color = Color.White,
-                    enabled = !busy,
-                    is_loading = working,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            Spacer(Modifier.height(AsterSpacing.md))
-            Row(horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm)) {
-                AsterDestructiveButton(
-                    label = stringResource(R.string.guard_panic_entry),
-                    onClick = on_not_me,
-                    enabled = !busy,
-                    modifier = Modifier.weight(1f),
-                )
+            Spacer(Modifier.height(AsterSpacing.lg))
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
+            ) {
+                if (show_stop) {
+                    AsterAccentButton(
+                        label = stringResource(R.string.guard_changes_stop),
+                        onClick = on_stop,
+                        fill = colors.danger,
+                        content_color = Color.White,
+                        enabled = !busy,
+                        is_loading = working,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 if (show_cancel) {
                     AsterButton(
                         label = stringResource(R.string.guard_changes_cancel),
                         onClick = on_cancel,
                         enabled = !busy,
-                        is_loading = working,
-                        modifier = Modifier.weight(1f),
+                        is_loading = working && !show_stop,
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                } else if (show_skip) {
+                }
+                AsterDestructiveButton(
+                    label = stringResource(R.string.guard_panic_entry),
+                    onClick = on_not_me,
+                    enabled = !busy,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (show_skip) {
                     AsterGhostButton(
                         label = stringResource(R.string.guard_changes_skip),
                         onClick = on_skip,
                         enabled = !busy,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
-            }
-            if (show_cancel && show_skip) {
-                Spacer(Modifier.height(AsterSpacing.sm))
-                AsterGhostButton(
-                    label = stringResource(R.string.guard_changes_skip),
-                    onClick = on_skip,
-                    enabled = !busy,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            if (state.can_skip_with_passkey(row)) {
-                Spacer(Modifier.height(AsterSpacing.sm))
-                AsterGhostButton(
-                    label = stringResource(R.string.guard_changes_skip_passkey),
-                    onClick = on_skip_passkey,
-                    enabled = !busy,
-                    modifier = Modifier.fillMaxWidth().testTag("guard_changes_skip_passkey"),
-                )
+                if (state.can_skip_with_passkey(row)) {
+                    AsterGhostButton(
+                        label = stringResource(R.string.guard_changes_skip_passkey),
+                        onClick = on_skip_passkey,
+                        enabled = !busy,
+                        modifier = Modifier.fillMaxWidth().testTag("guard_changes_skip_passkey"),
+                    )
+                }
             }
         }
     }
@@ -401,7 +421,7 @@ fun guard_progress_bar(progress: Float, color: Color, modifier: Modifier = Modif
     val colors = AsterMaterial.colors
     val shown by animateFloatAsState(
         targetValue = progress,
-        animationSpec = tween(durationMillis = 420, easing = AsterEasing.standard_enter),
+        animationSpec = tween(durationMillis = 420, easing = LinearEasing),
         label = "guard_progress",
     )
     Box(

@@ -203,12 +203,13 @@
     <string name="guard_switches_paused">Anmeldeaufforderungen sind bis %1$s pausiert.</string>
     <string name="guard_switches_missing_rescue">Sie haben keinen Rettungscode. Erstellen Sie einen, damit Sie immer einen Weg zurück in Ihr Konto haben.</string>
     <string name="guard_switches_not_guard_device">Verwenden Sie eines Ihrer Guard-Geräte, um diese Einstellungen zu ändern.</string>
-    <string name="guard_switches_canceled">Nichts wurde geändert. Bestätigen Sie, dass Sie es sind, um zu speichern.</string>
+    <string name="guard_switches_canceled">Deine Änderungen wurden nicht gespeichert. Bestätige deine Identität, um sie zu speichern.</string>
     <string name="guard_switches_code_subtitle">Anmeldung ohne Benachrichtigung bestätigen</string>
     <string name="guard_devices_section">Guard-Geräte</string>
     <string name="guard_devices_this_device">Dieses Telefon</string>
     <string name="guard_devices_unnamed">Unbenanntes Gerät</string>
     <string name="guard_devices_remove_prompt_subtitle">Guard-Gerät entfernen</string>
+    <string name="guard_devices_remove_confirm">%1$s kann Änderungen an deinem Konto nicht mehr bestätigen. Um es wieder zu verwenden, tritt Guard auf diesem Gerät erneut bei.</string>
     <string name="guard_security_row_off">Aktivieren Sie es, um Anmeldungen zu bestätigen und riskante Änderungen von diesem Telefon aus zurückzuhalten</string>
     <string name="guard_changes_title">Zurückgehaltene Änderungen</string>
     <string name="guard_changes_body">Diese Änderungen an Ihrem Konto warten, bevor sie wirksam werden. Wenn Sie eine davon nicht vorgenommen haben, brechen Sie sie ab.</string>
@@ -224,7 +225,7 @@
     <string name="guard_changes_step_up_required">Verwenden Sie zum Überspringen der Wartezeit ein Gerät, das Sie seit 7 Tagen oder länger verwenden, oder Ihren Sicherheitsschlüssel.</string>
     <string name="guard_changes_not_guard_device">Verwenden Sie eines Ihrer Guard-Geräte, um eine Änderung abzubrechen oder zu stoppen.</string>
     <string name="guard_changes_prompt_subtitle">Bestätigen Sie diese Änderung an Ihrem Konto</string>
-    <string name="guard_changes_prompt_canceled">Nichts wurde geändert. Bestätigen Sie, dass Sie es sind, um fortzufahren.</string>
+    <string name="guard_changes_prompt_canceled">Bestätige deine Identität, um fortzufahren.</string>
     <string name="guard_changes_done_canceled">Die Änderung wurde abgebrochen.</string>
     <string name="guard_changes_done_skipped">Die Änderung ist wirksam.</string>
     <string name="guard_changes_done_stopped">Die Wiederherstellung wurde gestoppt.</string>

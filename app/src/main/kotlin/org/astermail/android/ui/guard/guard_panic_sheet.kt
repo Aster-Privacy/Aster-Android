@@ -44,7 +44,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Clock
@@ -89,7 +88,7 @@ fun guard_panic_screen(
     on_retry: () -> Unit,
     on_change_password: () -> Unit,
 ) {
-    detail_scaffold(title = stringResource(R.string.guard_panic_entry), on_back = on_back) {
+    detail_scaffold(title = "", on_back = on_back) {
         when (state) {
             is guard_panic_state.confirm -> guard_panic_confirm(state.notice, working = false, on_confirm = on_confirm)
             guard_panic_state.working -> guard_panic_confirm(null, working = true, on_confirm = on_confirm)
@@ -114,8 +113,10 @@ private fun guard_panic_confirm(notice: guard_action_notice?, working: Boolean, 
         error_banner(it)
         Spacer(Modifier.height(AsterSpacing.md))
     }
-    guard_panic_hero(R.string.guard_panic_title, R.string.guard_panic_body)
-    Spacer(Modifier.height(AsterSpacing.lg))
+    guard_page_hero(
+        title = stringResource(R.string.guard_panic_title),
+        info = stringResource(R.string.guard_panic_body),
+    )
     guard_card {
         Column(modifier = Modifier.padding(vertical = AsterSpacing.sm)) {
             guard_panic_line(TablerIcons.Logout, stringResource(R.string.guard_panic_step_sessions))
@@ -132,24 +133,6 @@ private fun guard_panic_confirm(notice: guard_action_notice?, working: Boolean, 
         modifier = Modifier.fillMaxWidth(),
         is_loading = working,
     )
-}
-
-@Composable
-private fun guard_panic_hero(title: Int, body: Int?) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = AsterSpacing.md),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        guard_wordmark()
-        Spacer(Modifier.height(AsterSpacing.xxl))
-        guard_wizard_title(stringResource(title), Modifier.fillMaxWidth(), TextAlign.Center)
-        if (body != null) {
-            Spacer(Modifier.height(AsterSpacing.sm))
-            guard_wizard_body(stringResource(body), Modifier.fillMaxWidth(), TextAlign.Center)
-        }
-    }
 }
 
 @Composable

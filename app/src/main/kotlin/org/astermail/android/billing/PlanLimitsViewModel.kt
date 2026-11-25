@@ -61,7 +61,9 @@ class PlanLimitsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
-        PlanLimitsUiState(limits = PlanLimitsCache.limits(), plans = AvailablePlansCache.plans()),
+        PlanLimitsCache.limits().let { cached ->
+            PlanLimitsUiState(limits = cached, plans = AvailablePlansCache.plans(), is_loading = cached == null)
+        },
     )
     val state: StateFlow<PlanLimitsUiState> = _state.asStateFlow()
 

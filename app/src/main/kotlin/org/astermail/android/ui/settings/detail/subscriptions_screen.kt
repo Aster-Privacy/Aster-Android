@@ -72,6 +72,9 @@ import org.astermail.android.R
 import org.astermail.android.billing.BillingViewModel
 import org.astermail.android.billing.CancelStep
 import org.astermail.android.billing.is_resumable_crypto_invoice
+import org.astermail.android.billing.subscription_payment_source
+import org.astermail.android.billing.subscription_status_kind
+import org.astermail.android.billing.to_subscription_info
 import java.util.Locale
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterShapes
@@ -90,6 +93,7 @@ import kotlinx.coroutines.launch
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.ui.settings.join_launched
 
 private val LOCALE_CURRENCY_MAP = mapOf(
     "en_us" to "usd", "en_gb" to "gbp", "en_au" to "aud", "en_ca" to "cad", "en_in" to "inr",
@@ -118,17 +122,29 @@ private fun detect_currency(): String {
 private fun format_price(cents: Int, currency: String): String =
     org.astermail.android.billing.format_money(cents.toLong(), currency)
 
-private fun fallback_alias_limit(plan_code: String?): Int = when (plan_code) {
-    "star" -> 15
-    "nova", "supernova", "duo", "family" -> 0
-    else -> 5
-}
+private const val SECONDARY_LOAD_DELAY_MS = 350L
 
-private fun fallback_domain_limit(plan_code: String?): Int = when (plan_code) {
-    "star" -> 5
-    "nova", "duo" -> 30
-    "supernova", "family" -> 0
-    else -> 1
+private fun billing_usage_items(
+    limits: Map<String, org.astermail.android.api.billing.LimitInfo>?,
+    aliases_label: String,
+    domains_label: String,
+    rules_label: String,
+): List<billing_usage_item> {
+    if (limits == null) return emptyList()
+    return listOf(
+        "max_email_aliases" to aliases_label,
+        "max_custom_domains" to domains_label,
+        "max_custom_filters" to rules_label,
+    ).mapNotNull { (key, label) ->
+        val info = limits[key] ?: return@mapNotNull null
+        if (info.limit == 0 && info.current == 0) return@mapNotNull null
+        billing_usage_item(
+            label = label,
+            current = info.current.coerceAtLeast(0),
+            limit = info.limit.takeIf { it > 0 },
+            loaded = true,
+        )
+    }
 }
 
 private data class plan_tier(
@@ -282,19 +298,18 @@ fun SubscriptionsScreen(
     }
 
     LaunchedEffect(Unit) {
-        vm.load_subscription()
-        vm.load_storage()
+        vm.load_subscription(force = false)
         billing_vm.load_subscription()
+        vm.load_storage()
+        billing_vm.load_limits()
+        kotlinx.coroutines.delay(SECONDARY_LOAD_DELAY_MS)
         billing_vm.load_plans()
         billing_vm.load_history()
         billing_vm.load_storage_addons()
-        billing_vm.load_crypto_native_coins()
         billing_vm.load_pending_crypto_invoices()
         billing_vm.load_credits_and_discounts()
-        billing_vm.load_limits()
         billing_vm.load_credit_packages()
-        vm.load_aliases()
-        vm.load_domains()
+        billing_vm.load_crypto_native_coins()
     }
 
     LaunchedEffect(billing_state.created_crypto_invoice_id) {
@@ -305,7 +320,7 @@ fun SubscriptionsScreen(
 
     LaunchedEffect(billing_state.info) {
         val info = billing_state.info ?: return@LaunchedEffect
-        android.widget.Toast.makeText(context, info, android.widget.Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(info.toString())
         billing_vm.clear_messages()
         vm.load_subscription()
     }
@@ -360,7 +375,7 @@ fun SubscriptionsScreen(
     LaunchedEffect(billing_state.error, show_cancel_flow) {
         val err = billing_state.error ?: return@LaunchedEffect
         if (show_cancel_flow) return@LaunchedEffect
-        android.widget.Toast.makeText(context, err, android.widget.Toast.LENGTH_LONG).show()
+        org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = err.toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
         billing_vm.clear_messages()
     }
     LaunchedEffect(show_cancel_flow) {
@@ -368,8 +383,12 @@ fun SubscriptionsScreen(
     }
     var pending_downgrade_code by remember { mutableStateOf<String?>(null) }
 
-    val sub = state.subscription
     val billing_sub = billing_state.subscription
+    val billing_sub_info = remember(billing_sub) { billing_sub?.to_subscription_info() }
+    val sub = state.subscription?.takeUnless { state.subscription_cached && billing_sub_info != null }
+        ?: billing_sub_info
+        ?: state.subscription
+    val showing_stale_plan = sub != null && sub === state.subscription && state.subscription_cached
     val detected_currency = billing_state.play_currency?.takeIf { play_mode }
         ?: sub?.currency?.takeIf { it.isNotBlank() }
         ?: billing_sub?.currency?.takeIf { it.isNotBlank() }
@@ -402,7 +421,6 @@ fun SubscriptionsScreen(
     val default_interval = stringResource(R.string.settings_interval_default)
     val plan_free_label = stringResource(R.string.plan_name_free)
     var billing_interval by remember { mutableStateOf("year") }
-    val plan_load_settled = remember_load_settled(state.is_loading)
     var resumed_checkout_plan by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(billing_state.checkout_abandoned_plan, billing_state.checking_payment) {
@@ -535,9 +553,43 @@ fun SubscriptionsScreen(
         org.astermail.android.billing.api_plan_price_cents(billing_state.available_plans, "nova", "year"),
     )
 
-    detail_scaffold(title = stringResource(R.string.plan_billing), on_back = on_back, scroll_state = scroll_state) {
-        if (sub == null && state.subscription_load_failed) {
-            load_failed_card(state.error) { vm.load_subscription() }
+    detail_scaffold(
+        title = stringResource(R.string.plan_billing),
+        on_back = on_back,
+        scroll_state = scroll_state,
+        on_refresh = {
+            kotlinx.coroutines.coroutineScope {
+                launch {
+                    billing_vm.join_launched {
+                        billing_vm.load_subscription()
+                        billing_vm.load_plans()
+                        billing_vm.load_history()
+                        billing_vm.load_storage_addons()
+                        billing_vm.load_crypto_native_coins()
+                        billing_vm.load_pending_crypto_invoices()
+                        billing_vm.load_credits_and_discounts()
+                        billing_vm.load_limits()
+                        billing_vm.load_credit_packages()
+                    }
+                }
+                launch {
+                    vm.join_launched {
+                        vm.load_subscription(force = true)
+                        vm.load_storage(force = true)
+                    }
+                }
+            }
+        },
+        refresh_enabled = !billing_state.is_acting,
+    ) {
+        if (sub == null && state.subscription_load_failed && !state.subscription_loading) {
+            load_failed_card(
+                state.subscription_error ?: stringResource(R.string.subscription_load_failed_body),
+            ) {
+                vm.load_subscription(force = true)
+                billing_vm.load_subscription()
+                billing_vm.load_limits()
+            }
             return@detail_scaffold
         }
         if (payment_failed_due != null) {
@@ -565,13 +617,21 @@ fun SubscriptionsScreen(
             )
             v_gap(AsterSpacing.md)
         }
-        if (billing_state.subscription_error != null) {
+        val refresh_error = when {
+            sub == null -> null
+            showing_stale_plan -> state.subscription_error ?: billing_state.subscription_error
+            else -> null
+        }
+        if (refresh_error != null) {
             notice_row(
-                text = billing_state.subscription_error ?: "",
+                text = refresh_error,
                 accent = colors.text_tertiary,
                 action_label = stringResource(R.string.retry),
-                on_action = { billing_vm.load_subscription(); vm.load_subscription() },
-                on_dismiss = { billing_vm.clear_subscription_error() },
+                on_action = { billing_vm.load_subscription(); vm.load_subscription(force = true) },
+                on_dismiss = {
+                    billing_vm.clear_subscription_error()
+                    vm.clear_subscription_error()
+                },
             )
             v_gap(AsterSpacing.md)
         }
@@ -700,21 +760,48 @@ fun SubscriptionsScreen(
         } else {
             null
         }
-        val hero_status = when {
-            !is_paid_plan -> billing_hero_status.free
-            payment_failed_due != null -> billing_hero_status.attention
-            ends_at_period_end -> billing_hero_status.ending
+        val status_kind = org.astermail.android.billing.subscription_status_kind_of(
+            status = sub?.status,
+            is_paid_plan = is_paid_plan,
+            is_lifetime = is_lifetime_plan,
+            cancel_at_period_end = ends_at_period_end,
+            payment_failed = payment_failed_due != null,
+        )
+        val hero_status = when (status_kind) {
+            subscription_status_kind.free -> billing_hero_status.free
+            subscription_status_kind.past_due, subscription_status_kind.expired -> billing_hero_status.attention
+            subscription_status_kind.canceling -> billing_hero_status.ending
             else -> billing_hero_status.active
         }
+        val payment_source = org.astermail.android.billing.subscription_payment_source_of(
+            payment_provider = sub?.payment_provider ?: billing_sub?.payment_provider,
+            has_stripe_subscription = sub?.has_stripe_subscription,
+            is_paid_plan = is_paid_plan && !is_lifetime_plan,
+        )
+        val payment_source_text = when (payment_source) {
+            subscription_payment_source.play -> stringResource(R.string.billing_source_play)
+            subscription_payment_source.card -> stringResource(R.string.billing_source_card)
+            subscription_payment_source.crypto -> stringResource(R.string.billing_source_crypto)
+            subscription_payment_source.none -> null
+        }
+        val payment_source_icon = when (payment_source) {
+            subscription_payment_source.play -> TablerIcons.BrandGooglePlay
+            subscription_payment_source.card -> TablerIcons.CreditCard
+            subscription_payment_source.crypto -> TablerIcons.CurrencyBitcoin
+            subscription_payment_source.none -> null
+        }
+        val top_tier_plan = is_paid_plan && org.astermail.android.billing.is_top_tier_plan(current_code)
         val schedule_text = when {
             is_paid_plan && is_lifetime_plan -> stringResource(R.string.billing_lifetime_note)
             !is_paid_plan || period_end_label.isBlank() -> null
+            status_kind == subscription_status_kind.expired -> stringResource(R.string.ends_date, period_end_label)
             is_crypto_sub && !play_install -> stringResource(R.string.billing_crypto_paid_until, period_end_label)
             ends_at_period_end -> stringResource(R.string.ends_date, period_end_label)
             else -> stringResource(R.string.renews_format, period_end_label)
         }
-        val hero_plan_name = sub?.effective_plan_name
-            ?: if (state.error != null) stringResource(R.string.failed_to_load) else plan_free_label
+        val hero_plan_name = sub?.effective_plan_name?.takeIf { it.isNotBlank() }
+            ?: current_plan_name
+            ?: plan_free_label
         val reactivating = billing_state.is_acting && billing_state.acting_action == "reactivate"
         val yearly_monthly_equivalent = api_yearly_cents?.let { format_price(it / 12, detected_currency) }
         val yearly_saved_cents = if (api_monthly_cents != null && api_yearly_cents != null) {
@@ -803,27 +890,29 @@ fun SubscriptionsScreen(
                 }
             }
         }
-        if (sub == null && (state.is_loading || !plan_load_settled)) {
-            skeleton_hero_card(lines = 3)
+        if (sub == null) {
+            skeleton_hero_card(lines = 4)
             v_gap(AsterSpacing.lg)
             skeleton_section_label()
             skeleton_card_list(rows = 3, trailing_width = 64.dp)
+            v_gap(AsterSpacing.md)
+            skeleton_card_list(rows = 4, trailing_width = 48.dp)
             v_gap(AsterSpacing.lg)
             skeleton_section_label()
             skeleton_card_list(rows = 2, trailing_width = 64.dp)
+            return@detail_scaffold
         } else {
             billing_hero_card(
                 plan_name = hero_plan_name,
                 status = hero_status,
-                status_text = when (hero_status) {
-                    billing_hero_status.free -> stringResource(R.string.free)
-                    billing_hero_status.active -> if (is_lifetime_plan) {
-                        stringResource(R.string.billing_status_lifetime)
-                    } else {
-                        stringResource(R.string.active)
-                    }
-                    billing_hero_status.ending -> stringResource(R.string.billing_status_ending)
-                    billing_hero_status.attention -> stringResource(R.string.billing_status_payment_needed)
+                status_text = when (status_kind) {
+                    subscription_status_kind.free -> stringResource(R.string.free)
+                    subscription_status_kind.lifetime -> stringResource(R.string.billing_status_lifetime)
+                    subscription_status_kind.trialing -> stringResource(R.string.billing_status_trial)
+                    subscription_status_kind.canceling -> stringResource(R.string.billing_status_ending)
+                    subscription_status_kind.past_due -> stringResource(R.string.billing_status_payment_needed)
+                    subscription_status_kind.expired -> stringResource(R.string.expired)
+                    subscription_status_kind.active -> stringResource(R.string.active)
                 },
                 member_since = member_since_text,
                 thanks_title = stringResource(if (is_paid_plan) R.string.billing_thanks_title else R.string.billing_thanks_free_title),
@@ -849,21 +938,11 @@ fun SubscriptionsScreen(
                         scroll_state.animateScrollTo(addons_section_offset.toInt().coerceAtLeast(0))
                     }
                 },
-                usage = listOf(
-                    billing_usage_item(
-                        label = stringResource(R.string.aliases),
-                        current = maxOf(state.aliases.size, billing_state.limits?.limits?.get("max_email_aliases")?.current ?: 0),
-                        limit = billing_state.limits?.limits?.get("max_email_aliases")?.limit
-                            ?: fallback_alias_limit(current_code),
-                        loaded = billing_state.limits != null || sub != null,
-                    ),
-                    billing_usage_item(
-                        label = stringResource(R.string.custom_domains),
-                        current = maxOf(state.domains.size, billing_state.limits?.limits?.get("max_custom_domains")?.current ?: 0),
-                        limit = billing_state.limits?.limits?.get("max_custom_domains")?.limit
-                            ?: fallback_domain_limit(current_code),
-                        loaded = billing_state.limits != null || sub != null,
-                    ),
+                usage = billing_usage_items(
+                    limits = billing_state.limits?.limits,
+                    aliases_label = stringResource(R.string.aliases),
+                    domains_label = stringResource(R.string.custom_domains),
+                    rules_label = stringResource(R.string.mail_rules_title),
                 ),
                 on_usage_upgrade = if (is_paid_plan) {
                     null
@@ -901,6 +980,8 @@ fun SubscriptionsScreen(
                     }
                 },
                 actions = hero_actions,
+                payment_source_text = payment_source_text,
+                payment_source_icon = payment_source_icon,
                 danger_action = if (can_cancel && !ends_at_period_end) {
                     billing_hero_action(
                         label = stringResource(R.string.billing_cancel_plan),
@@ -917,6 +998,15 @@ fun SubscriptionsScreen(
                 } else {
                     null
                 },
+            )
+        }
+        if (billing_state.limits == null && billing_state.limits_failed) {
+            v_gap(AsterSpacing.md)
+            notice_row(
+                text = stringResource(R.string.billing_section_load_failed),
+                accent = colors.text_tertiary,
+                action_label = stringResource(R.string.retry),
+                on_action = { billing_vm.load_limits() },
             )
         }
         if (lapsed != null && !lapsed_dismissed && !is_lifetime_plan) {
@@ -991,10 +1081,12 @@ fun SubscriptionsScreen(
             )
         }
         val advantages_tier = if (is_paid_plan) current_tier?.takeIf { it.code !in FAMILY_PLAN_CODES } else free_teaser_tier
-        if (advantages_tier != null && (sub != null || state.error == null)) {
+        if (advantages_tier != null) {
             v_gap(AsterSpacing.md)
             billing_advantages_card(
-                title = if (is_paid_plan) {
+                title = if (top_tier_plan) {
+                    stringResource(R.string.billing_top_plan_title)
+                } else if (is_paid_plan) {
                     stringResource(R.string.billing_advantages_title_paid)
                 } else {
                     stringResource(R.string.billing_advantages_title_free, stringResource(advantages_tier.name_res))
@@ -1018,7 +1110,7 @@ fun SubscriptionsScreen(
             )
         }
 
-        if (!is_lifetime_plan) {
+        if (!is_lifetime_plan && (!top_tier_plan || show_plans)) {
             v_gap(AsterSpacing.lg)
             Box(
                 modifier = Modifier.onGloballyPositioned { coords ->
@@ -1231,7 +1323,7 @@ fun SubscriptionsScreen(
                             on_buy = {
                                 val id = effective_addon_id
                                 if (id == null) {
-                                    android.widget.Toast.makeText(context, select_addon_first, android.widget.Toast.LENGTH_SHORT).show()
+                                    org.astermail.android.ui.common.app_toast.show(select_addon_first.toString())
                                 } else if (!billing_state.is_acting) {
                                     pending_addon_id = id
                                     pending_plan_code = null
@@ -1243,18 +1335,22 @@ fun SubscriptionsScreen(
                 }
                 settings_row_gap()
             }
+            val history_unavailable = history_count == 0 && billing_state.history_failed
             billing_expander_row(
                 title = stringResource(R.string.billing_history),
-                subtitle = if (history_count == 0) {
-                    stringResource(R.string.fix_billing_history_empty)
-                } else {
-                    pluralStringResource(R.plurals.billing_invoice_count, history_count, history_count)
+                subtitle = when {
+                    history_unavailable -> stringResource(R.string.billing_section_load_failed)
+                    history_count > 0 -> pluralStringResource(R.plurals.billing_invoice_count, history_count, history_count)
+                    billing_state.history_loaded -> stringResource(R.string.fix_billing_history_empty)
+                    else -> null
                 },
                 icon = TablerIcons.Receipt,
-                expanded = show_history,
-                on_toggle = { show_history = !show_history },
+                expanded = show_history && !history_unavailable,
+                on_toggle = {
+                    if (history_unavailable) billing_vm.load_history() else show_history = !show_history
+                },
             )
-            if (show_history) {
+            if (show_history && !history_unavailable) {
                 Column(modifier = Modifier.padding(bottom = AsterSpacing.xs)) {
                     billing_history_list(
                         history = billing_state.history,
@@ -2221,9 +2317,9 @@ private fun notice_row(
         horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm),
     ) {
         if (loading) {
-            androidx.compose.material3.CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 color = accent,
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
                 modifier = Modifier.size(14.dp),
             )
         }

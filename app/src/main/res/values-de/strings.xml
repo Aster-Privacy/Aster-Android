@@ -279,7 +279,7 @@
     <string name="unsubscribed">Abbestellt</string>
     <string name="scanning">Wird gescannt...</string>
     <string name="no_mailing_lists">Noch keine Mailinglisten</string>
-    <string name="scan_inbox_hint">Tippen Sie auf \"Posteingang scannen\", um Newsletter und Marketing-Absender zu finden.</string>
+    <string name="scan_inbox_hint">Ziehen Sie nach unten, um Ihren Posteingang nach Newslettern und Marketing-Absendern zu durchsuchen.</string>
     <string name="active_tab">Aktiv</string>
     <string name="unsubscribed_tab">Abbestellt</string>
     <string name="reactivate">Reaktivieren</string>
@@ -803,6 +803,7 @@
     <string name="unblock">Entsperren</string>
     <string name="block_a_sender">Absender blockieren</string>
     <string name="block_sender_hint">Geben Sie eine E-Mail-Adresse oder eine Domain ein. Neue E-Mails von dort landen direkt im Spam.</string>
+    <string name="block_sender_invalid">Geben Sie eine E-Mail-Adresse oder eine Domain wie example.com ein.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">Blockieren</string>
     <string name="blocked_domain">Gesamte Domain</string>
@@ -1252,6 +1253,18 @@
     <string name="unsubscribe_failed">Abmeldung fehlgeschlagen</string>
     <string name="unsubscribe_manual_required">Dieser Absender unterstützt keine automatische Abmeldung. Über den Link in der E-Mail können Sie sich selbst abmelden.</string>
     <string name="bulk_unsubscribe_failed">Massenabmeldung fehlgeschlagen</string>
+    <string name="unsubscribe_in_progress">Abmeldung läuft</string>
+    <string name="subscription_hero_summary">%1$s aktive Absender, %2$s abbestellt, %3$s E-Mails</string>
+    <string name="unsubscribe_rate_limited">Du hast zu viele Abmeldeanfragen gesendet. Versuche es in einer Minute erneut.</string>
+    <string name="unsubscribe_opened_in_browser">Bei diesem Absender kannst du dich nur auf seiner Website abmelden. Schließe die Abmeldung auf der Seite ab, die sich in deinem Browser geöffnet hat.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">Abmeldung von %d Absender fehlgeschlagen</item>
+        <item quantity="other">Abmeldung von %d Absendern fehlgeschlagen</item>
+    </plurals>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="one">Von %d Absender musst du dich auf dessen Website abmelden</item>
+        <item quantity="other">Von %d Absendern musst du dich auf deren Websites abmelden</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="one">%d Absender abgemeldet</item>
         <item quantity="other">%d Absender abgemeldet</item>
@@ -1583,10 +1596,15 @@
     <string name="reaction_remove_failed">Reaktion konnte nicht entfernt werden</string>
     <string name="copy_address">Adresse kopieren</string>
     <string name="sender_on_aster">Aster-Konto</string>
+    <string name="sender_on_aster_logo">%1$s-Konto</string>
     <string name="messages_from_sender">Mails dieses Absenders finden</string>
     <string name="send_email_to_sender">An diesen Absender schreiben</string>
     <string name="add_to_contacts">In Kontakten speichern</string>
     <string name="remove_from_contacts">Aus Kontakten entfernen</string>
+    <string name="sender_action_new_message">Neue Nachricht</string>
+    <string name="sender_action_add_contact">Kontakt hinzufügen</string>
+    <string name="sender_action_view_contact">Kontakt ansehen</string>
+    <string name="sender_action_in_contacts">In Kontakten</string>
     <string name="contact_added_named">%1$s in Kontakten gespeichert</string>
     <string name="contact_removed_named">%1$s aus Kontakten entfernt</string>
     <string name="blocked_content_details_title">Blockierte Inhalte</string>
@@ -2365,6 +2383,10 @@
         <item quantity="one">%d neues Abo gefunden</item>
         <item quantity="other">%d neue Abos gefunden</item>
     </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">%1$s von %2$s Nachrichten gescannt, %3$s Absender gefunden</item>
+        <item quantity="other">%1$s von %2$s Nachrichten gescannt, %3$s Absender gefunden</item>
+    </plurals>
     <string name="reaction_info_title">Reaktion</string>
     <string name="reaction_badge_label">Neue Reaktion</string>
     <string name="notification_new_reaction">Sie haben eine neue Reaktion</string>
@@ -2863,6 +2885,8 @@
     <string name="contact_add_failed">%1$s konnte nicht in den Kontakten gespeichert werden</string>
     <string name="contact_remove_failed">%1$s konnte nicht aus den Kontakten entfernt werden</string>
     <string name="copy_failed">Kopieren fehlgeschlagen. Versuchen Sie es erneut.</string>
+    <string name="copy_subject">Betreff kopieren</string>
+    <string name="subject_copied">Betreff kopiert</string>
     <string name="create_label_subtitle">Nachrichten mit einer Farbe Ihrer Wahl markieren</string>
     <string name="delete_signature_message">„%1$s“ wird endgültig gelöscht, und Sie können das nicht rückgängig machen.</string>
     <string name="delete_vacation_reply_confirm">Ihre Abwesenheitsnotiz und ihre Daten werden gelöscht. Das lässt sich nicht rückgängig machen.</string>
@@ -3029,6 +3053,9 @@
     <string name="translation_storage_remove_all">Alle entfernen</string>
     <string name="translation_storage_removed">Sprachpakete entfernt</string>
     <string name="translation_offer_download">Diese Nachricht ist auf %1$s. Beim Übersetzen wird ein Sprachpaket heruntergeladen.</string>
+    <string name="translation_bar_translate_to">Auf %1$s übersetzen</string>
+    <string name="translation_bar_translated_from">Übersetzt aus: %1$s</string>
+    <string name="translation_bar_downloading">Sprachpaket für %1$s wird heruntergeladen</string>
     <string name="contact_support">Support kontaktieren</string>
     <string name="domain_purchase_manage">Verwalten</string>
     <string name="domain_purchase_cancel_payment_title">Diese Zahlung abbrechen?</string>
@@ -3151,6 +3178,10 @@
     <string name="remove_photo">Foto entfernen</string>
     <string name="add_photo">Foto hinzufügen</string>
     <string name="photo_too_large">Wählen Sie ein kleineres Bild</string>
+    <string name="contact_photo_unreadable">Aster kann dieses Bild nicht öffnen. Versuche es mit einem anderen Foto.</string>
+    <string name="contact_discard_changes_title">Änderungen verwerfen?</string>
+    <string name="contact_discard_changes_message">Deine Änderungen an diesem Kontakt sind nicht gespeichert.</string>
+    <string name="contact_keep_editing">Weiter bearbeiten</string>
     <string name="no_contacts_yet">Noch keine Kontakte</string>
     <string name="no_contacts_match">Keine Kontakte stimmen mit \"%1$s\" überein</string>
     <string name="no_contacts_in_trash">Der Papierkorb ist leer</string>
@@ -3712,6 +3743,13 @@
         <item quantity="other">%d Kontakte hinzugefügt</item>
     </plurals>
     <string name="body_index_status">Nachrichtentext wird für die Suche indexiert: %1$d von %2$d</string>
+    <string name="search_status_indexing_mail">E-Mails werden indexiert</string>
+    <string name="search_status_indexing_text">Nachrichtentext wird indexiert</string>
+    <string name="search_status_waiting_wifi">Indexierung des Nachrichtentexts wird im WLAN fortgesetzt</string>
+    <string name="search_status_paused">Indexierung pausiert</string>
+    <string name="search_status_partial">Ergebnisse sind möglicherweise unvollständig</string>
+    <string name="search_status_count">%1$s von %2$s</string>
+    <string name="search_refine_placeholder">In Ergebnissen suchen</string>
     <string name="mail_key_upgrade_title">Gespeicherte E-Mails werden aktualisiert</string>
     <string name="mail_key_upgrade_running">Aster Mail verschlüsselt deine gespeicherten Nachrichten mit deinen aktuellen Schlüsseln neu. Lass dieses Fenster geöffnet, bis der Vorgang abgeschlossen ist.</string>
     <string name="mail_key_upgrade_failed">Aster Mail konnte deine gespeicherten Nachrichten nicht vollständig aktualisieren. Deine E-Mails sind unverändert. Prüfe deine Verbindung und versuche es erneut.</string>
@@ -3736,10 +3774,21 @@
     <string name="attachment_unverified">Nicht bestätigter Anhang</string>
     <string name="confirm_back_exit">Vor dem Beenden bestätigen</string>
     <string name="confirm_back_exit_subtitle">Zweimal Zurück drücken, um die App im Posteingang zu verlassen</string>
+    <string name="toast_position_title">Position der App-Hinweise</string>
+    <string name="toast_position_subtitle">Wo Hinweise erscheinen, während die App geöffnet ist</string>
+    <string name="toast_position_top">Oben</string>
+    <string name="toast_position_bottom">Unten</string>
     <string name="mail_priority">Priorität</string>
     <string name="mail_priority_high">Hoch</string>
     <string name="mail_priority_normal">Normal</string>
     <string name="mail_priority_low">Niedrig</string>
     <string name="mail_high_priority">Hohe Priorität</string>
     <string name="mail_low_priority">Niedrige Priorität</string>
+    <string name="official_sender">Offizielle Aster-Adresse</string>
+    <string name="official_sender_desc">Diese Nachricht stammt von einer offiziellen Aster-Adresse. Aster fragt dich niemals per E-Mail nach deinem Passwort oder deiner Wiederherstellungsphrase.</string>
+    <string name="search_match_position">%1$d von %2$d</string>
+    <string name="search_match_position_description">Treffer %1$d von %2$d</string>
+    <string name="search_match_previous">Vorheriger Treffer</string>
+    <string name="search_match_next">Nächster Treffer</string>
+    <string name="search_match_clear">Markierungen entfernen</string>
 </resources>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="billing_compare_upgrade_to">الترقية إلى %1$s</string>
+    <string name="billing_compare_switch_to">التبديل إلى %1$s</string>
+    <string name="billing_compare_downgrade_to">التخفيض إلى %1$s</string>
+    <string name="billing_compare_gains_title">ما يضيفه %1$s</string>
+    <string name="billing_compare_you_have">لديك %1$s</string>
+    <string name="billing_compare_not_in_plan">غير متوفر في خطتك</string>
+    <string name="billing_compare_everything_in">كل ما في %1$s</string>
+    <string name="billing_compare_free_forever">مجاني للأبد</string>
+    <string name="billing_compare_free_note">للانتقال إلى الخطة المجانية، ألغِ خطتك.</string>
+    <string name="billing_compare_tagline_free">بريد خاص للبدء</string>
+    <string name="billing_compare_tagline_star">مساحة أكبر وحتى 5 نطاقات</string>
+    <string name="billing_compare_tagline_nova">أسماء مستعارة غير محدودة و30 نطاقًا</string>
+    <string name="billing_compare_tagline_supernova">أكبر مساحة تخزين وأفضل دعم</string>
+    <string name="billing_compare_tagline_duo">حسابان، فاتورة واحدة</string>
+    <string name="billing_compare_tagline_family">حتى ستة أشخاص، خطة واحدة</string>
+    <string name="contacts_close_search">إغلاق البحث</string>
+    <string name="contacts_show_favorites_only">إظهار المفضلة فقط</string>
+    <string name="contacts_show_all">إظهار كل جهات الاتصال</string>
+    <string name="guard_changes_subtitle">تنتظر التغييرات على حسابك هنا قبل أن تصبح سارية.</string>
+    <string name="hide_quoted_text">إخفاء النص المقتبس</string>
+    <string name="show_quoted_text">إظهار النص المقتبس</string>
+    <string name="search_keywords_more_exit">خروج, رجوع, نقر مزدوج, رجوع مزدوج, الضغط على رجوع مرتين, زر الرجوع, إغلاق التطبيق, مغادرة التطبيق, exit, back</string>
+    <string name="search_keywords_more_quick_actions">إجراءات سريعة, عوامل تصفية سريعة, أزرار البريد الوارد, أزرار الرأس, أزرار التصفية, quick actions</string>
+    <string name="search_keywords_more_reduce_motion">تقليل الحركة, الرسوم المتحركة, الحركة, الانتقالات, إمكانية الوصول, دوار الحركة, reduce motion</string>
+    <string name="search_keywords_more_high_contrast">التباين, إمكانية الوصول, الرؤية, سهولة القراءة, ضعف البصر, contrast</string>
+    <string name="search_keywords_more_sign_out_everywhere">تسجيل الخروج من كل مكان, تسجيل الخروج من كل الأجهزة, إنهاء الجلسات, إزالة الأجهزة, sign out</string>
+    <string name="search_keywords_more_cancel_plan">إلغاء الاشتراك, إلغاء الخطة, تخفيض الخطة, إيقاف الاشتراك, التجديد, التجديد التلقائي, الفوترة, cancel subscription</string>
+    <string name="search_keywords_more_sound">نغمة الرنين, صوت الإشعار, رنين, صوت التنبيه, نغمة, الأصوات, ringtone</string>
+</resources>

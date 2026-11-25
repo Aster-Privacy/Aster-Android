@@ -27,7 +27,6 @@ import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
 import android.content.ClipboardManager
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.width
@@ -190,7 +189,7 @@ fun RegisterRecoveryStep(
             onClick = {
                 if (copy_recovery_codes(context, codes)) {
                     has_saved = true
-                    Toast.makeText(context, copied_message, Toast.LENGTH_SHORT).show()
+                    org.astermail.android.ui.common.app_toast.show(copied_message.toString())
                 } else {
                     show_copy_failed_toast(context)
                 }
@@ -205,7 +204,7 @@ fun RegisterRecoveryStep(
                 request_storage_access {
                     val saved = download_recovery_codes(context, codes)
                     if (saved) has_saved = true
-                    Toast.makeText(context, if (saved) saved_message else failed_message, Toast.LENGTH_SHORT).show()
+                    org.astermail.android.ui.common.app_toast.show((if (saved) saved_message else failed_message).toString())
                 }
             },
         )
@@ -220,7 +219,7 @@ fun RegisterRecoveryStep(
                     account_email = account_email,
                     codes = codes,
                     on_failure = {
-                        Toast.makeText(context, print_failed_message, Toast.LENGTH_SHORT).show()
+                        org.astermail.android.ui.common.app_toast.show(print_failed_message.toString())
                     },
                 )
             },

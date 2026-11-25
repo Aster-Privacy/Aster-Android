@@ -21,7 +21,7 @@
 
 package org.astermail.android.ui.settings.mail_rules
 
-import org.astermail.android.ui.common.vertical_scroll_with_indicator
+import org.astermail.android.ui.common.vertical_scroll_with_fade
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -44,6 +44,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.AnimatedContent
+import org.astermail.android.design.AsterEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -79,6 +80,7 @@ import org.astermail.android.api.mail_rules.MatchMode
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.shimmer
+import org.astermail.android.design.components.skeleton_reveal
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterDialog
 import org.astermail.android.design.components.AsterDialogDestructiveButton
@@ -96,6 +98,7 @@ import org.astermail.android.mail_rules.MailRulesViewModel
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.common.page_surface
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun MailRulesListScreen(
@@ -128,11 +131,7 @@ fun MailRulesListScreen(
     LaunchedEffect(state.error, state.rules.isEmpty()) {
         val message_res = state.error ?: return@LaunchedEffect
         if (state.rules.isEmpty()) return@LaunchedEffect
-        android.widget.Toast.makeText(
-            rules_context,
-            rules_context.getString(message_res),
-            android.widget.Toast.LENGTH_SHORT,
-        ).show()
+        org.astermail.android.ui.common.app_toast.show(rules_context.getString(message_res).toString())
         vm.clear_error()
     }
     Box(
@@ -151,62 +150,87 @@ fun MailRulesListScreen(
             }
             val copy_suffix = stringResource(R.string.rules_copy_suffix)
             val rules_key = when {
-                state.is_loading -> 0
+                state.is_loading -> rules_content_loading_key
                 state.rules.isEmpty() && state.error != null -> 3
                 state.rules.isEmpty() -> 1
                 else -> 2
             }
-            AnimatedContent(
-                targetState = rules_key,
-                transitionSpec = {
-                    fadeIn(animationSpec = tween(200)) togetherWith
-                        fadeOut(animationSpec = tween(150))
+            val rules_reduce_motion = org.astermail.android.design.aster_reduce_motion()
+            org.astermail.android.ui.settings.settings_pull_refresh_box(
+                on_refresh = {
+                    vm.join_launched {
+                        vm.load(force_refresh = true, quiet = true)
+                        settings_vm.load_labels(force = true)
+                    }
                 },
-                label = "rules_content",
-            ) { key ->
-                when (key) {
-                    0 -> mail_rules_skeleton()
-                    1 -> empty_state(on_new = on_new)
-                    3 -> error_state(
-                        message = stringResource(state.error ?: R.string.rules_error_load),
-                        on_retry = { vm.load(force_refresh = true) },
-                    )
-                    else -> Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .vertical_scroll_with_indicator()
-                            .padding(horizontal = AsterSpacing.lg),
-                    ) {
-                        settings_group {
-                            sort_rules_for_display(state.rules).forEachIndexed { index, rule ->
-                                if (index > 0) settings_row_gap()
-                                rule_row(
-                                    rule = rule,
-                                    folder_names = folder_names,
-                                    on_open = { on_edit(rule.id) },
-                                    on_toggle = { vm.toggle_enabled(rule.id) },
-                                    on_duplicate = { vm.duplicate_rule(rule.id, copy_suffix) },
-                                    on_delete = { vm.delete_rule(rule.id) },
-                                    on_run = { vm.run_on_existing(rule.id) },
+                modifier = Modifier.weight(1f),
+                enabled = !state.is_loading,
+            ) {
+                AnimatedContent(
+                    targetState = rules_key,
+                    transitionSpec = {
+                        if (rules_content_animates(initialState, rules_reduce_motion)) {
+                            fadeIn(animationSpec = tween(200, easing = AsterEasing.emphasized_decelerate)) togetherWith
+                                fadeOut(animationSpec = tween(150, easing = AsterEasing.emphasized_accelerate))
+                        } else {
+                            androidx.compose.animation.EnterTransition.None togetherWith
+                                androidx.compose.animation.ExitTransition.None
+                        }
+                    },
+                    label = "rules_content",
+                ) { key ->
+                    when (key) {
+                        0 -> mail_rules_skeleton()
+                        1 -> empty_state(on_new = on_new)
+                        3 -> error_state(
+                            message = stringResource(state.error ?: R.string.rules_error_load),
+                            on_retry = { vm.load(force_refresh = true) },
+                        )
+                        else -> Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .vertical_scroll_with_fade()
+                                .padding(horizontal = AsterSpacing.lg)
+                                .padding(top = AsterSpacing.lg),
+                        ) {
+                            settings_group {
+                                sort_rules_for_display(state.rules).forEachIndexed { index, rule ->
+                                    androidx.compose.runtime.key(rule.id) {
+                                    if (index > 0) settings_row_gap()
+                                    rule_row(
+                                        rule = rule,
+                                        folder_names = folder_names,
+                                        on_open = { on_edit(rule.id) },
+                                        on_toggle = { vm.toggle_enabled(rule.id) },
+                                        on_duplicate = { vm.duplicate_rule(rule.id, copy_suffix) },
+                                        on_delete = { vm.delete_rule(rule.id) },
+                                        on_run = { vm.run_on_existing(rule.id) },
+                                    )
+                                    }
+                                }
+                            }
+                            caption(stringResource(R.string.mail_rules_subtitle))
+                            settings_group {
+                                detail_row(
+                                    title = stringResource(R.string.mail_rules_new_rule),
+                                    icon = TablerIcons.Plus,
+                                    icon_tint = colors.accent_blue,
+                                    on_click = on_new,
                                 )
                             }
+                            Spacer(Modifier.height(AsterSpacing.xxl))
                         }
-                        caption(stringResource(R.string.mail_rules_subtitle))
-                        settings_group {
-                            detail_row(
-                                title = stringResource(R.string.mail_rules_new_rule),
-                                icon = TablerIcons.Plus,
-                                icon_tint = colors.accent_blue,
-                                on_click = on_new,
-                            )
-                        }
-                        Spacer(Modifier.height(AsterSpacing.xxl))
                     }
                 }
             }
         }
     }
 }
+
+internal const val rules_content_loading_key = 0
+
+internal fun rules_content_animates(from_key: Int, reduce_motion: Boolean): Boolean =
+    !reduce_motion && from_key != rules_content_loading_key
 
 @Composable
 private fun caption(text: String) {
@@ -228,7 +252,9 @@ private fun mail_rules_skeleton() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = AsterSpacing.lg),
+            .skeleton_reveal()
+            .padding(horizontal = AsterSpacing.lg)
+            .padding(top = AsterSpacing.lg),
     ) {
         settings_group {
             repeat(6) { index ->
@@ -365,12 +391,10 @@ private fun rule_summary_text(rule: MailRule, folder_names: Map<String, String>)
     val joiner = stringResource(
         if (rule.match_mode == MatchMode.ANY) R.string.mail_rules_or else R.string.mail_rules_and,
     )
-    return rule_summary_line(
-        when_label = stringResource(R.string.mail_rules_when_section),
-        then_label = stringResource(R.string.mail_rules_then_section),
-        joiner = joiner,
+    return rule_arrow_summary(
         conditions = conditions,
         actions = actions,
+        joiner = joiner,
     )
 }
 

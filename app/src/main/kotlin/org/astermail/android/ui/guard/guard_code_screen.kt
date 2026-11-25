@@ -56,7 +56,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
@@ -221,16 +220,11 @@ fun guard_code_screen(
                 )
             } else {
                 val shown = if (revealed) view?.code else null
-                guard_wordmark()
-                Spacer(Modifier.height(AsterSpacing.xxl + AsterSpacing.sm))
-                guard_wizard_title(stringResource(R.string.guard_code_title), Modifier.fillMaxWidth(), TextAlign.Center)
-                Spacer(Modifier.height(AsterSpacing.sm))
-                guard_wizard_body(
-                    stringResource(if (shown != null) R.string.guard_code_body else R.string.guard_code_hidden),
-                    Modifier.fillMaxWidth(),
-                    TextAlign.Center,
+                guard_page_hero(
+                    title = stringResource(R.string.guard_code_title),
+                    body = if (shown == null) stringResource(R.string.guard_code_hidden) else null,
+                    info = stringResource(R.string.guard_code_body),
                 )
-                Spacer(Modifier.height(AsterSpacing.xxl))
                 guard_code_card(shown, view?.seconds_left ?: GuardCode.STEP_SECONDS.toInt())
                 Spacer(Modifier.height(AsterSpacing.xxl))
                 if (shown != null) {

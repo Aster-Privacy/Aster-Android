@@ -17,4 +17,22 @@
     <string name="alias_import_change_file">Trocar arquivo</string>
     <string name="alias_import_remove_file">Remover arquivo</string>
     <string name="alias_note_placeholder_short">Onde você usa</string>
+    <string name="alias_status_section">Status</string>
+    <string name="alias_receive_mail">Receber e-mails</string>
+    <string name="alias_receive_mail_on">Os e-mails enviados para este endereço chegam até você.</string>
+    <string name="alias_receive_mail_off">Pausado. Novos e-mails para este endereço não são entregues.</string>
+    <string name="alias_pin_subtitle">Manter este alias no topo da sua lista.</string>
+    <string name="alias_danger_zone">Zona de perigo</string>
+    <string name="alias_delete_row_subtitle">Remover este endereço permanentemente.</string>
+    <string name="alias_protection_section">Proteção</string>
+    <string name="alias_automation_section">Automação</string>
+    <string name="alias_pin_mode_title">Modo</string>
+    <string name="alias_remove_entry_a11y">Remover %1$s</string>
+    <string name="alias_create_action">Criar alias</string>
+    <string name="alias_usage_near">Você está perto do limite de aliases.</string>
+    <string name="alias_usage_full">Você atingiu o limite de aliases.</string>
+    <string name="alias_offline_banner">Você está offline. As alterações são sincronizadas quando você se reconectar.</string>
+    <string name="alias_menu_pause">Pausar</string>
+    <string name="alias_menu_resume">Retomar</string>
+    <string name="alias_directory_auto_create_a11y">Criar aliases automaticamente para %1$s</string>
 </resources>

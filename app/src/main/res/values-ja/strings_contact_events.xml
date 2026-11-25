@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_events">イベント</string>
+    <string name="contact_event_anniversary">記念日</string>
+    <string name="contact_add_event">イベントを追加</string>
+    <string name="contact_remove_event">イベントを削除</string>
+    <string name="contact_event_type">イベントの種類</string>
+    <string name="contact_event_year_range">%1$d〜%2$d の年を入力してください</string>
+    <string name="contacts_add_to_favorites">お気に入りに追加</string>
+    <string name="contacts_remove_from_favorites">お気に入りから削除</string>
+    <string name="contacts_favorites_failed">お気に入りを更新できませんでした。もう一度お試しください。</string>
+    <string name="contacts_recently_added">最近追加した連絡先</string>
+    <string name="contacts_today">今日</string>
+</resources>

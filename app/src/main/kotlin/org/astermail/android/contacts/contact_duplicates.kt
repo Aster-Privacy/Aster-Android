@@ -194,8 +194,10 @@ fun merge_contacts(ordered: List<Contact>): Contact {
     }
 
     val notes = ordered.map { it.notes.trim() }.filter { it.isNotEmpty() }.distinct()
+    val events = ordered.fold(emptyList<ContactEvent>()) { merged, contact -> merge_events(merged, contact.event_entries()) }
+    val keep_events = ordered.any { it.events != null } || events.any { it.kind != ContactEventKind.BIRTHDAY }
 
-    return primary.copy(
+    val merged = primary.copy(
         name = first_non_blank(ordered) { it.name },
         email = ordered_addresses.getOrElse(0) { "" },
         work_email = ordered_addresses.getOrElse(1) { "" },
@@ -232,6 +234,8 @@ fun merge_contacts(ordered: List<Contact>): Contact {
         },
         addresses = merged_addresses(ordered.flatMap { it.address_entries() }),
     )
+    if (!keep_events) return merged
+    return merged.copy(events = events, birthday = birthday_from_events(events).ifEmpty { merged.birthday })
 }
 
 private fun merged_entries(entries: List<ContactEntry>, key_of: (String) -> String): List<ContactEntry> {

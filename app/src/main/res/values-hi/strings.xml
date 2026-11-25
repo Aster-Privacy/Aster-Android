@@ -299,10 +299,15 @@
     <string name="block_sender">प्रेषक को ब्लॉक करें</string>
     <string name="copy_address">पता कॉपी करें</string>
     <string name="sender_on_aster">Aster खाता</string>
+    <string name="sender_on_aster_logo">%1$s खाता</string>
     <string name="messages_from_sender">इस प्रेषक की मेल ढूंढें</string>
     <string name="send_email_to_sender">इस प्रेषक को लिखें</string>
     <string name="add_to_contacts">संपर्कों में सहेजें</string>
     <string name="remove_from_contacts">संपर्कों से निकालें</string>
+    <string name="sender_action_new_message">नया संदेश</string>
+    <string name="sender_action_add_contact">संपर्क जोड़ें</string>
+    <string name="sender_action_view_contact">संपर्क देखें</string>
+    <string name="sender_action_in_contacts">संपर्कों में</string>
     <string name="contact_added_named">%1$s संपर्कों में सहेजा गया</string>
     <string name="contact_removed_named">%1$s संपर्कों से हटाया गया</string>
     <string name="message_unavailable">संदेश उपलब्ध नहीं</string>
@@ -451,7 +456,7 @@
     <string name="unsubscribed">सदस्यता छोड़ी गई</string>
     <string name="scanning">स्कैन हो रहा है...</string>
     <string name="no_mailing_lists">अभी तक कोई मेलिंग सूची नहीं</string>
-    <string name="scan_inbox_hint">न्यूज़लेटर और प्रचार भेजने वालों को ढूंढने के लिए "इनबॉक्स जांचें" पर टैप करें।</string>
+    <string name="scan_inbox_hint">न्यूज़लेटर और प्रचार भेजने वालों को ढूंढने के लिए इनबॉक्स जांचने हेतु नीचे खींचें।</string>
     <string name="active_tab">सक्रिय</string>
     <string name="unsubscribed_tab">सदस्यता छोड़ी गई</string>
     <string name="reactivate">फिर से चालू करें</string>
@@ -1116,6 +1121,7 @@
     <string name="unblock">अनब्लॉक करें</string>
     <string name="block_a_sender">किसी प्रेषक को ब्लॉक करें</string>
     <string name="block_sender_hint">कोई ईमेल पता या डोमेन डालें। उससे आने वाली नई मेल सीधे स्पैम में जाएगी।</string>
+    <string name="block_sender_invalid">कोई ईमेल पता या example.com जैसा डोमेन दर्ज करें।</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">ब्लॉक करें</string>
     <string name="blocked_domain">पूरा डोमेन</string>
@@ -1625,6 +1631,22 @@
     <plurals name="subscriptions_found_count">
         <item quantity="one">%d नई सदस्यता मिली</item>
         <item quantity="other">%d नई सदस्यताएं मिलीं</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">%2$s में से %1$s संदेश जांचे गए, %3$s प्रेषक मिला</item>
+        <item quantity="other">%2$s में से %1$s संदेश जांचे गए, %3$s प्रेषक मिले</item>
+    </plurals>
+    <string name="unsubscribe_in_progress">सदस्यता रद्द की जा रही है</string>
+    <string name="subscription_hero_summary">%1$s सक्रिय प्रेषक, %2$s की सदस्यता रद्द, %3$s ईमेल</string>
+    <string name="unsubscribe_rate_limited">आपने सदस्यता छोड़ने के बहुत अधिक अनुरोध भेजे हैं। एक मिनट बाद फिर से कोशिश करें।</string>
+    <string name="unsubscribe_opened_in_browser">यह प्रेषक आपको केवल अपनी वेबसाइट पर सदस्यता छोड़ने देता है। अपने ब्राउज़र में खुले पेज पर प्रक्रिया पूरी करें।</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">%d प्रेषक की सदस्यता नहीं छोड़ी जा सकी</item>
+        <item quantity="other">%d प्रेषकों की सदस्यता नहीं छोड़ी जा सकी</item>
+    </plurals>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="one">%d प्रेषक की सदस्यता आपको उसकी वेबसाइट पर रद्द करनी होगी</item>
+        <item quantity="other">%d प्रेषकों की सदस्यता आपको उनकी वेबसाइटों पर रद्द करनी होगी</item>
     </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="one">%d प्रेषक की सदस्यता छोड़ी गई</item>
@@ -2805,6 +2827,8 @@
     <string name="contact_add_failed">%1$s संपर्कों में सहेजा नहीं जा सका</string>
     <string name="contact_remove_failed">%1$s संपर्कों से हटाया नहीं जा सका</string>
     <string name="copy_failed">कॉपी नहीं हो सका। फिर से कोशिश करें।</string>
+    <string name="copy_subject">विषय कॉपी करें</string>
+    <string name="subject_copied">विषय कॉपी किया गया</string>
     <string name="create_label_subtitle">संदेशों पर अपनी पसंद के रंग का टैग लगाएं</string>
     <string name="delete_signature_message">“%1$s” हटाएं? इसे पहले जैसा नहीं किया जा सकता।</string>
     <string name="delete_vacation_reply_confirm">आपका बाहर होने का संदेश और उसकी तारीख़ें हटा दी जाएंगी। इसे पहले जैसा नहीं किया जा सकता।</string>
@@ -2919,6 +2943,9 @@
     <string name="translation_storage_remove_all">सब हटाएं</string>
     <string name="translation_storage_removed">भाषा पैक हटाए गए</string>
     <string name="translation_offer_download">यह संदेश %1$s में है। इसका अनुवाद करने पर एक भाषा पैक डाउनलोड होगा।</string>
+    <string name="translation_bar_translate_to">%1$s में अनुवाद करें</string>
+    <string name="translation_bar_translated_from">%1$s से अनुवादित</string>
+    <string name="translation_bar_downloading">%1$s भाषा पैक डाउनलोड हो रहा है</string>
     <string name="contact_support">सहायता से संपर्क करें</string>
     <string name="domain_purchase_manage">प्रबंधित करें</string>
     <string name="domain_purchase_cancel_payment_title">यह भुगतान रद्द करें?</string>
@@ -3042,6 +3069,10 @@
     <string name="remove_photo">फ़ोटो निकालें</string>
     <string name="add_photo">फ़ोटो जोड़ें</string>
     <string name="photo_too_large">कोई छोटी तस्वीर चुनें</string>
+    <string name="contact_photo_unreadable">Aster यह इमेज नहीं खोल सकता. कोई दूसरी फ़ोटो आज़माएं.</string>
+    <string name="contact_discard_changes_title">बदलाव छोड़ें?</string>
+    <string name="contact_discard_changes_message">इस संपर्क में किए गए आपके बदलाव सेव नहीं हुए हैं.</string>
+    <string name="contact_keep_editing">बदलाव जारी रखें</string>
     <string name="no_contacts_yet">अभी कोई संपर्क नहीं</string>
     <string name="no_contacts_match">\"%1$s\" से कोई संपर्क मेल नहीं खाता</string>
     <string name="no_contacts_in_trash">ट्रैश खाली है</string>
@@ -3603,6 +3634,13 @@
         <item quantity="other">%d संपर्क जोड़े गए</item>
     </plurals>
     <string name="body_index_status">खोज के लिए संदेश टेक्स्ट इंडेक्स हो रहा है: %2$d में से %1$d</string>
+    <string name="search_status_indexing_mail">मेल इंडेक्स हो रहा है</string>
+    <string name="search_status_indexing_text">संदेश टेक्स्ट इंडेक्स हो रहा है</string>
+    <string name="search_status_waiting_wifi">संदेश टेक्स्ट की इंडेक्सिंग Wi-Fi पर फिर से शुरू होगी</string>
+    <string name="search_status_paused">इंडेक्सिंग रोकी गई</string>
+    <string name="search_status_partial">परिणाम अधूरे हो सकते हैं</string>
+    <string name="search_status_count">%2$s में से %1$s</string>
+    <string name="search_refine_placeholder">परिणामों में खोजें</string>
     <string name="mail_key_upgrade_title">आपके सहेजे गए मेल अपडेट हो रहे हैं</string>
     <string name="mail_key_upgrade_running">Aster Mail आपके सहेजे गए संदेशों को आपकी मौजूदा कुंजियों से फिर से एन्क्रिप्ट कर रहा है। पूरा होने तक यह विंडो खुली रखें।</string>
     <string name="mail_key_upgrade_failed">Aster Mail आपके सहेजे गए संदेशों को अपडेट करना पूरा नहीं कर सका। आपका मेल नहीं बदला है। अपना कनेक्शन जांचें, फिर दोबारा कोशिश करें।</string>
@@ -3627,10 +3665,21 @@
     <string name="attachment_unverified">असत्यापित अटैचमेंट</string>
     <string name="confirm_back_exit">बाहर निकलने से पहले पुष्टि करें</string>
     <string name="confirm_back_exit_subtitle">इनबॉक्स से ऐप छोड़ने के लिए दो बार वापस दबाएं</string>
+    <string name="toast_position_title">ऐप में अलर्ट की जगह</string>
+    <string name="toast_position_subtitle">ऐप इस्तेमाल करते समय अलर्ट कहां दिखें</string>
+    <string name="toast_position_top">ऊपर</string>
+    <string name="toast_position_bottom">नीचे</string>
     <string name="mail_priority">प्राथमिकता</string>
     <string name="mail_priority_high">उच्च</string>
     <string name="mail_priority_normal">सामान्य</string>
     <string name="mail_priority_low">निम्न</string>
     <string name="mail_high_priority">उच्च प्राथमिकता</string>
     <string name="mail_low_priority">निम्न प्राथमिकता</string>
+    <string name="official_sender">आधिकारिक Aster पता</string>
+    <string name="official_sender_desc">यह संदेश एक आधिकारिक Aster पते से है। Aster कभी भी ईमेल से आपका पासवर्ड या रिकवरी वाक्यांश नहीं मांगेगा।</string>
+    <string name="search_match_position">%2$d में से %1$d</string>
+    <string name="search_match_position_description">%2$d में से मिलान %1$d</string>
+    <string name="search_match_previous">पिछला मिलान</string>
+    <string name="search_match_next">अगला मिलान</string>
+    <string name="search_match_clear">हाइलाइट हटाएं</string>
 </resources>

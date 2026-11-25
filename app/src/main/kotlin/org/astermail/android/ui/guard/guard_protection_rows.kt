@@ -74,7 +74,9 @@ import compose.icons.tablericons.Plug
 import org.astermail.android.R
 import org.astermail.android.api.guard.GuardHoldScope
 import org.astermail.android.api.guard.GuardSwitch
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterMotionSpec
 import org.astermail.android.design.AsterSemanticColors
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.aster_haptic
@@ -211,7 +213,7 @@ internal fun guard_scope_row(
     val density = LocalDensity.current
     val tone by animateFloatAsState(
         targetValue = if (enabled) 1f else 0f,
-        animationSpec = tween(180),
+        animationSpec = tween(AsterMotionSpec.color_ms, easing = AsterEasing.standard),
         label = "guard_scope_row",
     )
     val title_color = lerp(colors.text_tertiary, colors.text_primary, tone)

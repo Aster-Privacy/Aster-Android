@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_events">이벤트</string>
+    <string name="contact_event_anniversary">기념일</string>
+    <string name="contact_add_event">이벤트 추가</string>
+    <string name="contact_remove_event">이벤트 삭제</string>
+    <string name="contact_event_type">이벤트 유형</string>
+    <string name="contact_event_year_range">%1$d~%2$d 사이의 연도를 입력하세요</string>
+    <string name="contacts_add_to_favorites">즐겨찾기에 추가</string>
+    <string name="contacts_remove_from_favorites">즐겨찾기에서 삭제</string>
+    <string name="contacts_favorites_failed">즐겨찾기를 업데이트하지 못했습니다. 다시 시도하세요.</string>
+    <string name="contacts_recently_added">최근 추가됨</string>
+    <string name="contacts_today">오늘</string>
+</resources>

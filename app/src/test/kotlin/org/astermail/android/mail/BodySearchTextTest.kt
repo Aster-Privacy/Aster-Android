@@ -21,6 +21,7 @@
 
 package org.astermail.android.mail
 
+import org.astermail.android.storage.search.BodyBackfillRow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -91,5 +92,56 @@ class BodySearchTextTest {
         assertTrue(body_backfill_allowed(on_wifi = true, on_ethernet = false))
         assertTrue(body_backfill_allowed(on_wifi = false, on_ethernet = true))
         assertFalse(body_backfill_allowed(on_wifi = false, on_ethernet = false))
+    }
+
+    @Test
+    fun backfill_groups_rows_by_thread_in_order() {
+        val rows = listOf(
+            BodyBackfillRow("m1", "t1", "2026-11-03"),
+            BodyBackfillRow("m2", "t2", "2026-11-02"),
+            BodyBackfillRow("m3", "t1", "2026-11-01"),
+        )
+        val groups = body_backfill_groups(rows, emptySet())
+        assertEquals(listOf("t1", "t2"), groups.keys.toList())
+        assertEquals(listOf("m1", "m3"), groups["t1"])
+        assertEquals(listOf("m2"), groups["t2"])
+    }
+
+    @Test
+    fun backfill_groups_skip_failed_ids_and_blank_threads() {
+        val rows = listOf(
+            BodyBackfillRow("m1", "t1", "2026-11-03"),
+            BodyBackfillRow("m2", "", "2026-11-02"),
+            BodyBackfillRow("m3", null, "2026-11-01"),
+            BodyBackfillRow("m4", "t2", "2026-11-01"),
+        )
+        val groups = body_backfill_groups(rows, setOf("m4"))
+        assertEquals(mapOf("t1" to listOf("m1")), groups)
+    }
+
+    @Test
+    fun progress_publishes_first_then_throttles() {
+        assertTrue(should_publish_body_progress(last_published_ms = 0L, now_ms = 1_000L, finished = false))
+        assertFalse(should_publish_body_progress(last_published_ms = 1_000L, now_ms = 1_100L, finished = false))
+        assertTrue(should_publish_body_progress(last_published_ms = 1_000L, now_ms = 1_250L, finished = false))
+    }
+
+    @Test
+    fun progress_always_publishes_when_finished() {
+        assertTrue(should_publish_body_progress(last_published_ms = 1_000L, now_ms = 1_001L, finished = true))
+    }
+
+    @Test
+    fun snapshot_covers_only_when_every_expected_id_is_ready() {
+        assertTrue(snapshot_covers(setOf("a", "b", "c"), listOf("a", "c")))
+        assertFalse(snapshot_covers(setOf("a"), listOf("a", "b")))
+        assertFalse(snapshot_covers(setOf("a"), emptyList()))
+    }
+
+    @Test
+    fun thread_rows_mark_missing_expected_ids_once() {
+        val rows = body_index_thread_rows(emptyList(), listOf("x", "y", "x"), { emptyList() }, now = 7L)
+        assertEquals(listOf("x", "y"), rows.map { it.message_id })
+        assertTrue(rows.all { it.body.isEmpty() && it.indexed_at == 7L })
     }
 }

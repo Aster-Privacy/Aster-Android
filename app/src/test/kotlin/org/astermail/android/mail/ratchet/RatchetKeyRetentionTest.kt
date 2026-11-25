@@ -156,10 +156,54 @@ class RatchetKeyRetentionTest {
     }
 
     @Test
-    fun `merge caps the number of retained sets`() {
+    fun `merge keeps a long history of small sets`() {
         val many = JSONArray()
         repeat(max_retained_ratchet_key_sets + 10) { many.put(JSONObject().put("ratchet_identity_key", "id_$it")) }
-        assertEquals(max_retained_ratchet_key_sets, JSONArray(merge_retained_ratchet_keys(many.toString())).length())
+        assertEquals(max_retained_ratchet_key_sets + 10, JSONArray(merge_retained_ratchet_keys(many.toString())).length())
+    }
+
+    @Test
+    fun `merge caps a history that exceeds the byte budget`() {
+        val many = JSONArray()
+        repeat(max_retained_ratchet_key_sets + 20) {
+            many.put(JSONObject().put("ratchet_identity_key", "id_$it").put("ratchet_pq_identity_key", "x".repeat(10 * 1024)))
+        }
+        val kept = JSONArray(merge_retained_ratchet_keys(many.toString()))
+        assertTrue(kept.length() >= max_retained_ratchet_key_sets)
+        assertTrue(kept.length() < max_retained_ratchet_key_sets + 20)
+        assertTrue(kept.toString().length <= ratchet_history_max_bytes + kept.length())
+        assertEquals("id_0", kept.getJSONObject(0).getString("ratchet_identity_key"))
+    }
+
+    @Test
+    fun `merge keeps a PQ secret held only by a copy without it elsewhere`() {
+        val without_secret = JSONObject()
+            .put("ratchet_identity_key", "id_old")
+            .put("ratchet_pq_identity_public", "pqpub_old")
+        val with_secret = JSONObject(without_secret.toString()).put("ratchet_pq_identity_key", "pq_old")
+        val kept = entries_of(JSONArray(merge_retained_ratchet_keys(
+            JSONArray().put(without_secret).toString(),
+            JSONArray().put(with_secret).toString(),
+        )))
+        assertTrue(kept.any { it.optString("ratchet_pq_identity_key") == "pq_old" })
+    }
+
+    @Test
+    fun `trimming keeps a dropped PQ secret as a PQ-only entry`() {
+        val kept = keep_dropped_pq_secrets(
+            listOf(JSONObject().put("ratchet_identity_key", "id_a").put("ratchet_pq_identity_key", "pq_a")),
+            listOf(
+                JSONObject().put("ratchet_identity_key", "id_b").put("ratchet_pq_identity_key", "pq_a"),
+                JSONObject()
+                    .put("ratchet_identity_key", "id_c")
+                    .put("ratchet_pq_identity_key", "pq_c")
+                    .put("ratchet_pq_identity_public", "pqpub_c"),
+            ),
+        )
+        assertEquals(2, kept.size)
+        assertEquals("pq_c", kept[1].getString("ratchet_pq_identity_key"))
+        assertEquals("pqpub_c", kept[1].getString("ratchet_pq_identity_public"))
+        assertFalse(kept[1].has("ratchet_identity_key"))
     }
 
     private fun vault_for(identity: RatchetCrypto.EcKeyPair, spk: RatchetCrypto.EcKeyPair): JSONObject = JSONObject()
@@ -431,7 +475,7 @@ class RatchetKeyRetentionTest {
             .put("ratchet_previous_keys", full)
         fold_local_ratchet_keys_into_vault(vault, store)
         val kept = vault.getJSONArray("ratchet_previous_keys")
-        assertEquals(max_retained_ratchet_key_sets, kept.length())
+        assertEquals(max_retained_ratchet_key_sets + 1, kept.length())
         assertEquals("id_local", kept.getJSONObject(0).getString("ratchet_identity_key"))
     }
 

@@ -25,6 +25,7 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import org.astermail.android.mail.strip_non_rendered_blocks
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,7 +35,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import org.astermail.android.design.AsterShapes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -60,6 +61,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.aster_shared_axis_slide_px
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterTextField
@@ -70,6 +73,7 @@ import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.templates.DecryptedTemplate
 import org.astermail.android.templates.TemplatesViewModel
 import org.astermail.android.util.clip_units
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun TemplatesScreen(
@@ -84,9 +88,19 @@ fun TemplatesScreen(
 
     var pending_delete by remember { mutableStateOf<DecryptedTemplate?>(null) }
 
-    val draft = state.draft
-    if (draft != null) {
-        BackHandler { vm.cancel_edit() }
+    val live_draft = state.draft
+    val reduce_motion = aster_reduce_motion()
+    val slide_px = aster_shared_axis_slide_px()
+    AnimatedContent(
+        targetState = live_draft != null,
+        transitionSpec = { settings_sub_screen_axis_x(forward = targetState, slide_px = slide_px, reduce_motion = reduce_motion) },
+        label = "template_editor",
+    ) { editor_open ->
+    if (editor_open) {
+        val held_draft = remember { arrayOfNulls<DecryptedTemplate>(1) }
+        if (live_draft != null) held_draft[0] = live_draft
+        val draft = held_draft[0] ?: return@AnimatedContent
+        if (live_draft != null) BackHandler { vm.cancel_edit() }
         template_editor(
             title = if (draft.id.isBlank()) stringResource(R.string.new_template) else stringResource(R.string.edit_template),
             name = draft.name,
@@ -100,15 +114,15 @@ fun TemplatesScreen(
             on_content_change = { vm.update_draft(content = it) },
             on_save = { vm.save_draft() },
         )
-        return
-    }
-
+    } else {
     detail_scaffold(
         title = stringResource(R.string.templates),
         on_back = on_back,
         trailing = {
             AsterGhostButton(label = stringResource(R.string.new_label), onClick = { vm.start_new() })
         },
+        on_refresh = { vm.join_launched { vm.load() } },
+        refresh_enabled = !state.is_saving && pending_delete == null,
     ) {
         if (state.is_loading && state.items.isEmpty()) {
             settings_pending_spinner()
@@ -137,16 +151,18 @@ fun TemplatesScreen(
             v_gap(AsterSpacing.md)
         }
 
-        if (state.items.isEmpty() && !state.is_loading && state.undecryptable_count == 0) {
+        if (state.items.isEmpty() && !state.is_loading) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-                    Text(
-                        text = stringResource(R.string.no_templates),
-                        color = colors.text_primary,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Spacer(Modifier.size(AsterSpacing.xs))
+                    if (state.undecryptable_count == 0) {
+                        Text(
+                            text = stringResource(R.string.no_templates),
+                            color = colors.text_primary,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Spacer(Modifier.size(AsterSpacing.xs))
+                    }
                     Text(
                         text = stringResource(R.string.templates_description),
                         color = colors.text_tertiary,
@@ -175,6 +191,8 @@ fun TemplatesScreen(
             }
         }
         v_gap(AsterSpacing.xxl)
+    }
+    }
     }
 
     val doomed = pending_delete
@@ -245,7 +263,7 @@ private fun template_row(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
-                        .background(colors.bg_tertiary, RoundedCornerShape(999.dp))
+                        .background(colors.bg_tertiary, AsterShapes.pill)
                         .padding(horizontal = 8.dp, vertical = 2.dp),
                 )
             }
@@ -303,7 +321,7 @@ private fun template_editor(
         on_back = on_back,
         trailing = {
             if (is_saving) {
-                CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(18.dp))
+                org.astermail.android.design.components.aster_spinner(color = colors.accent_blue, modifier = Modifier.size(18.dp))
             } else {
                 AsterGhostButton(label = stringResource(R.string.save), onClick = on_save)
             }

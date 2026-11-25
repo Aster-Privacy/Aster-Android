@@ -21,12 +21,12 @@
 
 package org.astermail.android.ui.settings.detail
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -61,6 +61,7 @@ import org.astermail.android.ui.settings.device_client_label_res
 import org.astermail.android.ui.settings.device_display_name
 import org.astermail.android.ui.settings.device_display_platform
 import org.astermail.android.ui.settings.this_device_badge
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun SessionsScreen(
@@ -73,7 +74,7 @@ fun SessionsScreen(
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
-        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg.toString())
         vm.clear_action_result()
     }
 
@@ -91,6 +92,7 @@ fun SessionsScreen(
         title = stringResource(R.string.sessions),
         on_back = on_back,
         scroll_state = scroll_state,
+        on_refresh = { vm.join_launched { vm.load_sessions() } },
     ) {
         state.sessions_held?.let {
             org.astermail.android.guard.GuardHeldBanner(it)
@@ -129,12 +131,7 @@ fun SessionsScreen(
                 v_gap(AsterSpacing.lg)
             }
             if (other_sessions.isNotEmpty()) {
-                section_header_action(
-                    title = stringResource(R.string.sessions_other_devices_section),
-                    action_label = stringResource(R.string.sign_out_others_action),
-                    enabled = true,
-                    on_click = { show_logout_others_confirm = true },
-                )
+                section_label(stringResource(R.string.sessions_other_devices_section))
                 AsterCard(modifier = Modifier.fillMaxWidth()) {
                     other_sessions.forEachIndexed { idx, s ->
                         session_row(
@@ -144,6 +141,12 @@ fun SessionsScreen(
                         if (idx < other_sessions.lastIndex) settings_row_gap()
                     }
                 }
+                v_gap(AsterSpacing.md)
+                org.astermail.android.design.components.AsterDestructiveButton(
+                    label = stringResource(R.string.sign_out_all_other),
+                    onClick = { show_logout_others_confirm = true },
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
         v_gap(AsterSpacing.xxl)
@@ -267,7 +270,11 @@ private fun session_row(
         if (on_revoke == null) {
             this_device_badge()
         } else {
-            AsterGhostButton(label = stringResource(R.string.sign_out), onClick = on_revoke)
+            org.astermail.android.design.components.AsterCompactDestructiveButton(
+                label = stringResource(R.string.sign_out),
+                onClick = on_revoke,
+                modifier = Modifier.widthIn(min = 84.dp),
+            )
         }
     }
 }

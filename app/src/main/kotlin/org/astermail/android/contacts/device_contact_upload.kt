@@ -31,6 +31,7 @@ data class DeviceContactUploadResult(
     val failed: Int,
     val limit_reached: Boolean,
     val last_failure: Throwable?,
+    val unsent: List<Any?> = emptyList(),
 )
 
 suspend fun <T> upload_device_contacts(
@@ -41,26 +42,32 @@ suspend fun <T> upload_device_contacts(
     var imported = 0
     var failed = 0
     var last_failure: Throwable? = null
+    val unsent = mutableListOf<T>()
     for ((index, contact) in contacts.withIndex()) {
         val error = create(contact).exceptionOrNull()
         when (error) {
             null -> imported++
             is CancellationException -> throw error
-            is ApiError.PlanLimitExceeded -> return DeviceContactUploadResult(imported, failed, true, last_failure)
+            is ApiError.PlanLimitExceeded -> {
+                unsent.addAll(contacts.subList(index, contacts.size))
+                return DeviceContactUploadResult(imported, failed, true, last_failure, unsent)
+            }
             else -> {
                 last_failure = error
                 failed++
+                unsent.add(contact)
             }
         }
         on_progress(index + 1)
     }
-    return DeviceContactUploadResult(imported, failed, false, last_failure)
+    return DeviceContactUploadResult(imported, failed, false, last_failure, unsent)
 }
 
 data class ContactImportPlan(
     val new_contacts: List<Contact>,
     val in_trash: Int,
     val updates: List<Contact> = emptyList(),
+    val deleted_in_aster: Int = 0,
 )
 
 private fun normalized_key(value: String): String = value.lowercase(Locale.ROOT).trim()
@@ -104,6 +111,28 @@ fun device_entry_keys(contacts: List<Contact>): Set<String> = buildSet {
 }
 
 const val DETAILS_BASELINE_MARKER = "details_v1"
+
+private fun identity_key(match_key: String): String = hash_entry_key("i:$match_key")
+
+fun device_identity_keys(contacts: List<Contact>): Set<String> = buildSet {
+    for (contact in contacts) import_match_keys(contact).forEach { add(identity_key(it)) }
+}
+
+private const val TOMBSTONE_KEY_LENGTH = 32
+
+private fun tombstone_key(match_key: String): String = hash_entry_key("t:$match_key").take(TOMBSTONE_KEY_LENGTH)
+
+fun deletion_tombstone_keys(contact: Contact): List<String> =
+    (email_match_keys(contact) + listOfNotNull(name_key(contact))).map(::tombstone_key)
+
+fun deletion_tombstone_keys(contacts: Collection<Contact>): List<String> =
+    contacts.flatMap(::deletion_tombstone_keys).distinct()
+
+private fun seen_in_last_device_sync(keys: List<String>, known_identities: Set<String>): Boolean =
+    known_identities.isNotEmpty() && keys.any { identity_key(it) in known_identities }
+
+private fun deleted_in_aster(keys: List<String>, tombstones: Set<String>): Boolean =
+    tombstones.isNotEmpty() && keys.any { tombstone_key(it) in tombstones }
 
 private class DetailField(
     val name: String,
@@ -189,6 +218,8 @@ fun plan_contact_import(
     existing: List<Contact>,
     previously_seen: Set<String>? = emptySet(),
     refresh_details: Boolean = false,
+    tombstones: Set<String> = emptySet(),
+    known_identities: Set<String> = emptySet(),
 ): ContactImportPlan {
     val active = existing.filter { it.deleted_at.isBlank() }
     val active_index = active_match_index(active)
@@ -198,6 +229,7 @@ fun plan_contact_import(
     val new_contacts = mutableListOf<Contact>()
     val updates = linkedMapOf<String, Contact>()
     var in_trash = 0
+    var removed = 0
     for (contact in incoming) {
         val keys = import_match_keys(contact)
         if (keys.isEmpty()) {
@@ -224,7 +256,11 @@ fun plan_contact_import(
             in_trash++
             continue
         }
+        if (deleted_in_aster(keys, tombstones) || seen_in_last_device_sync(keys, known_identities)) {
+            removed++
+            continue
+        }
         new_contacts.add(contact)
     }
-    return ContactImportPlan(new_contacts, in_trash, updates.values.toList())
+    return ContactImportPlan(new_contacts, in_trash, updates.values.toList(), removed)
 }

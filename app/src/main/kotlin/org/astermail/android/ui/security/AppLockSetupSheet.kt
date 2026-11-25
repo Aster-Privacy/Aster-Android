@@ -84,6 +84,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.aster_error_shake
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterSecondaryButton
@@ -91,6 +92,7 @@ import org.astermail.android.security.AppLockStore
 import kotlin.math.roundToInt
 import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.ui.common.aster_modal_sheet
+import org.astermail.android.ui.common.remember_sheet_dismiss
 import org.astermail.android.ui.common.sheet_container_color
 
 private enum class SetupStep {
@@ -107,6 +109,7 @@ fun AppLockSetupSheet(
 ) {
     org.astermail.android.ui.common.secure_screen()
     val sheet_state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val dismiss_sheet = remember_sheet_dismiss(sheet_state, on_dismiss)
     val colors = AsterMaterial.colors
     val scope = rememberCoroutineScope()
 
@@ -314,7 +317,7 @@ fun AppLockSetupSheet(
                     ) {
                         AsterSecondaryButton(
                             label = stringResource(R.string.cancel),
-                            onClick = on_dismiss,
+                            onClick = dismiss_sheet,
                             modifier = Modifier.weight(1f),
                         )
                         AsterButton(
@@ -516,7 +519,7 @@ fun AppLockVerifySheet(
                     PinDots(digits = digits, filled = input.length, shake_trigger = shake_trigger)
                     Box(modifier = Modifier.height(18.dp), contentAlignment = Alignment.Center) {
                         when {
-                            verifying -> androidx.compose.material3.CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = colors.accent_blue)
+                            verifying -> org.astermail.android.design.components.aster_spinner(modifier = Modifier.size(16.dp), stroke_width = 2.dp, color = colors.accent_blue)
                             error_msg != null -> Text(text = error_msg!!, color = colors.danger, fontSize = 12.sp)
                             attempt_hint != null -> Text(text = attempt_hint, color = colors.text_muted, fontSize = 12.sp)
                         }
@@ -593,16 +596,9 @@ private fun setup_passphrase_field(
     on_submit: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val offset_x = remember { Animatable(0f) }
-    LaunchedEffect(shake_trigger) {
-        if (shake_trigger == 0) return@LaunchedEffect
-        for (x in listOf(-10f, 10f, -10f, 10f, 0f)) {
-            offset_x.animateTo(x, animationSpec = tween(60))
-        }
-    }
     Box(
         modifier = Modifier
-            .offset { IntOffset(offset_x.value.roundToInt(), 0) }
+            .aster_error_shake(shake_trigger)
             .fillMaxWidth()
             .background(colors.input_bg, SquircleShape(14.dp))
             .border(1.dp, colors.input_border, SquircleShape(14.dp))

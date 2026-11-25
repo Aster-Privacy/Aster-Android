@@ -18,15 +18,14 @@
 
 package org.astermail.android.design.components
 
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberTransition
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -61,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -91,16 +91,17 @@ import androidx.core.view.WindowInsetsCompat
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterMotionSpec
+import org.astermail.android.design.AsterSpring
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.aster_reduce_motion
 import androidx.compose.material3.ripple
 
 private val menu_surface_shape = AsterShapes.island
-private val menu_item_shape = AsterShapes.control
+private val menu_item_shape = RectangleShape
 private val menu_screen_margin = 12.dp
-private val menu_surface_padding = 6.dp
-private val menu_surface_elevation = 18.dp
+private val menu_surface_elevation = 3.dp
 private val menu_item_min_height = 44.dp
 private val menu_item_padding_horizontal = 12.dp
 private val menu_icon_size = 18.dp
@@ -111,8 +112,6 @@ private val menu_label_size = 12.sp
 private const val menu_surface_lift = 0.14f
 private const val menu_border_lift_dark = 0.09f
 private const val menu_border_lift_light = 0.07f
-private const val menu_enter_scale = 0.85f
-private const val menu_exit_scale = 0.88f
 
 private class menu_anchor_state {
     var bounds by mutableStateOf<IntRect?>(null)
@@ -164,13 +163,13 @@ fun aster_menu_surface(
     Column(
         modifier = modifier
             .shadow(menu_surface_elevation, menu_surface_shape, clip = false)
+            .clip(menu_surface_shape)
             .acrylic(AsterMaterial.colors, menu_surface_shape, aster_menu_surface_color())
             .defaultMinSize(minWidth = min_width)
             .widthIn(max = max_width)
             .width(IntrinsicSize.Max)
             .heightIn(max = max_height)
-            .verticalScroll(rememberScrollState())
-            .padding(menu_surface_padding),
+            .verticalScroll(rememberScrollState()),
         content = content,
     )
 }
@@ -205,47 +204,40 @@ fun aster_menu(
 
     val anchor = remember { menu_anchor_state() }
     val provider = remember(anchor) { menu_full_window_provider(anchor) }
+    val frozen_size = remember { IntArray(2) }
+    if (!visible_state.currentState && visible_state.targetState) {
+        frozen_size[0] = 0
+        frozen_size[1] = 0
+    }
     val transition = rememberTransition(visible_state, label = "aster_menu")
     val scale by transition.animateFloat(
         transitionSpec = {
             when {
-                reduce_motion -> snap()
-                targetState -> spring(dampingRatio = 0.86f, stiffness = 700f)
-                else -> tween(120, easing = FastOutLinearInEasing)
+                reduce_motion || !targetState -> tween(0)
+                else -> AsterSpring.fast_spatial<Float>()
             }
         },
         label = "aster_menu_scale",
     ) { shown ->
         when {
             shown || reduce_motion -> 1f
-            visible_state.targetState -> menu_enter_scale
-            else -> menu_exit_scale
+            visible_state.targetState -> AsterMotionSpec.fade_from
+            else -> 1f
         }
     }
     val fade by transition.animateFloat(
         transitionSpec = {
             when {
-                reduce_motion -> snap()
-                targetState -> tween(120, easing = LinearOutSlowInEasing)
-                else -> tween(110, easing = FastOutLinearInEasing)
+                reduce_motion && targetState -> tween(AsterMotionSpec.reduced_fade_ms, easing = LinearEasing)
+                reduce_motion -> tween(AsterMotionSpec.reduced_fade_out_ms, easing = LinearEasing)
+                else -> AsterSpring.fast_effects<Float>()
             }
         },
         label = "aster_menu_fade",
     ) { shown -> if (shown) 1f else 0f }
-    val content_fade by transition.animateFloat(
-        transitionSpec = {
-            when {
-                reduce_motion -> snap()
-                targetState -> tween(150, delayMillis = 50, easing = LinearOutSlowInEasing)
-                else -> tween(80)
-            }
-        },
-        label = "aster_menu_content_fade",
-    ) { shown -> if (shown) 1f else 0f }
 
     val menu_colors = AsterMaterial.colors
     val surface_color = aster_menu_surface_color()
-    val scrim_color = Color.Black.copy(alpha = if (menu_colors.is_dark) 0.34f else 0.16f)
     val surface_tap = remember { MutableInteractionSource() }
 
     Popup(
@@ -258,8 +250,6 @@ fun aster_menu(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer { alpha = fade }
-                    .background(scrim_color)
                     .pointerInput(on_dismiss) {
                         awaitEachGesture {
                             awaitFirstDown(requireUnconsumed = false)
@@ -271,26 +261,31 @@ fun aster_menu(
                 content = {
                     Column(
                         modifier = modifier
+                            .clip(menu_surface_shape)
                             .acrylic(menu_colors, menu_surface_shape, surface_color)
                             .clickable(interactionSource = surface_tap, indication = null) {}
                             .defaultMinSize(minWidth = min_width)
                             .widthIn(max = max_width)
                             .width(IntrinsicSize.Max)
                             .heightIn(max = max_height)
-                            .verticalScroll(rememberScrollState())
-                            .padding(menu_surface_padding)
-                            .graphicsLayer { alpha = content_fade },
+                            .verticalScroll(rememberScrollState()),
                         content = content,
                     )
                 },
             ) { measurables, constraints ->
                 val margin = menu_screen_margin.roundToPx()
+                val limit_width = (constraints.maxWidth - margin * 2).coerceAtLeast(0)
+                val limit_height = (constraints.maxHeight - margin * 2).coerceAtLeast(0)
                 val placeable = measurables.first().measure(
                     Constraints(
-                        maxWidth = (constraints.maxWidth - margin * 2).coerceAtLeast(0),
-                        maxHeight = (constraints.maxHeight - margin * 2).coerceAtLeast(0),
+                        minWidth = frozen_size[0].coerceAtMost(limit_width),
+                        maxWidth = limit_width,
+                        minHeight = frozen_size[1].coerceAtMost(limit_height),
+                        maxHeight = limit_height,
                     ),
                 )
+                frozen_size[0] = maxOf(frozen_size[0], placeable.width)
+                frozen_size[1] = maxOf(frozen_size[1], placeable.height)
                 layout(constraints.maxWidth, constraints.maxHeight) {
                     val bounds = anchor.bounds ?: return@layout
                     val parent_screen = IntArray(2).also { parent_view.getLocationOnScreen(it) }
@@ -353,6 +348,7 @@ fun aster_menu_item(
     test_tag: String? = null,
     count: Int = 0,
     indent: Dp = 0.dp,
+    reserve_check: Boolean = false,
     leading: (@Composable () -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
@@ -425,8 +421,34 @@ fun aster_menu_item(
                 tint = if (enabled) colors.accent_blue else colors.text_muted,
                 modifier = Modifier.size(menu_check_size),
             )
+        } else if (reserve_check) {
+            Spacer(Modifier.width(12.dp + menu_check_size))
         }
     }
+}
+
+@Composable
+fun aster_menu_toggle_item(
+    label: String,
+    checked: Boolean,
+    on_click: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    enabled: Boolean = true,
+    test_tag: String? = null,
+) {
+    aster_menu_item(
+        label = label,
+        on_click = on_click,
+        modifier = modifier.semantics {
+            toggleableState = if (checked) ToggleableState.On else ToggleableState.Off
+        },
+        icon = icon,
+        selected = checked,
+        enabled = enabled,
+        test_tag = test_tag,
+        reserve_check = true,
+    )
 }
 
 @Composable

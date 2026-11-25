@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="subscription_load_failed_body">Aster kon je abonnement niet laden. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="billing_source_play">Gefactureerd via Google Play</string>
+    <string name="billing_source_card">Gefactureerd per kaart</string>
+    <string name="billing_source_crypto">Betaald met crypto</string>
+    <string name="billing_status_trial">Proefperiode</string>
+    <string name="billing_top_plan_title">Je hebt het hoogste abonnement</string>
+    <string name="billing_section_load_failed">Aster kon dit onderdeel niet laden.</string>
+</resources>

@@ -157,7 +157,7 @@ internal fun pdf_attachment_viewer(
     }
 
     when (val current = state) {
-        pdf_view_state.loading -> CircularProgressIndicator(
+        pdf_view_state.loading -> org.astermail.android.design.components.aster_spinner(
             color = Color.White,
             modifier = Modifier.size(36.dp).testTag("pdf_loading"),
         )
@@ -351,7 +351,7 @@ private fun pdf_page(document: pdf_document, index: Int, target_width_px: Int, f
                 .background(Color.White.copy(alpha = 0.08f)),
             contentAlignment = Alignment.Center,
         ) {
-            CircularProgressIndicator(color = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(24.dp))
+            org.astermail.android.design.components.aster_spinner(color = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(24.dp))
         }
     }
 }

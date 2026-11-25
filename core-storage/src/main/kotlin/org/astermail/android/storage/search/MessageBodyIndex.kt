@@ -58,6 +58,12 @@ data class MessageBodyFtsEntity(
     val body: String,
 )
 
+data class BodyBackfillRow(
+    val id: String,
+    val thread_token: String?,
+    val timestamp: String,
+)
+
 @Dao
 abstract class MessageBodyIndexDao {
 
@@ -96,6 +102,23 @@ abstract class MessageBodyIndexDao {
             "AND d.id NOT IN (:skip) ORDER BY d.timestamp DESC LIMIT :limit",
     )
     abstract suspend fun unindexed_rows(skip: List<String>, limit: Int): List<InboxWindowRow>
+
+    @Query(
+        "SELECT d.id, d.thread_token, d.timestamp FROM decrypted_mail_cache d " +
+            "LEFT JOIN message_body_index b ON b.message_id = d.id " +
+            "WHERE b.message_id IS NULL AND d.thread_token IS NOT NULL AND d.thread_token != '' " +
+            "ORDER BY d.timestamp DESC, d.id DESC LIMIT :limit",
+    )
+    abstract suspend fun unindexed_head(limit: Int): List<BodyBackfillRow>
+
+    @Query(
+        "SELECT d.id, d.thread_token, d.timestamp FROM decrypted_mail_cache d " +
+            "LEFT JOIN message_body_index b ON b.message_id = d.id " +
+            "WHERE b.message_id IS NULL AND d.thread_token IS NOT NULL AND d.thread_token != '' " +
+            "AND (d.timestamp < :before_timestamp OR (d.timestamp = :before_timestamp AND d.id < :before_id)) " +
+            "ORDER BY d.timestamp DESC, d.id DESC LIMIT :limit",
+    )
+    abstract suspend fun unindexed_after(before_timestamp: String, before_id: String, limit: Int): List<BodyBackfillRow>
 
     @Query(
         "SELECT COUNT(*) FROM decrypted_mail_cache " +

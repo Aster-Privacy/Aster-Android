@@ -270,7 +270,7 @@ object SenderTrustStore {
         }
         val current = state.value
         if (current.contacts == next) return
-        state.value = current.copy(contacts = java.util.Collections.unmodifiableList(next))
+        publish(current.copy(contacts = java.util.Collections.unmodifiableList(next)))
     }
 
     @Synchronized
@@ -294,6 +294,19 @@ object SenderTrustStore {
         state.value = SenderTrustContext()
     }
 
+    private val warm_executor = java.util.concurrent.Executors.newSingleThreadExecutor { task ->
+        Thread(task, "aster-trust-warm").apply { isDaemon = true }
+    }
+
+    private fun publish(next: SenderTrustContext) {
+        state.value = next
+        if (next.own_addresses.isEmpty() && next.contacts.isEmpty()) return
+        warm_executor.execute {
+            if (state.value !== next) return@execute
+            runCatching { warm_personal_context(next.own_addresses, next.contacts) }
+        }
+    }
+
     private fun publish_own_addresses() {
         val seen = java.util.TreeSet<String>()
         val candidates = ArrayList<String>()
@@ -306,6 +319,6 @@ object SenderTrustStore {
         val next = seen.take(max_own_addresses)
         val current = state.value
         if (current.own_addresses == next) return
-        state.value = current.copy(own_addresses = java.util.Collections.unmodifiableList(next))
+        publish(current.copy(own_addresses = java.util.Collections.unmodifiableList(next)))
     }
 }

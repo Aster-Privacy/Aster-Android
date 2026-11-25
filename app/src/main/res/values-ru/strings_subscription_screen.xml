@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="subscription_load_failed_body">Aster не удалось загрузить ваш тариф. Проверьте подключение и повторите попытку.</string>
+    <string name="billing_source_play">Оплата через Google Play</string>
+    <string name="billing_source_card">Оплата картой</string>
+    <string name="billing_source_crypto">Оплачено криптовалютой</string>
+    <string name="billing_status_trial">Пробный период</string>
+    <string name="billing_top_plan_title">У вас самый высокий тариф</string>
+    <string name="billing_section_load_failed">Aster не удалось загрузить этот раздел.</string>
+</resources>

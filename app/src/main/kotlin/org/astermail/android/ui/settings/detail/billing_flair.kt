@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -93,6 +94,8 @@ internal fun plan_feature_icon(@StringRes feature_res: Int): ImageVector = when 
     else -> TablerIcons.CircleCheck
 }
 
+internal const val progress_track_alpha = 0.14f
+
 @Composable
 internal fun solid_progress_bar(fraction: Float, is_over: Boolean, height: Dp = 6.dp) {
     val colors = AsterMaterial.colors
@@ -102,12 +105,13 @@ internal fun solid_progress_bar(fraction: Float, is_over: Boolean, height: Dp = 
             .fillMaxWidth()
             .height(height)
             .clip(CircleShape)
-            .background(colors.bg_tertiary),
+            .background(colors.text_primary.copy(alpha = progress_track_alpha)),
     ) {
         if (filled > 0f) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(filled)
+                    .widthIn(min = height * 2)
                     .fillMaxHeight()
                     .clip(CircleShape)
                     .background(if (is_over) colors.danger else colors.accent_blue),

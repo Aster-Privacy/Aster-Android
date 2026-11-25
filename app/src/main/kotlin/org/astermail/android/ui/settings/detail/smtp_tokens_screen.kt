@@ -76,6 +76,7 @@ import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.show_copy_result_toast
 import org.astermail.android.ui.common.write_sensitive_to_clipboard
 import org.astermail.android.util.schedule_sensitive_clipboard_clear
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
@@ -98,7 +99,7 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
-        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg.toString())
         vm.clear_action_result()
     }
 
@@ -146,7 +147,16 @@ fun SmtpTokensScreen(on_back: () -> Unit, on_upgrade: () -> Unit = {}) {
         }
     }
 
-    detail_scaffold(title = stringResource(R.string.settings_smtp_tokens), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.settings_smtp_tokens),
+        on_back = on_back,
+        on_refresh = {
+            vm.join_launched {
+                vm.load_smtp_tokens(force = true)
+                vm.load_custom_domain_addresses(force = true)
+            }
+        },
+    ) {
         if (!is_locked) {
             Text(
                 text = stringResource(R.string.smtp_tokens_summary),
@@ -355,11 +365,7 @@ internal fun smtp_token_created_dialog(settings: SmtpTokenSettings, on_done: () 
     val copy_value: (String) -> Unit = { value ->
         if (write_sensitive_to_clipboard(context, clipboard_label, value)) {
             schedule_sensitive_clipboard_clear(context)
-            android.widget.Toast.makeText(
-                context,
-                context.getString(R.string.copied_to_clipboard),
-                android.widget.Toast.LENGTH_SHORT,
-            ).show()
+            org.astermail.android.ui.common.app_toast.show(context.getString(R.string.copied_to_clipboard).toString())
         } else {
             show_copy_failed_toast(context)
         }
@@ -396,11 +402,7 @@ internal fun smtp_token_created_dialog(settings: SmtpTokenSettings, on_done: () 
                     onClick = {
                         if (write_sensitive_to_clipboard(context, clipboard_label, all_text)) {
                             schedule_sensitive_clipboard_clear(context)
-                            android.widget.Toast.makeText(
-                                context,
-                                context.getString(R.string.copied_to_clipboard),
-                                android.widget.Toast.LENGTH_SHORT,
-                            ).show()
+                            org.astermail.android.ui.common.app_toast.show(context.getString(R.string.copied_to_clipboard).toString())
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -456,11 +458,7 @@ internal fun smtp_token_details_dialog(settings: SmtpTokenConnectionSettings, on
                     label = stringResource(R.string.smtp_token_copy_all),
                     onClick = {
                         if (write_sensitive_to_clipboard(context, clipboard_label, details_text)) {
-                            android.widget.Toast.makeText(
-                                context,
-                                context.getString(R.string.copied_to_clipboard),
-                                android.widget.Toast.LENGTH_SHORT,
-                            ).show()
+                            org.astermail.android.ui.common.app_toast.show(context.getString(R.string.copied_to_clipboard).toString())
                         } else {
                             show_copy_failed_toast(context)
                         }

@@ -543,7 +543,7 @@ fun alias_import_dialog(
                             },
                             modifier = Modifier.fillMaxWidth(),
                             color = colors.accent_blue,
-                            trackColor = colors.bg_secondary,
+                            trackColor = colors.text_primary.copy(alpha = 0.14f),
                         )
                         Text(
                             text = stringResource(

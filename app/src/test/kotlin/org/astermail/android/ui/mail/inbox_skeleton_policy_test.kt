@@ -50,6 +50,7 @@ class inbox_skeleton_policy_test {
         showing_error: Boolean = false,
         refreshing_known_empty: Boolean = false,
         emptied_by_action: Boolean = false,
+        refill_pending: Boolean = false,
     ) = inbox_skeleton_wanted(
         rows_deriving = rows_deriving,
         skeleton_showing = skeleton_showing,
@@ -59,6 +60,7 @@ class inbox_skeleton_policy_test {
         showing_error = showing_error,
         refreshing_known_empty = refreshing_known_empty,
         emptied_by_action = emptied_by_action,
+        refill_pending = refill_pending,
     )
 
     @Test
@@ -109,6 +111,49 @@ class inbox_skeleton_policy_test {
     fun refreshing_a_known_empty_folder_or_an_emptied_folder_shows_no_skeleton() {
         assertFalse(wanted(loading_without_rows = true, refreshing_known_empty = true))
         assertFalse(wanted(cache_pending = true, emptied_by_action = true))
+    }
+
+    @Test
+    fun an_emptied_folder_waiting_for_a_refill_shows_the_skeleton() {
+        assertTrue(wanted(emptied_by_action = true, refill_pending = true))
+        assertTrue(wanted(emptied_by_action = true, refill_pending = true, refreshing_known_empty = true))
+        assertFalse(wanted(emptied_by_action = true, refill_pending = false))
+    }
+
+    @Test
+    fun a_refill_never_starts_a_skeleton_while_rows_derive() {
+        assertFalse(wanted(rows_deriving = true, skeleton_showing = false, refill_pending = true))
+    }
+
+    private fun filtered(
+        cache_skeleton_allowed: Boolean = true,
+        has_rows: Boolean = false,
+        is_loading: Boolean = false,
+        initial: Boolean = false,
+        has_error: Boolean = false,
+        showing_requested: Boolean = true,
+    ) = filtered_inbox_skeleton_wanted(
+        cache_skeleton_allowed = cache_skeleton_allowed,
+        has_rows = has_rows,
+        is_loading = is_loading,
+        initial = initial,
+        has_error = has_error,
+        showing_requested = showing_requested,
+    )
+
+    @Test
+    fun a_filtered_list_that_has_not_loaded_yet_shows_the_skeleton() {
+        assertTrue(filtered(initial = true))
+        assertTrue(filtered(is_loading = true))
+        assertTrue(filtered(showing_requested = false))
+    }
+
+    @Test
+    fun a_filtered_list_with_rows_an_error_or_a_settled_empty_result_shows_no_skeleton() {
+        assertFalse(filtered(initial = true, has_rows = true))
+        assertFalse(filtered(initial = true, has_error = true))
+        assertFalse(filtered(initial = true, cache_skeleton_allowed = false))
+        assertFalse(filtered())
     }
 
     @Test

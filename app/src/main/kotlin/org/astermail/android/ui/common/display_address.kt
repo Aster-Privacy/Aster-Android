@@ -63,18 +63,43 @@ fun resolve_display_address(
 
 private val DISPLAY_EXCLUDED_PREFIXES = listOf("ghost-", "external-")
 
+internal class cached_sender_memo(private val max_entries: Int = 8) {
+    private val entries = LinkedHashMap<String, String>()
+
+    @Synchronized
+    fun read(user_email: String): String {
+        if (user_email.isBlank()) return ""
+        return entries[user_email.lowercase(java.util.Locale.ROOT)] ?: ""
+    }
+
+    @Synchronized
+    fun write(user_email: String, sender: String) {
+        if (user_email.isBlank()) return
+        val key = user_email.lowercase(java.util.Locale.ROOT)
+        entries.remove(key)
+        entries[key] = sender
+        while (entries.size > max_entries) {
+            entries.remove(entries.keys.first())
+        }
+    }
+}
+
+private val display_cached_sender_memo = cached_sender_memo()
+
 @Composable
 fun remember_display_address(state: SettingsUiState, user_email: String): String {
     val context = LocalContext.current
-    val cached_sender by produceState(initialValue = "", user_email) {
+    val cached_sender by produceState(initialValue = display_cached_sender_memo.read(user_email), user_email) {
         value = if (user_email.isBlank()) {
             ""
         } else {
-            withContext(Dispatchers.IO) {
+            val read = withContext(Dispatchers.IO) {
                 runCatching {
                     compose_seed_store.read_identity(context, user_email).primary_sender_email
                 }.getOrDefault("")
             }
+            display_cached_sender_memo.write(user_email, read)
+            read
         }
     }
     val resolved_sender = display_sender_email(

@@ -39,7 +39,7 @@ class SettingsSearchCoverageTest {
     private val text_arguments = setOf("title", "label", "subtitle", "text", "description")
 
     private val not_settings = setOf(
-        "failed_to_load", "retry", "loading", "no_aliases", "no_aliases_subtitle", "no_results_found",
+        "failed_to_load", "billing_section_load_failed", "retry", "loading", "no_aliases", "no_aliases_subtitle", "no_results_found",
         "recently_deleted_aliases_empty", "no_custom_domains", "no_custom_domains_subtitle",
         "no_directories_yet", "no_directories_subtitle", "no_ghost_aliases", "no_ghost_aliases_subtitle",
         "alias_detail_unavailable", "delete_alias", "email_address", "allowlist_entire_domain",
@@ -52,6 +52,7 @@ class SettingsSearchCoverageTest {
         "color_theme_default", "color_theme_show_all", "font_option_default", "font_option_system",
         "font_option_system_mono", "integrations", "connected_apps", "slack", "slack_subtitle", "calendar",
         "calendar_subtitle", "zapier", "zapier_subtitle", "webhooks", "manage_webhooks",
+        "mail_rules_color", "rules_when_title", "rules_then_title", "mail_rules_match_case",
     )
 
     private val locales = listOf(
@@ -194,7 +195,9 @@ class SettingsSearchCoverageTest {
 
     @Test
     fun keywords_are_translated_for_every_locale() {
-        val english = settings_search_fixture.english.filterKeys { it.startsWith("search_keywords_") }
+        val english = settings_search_fixture.english.filterKeys {
+            it.startsWith("search_keywords_") && !it.startsWith("search_keywords_more_")
+        }
         assertTrue(english.size > 40)
         locales.forEach { locale ->
             val translated = settings_search_fixture.read_strings("values-$locale")

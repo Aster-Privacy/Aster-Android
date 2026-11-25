@@ -171,12 +171,20 @@ fun settings_search_action() {
 fun settings_search_screen(
     on_back: () -> Unit,
     on_open: (String) -> Unit,
+    trailing_action: (@Composable (dismiss_keyboard: () -> Unit) -> Unit)? = null,
 ) {
     val colors = AsterMaterial.colors
     var query by rememberSaveable { mutableStateOf("") }
     val focus_requester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
     val focus_manager = LocalFocusManager.current
+    val dismiss_keyboard = remember(focus_manager, keyboard) {
+        {
+            focus_manager.clearFocus(force = true)
+            keyboard?.hide()
+            Unit
+        }
+    }
     val dismiss_and_back = remember(on_back) {
         {
             focus_manager.clearFocus(force = true)
@@ -202,6 +210,8 @@ fun settings_search_screen(
             on_query_change = { query = it },
             on_back = dismiss_and_back,
             focus_requester = focus_requester,
+            trailing_action = trailing_action,
+            dismiss_keyboard = dismiss_keyboard,
         )
         AsterDivider()
         settings_search_results(
@@ -223,6 +233,8 @@ private fun settings_search_input_bar(
     on_query_change: (String) -> Unit,
     on_back: () -> Unit,
     focus_requester: FocusRequester,
+    trailing_action: (@Composable (dismiss_keyboard: () -> Unit) -> Unit)?,
+    dismiss_keyboard: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val keyboard = LocalSoftwareKeyboardController.current
@@ -239,6 +251,8 @@ private fun settings_search_input_bar(
             auto_mirror = true,
             content_description = stringResource(R.string.back),
             onClick = on_back,
+            tint = colors.text_primary,
+            icon_size = 24,
             modifier = Modifier.testTag("back"),
         )
         Row(
@@ -302,7 +316,16 @@ private fun settings_search_input_bar(
                 }
             }
         }
-        Spacer(Modifier.width(settings_search_trailing_inset))
+        if (trailing_action != null) {
+            Box(
+                modifier = Modifier.size(settings_search_trailing_inset),
+                contentAlignment = Alignment.Center,
+            ) {
+                trailing_action(dismiss_keyboard)
+            }
+        } else {
+            Spacer(Modifier.width(settings_search_trailing_inset))
+        }
     }
 }
 

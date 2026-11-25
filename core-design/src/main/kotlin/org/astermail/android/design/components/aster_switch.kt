@@ -18,11 +18,8 @@ package org.astermail.android.design.components
 
 import org.astermail.android.design.aster_haptic
 import org.astermail.android.design.aster_perform_haptic
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -40,9 +37,15 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterSpring
+import org.astermail.android.design.aster_animate_color
 
 private val track_width = 44.dp
 private val track_height = 26.dp
@@ -50,6 +53,7 @@ private val thumb_size = 20.dp
 private val thumb_inset = 3.dp
 private val touch_width = 48.dp
 private val touch_height = 32.dp
+private const val thumb_pressed_scale = 28f / 24f
 
 @Composable
 fun aster_switch_off_track(): Color {
@@ -66,30 +70,33 @@ fun AsterSwitch(
 ) {
     val colors = AsterMaterial.colors
     val off_track = aster_switch_off_track()
-    val track_color by animateColorAsState(
-        targetValue = if (checked) colors.accent_blue else off_track,
-        animationSpec = tween(durationMillis = 160),
+    val track_color by aster_animate_color(
+        if (checked) colors.accent_blue else off_track,
         label = "aster_switch_track",
     )
-    val thumb_color by animateColorAsState(
-        targetValue = if (checked) colors.on_accent else Color.White,
-        animationSpec = tween(durationMillis = 160),
+    val thumb_color by aster_animate_color(
+        if (checked) colors.on_accent else Color.White,
         label = "aster_switch_thumb_color",
     )
-    val border_color by animateColorAsState(
-        targetValue = if (checked) Color.Transparent else colors.border_primary,
-        animationSpec = tween(durationMillis = 160),
+    val border_color by aster_animate_color(
+        if (checked) Color.Transparent else colors.border_primary,
         label = "aster_switch_border",
     )
-    val thumb_offset by animateDpAsState(
-        targetValue = if (checked) track_width - thumb_size - thumb_inset else thumb_inset,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessMediumLow,
-        ),
+    val density = LocalDensity.current
+    val thumb_offset_px by animateFloatAsState(
+        targetValue = with(density) {
+            (if (checked) track_width - thumb_size - thumb_inset else thumb_inset).toPx()
+        },
+        animationSpec = AsterSpring.fast_spatial(),
         label = "aster_switch_thumb",
     )
     val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val thumb_scale by animateFloatAsState(
+        targetValue = if (pressed && enabled && onCheckedChange != null) thumb_pressed_scale else 1f,
+        animationSpec = AsterSpring.fast_spatial(),
+        label = "aster_switch_thumb_press",
+    )
     val view = androidx.compose.ui.platform.LocalView.current
     Box(
         modifier = modifier
@@ -126,8 +133,12 @@ fun AsterSwitch(
         ) {
             Box(
                 modifier = Modifier
-                    .offset(x = thumb_offset)
+                    .offset { IntOffset(thumb_offset_px.roundToInt(), 0) }
                     .size(thumb_size)
+                    .graphicsLayer {
+                        scaleX = thumb_scale
+                        scaleY = thumb_scale
+                    }
                     .shadow(2.dp, CircleShape)
                     .clip(CircleShape)
                     .background(thumb_color),

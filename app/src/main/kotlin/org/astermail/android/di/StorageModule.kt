@@ -93,6 +93,7 @@ object StorageModule {
     fun provide_session_key_store(@ApplicationContext context: Context): SessionKeyStore =
         SessionKeyStore(context).also { store ->
             store.add_clear_listener { org.astermail.android.crypto.PgpDecryptor.clear_caches() }
+            store.add_clear_listener { org.astermail.android.mail.message_preloader.clear() }
             org.astermail.android.crypto.VaultBindingFloor.bind_account_source { store.get_user_id() }
             org.astermail.android.crypto.VaultBindingFloor.bind_store(
                 SecureVaultBindingFloorStore(

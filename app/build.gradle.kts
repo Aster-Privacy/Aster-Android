@@ -15,6 +15,16 @@ kotlin {
 val is_fdroid_build = project.hasProperty("fdroid") ||
     gradle.startParameter.taskNames.any { it.contains("fdroid", ignoreCase = true) }
 
+val release_store_password: String? = System.getenv("KEYSTORE_PASSWORD")
+val release_key_password: String? = System.getenv("KEY_PASSWORD")
+val release_signing_requested = System.getenv("ASTER_UNSIGNED") != "1" && !is_fdroid_build
+val release_tasks_requested = gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }
+if (release_signing_requested && release_tasks_requested) {
+    if (release_store_password == null) error("KEYSTORE_PASSWORD env var is required for release signing")
+    if (release_key_password == null) error("KEY_PASSWORD env var is required for release signing")
+}
+val wants_release_signing = release_signing_requested && release_store_password != null && release_key_password != null
+
 if (!is_fdroid_build) {
     apply(plugin = "androidx.baselineprofile")
 }
@@ -52,13 +62,11 @@ android {
 
     signingConfigs {
         create("release") {
-            if (System.getenv("ASTER_UNSIGNED") != "1" && !is_fdroid_build) {
+            if (wants_release_signing) {
                 storeFile = file("${rootProject.projectDir}/keystore/aster-mail-upload-v3.jks")
-                storePassword = System.getenv("KEYSTORE_PASSWORD")
-                    ?: error("KEYSTORE_PASSWORD env var is required for release signing")
+                storePassword = release_store_password
                 keyAlias = "aster-mail"
-                keyPassword = System.getenv("KEY_PASSWORD")
-                    ?: error("KEY_PASSWORD env var is required for release signing")
+                keyPassword = release_key_password
             }
         }
     }
@@ -74,7 +82,7 @@ android {
             isJniDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
-            if (System.getenv("ASTER_UNSIGNED") != "1" && !is_fdroid_build) {
+            if (wants_release_signing) {
                 signingConfig = signingConfigs.getByName("release")
             }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

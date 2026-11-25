@@ -53,6 +53,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.launch
 import org.astermail.android.R
 import org.astermail.android.billing.BillingViewModel
 import org.astermail.android.design.AsterMaterial
@@ -67,6 +68,7 @@ import org.astermail.android.design.components.DialogConfirmStyle
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.common.open_external_url
+import org.astermail.android.ui.settings.join_launched
 
 internal fun format_bytes(bytes: Long): String {
     if (bytes < 1024) return "$bytes B"
@@ -125,15 +127,22 @@ fun StorageScreen(
 
     LaunchedEffect(Unit) {
         mail_vm.toast_events.collect { event ->
-            android.widget.Toast.makeText(context, event.message, android.widget.Toast.LENGTH_SHORT).show()
+            org.astermail.android.ui.common.app_toast.show(event.message.toString())
         }
     }
 
     LaunchedEffect(vm) {
         vm.storage_format_events.collect { saved ->
             val message = if (saved) R.string.storage_format_updated else R.string.storage_format_update_failed
-            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+            org.astermail.android.ui.common.app_toast.show(context.getString(message))
         }
+    }
+
+    var cleanup_was_running by remember { mutableStateOf(false) }
+    LaunchedEffect(is_emptying_trash, is_emptying_spam) {
+        val running = is_emptying_trash || is_emptying_spam
+        if (cleanup_was_running && !running) vm.load_storage(force = true)
+        cleanup_was_running = running
     }
 
     LaunchedEffect(billing_state.portal_url) {
@@ -155,7 +164,23 @@ fun StorageScreen(
         onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
     }
 
-    detail_scaffold(title = stringResource(R.string.storage_title), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.storage_title),
+        on_back = on_back,
+        on_refresh = {
+            kotlinx.coroutines.coroutineScope {
+                launch { mail_vm.join_launched { mail_vm.load_stats(force = true) } }
+                launch {
+                    vm.join_launched {
+                        vm.load_storage(force = true)
+                        vm.load_subscription(force = true)
+                        vm.load_encryption_settings()
+                    }
+                }
+            }
+        },
+        refresh_enabled = !is_emptying_spam && !is_emptying_trash,
+    ) {
         val storage = state.storage
         val stats = inbox_state.stats
         val has_usable_storage = (storage != null && storage.total_bytes > 0L) ||
@@ -232,7 +257,7 @@ fun StorageScreen(
                     Spacer(Modifier.height(AsterSpacing.md))
                     val animated_fraction by animateFloatAsState(
                         targetValue = display_fraction,
-                        animationSpec = tween(durationMillis = 420),
+                        animationSpec = tween(durationMillis = org.astermail.android.design.AsterMotionSpec.expand_ms, easing = org.astermail.android.design.AsterEasing.emphasized),
                         label = "storage_bar",
                     )
                     storage_usage_bar(
@@ -278,9 +303,13 @@ fun StorageScreen(
             }
             v_gap(AsterSpacing.lg)
             storage_distribution_section(segments, on_open_folder)
+            val live_trash_count = stats?.trash ?: 0
+            val live_spam_count = stats?.spam ?: 0
+            val frozen_trash_count = remember(is_emptying_trash) { live_trash_count }
+            val frozen_spam_count = remember(is_emptying_spam) { live_spam_count }
             storage_cleanup_section(
-                trash_count = stats?.trash ?: 0,
-                spam_count = stats?.spam ?: 0,
+                trash_count = if (is_emptying_trash) frozen_trash_count else live_trash_count,
+                spam_count = if (is_emptying_spam) frozen_spam_count else live_spam_count,
                 is_emptying_spam = is_emptying_spam,
                 is_emptying_trash = is_emptying_trash,
                 on_empty_trash = { show_empty_trash_confirm = true },
@@ -298,9 +327,7 @@ fun StorageScreen(
             section_label(stringResource(R.string.storage_format))
             val prefs = state.preferences
             if (prefs == null) {
-                AsterCard(modifier = Modifier.fillMaxWidth()) {
-                    settings_pending_spinner(padding = AsterSpacing.xl)
-                }
+                skeleton_card_list(rows = 2)
             } else {
                 Column(
                     modifier = Modifier

@@ -25,7 +25,6 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -87,9 +86,9 @@ fun RegisterNotificationsStep(
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
             enable_push(context)
-            Toast.makeText(context, turned_on_message, Toast.LENGTH_SHORT).show()
+            org.astermail.android.ui.common.app_toast.show(turned_on_message.toString())
         } else {
-            Toast.makeText(context, blocked_message, Toast.LENGTH_LONG).show()
+            org.astermail.android.ui.common.app_toast.show(org.astermail.android.ui.common.TopToastState(message = blocked_message.toString(), duration_ms = org.astermail.android.ui.common.toast_action_duration_ms))
         }
         on_done()
     }
@@ -103,14 +102,14 @@ fun RegisterNotificationsStep(
             ) == PackageManager.PERMISSION_GRANTED
             if (granted) {
                 enable_push(context)
-                Toast.makeText(context, turned_on_message, Toast.LENGTH_SHORT).show()
+                org.astermail.android.ui.common.app_toast.show(turned_on_message.toString())
                 on_done()
             } else {
                 launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         } else {
             enable_push(context)
-            Toast.makeText(context, turned_on_message, Toast.LENGTH_SHORT).show()
+            org.astermail.android.ui.common.app_toast.show(turned_on_message.toString())
             on_done()
         }
     }

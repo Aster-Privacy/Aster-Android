@@ -112,6 +112,7 @@ import org.astermail.android.ui.common.app_toast
 import org.astermail.android.ui.common.show_copied_toast
 import org.astermail.android.ui.common.start_external_intent
 import org.astermail.android.util.ascii_digits
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun ExternalAccountsScreen(
@@ -191,6 +192,13 @@ fun ExternalAccountsScreen(
         embedded = embedded,
         title = stringResource(R.string.external_accounts),
         on_back = on_back,
+        on_refresh = { vm.join_launched { vm.load() } },
+        refresh_enabled = !manual_open &&
+            !gmail_wizard_open &&
+            editing_token == null &&
+            deleting_token == null &&
+            state.connecting_provider == null &&
+            !state.manual_submitting,
     ) {
         if (plan_vm.is_feature_locked("has_external_accounts") && !plan_state.is_loading) {
             UpgradeGate(
@@ -524,8 +532,8 @@ fun ExternalAccountsScreen(
                         label = stringResource(R.string.retry),
                         onClick = { vm.load() },
                     )
-                } else if (state.accounts.isEmpty() && state.loading) {
-                    CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(20.dp))
+                } else if (state.accounts.isEmpty() && (state.loading || !state.accounts_loaded)) {
+                    settings_load_spinner(size = 20.dp)
                 } else if (state.accounts.isEmpty()) {
                     Text(
                         text = stringResource(R.string.ext_no_accounts),
@@ -668,10 +676,10 @@ fun ExternalAccountsScreen(
                                 },
                             ) {
                                 if (is_syncing) {
-                                    CircularProgressIndicator(
+                                    org.astermail.android.design.components.aster_spinner(
                                         modifier = Modifier.size(12.dp),
                                         color = colors.accent_blue,
-                                        strokeWidth = 1.5.dp,
+                                        stroke_width = 1.5.dp,
                                     )
                                     Spacer(Modifier.width(AsterSpacing.xs))
                                 } else {
@@ -766,9 +774,9 @@ fun ExternalAccountsScreen(
                                         modifier = Modifier.size(48.dp),
                                         contentAlignment = Alignment.Center,
                                     ) {
-                                        CircularProgressIndicator(
+                                        org.astermail.android.design.components.aster_spinner(
                                             color = colors.accent_blue,
-                                            strokeWidth = 2.dp,
+                                            stroke_width = 2.dp,
                                             modifier = Modifier.size(20.dp),
                                         )
                                     }
@@ -830,9 +838,9 @@ fun ExternalAccountsScreen(
                                 }
                                 v_gap(AsterSpacing.md)
                                 if (settings == null) {
-                                    CircularProgressIndicator(
+                                    org.astermail.android.design.components.aster_spinner(
                                         color = colors.accent_blue,
-                                        strokeWidth = 2.dp,
+                                        stroke_width = 2.dp,
                                         modifier = Modifier.size(20.dp),
                                     )
                                 } else {
@@ -1262,15 +1270,13 @@ private fun oauth_provider_row(
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(SquircleShape(8.dp))
-                .background(colors.bg_tertiary),
+                .size(36.dp),
             contentAlignment = Alignment.Center,
         ) {
             Image(
                 painter = painterResource(id = icon_res),
                 contentDescription = null,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(28.dp),
             )
         }
         Spacer(Modifier.size(AsterSpacing.md))
@@ -1282,9 +1288,9 @@ private fun oauth_provider_row(
             modifier = Modifier.weight(1f),
         )
         if (is_loading) {
-            CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 color = colors.accent_blue,
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
                 modifier = Modifier.size(18.dp),
             )
         }

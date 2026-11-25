@@ -41,6 +41,7 @@ internal data class settings_search_scored(
 internal class settings_search_prepared(val candidate: settings_search_candidate) {
     val label_norm: String = normalize_settings_search_text(candidate.label)
     val label_words: List<String> = split_settings_search_words(label_norm)
+    val label_stem: String = label_words.joinToString(" ") { settings_search_stem(it) }
     val parent_norm: String = normalize_settings_search_text(candidate.parent)
     val parent_words: List<String> = split_settings_search_words(parent_norm)
     val keyword_phrases: List<String> = candidate.keywords
@@ -48,12 +49,21 @@ internal class settings_search_prepared(val candidate: settings_search_candidate
         .filter { it.isNotEmpty() }
         .distinct()
     val keyword_words: List<String> = keyword_phrases.flatMap { split_settings_search_words(it) }.distinct()
+    val keyword_compact: List<String> = keyword_phrases.map { phrase ->
+        split_settings_search_words(phrase).filter { it !in settings_search_stop_words }.joinToString(" ")
+    }.filter { it.isNotEmpty() }
 }
 
 private const val match_none = 0
 private const val match_typo = 1
 private const val match_prefix = 2
 private const val match_exact = 3
+
+internal val settings_search_stop_words: Set<String> = setOf(
+    "a", "an", "the", "to", "my", "me", "i", "how", "do", "does", "can", "where", "is", "what", "of", "for",
+    "in", "change", "turn", "off", "on", "enable", "disable", "set", "setting", "settings", "toggle", "find",
+    "want", "please", "and",
+)
 
 private val description_suffixes = listOf("_subtitle", "_description", "_desc", "_sub", "_body", "_hint")
 
@@ -119,8 +129,27 @@ private fun is_unspaced_script(token: String): Boolean = token.any { ch ->
     }
 }
 
+internal fun settings_search_stem(word: String): String {
+    if (word.length <= 3 || word.any { it !in 'a'..'z' }) return word
+    return when {
+        word.endsWith("ies") && word.length > 4 -> word.dropLast(3) + "y"
+        word.endsWith("sses") -> word.dropLast(2)
+        word.endsWith("xes") || word.endsWith("ches") || word.endsWith("shes") -> word.dropLast(2)
+        word.endsWith("ases") -> word.dropLast(2)
+        word.endsWith("ss") || word.endsWith("us") || word.endsWith("is") || word.endsWith("as") -> word
+        word.endsWith("s") -> word.dropLast(1)
+        else -> word
+    }
+}
+
+internal fun settings_search_query_tokens(normalized: String): List<String> {
+    val tokens = split_settings_search_words(normalized).distinct()
+    val meaningful = tokens.filter { it !in settings_search_stop_words }
+    return meaningful.ifEmpty { tokens }
+}
+
 private fun token_typo_match(token: String, word: String): Boolean {
-    if (token.length < 4) return false
+    if (token.length < 4 || token.any { it.isDigit() }) return false
     if (kotlin.math.abs(token.length - word.length) <= 1 && settings_search_edit_distance(token, word) <= 1) {
         return true
     }
@@ -132,8 +161,15 @@ private fun token_typo_match(token: String, word: String): Boolean {
 
 private fun token_match(token: String, words: List<String>, full_text: String): Int {
     var best = match_none
-    for (word in words) {
+    val token_stem = settings_search_stem(token)
+    for ((index, word) in words.withIndex()) {
         if (word == token) return match_exact
+        if (settings_search_stem(word) == token_stem) return match_exact
+        if (index + 1 < words.size && word.length + words[index + 1].length == token.length &&
+            token == word + words[index + 1]
+        ) {
+            return match_exact
+        }
         if (word.startsWith(token)) {
             best = maxOf(best, match_prefix)
         } else if (best < match_typo && token_typo_match(token, word)) {
@@ -169,8 +205,9 @@ private fun settings_search_tier(row: settings_search_prepared, query: String, t
     }
     return when {
         row.label_norm == query -> 1000
+        row.label_stem == query.split(' ').joinToString(" ") { settings_search_stem(it) } -> 900
         row.label_norm.startsWith(query) -> 800
-        row.keyword_phrases.any { it == query } -> 700
+        row.keyword_phrases.any { it == query } || row.keyword_compact.any { it == query } -> 700
         label_clean -> 600
         row.keyword_phrases.any { it.startsWith(query) } -> 500
         label_or_keyword_clean -> 450
@@ -190,10 +227,11 @@ internal fun rank_settings_search(
     per_screen_limit: Int = 3,
 ): List<settings_search_scored> {
     val normalized = normalize_settings_search_text(query)
-    val tokens = split_settings_search_words(normalized).distinct()
+    val tokens = settings_search_query_tokens(normalized)
     if (tokens.isEmpty()) return emptyList()
+    val effective = tokens.joinToString(" ")
     val scored = rows.mapNotNull { row ->
-        val tier = settings_search_tier(row, normalized, tokens)
+        val tier = settings_search_tier(row, effective, tokens)
         if (tier == 0) {
             null
         } else {

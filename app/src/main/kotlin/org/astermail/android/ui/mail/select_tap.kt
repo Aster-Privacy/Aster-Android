@@ -42,6 +42,7 @@ fun Modifier.select_tap(
     interaction_source: MutableInteractionSource? = null,
 ): Modifier {
     val current_tap = rememberUpdatedState(on_tap)
+    val current_source = rememberUpdatedState(interaction_source)
     return this
         .semantics(mergeDescendants = true) {
             role = Role.Button
@@ -57,8 +58,9 @@ fun Modifier.select_tap(
                     requireUnconsumed = false,
                     pass = PointerEventPass.Initial,
                 )
+                val source = current_source.value
                 val press = PressInteraction.Press(down.position)
-                interaction_source?.tryEmit(press)
+                source?.tryEmit(press)
                 var moved = false
                 var released = false
                 while (true) {
@@ -74,10 +76,10 @@ fun Modifier.select_tap(
                     }
                 }
                 if (released && !moved) {
-                    interaction_source?.tryEmit(PressInteraction.Release(press))
+                    source?.tryEmit(PressInteraction.Release(press))
                     current_tap.value()
                 } else {
-                    interaction_source?.tryEmit(PressInteraction.Cancel(press))
+                    source?.tryEmit(PressInteraction.Cancel(press))
                 }
             }
         }

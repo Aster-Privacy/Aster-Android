@@ -75,6 +75,7 @@ import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.mail.spam_action_icon
+import org.astermail.android.ui.settings.join_launched
 
 private data class SwipeActionOption(
     val id: String,
@@ -96,7 +97,7 @@ fun SwipeActionsScreen(on_back: () -> Unit) {
     var swipe_left by remember { mutableStateOf(DEFAULT_SWIPE_LEFT_ACTION) }
     var prefs_loaded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(prefs, state.preferences_authoritative) {
+    LaunchedEffect(prefs, state.preferences_authoritative, prefs_loaded) {
         if (prefs != null && state.preferences_authoritative && !prefs_loaded) {
             prefs_loaded = true
             swipe_right = normalize_swipe_action(prefs.swipe_right_action, DEFAULT_SWIPE_RIGHT_ACTION)
@@ -125,6 +126,11 @@ fun SwipeActionsScreen(on_back: () -> Unit) {
     detail_scaffold(
         title = stringResource(R.string.swipe_actions),
         on_back = on_back,
+        on_refresh = {
+            vm.join_launched { vm.load_preferences(force = true) }
+            if (state.save_status != SaveStatus.SAVING) prefs_loaded = false
+        },
+        refresh_enabled = state.save_status != SaveStatus.SAVING,
     ) {
         preferences_save_error_banner()
         if (prefs == null || !state.preferences_authoritative) {

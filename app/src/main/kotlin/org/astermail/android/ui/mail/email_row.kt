@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.astermail.android.ui.search.search_row_text
 import androidx.compose.animation.core.snap
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.indication
@@ -34,6 +35,13 @@ import compose.icons.tablericons.*
 
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.AsterEasing
+import org.astermail.android.design.AsterIconSwap
+import org.astermail.android.design.AsterMotionSpec
+import org.astermail.android.design.aster_animate_color
+import org.astermail.android.design.aster_collapse_horizontal_out
+import org.astermail.android.design.aster_expand_horizontal_in
+import androidx.compose.animation.AnimatedVisibility
 import org.astermail.android.ui.icons.pin_icon_filled
 
 import androidx.compose.animation.animateColorAsState
@@ -44,7 +52,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -128,43 +135,109 @@ internal fun inbox_leading_slot(
     is_selected: Boolean,
     avatar_size: androidx.compose.ui.unit.Dp,
     on_avatar_click: (() -> Unit)? = null,
+    on_avatar_long_click: (() -> Unit)? = null,
+    haptic_enabled: Boolean = true,
     avatar: @Composable () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    if (!is_selected && !show_pictures) return
+    val reduce = aster_reduce_motion()
     val toggle_label = stringResource(if (is_selected) R.string.deselect else R.string.select)
     val tap_interaction = remember { MutableInteractionSource() }
     val tap_modifier = if (on_avatar_click != null) {
-        Modifier.clickable(
+        Modifier.combinedClickable(
             interactionSource = tap_interaction,
             indication = androidx.compose.material3.ripple(bounded = false, radius = avatar_size / 2),
             onClickLabel = toggle_label,
             onClick = on_avatar_click,
+            onLongClick = on_avatar_long_click,
+            hapticFeedbackEnabled = haptic_enabled,
         )
     } else {
         Modifier
     }
-    Box(modifier = tap_modifier) {
-        if (is_selected) {
-            Box(
-                modifier = Modifier
-                    .size(if (show_pictures) avatar_size else 24.dp)
-                    .clip(CircleShape)
-                    .background(colors.accent_blue),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = TablerIcons.Check,
-                    contentDescription = stringResource(R.string.selected),
-                    tint = colors.on_accent,
-                    modifier = Modifier.size(if (show_pictures) 20.dp else 16.dp),
-                )
+    if (!show_pictures) {
+        AnimatedVisibility(
+            visible = is_selected,
+            enter = aster_expand_horizontal_in(reduce),
+            exit = aster_collapse_horizontal_out(reduce),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = tap_modifier) {
+                    inbox_selected_check(24.dp, 16.dp, 1f)
+                }
+                Spacer(Modifier.width(AsterSpacing.md))
+            }
+        }
+        return
+    }
+    val flip = animateFloatAsState(
+        targetValue = if (is_selected) 180f else 0f,
+        animationSpec = tween(
+            durationMillis = if (reduce) 0 else AsterMotionSpec.icon_ms,
+            easing = AsterEasing.emphasized,
+        ),
+        label = "avatar_flip",
+    )
+    val check_reveal = animateFloatAsState(
+        targetValue = if (is_selected) 1f else 0f,
+        animationSpec = if (is_selected) {
+            tween(
+                durationMillis = if (reduce) AsterMotionSpec.reduced_fade_ms else AsterMotionSpec.icon_ms / 2,
+                delayMillis = if (reduce) 0 else AsterMotionSpec.icon_ms / 2,
+                easing = AsterEasing.emphasized_decelerate,
+            )
+        } else {
+            tween(AsterMotionSpec.fade_out_ms, easing = AsterEasing.emphasized_accelerate)
+        },
+        label = "avatar_check_reveal",
+    )
+    val back_visible = flip.value > 90f
+    Box(
+        modifier = tap_modifier.graphicsLayer {
+            rotationY = flip.value
+            cameraDistance = 12f * density
+        },
+        contentAlignment = Alignment.Center,
+    ) {
+        if (back_visible) {
+            Box(modifier = Modifier.graphicsLayer { rotationY = 180f }) {
+                inbox_selected_check(avatar_size, 20.dp, check_reveal.value)
             }
         } else {
             avatar()
         }
     }
     Spacer(Modifier.width(AsterSpacing.md))
+}
+
+@Composable
+private fun inbox_selected_check(
+    circle_size: androidx.compose.ui.unit.Dp,
+    icon_size: androidx.compose.ui.unit.Dp,
+    reveal: Float,
+) {
+    val colors = AsterMaterial.colors
+    Box(
+        modifier = Modifier
+            .size(circle_size)
+            .clip(CircleShape)
+            .background(colors.accent_blue),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = TablerIcons.Check,
+            contentDescription = stringResource(R.string.selected),
+            tint = colors.on_accent,
+            modifier = Modifier
+                .size(icon_size)
+                .graphicsLayer {
+                    alpha = reveal
+                    val check_scale = AsterMotionSpec.icon_from + (1f - AsterMotionSpec.icon_from) * reveal
+                    scaleX = check_scale
+                    scaleY = check_scale
+                },
+        )
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -199,16 +272,17 @@ fun EmailRow(
         stringResource(R.string.unknown),
     )
     val marks_hidden = trust?.show_identity_marks == false
-    val sender_color = inbox_sender_color(colors, is_unread)
-    val subject_color = inbox_subject_color(colors, is_unread)
-    val preview_color = inbox_preview_color(colors, is_unread)
-    val row_bg = animateColorAsState(
-        targetValue = when {
+    val shows_official_badge = remember(email) { is_official_sender(email) }
+    val read_fade_scale = local_read_fade_scale.current
+    val sender_color = inbox_sender_color(colors, is_unread, read_fade_scale)
+    val subject_color = inbox_subject_color(colors, is_unread, read_fade_scale)
+    val preview_color = inbox_preview_color(colors, is_unread, read_fade_scale)
+    val row_bg = aster_animate_color(
+        target = when {
             is_selected -> inbox_card_selected_color(colors)
             is_unread -> inbox_card_unread_color(colors)
             else -> inbox_card_read_color(colors)
         },
-        animationSpec = if (aster_reduce_motion()) snap() else tween(durationMillis = 220),
         label = "row_bg",
     )
     val interaction_source = remember { MutableInteractionSource() }
@@ -227,14 +301,11 @@ fun EmailRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .press_preload(email.id, enabled = !select_mode)
             .semantics { stateDescription = read_state_label }
             .then(
                 if (select_mode) {
-                    Modifier.select_tap(
-                        click_label = select_tap_label,
-                        on_tap = on_click,
-                        interaction_source = interaction_source,
-                    )
+                    Modifier.select_tap(click_label = select_tap_label, on_tap = on_click, interaction_source = interaction_source)
                 } else {
                     Modifier
                 },
@@ -290,16 +361,25 @@ fun EmailRow(
                 with_via_suffix(shown_sender_name, via_label, via_color)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = sender_text,
-                    style = MaterialTheme.typography.bodyLarge.merge(inbox_bidi_line_style()),
-                    color = sender_color,
-                    fontSize = 16.sp,
-                    fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
+                Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = sender_text,
+                        style = MaterialTheme.typography.bodyLarge.merge(inbox_bidi_line_style()),
+                        color = sender_color,
+                        fontSize = 16.sp,
+                        fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (shows_official_badge) {
+                        official_badge(
+                            modifier = Modifier.padding(start = 4.dp),
+                            size = 22.dp,
+                            interactive = false,
+                        )
+                    }
+                }
                 if (is_pinned) {
                     Icon(
                         imageVector = pin_icon_filled,
@@ -327,7 +407,7 @@ fun EmailRow(
                 Text(
                     text = relative_time,
                     style = MaterialTheme.typography.labelSmall,
-                    color = inbox_time_color(colors, is_unread),
+                    color = inbox_time_color(colors, is_unread, read_fade_scale),
                     fontSize = 13.sp,
                     fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.padding(start = if (email.has_attachment) 4.dp else AsterSpacing.sm),
@@ -439,15 +519,9 @@ private fun star_button(
     interactive: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
-    val tint by animateColorAsState(
-        targetValue = if (is_starred) colors.star else colors.text_tertiary,
-        animationSpec = tween(durationMillis = 180),
+    val tint by aster_animate_color(
+        target = if (is_starred) colors.star else colors.text_tertiary,
         label = "star_tint",
-    )
-    val star_scale = animateFloatAsState(
-        targetValue = if (is_starred) 1.12f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-        label = "star_scale",
     )
     var tooltip_visible by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     val star_label = if (is_starred) stringResource(R.string.starred) else stringResource(R.string.not_starred)
@@ -484,19 +558,17 @@ private fun star_button(
                 Box(
                     modifier = Modifier
                         .size(32.dp)
-                        .graphicsLayer {
-                            scaleX = star_scale.value
-                            scaleY = star_scale.value
-                        }
                         .indication(star_interaction, LocalIndication.current),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        imageVector = if (is_starred) Icons.Filled.Star else TablerIcons.Star,
-                        contentDescription = star_label,
-                        tint = tint,
-                        modifier = Modifier.size(20.dp),
-                    )
+                    AsterIconSwap(target_state = is_starred, label = "star_icon") { starred ->
+                        Icon(
+                            imageVector = if (starred) Icons.Filled.Star else TablerIcons.Star,
+                            contentDescription = star_label,
+                            tint = tint,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
                 }
             }
         }
@@ -549,6 +621,7 @@ fun ThreadInboxRow(
     )
     val newest_sender_email = displayed_sender_email(email.display_sender_email, email.sender_email)
     val single_plain_sender = trust != null && (!trust.show_identity_marks || trust.warning != null)
+    val shows_official_badge = remember(email) { is_official_sender(email) }
     val shown_participants = remember(
         thread.thread_id,
         thread.participants,
@@ -565,16 +638,16 @@ fun ThreadInboxRow(
             newest_vetted = trust != null,
         )
     }
-    val sender_color = inbox_sender_color(colors, is_unread)
-    val subject_color = inbox_subject_color(colors, is_unread)
-    val preview_color = inbox_preview_color(colors, is_unread)
-    val row_bg = animateColorAsState(
-        targetValue = when {
+    val read_fade_scale = local_read_fade_scale.current
+    val sender_color = inbox_sender_color(colors, is_unread, read_fade_scale)
+    val subject_color = inbox_subject_color(colors, is_unread, read_fade_scale)
+    val preview_color = inbox_preview_color(colors, is_unread, read_fade_scale)
+    val row_bg = aster_animate_color(
+        target = when {
             is_selected -> inbox_card_selected_color(colors)
             is_unread -> inbox_card_unread_color(colors)
             else -> inbox_card_read_color(colors)
         },
-        animationSpec = if (aster_reduce_motion()) snap() else tween(durationMillis = 220),
         label = "row_bg",
     )
     val interaction_source = remember { MutableInteractionSource() }
@@ -593,13 +666,10 @@ fun ThreadInboxRow(
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .press_preload(email.id, enabled = !select_mode)
             .then(
                 if (select_mode) {
-                    Modifier.select_tap(
-                        click_label = select_tap_label,
-                        on_tap = on_click,
-                        interaction_source = interaction_source,
-                    )
+                    Modifier.select_tap(click_label = select_tap_label, on_tap = on_click, interaction_source = interaction_source)
                 } else {
                     Modifier
                 },
@@ -649,6 +719,8 @@ fun ThreadInboxRow(
             is_selected,
             metrics.avatar_size,
             if (select_mode) null else on_avatar_click,
+            on_avatar_long_click = on_long_click,
+            haptic_enabled = haptic_enabled,
         ) {
             val authenticated_system_email = androidx.compose.runtime.remember(
                 email.sender_email, email.display_sender_email, email.is_external, email.system_origin,
@@ -692,15 +764,24 @@ fun ThreadInboxRow(
                 with_via_suffix(participants_text, via_label, via_color)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = sender_text,
-                    style = inbox_sender_text_style(),
-                    color = sender_color,
-                    fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
+                Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = search_row_text(sender_text) { it.sender },
+                        style = inbox_sender_text_style(),
+                        color = sender_color,
+                        fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (shows_official_badge) {
+                        official_badge(
+                            modifier = Modifier.padding(start = 4.dp),
+                            size = 22.dp,
+                            interactive = false,
+                        )
+                    }
+                }
                 if (is_pinned) {
                     Icon(
                         imageVector = pin_icon_filled,
@@ -728,7 +809,7 @@ fun ThreadInboxRow(
                 Text(
                     text = relative_time,
                     style = inbox_time_text_style(),
-                    color = inbox_time_color(colors, is_unread),
+                    color = inbox_time_color(colors, is_unread, read_fade_scale),
                     fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.padding(start = if (thread.has_attachment) 4.dp else AsterSpacing.sm),
                 )
@@ -778,7 +859,7 @@ fun ThreadInboxRow(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = subject_text,
+                        text = search_row_text(subject_text) { it.subject },
                         style = inbox_subject_text_style(),
                         color = subject_color,
                         fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
@@ -984,22 +1065,24 @@ private const val read_subject_fade = 0.46f
 private const val read_preview_fade = 0.56f
 private const val unread_preview_fade = 0.30f
 
+val local_read_fade_scale = androidx.compose.runtime.staticCompositionLocalOf { 1f }
+
 private fun fade_toward_surface(colors: AsterSemanticColors, amount: Float): Color {
     val surface = if (colors.is_glass) colors.solid_bg else colors.bg_primary
     return androidx.compose.ui.graphics.lerp(colors.text_primary, surface.copy(alpha = 1f), amount)
 }
 
-internal fun inbox_sender_color(colors: AsterSemanticColors, unread: Boolean): Color =
-    if (unread) colors.text_primary else fade_toward_surface(colors, read_sender_fade)
+internal fun inbox_sender_color(colors: AsterSemanticColors, unread: Boolean, fade_scale: Float = 1f): Color =
+    if (unread) colors.text_primary else fade_toward_surface(colors, read_sender_fade * fade_scale)
 
-internal fun inbox_subject_color(colors: AsterSemanticColors, unread: Boolean): Color =
-    if (unread) colors.text_primary else fade_toward_surface(colors, read_subject_fade)
+internal fun inbox_subject_color(colors: AsterSemanticColors, unread: Boolean, fade_scale: Float = 1f): Color =
+    if (unread) colors.text_primary else fade_toward_surface(colors, read_subject_fade * fade_scale)
 
-internal fun inbox_preview_color(colors: AsterSemanticColors, unread: Boolean): Color =
-    fade_toward_surface(colors, if (unread) unread_preview_fade else read_preview_fade)
+internal fun inbox_preview_color(colors: AsterSemanticColors, unread: Boolean, fade_scale: Float = 1f): Color =
+    fade_toward_surface(colors, if (unread) unread_preview_fade else read_preview_fade * fade_scale)
 
-internal fun inbox_time_color(colors: AsterSemanticColors, unread: Boolean): Color =
-    if (unread) colors.accent_blue else fade_toward_surface(colors, read_preview_fade)
+internal fun inbox_time_color(colors: AsterSemanticColors, unread: Boolean, fade_scale: Float = 1f): Color =
+    if (unread) colors.accent_blue else fade_toward_surface(colors, read_preview_fade * fade_scale)
 
 internal fun search_field_bg_color(colors: AsterSemanticColors): Color =
     if (colors.is_glass) {

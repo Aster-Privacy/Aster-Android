@@ -24,7 +24,6 @@ package org.astermail.android.ui.settings.detail
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -85,6 +84,7 @@ import org.astermail.android.settings.host_activity
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.util.ascii_digits
 import org.astermail.android.util.latest_code_input
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun RecoveryEmailScreen(on_back: () -> Unit) {
@@ -128,11 +128,7 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
             show_step_up = false
             step_up_password = ""
             step_up_code = ""
-            Toast.makeText(
-                context,
-                context.getString(R.string.recovery_email_saved),
-                Toast.LENGTH_SHORT,
-            ).show()
+            org.astermail.android.ui.common.app_toast.show(context.getString(R.string.recovery_email_saved).toString())
             vm.reset_save_status()
         }
         if (state.save_status == SaveStatus.ERROR && show_step_up) {
@@ -143,7 +139,7 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
     LaunchedEffect(state.action_result) {
         state.action_result?.let {
             resend_pending = false
-            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            org.astermail.android.ui.common.app_toast.show(it.toString())
             vm.clear_action_result()
         }
     }
@@ -156,7 +152,18 @@ fun RecoveryEmailScreen(on_back: () -> Unit) {
         }
     }
 
-    detail_scaffold(title = stringResource(R.string.recovery_email), on_back = on_back) {
+    val recovery_email_dirty = email.isNotBlank() && email != state.recovery_email_address.orEmpty()
+    detail_scaffold(
+        title = stringResource(R.string.recovery_email),
+        on_back = on_back,
+        on_refresh = {
+            vm.join_launched {
+                vm.load_recovery_email()
+                vm.load_security_status()
+            }
+        },
+        refresh_enabled = !recovery_email_dirty && !show_step_up && state.save_status != SaveStatus.SAVING,
+    ) {
         Text(
             text = stringResource(R.string.backup_email_description),
             color = colors.text_tertiary,

@@ -127,15 +127,13 @@ internal fun gmail_setup_wizard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
-                            .clip(SquircleShape(10.dp))
-                            .background(colors.bg_tertiary),
+                            .size(40.dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.ic_brand_gmail),
                             contentDescription = null,
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(28.dp),
                         )
                     }
                     Spacer(Modifier.width(AsterSpacing.md))

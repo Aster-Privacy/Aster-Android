@@ -24,10 +24,6 @@ package org.astermail.android.ui.common
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -69,6 +65,7 @@ import compose.icons.tablericons.Check
 import compose.icons.tablericons.ChevronRight
 import compose.icons.tablericons.X
 import org.astermail.android.R
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.auto_mirrored
@@ -78,7 +75,6 @@ const val tutorial_list_panel_tag = "tutorial_list_panel"
 const val tutorial_list_toggle_tag = "tutorial_list_toggle"
 const val tutorial_list_progress_tag = "tutorial_list_progress"
 
-private const val tutorial_list_motion_ms = 160
 
 private val tutorial_list_item_shape = RoundedCornerShape(8.dp)
 private val tutorial_list_check_shape = RoundedCornerShape(6.dp)
@@ -119,8 +115,8 @@ fun onboarding_checklist_card(
         )
         AnimatedVisibility(
             visible = is_open,
-            enter = expandVertically(tween(tutorial_list_motion_ms)) + fadeIn(tween(tutorial_list_motion_ms)),
-            exit = shrinkVertically(tween(tutorial_list_motion_ms)) + fadeOut(tween(tutorial_list_motion_ms)),
+            enter = org.astermail.android.design.aster_expand_in(),
+            exit = org.astermail.android.design.aster_collapse_out(),
         ) {
             tutorial_list_panel(
                 rows = rows,
@@ -214,7 +210,7 @@ private fun tutorial_list_panel(
     val completed_label = stringResource(R.string.completed)
     val animated_fraction by animateFloatAsState(
         targetValue = progress.fraction,
-        animationSpec = tween(300),
+        animationSpec = tween(300, easing = AsterEasing.standard),
         label = "tutorial_list_progress",
     )
     Column(

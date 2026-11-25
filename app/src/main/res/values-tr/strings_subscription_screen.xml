@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="subscription_load_failed_body">Aster planınızı yükleyemedi. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="billing_source_play">Google Play üzerinden faturalandırılır</string>
+    <string name="billing_source_card">Kartla faturalandırılır</string>
+    <string name="billing_source_crypto">Kripto ile ödendi</string>
+    <string name="billing_status_trial">Deneme</string>
+    <string name="billing_top_plan_title">En üst plandasınız</string>
+    <string name="billing_section_load_failed">Aster bu bölümü yükleyemedi.</string>
+</resources>

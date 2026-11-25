@@ -66,6 +66,8 @@ private val FAMILY_OFFER_PLAN_CODES = setOf("duo", "family")
 internal fun offer_checkout_uses_family_endpoint(plan_code: String, special_offer: Boolean): Boolean =
     special_offer && plan_code.lowercase() in FAMILY_OFFER_PLAN_CODES
 
+private const val SUBSCRIPTION_RETRY_DELAY_MS = 800L
+
 data class BillingUiState(
     val subscription: SubscriptionResponse? = null,
     val available_plans: List<AvailablePlan> = emptyList(),
@@ -91,6 +93,9 @@ data class BillingUiState(
     val plan_change_preview_failed: Boolean = false,
     val subscription_error: String? = null,
     val plans_failed: Boolean = false,
+    val limits_failed: Boolean = false,
+    val history_failed: Boolean = false,
+    val history_loaded: Boolean = false,
     val checking_payment: Boolean = false,
     val checkout_abandoned_plan: String? = null,
     val checkout_abandoned_interval: String? = null,
@@ -964,7 +969,14 @@ class BillingViewModel @Inject constructor(
     private suspend fun reload_subscription(): Boolean {
         _state.update { it.copy(is_loading = true, subscription_error = null) }
         try {
-            val sub = billing_api.get_subscription()
+            val sub = try {
+                billing_api.get_subscription()
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                if (!is_transient_billing_failure(t)) throw t
+                kotlinx.coroutines.delay(SUBSCRIPTION_RETRY_DELAY_MS)
+                billing_api.get_subscription()
+            }
             _state.update { it.copy(subscription = sub, is_loading = false, subscription_error = null) }
             PaymentFailedNotifier.observe(ctx, sub.status, sub.payment_failed_at, sub.current_period_end, sub.plan.name)
             return true
@@ -1005,17 +1017,12 @@ class BillingViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val limits = billing_api.get_plan_limits()
-                _state.update { it.copy(limits = limits) }
+                _state.update { it.copy(limits = limits, limits_failed = false) }
                 persist_cached_limits(limits)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_plan_limits failed", t)
-                _state.update {
-                    it.copy(
-                        error = org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.failed_to_load),
-                        ),
-                    )
-                }
+                _state.update { it.copy(limits_failed = true) }
             }
         }
     }
@@ -1024,16 +1031,11 @@ class BillingViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val response = billing_api.get_billing_history(page = 1, per_page = 20)
-                _state.update { it.copy(history = response.items) }
+                _state.update { it.copy(history = response.items, history_failed = false, history_loaded = true) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 if (BuildConfig.DEBUG) android.util.Log.w("BillingVM", "get_billing_history failed", t)
-                _state.update {
-                    it.copy(
-                        error = org.astermail.android.localized_api_error(ctx, t, ctx.getString(R.string.failed_to_load),
-                        ),
-                    )
-                }
+                _state.update { it.copy(history_failed = true) }
             }
         }
     }

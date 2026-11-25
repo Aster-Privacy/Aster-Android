@@ -21,25 +21,33 @@
 
 package org.astermail.android.ui.common
 
-import android.os.Build
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogWindowProvider
-import androidx.core.view.WindowCompat
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterSpring
+import org.astermail.android.design.aster_finite
 import org.astermail.android.design.AsterSemanticColors
+import org.astermail.android.design.ime_settle_anchor
+import org.astermail.android.design.remember_ime_settle
+import org.astermail.android.design.components.aster_popup_window_effect
 
 fun sheet_container_color(colors: AsterSemanticColors): Color =
     if (colors.is_glass) colors.solid_bg else colors.bg_card
@@ -56,9 +64,16 @@ fun aster_modal_sheet(
     shape: Shape = aster_sheet_shape,
     scrim_color: Color = BottomSheetDefaults.ScrimColor,
     drag_handle: (@Composable () -> Unit)? = { BottomSheetDefaults.DragHandle() },
+    animate_height: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val content_color = AsterMaterial.colors.text_primary
+    val settle = remember_ime_settle()
+    val height_modifier = if (animate_height) {
+        Modifier.animateContentSize(aster_finite(AsterSpring.fast_spatial<IntSize>()))
+    } else {
+        Modifier
+    }
     ModalBottomSheet(
         onDismissRequest = on_dismiss_request,
         modifier = modifier,
@@ -70,19 +85,25 @@ fun aster_modal_sheet(
         scrimColor = scrim_color,
         dragHandle = drag_handle,
     ) {
-        sheet_navigation_bar(light_bars = container_color.luminance() > 0.5f)
-        content()
+        aster_popup_window_effect(light_navigation_bars = container_color.luminance() > 0.5f)
+        sheet_toast_host()
+        Column(
+            modifier = Modifier.fillMaxWidth().then(height_modifier).ime_settle_anchor(settle),
+            content = content,
+        )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun sheet_navigation_bar(light_bars: Boolean) {
-    val view = LocalView.current
-    SideEffect {
-        val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            window.isNavigationBarContrastEnforced = false
+fun remember_sheet_dismiss(sheet_state: SheetState, on_hidden: () -> Unit): () -> Unit {
+    val scope = rememberCoroutineScope()
+    val latest = rememberUpdatedState(on_hidden)
+    return remember(sheet_state) {
+        {
+            scope.launch { sheet_state.hide() }.invokeOnCompletion {
+                if (!sheet_state.isVisible) latest.value()
+            }
         }
-        WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = light_bars
     }
 }

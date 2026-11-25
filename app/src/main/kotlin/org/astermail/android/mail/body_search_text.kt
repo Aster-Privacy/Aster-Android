@@ -21,6 +21,7 @@
 
 package org.astermail.android.mail
 
+import org.astermail.android.storage.search.BodyBackfillRow
 import org.astermail.android.storage.search.MessageBodyIndexEntity
 import org.astermail.android.ui.search.fold_text
 import org.astermail.android.ui.search.parse_item_timestamp
@@ -28,6 +29,7 @@ import org.astermail.android.ui.search.parse_item_timestamp
 const val body_search_max_chars = 32_768
 const val body_search_html_input_limit = 262_144
 const val body_search_match_limit = 5_000
+const val body_progress_min_interval_ms = 250L
 
 private val body_word_split = Regex("""[^\p{L}\p{N}]+""")
 
@@ -83,3 +85,34 @@ fun body_index_rows(
 
 fun placeholder_index_rows(ids: Collection<String>, now: Long): List<MessageBodyIndexEntity> =
     ids.map { MessageBodyIndexEntity(message_id = it, body = "", received_at = 0L, indexed_at = now) }
+
+fun body_index_thread_rows(
+    messages: List<ThreadMessageDecrypted>,
+    expected_ids: Collection<String>,
+    attachment_names: (String) -> List<String>,
+    now: Long,
+): List<MessageBodyIndexEntity> {
+    val rows = body_index_rows(messages, attachment_names, now)
+    val seen = rows.mapTo(HashSet()) { it.message_id }
+    return rows + placeholder_index_rows(expected_ids.filterNot { it in seen }.distinct(), now)
+}
+
+fun snapshot_covers(ready_ids: Set<String>, expected_ids: Collection<String>): Boolean =
+    expected_ids.isNotEmpty() && ready_ids.containsAll(expected_ids)
+
+fun body_backfill_groups(rows: List<BodyBackfillRow>, failed_ids: Set<String>): Map<String, List<String>> {
+    val groups = LinkedHashMap<String, MutableList<String>>()
+    rows.forEach { row ->
+        val token = row.thread_token?.takeIf { it.isNotBlank() } ?: return@forEach
+        if (row.id in failed_ids) return@forEach
+        groups.getOrPut(token) { mutableListOf() }.add(row.id)
+    }
+    return groups
+}
+
+fun should_publish_body_progress(
+    last_published_ms: Long,
+    now_ms: Long,
+    finished: Boolean,
+    min_interval_ms: Long = body_progress_min_interval_ms,
+): Boolean = finished || last_published_ms <= 0L || now_ms - last_published_ms >= min_interval_ms

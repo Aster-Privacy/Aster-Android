@@ -43,33 +43,23 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.astermail.android.accounts.subscription_is_paid
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.settings.optional_shared_settings_view_model
 
 val plan_ring_stroke: Dp = 2.dp
 val plan_ring_gap: Dp = 3.dp
 
-private val unpaid_subscription_states = setOf(
-    "canceled",
-    "cancelled",
-    "incomplete_expired",
-    "unpaid",
-)
-
 @Composable
 fun plan_ring_brush(): Brush {
     val accent = AsterMaterial.colors.accent_blue
     return remember(accent) {
-        val light = lerp(accent, Color.White, 0.32f)
-        val deep = lerp(accent, Color.Black, 0.22f)
-        val seam = lerp(accent, deep, 0.5f)
-        Brush.sweepGradient(
-            0.000f to seam,
-            0.125f to deep,
-            0.375f to accent,
-            0.625f to light,
-            0.875f to accent,
-            1.000f to seam,
+        val light = lerp(accent, Color.White, 0.18f)
+        val deep = lerp(accent, Color.Black, 0.12f)
+        Brush.linearGradient(
+            0.0f to light,
+            0.5f to accent,
+            1.0f to deep,
         )
     }
 }
@@ -116,8 +106,7 @@ fun remember_has_paid_plan(): Boolean {
 
     LaunchedEffect(settings_state.subscription) {
         val subscription = settings_state.subscription ?: return@LaunchedEffect
-        val paid = subscription.effective_price_cents > 0 &&
-            subscription.status !in unpaid_subscription_states
+        val paid = subscription_is_paid(subscription)
         if (paid != cached_paid) {
             cached_paid = paid
         }

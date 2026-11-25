@@ -31,7 +31,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import org.astermail.android.ui.common.vertical_scroll_with_fade
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -118,12 +118,14 @@ fun bimi_setup_screen(domain_id: String, on_back: () -> Unit) {
         title = stringResource(R.string.domain_bimi_title),
         on_back = on_back,
         scrollable = false,
+        on_refresh = { vm.reload() },
+        refresh_enabled = state.step == BimiStep.manage && !state.busy,
     ) {
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .verticalScroll(scroll_state)
+                .vertical_scroll_with_fade(scroll_state)
                 .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.lg),
         ) {
             if (domain_name.isNotEmpty() && state.step != BimiStep.manage) {
@@ -141,7 +143,7 @@ fun bimi_setup_screen(domain_id: String, on_back: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().heightIn(min = 240.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    if (show_spinner) CircularProgressIndicator(color = colors.accent_blue)
+                    if (show_spinner) org.astermail.android.design.components.aster_spinner(color = colors.accent_blue)
                 }
                 state.step == BimiStep.logo -> bimi_logo_step(state = state, domain_name = domain_name, vm = vm)
                 state.step == BimiStep.publish -> bimi_publish_step(state = state, domain = domain)

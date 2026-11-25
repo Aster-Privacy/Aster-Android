@@ -57,6 +57,7 @@ open class AccountLinkProviderConfirmTest {
         every { account_store.account_exists(account_id) } returns true
         every { account_store.get_current_id() } returns account_id
         every { account_store.get_all() } returns listOf(StoredAccount(id = account_id, email = "a@example.org", added_at = 0L))
+        every { session_key_store.get_user_id() } returns account_id
         every { session_key_store.get_passphrase() } answers { ByteArray(32) { 7 } }
         coEvery { device_code_api.verify_code(any()) } throws IllegalStateException("stop after the network read")
 

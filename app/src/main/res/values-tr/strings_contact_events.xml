@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_events">Etkinlikler</string>
+    <string name="contact_event_anniversary">Yıl dönümü</string>
+    <string name="contact_add_event">Etkinlik ekle</string>
+    <string name="contact_remove_event">Etkinliği kaldır</string>
+    <string name="contact_event_type">Etkinlik türü</string>
+    <string name="contact_event_year_range">%1$d ile %2$d arasında bir yıl girin</string>
+    <string name="contacts_add_to_favorites">Favorilere ekle</string>
+    <string name="contacts_remove_from_favorites">Favorilerden kaldır</string>
+    <string name="contacts_favorites_failed">Favoriler güncellenemedi. Tekrar deneyin.</string>
+    <string name="contacts_recently_added">Son eklenenler</string>
+    <string name="contacts_today">Bugün</string>
+</resources>

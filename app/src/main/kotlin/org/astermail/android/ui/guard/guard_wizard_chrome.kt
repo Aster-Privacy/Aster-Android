@@ -68,6 +68,7 @@ import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSemanticColors
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_animate_color
 import org.astermail.android.design.components.AsterIconButton
 
 internal const val GUARD_SETUP_STEPS = 5
@@ -105,9 +106,8 @@ internal fun guard_step_progress_bar(step: Int, total: Int, modifier: Modifier =
         horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
     ) {
         repeat(total) { index ->
-            val fill by animateColorAsState(
-                targetValue = if (guard_step_filled(index, step)) colors.accent_blue else guard_track_color(colors),
-                animationSpec = tween(240),
+            val fill by aster_animate_color(
+                target = if (guard_step_filled(index, step)) colors.accent_blue else guard_track_color(colors),
                 label = "guard_step_segment",
             )
             Box(

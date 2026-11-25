@@ -278,7 +278,7 @@
     <string name="unsubscribed">uitgeschreven</string>
     <string name="scanning">Scannen...</string>
     <string name="no_mailing_lists">Nog geen mailinglijsten</string>
-    <string name="scan_inbox_hint">Tik op "Inbox scannen" om nieuwsbrieven en marketingafzenders te vinden.</string>
+    <string name="scan_inbox_hint">Trek omlaag om je inbox te scannen op nieuwsbrieven en marketingafzenders.</string>
     <string name="active_tab">Actief</string>
     <string name="unsubscribed_tab">Uitgeschreven</string>
     <string name="reactivate">Heractiveren</string>
@@ -802,6 +802,7 @@
     <string name="unblock">Deblokkeren</string>
     <string name="block_a_sender">Afzender blokkeren</string>
     <string name="block_sender_hint">Voer een e-mailadres of domein in. Nieuwe berichten gaan direct naar spam.</string>
+    <string name="block_sender_invalid">Voer een e-mailadres of een domein zoals example.com in.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">Blokkeren</string>
     <string name="blocked_domain">Volledig domein</string>
@@ -1251,6 +1252,18 @@
     <string name="unsubscribe_failed">Uitschrijven mislukt</string>
     <string name="unsubscribe_manual_required">Deze afzender ondersteunt geen automatisch uitschrijven. Via de link in de e-mail kun je je zelf uitschrijven.</string>
     <string name="bulk_unsubscribe_failed">Bulksgewijs uitschrijven mislukt</string>
+    <string name="unsubscribe_in_progress">Afmelden</string>
+    <string name="subscription_hero_summary">%1$s actieve afzenders, %2$s afgemeld, %3$s e-mails</string>
+    <string name="unsubscribe_rate_limited">Je hebt te veel afmeldverzoeken verstuurd. Probeer het over een minuut opnieuw.</string>
+    <string name="unsubscribe_opened_in_browser">Bij deze afzender kun je je alleen afmelden op de website. Rond het af op de pagina die in je browser is geopend.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">Afmelden bij %d afzender is mislukt</item>
+        <item quantity="other">Afmelden bij %d afzenders is mislukt</item>
+    </plurals>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="one">Voor %d afzender moet je je afmelden op de website</item>
+        <item quantity="other">Voor %d afzenders moet je je afmelden op hun websites</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="one">%d afzender uitgeschreven</item>
         <item quantity="other">%d afzenders uitgeschreven</item>
@@ -1582,10 +1595,15 @@
     <string name="reaction_remove_failed">Reactie kon niet worden verwijderd</string>
     <string name="copy_address">Adres kopiëren</string>
     <string name="sender_on_aster">Aster-account</string>
+    <string name="sender_on_aster_logo">%1$s-account</string>
     <string name="messages_from_sender">Mail van deze afzender zoeken</string>
     <string name="send_email_to_sender">Schrijf naar deze afzender</string>
     <string name="add_to_contacts">Opslaan in contacten</string>
     <string name="remove_from_contacts">Verwijderen uit contacten</string>
+    <string name="sender_action_new_message">Nieuw bericht</string>
+    <string name="sender_action_add_contact">Contact toevoegen</string>
+    <string name="sender_action_view_contact">Contact bekijken</string>
+    <string name="sender_action_in_contacts">In contacten</string>
     <string name="contact_added_named">%1$s opgeslagen in contacten</string>
     <string name="contact_removed_named">%1$s verwijderd uit contacten</string>
     <string name="blocked_content_details_title">Geblokkeerde inhoud</string>
@@ -2364,6 +2382,10 @@
         <item quantity="one">%d nieuw abonnement gevonden</item>
         <item quantity="other">%d nieuwe abonnementen gevonden</item>
     </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">%1$s van %2$s berichten gescand, %3$s afzender gevonden</item>
+        <item quantity="other">%1$s van %2$s berichten gescand, %3$s afzenders gevonden</item>
+    </plurals>
     <string name="reaction_info_title">Reactie</string>
     <string name="reaction_badge_label">Nieuwe reactie</string>
     <string name="notification_new_reaction">Je hebt een nieuwe reactie</string>
@@ -2862,6 +2884,8 @@
     <string name="contact_add_failed">%1$s kon niet worden opgeslagen in contacten</string>
     <string name="contact_remove_failed">%1$s kon niet uit contacten worden verwijderd</string>
     <string name="copy_failed">Kopiëren mislukt. Probeer het opnieuw.</string>
+    <string name="copy_subject">Onderwerp kopiëren</string>
+    <string name="subject_copied">Onderwerp gekopieerd</string>
     <string name="create_label_subtitle">Markeer berichten met een kleur die je kiest</string>
     <string name="delete_signature_message">“%1$s” wordt definitief verwijderd en je kunt dit niet ongedaan maken.</string>
     <string name="delete_vacation_reply_confirm">Je afwezigheidsbericht en de bijbehorende datums worden verwijderd. Dit kan niet ongedaan worden gemaakt.</string>
@@ -3028,6 +3052,9 @@
     <string name="translation_storage_remove_all">Alles verwijderen</string>
     <string name="translation_storage_removed">Taalpakketten verwijderd</string>
     <string name="translation_offer_download">Dit bericht is in het %1$s. Vertalen downloadt een taalpakket.</string>
+    <string name="translation_bar_translate_to">Vertalen naar het %1$s</string>
+    <string name="translation_bar_translated_from">Vertaald uit het %1$s</string>
+    <string name="translation_bar_downloading">Taalpakket voor %1$s downloaden</string>
     <string name="contact_support">Contact opnemen met support</string>
     <string name="domain_purchase_manage">Beheren</string>
     <string name="domain_purchase_cancel_payment_title">Deze betaling annuleren?</string>
@@ -3150,6 +3177,10 @@
     <string name="remove_photo">Foto verwijderen</string>
     <string name="add_photo">Foto toevoegen</string>
     <string name="photo_too_large">Kies een kleinere afbeelding</string>
+    <string name="contact_photo_unreadable">Aster kan deze afbeelding niet openen. Probeer een andere foto.</string>
+    <string name="contact_discard_changes_title">Wijzigingen verwijderen?</string>
+    <string name="contact_discard_changes_message">Je wijzigingen aan dit contact zijn niet opgeslagen.</string>
+    <string name="contact_keep_editing">Verder bewerken</string>
     <string name="no_contacts_yet">Nog geen contacten</string>
     <string name="no_contacts_match">Geen contacten komen overeen met \"%1$s\"</string>
     <string name="no_contacts_in_trash">De prullenmand is leeg</string>
@@ -3711,6 +3742,13 @@
         <item quantity="other">%d contacten toegevoegd</item>
     </plurals>
     <string name="body_index_status">Berichttekst wordt geïndexeerd voor zoeken: %1$d van %2$d</string>
+    <string name="search_status_indexing_mail">E-mail indexeren</string>
+    <string name="search_status_indexing_text">Berichttekst indexeren</string>
+    <string name="search_status_waiting_wifi">Indexeren van berichttekst gaat verder via wifi</string>
+    <string name="search_status_paused">Indexeren gepauzeerd</string>
+    <string name="search_status_partial">Resultaten zijn mogelijk onvolledig</string>
+    <string name="search_status_count">%1$s van %2$s</string>
+    <string name="search_refine_placeholder">Zoeken in resultaten</string>
     <string name="mail_key_upgrade_title">Je opgeslagen e-mail wordt bijgewerkt</string>
     <string name="mail_key_upgrade_running">Aster Mail versleutelt je opgeslagen berichten opnieuw met je huidige sleutels. Houd dit venster open tot het klaar is.</string>
     <string name="mail_key_upgrade_failed">Aster Mail kon het bijwerken van je opgeslagen berichten niet voltooien. Je e-mail is niet gewijzigd. Controleer je verbinding en probeer het opnieuw.</string>
@@ -3735,10 +3773,21 @@
     <string name="attachment_unverified">Niet-geverifieerde bijlage</string>
     <string name="confirm_back_exit">Bevestigen voor afsluiten</string>
     <string name="confirm_back_exit_subtitle">Druk twee keer op Terug om de app vanuit de inbox te verlaten</string>
+    <string name="toast_position_title">Positie van meldingen in de app</string>
+    <string name="toast_position_subtitle">Waar meldingen verschijnen terwijl je de app gebruikt</string>
+    <string name="toast_position_top">Boven</string>
+    <string name="toast_position_bottom">Onder</string>
     <string name="mail_priority">Prioriteit</string>
     <string name="mail_priority_high">Hoog</string>
     <string name="mail_priority_normal">Normaal</string>
     <string name="mail_priority_low">Laag</string>
     <string name="mail_high_priority">Hoge prioriteit</string>
     <string name="mail_low_priority">Lage prioriteit</string>
+    <string name="official_sender">Officieel Aster-adres</string>
+    <string name="official_sender_desc">Dit bericht komt van een officieel Aster-adres. Aster vraagt je nooit per e-mail om je wachtwoord of herstelzin.</string>
+    <string name="search_match_position">%1$d van %2$d</string>
+    <string name="search_match_position_description">Overeenkomst %1$d van %2$d</string>
+    <string name="search_match_previous">Vorige overeenkomst</string>
+    <string name="search_match_next">Volgende overeenkomst</string>
+    <string name="search_match_clear">Markeringen wissen</string>
 </resources>

@@ -491,4 +491,65 @@ class EmailDarkContrastTest {
             assertEquals(PAPER_FILL_VALUE, content.selectFirst(".paper")!!.attr(PAPER_ATTRIBUTE))
         }
     }
+
+    @Test
+    fun a_plain_white_first_block_never_paints_a_white_card_behind_light_text() {
+        val body = "<div style=\"background-color:#ffffff\">Hello, here are the meeting notes.</div>"
+        val doc = Jsoup.parse(render(body, forced = false))
+        assertEquals("1", doc.selectFirst("html")!!.attr("data-dark"))
+        val content = doc.getElementById("m")!!
+        assertFalse(declares_light_background(content.attr("style")))
+        assert_consistent_in_dark("plain white block", body)
+    }
+
+    @Test
+    fun faint_explicit_ink_on_a_white_card_switches_to_dark_ink() {
+        val body = "<table width=\"600\" bgcolor=\"#ffffff\"><tr><td><p style=\"color:#dddddd !important\">Faint</p>" +
+            "<p style=\"color:#333333\">Readable</p></td></tr></table>"
+        val doc = Jsoup.parse(render(body, forced = false))
+        assertEquals("1", doc.selectFirst("html")!!.attr("data-white"))
+        val content = doc.getElementById("m")!!
+        val paragraphs = content.select("p")
+        assertEquals(INK_DARK, paragraphs[0].attr(INK_ATTRIBUTE))
+        assertFalse(paragraphs[0].attr("style").contains("important"))
+        assertFalse(paragraphs[1].hasAttr(INK_ATTRIBUTE))
+        assertEquals("color:#333333", paragraphs[1].attr("style"))
+    }
+
+    @Test
+    fun a_mid_tone_surface_in_simple_dark_gets_dark_ink() {
+        val body = "<div style=\"background-color:#a9a9a9\">Status update</div><p>After</p>"
+        val doc = Jsoup.parse(render(body, forced = false))
+        assertEquals("1", doc.selectFirst("html")!!.attr("data-dark"))
+        val content = doc.getElementById("m")!!
+        assertEquals("", content.attr("style"))
+        assertEquals(INK_DARK, content.child(0).attr(INK_ATTRIBUTE))
+        assertFalse(content.selectFirst("p")!!.hasAttr(INK_ATTRIBUTE))
+    }
+
+    @Test
+    fun a_light_ink_email_reads_in_the_light_theme() {
+        val body = "<p style=\"color:#eeeeee\">Written for a dark client</p><div style=\"background:#000000;color:#ffffff\">Dark band</div>"
+        val content = Jsoup.parse(render(body, forced = false, theme_dark = false)).getElementById("m")!!
+        assertEquals(INK_DARK, content.selectFirst("p")!!.attr(INK_ATTRIBUTE))
+        assertFalse(content.selectFirst("div")!!.hasAttr(INK_ATTRIBUTE))
+    }
+
+    @Test
+    fun colorless_mail_is_left_alone() {
+        val body = "<p>Hello</p><p><a href=\"https://example.com\">Link</a></p>"
+        for (forced in listOf(false, true)) {
+            val content = Jsoup.parse(render(body, forced = forced)).getElementById("m")!!
+            assertTrue(content.select("[$INK_ATTRIBUTE],[$INK_LINK_ATTRIBUTE]").isEmpty())
+        }
+    }
+
+    @Test
+    fun a_white_page_uses_a_dark_link_color() {
+        val body = "<table width=\"600\" bgcolor=\"#ffffff\"><tr><td style=\"background:#ffffff;color:#222222\">" +
+            "<a href=\"https://example.com\">Open</a></td></tr></table>"
+        val html = render(body, forced = false)
+        assertEquals("1", Jsoup.parse(html).selectFirst("html")!!.attr("data-white"))
+        assertTrue(html.contains("a{color:$PAPER_LINK}"))
+    }
 }

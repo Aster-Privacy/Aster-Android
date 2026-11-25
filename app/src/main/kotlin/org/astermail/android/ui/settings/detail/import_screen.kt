@@ -88,6 +88,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterActionRow
 import org.astermail.android.design.components.AsterCard
+import org.astermail.android.ui.settings.join_launched
 
 private const val CHUNK_SIZE = 4 * 1024 * 1024
 private const val MAX_TOTAL_BYTES = 10L * 1024 * 1024 * 1024
@@ -394,15 +395,13 @@ private fun provider_row(
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .clip(SquircleShape(8.dp))
-                .background(colors.bg_tertiary),
+                .size(36.dp),
             contentAlignment = Alignment.Center,
         ) {
             Image(
                 painter = painterResource(id = icon_res),
                 contentDescription = null,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(28.dp),
             )
         }
         Spacer(Modifier.size(AsterSpacing.md))
@@ -496,6 +495,8 @@ fun ImportScreen(
         embedded = embedded,
         title = stringResource(R.string.import_title),
         on_back = on_back,
+        on_refresh = { vm.join_launched { vm.load_jobs() } },
+        refresh_enabled = !state.is_uploading,
     ) {
         section_label(stringResource(R.string.import_section_connect))
         AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -574,6 +575,7 @@ fun ImportScreen(
                         progress = { progress },
                         modifier = Modifier.fillMaxWidth(),
                         color = colors.accent_blue,
+                        trackColor = colors.text_primary.copy(alpha = 0.14f),
                     )
                 } else {
                     Box(
@@ -667,14 +669,8 @@ fun ImportScreen(
                             }
                             androidx.compose.animation.AnimatedVisibility(
                                 visible = is_expanded,
-                                enter = androidx.compose.animation.expandVertically(
-                                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 220, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-                                    expandFrom = androidx.compose.ui.Alignment.Top,
-                                ) + androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(durationMillis = 180)),
-                                exit = androidx.compose.animation.shrinkVertically(
-                                    animationSpec = androidx.compose.animation.core.tween(durationMillis = 200, easing = androidx.compose.animation.core.FastOutLinearInEasing),
-                                    shrinkTowards = androidx.compose.ui.Alignment.Top,
-                                ) + androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(durationMillis = 140)),
+                                enter = settings_expand_in(org.astermail.android.design.aster_reduce_motion()),
+                                exit = org.astermail.android.design.aster_collapse_out(org.astermail.android.design.aster_reduce_motion()),
                             ) {
                                 androidx.compose.foundation.layout.Column {
                                 val details = state.expanded_details
@@ -697,6 +693,7 @@ fun ImportScreen(
                                         progress = { progress },
                                         modifier = Modifier.fillMaxWidth(),
                                         color = colors.accent_blue,
+                                        trackColor = colors.text_primary.copy(alpha = 0.14f),
                                     )
                                     Spacer(Modifier.size(AsterSpacing.xs))
                                     Text(text = stringResource(R.string.import_job_state, friendly_state_label(details.job.state, context)), color = colors.text_secondary, fontSize = 12.sp)

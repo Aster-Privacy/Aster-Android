@@ -147,6 +147,10 @@ internal fun compose_cc_caret(expanded: Boolean, on_toggle: () -> Unit) {
     val colors = AsterMaterial.colors
     val rotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
+        animationSpec = androidx.compose.animation.core.tween(
+            durationMillis = org.astermail.android.design.AsterMotionSpec.icon_ms,
+            easing = org.astermail.android.design.AsterEasing.emphasized,
+        ),
         label = "caret_rotation",
     )
     Box(

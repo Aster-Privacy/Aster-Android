@@ -25,6 +25,7 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.ArrowLeft
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -57,7 +58,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.drop
 import org.astermail.android.auth.AuthUiState
 import org.astermail.android.auth.AuthViewModel
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.aster_shared_axis_slide_px
+import org.astermail.android.design.aster_shared_axis_x
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.ui.common.page_surface
@@ -163,8 +168,21 @@ fun RegisterScreen(
                 show_back = can_go_back && !is_loading,
             )
 
-            Box(modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
-                when (state.step.value) {
+            val reduce_motion = aster_reduce_motion()
+            val slide_px = aster_shared_axis_slide_px()
+            AnimatedContent(
+                targetState = state.step.value,
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+                transitionSpec = {
+                    aster_shared_axis_x(
+                        forward = targetState.ordinal > initialState.ordinal,
+                        slide_px = slide_px,
+                        reduce_motion = reduce_motion,
+                    )
+                },
+                label = "register_step",
+            ) { step ->
+                when (step) {
                     RegisterStep.email -> RegisterUsernameStep(
                         state = state,
                         error_message = username_error_message,
@@ -241,12 +259,12 @@ private fun register_progress_header(
     val progress = step_progress(step)
     val animated_progress by animateFloatAsState(
         targetValue = progress,
-        animationSpec = tween(durationMillis = 400),
+        animationSpec = tween(durationMillis = 400, easing = AsterEasing.emphasized),
         label = "register_progress",
     )
     val header_alpha by animateFloatAsState(
         targetValue = if (step == RegisterStep.generating || step == RegisterStep.install_limit) 0f else 1f,
-        animationSpec = tween(durationMillis = 300),
+        animationSpec = tween(durationMillis = 300, easing = AsterEasing.standard),
         label = "register_header_alpha",
     )
 

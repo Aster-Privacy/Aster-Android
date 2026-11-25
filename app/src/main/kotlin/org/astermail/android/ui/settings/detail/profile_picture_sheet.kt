@@ -162,7 +162,6 @@ private val view_shift = 32.dp
 private val top_bar_height = 56.dp
 private val hero_size = 128.dp
 private val tile_min_size = 104.dp
-private val option_icon_box = 40.dp
 
 internal fun profile_picture_slide_sign(target: profile_picture_view, rtl: Boolean): Int {
     val forward = if (target == profile_picture_view.gallery) 1 else -1
@@ -216,7 +215,7 @@ private fun view_transition(): AnimatedContentTransitionScope<profile_picture_vi
     return remember(reduce_motion, rtl, shift_px) {
         {
             if (reduce_motion) {
-                fadeIn(animationSpec = snap()) togetherWith fadeOut(animationSpec = snap()) using null
+                org.astermail.android.design.aster_crossfade(true)
             } else {
                 val sign = profile_picture_slide_sign(targetState, rtl)
                 val spec_float = tween<Float>(view_duration_ms, easing = view_ease)
@@ -350,23 +349,11 @@ fun profile_picture_sheet(
             dismissOnClickOutside = false,
         ),
     ) {
-        val dialog_view = LocalView.current
-        SideEffect {
-            val window = (dialog_view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-            window.setDimAmount(0f)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) window.isNavigationBarContrastEnforced = false
-            WindowCompat.getInsetsController(window, dialog_view).apply {
-                isAppearanceLightStatusBars = light_bars
-                isAppearanceLightNavigationBars = light_bars
-            }
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-                @Suppress("DEPRECATION")
-                window.navigationBarColor = android.graphics.Color.TRANSPARENT
-                @Suppress("DEPRECATION")
-                window.statusBarColor = android.graphics.Color.TRANSPARENT
-            }
-        }
+        org.astermail.android.design.components.aster_popup_window_effect(
+            light_status_bars = light_bars,
+            light_navigation_bars = light_bars,
+            full_window = true,
+        )
         AnimatedVisibility(
             visibleState = visible_state,
             enter = nav_forward_enter(anim_duration),
@@ -430,6 +417,7 @@ fun profile_picture_sheet(
                 }
             }
         }
+        org.astermail.android.ui.common.app_toast_host(nested = true)
     }
 }
 
@@ -530,9 +518,9 @@ private fun profile_picture_main_view(
                             .background(colors.bg_primary.copy(alpha = 0.60f)),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator(
+                        org.astermail.android.design.components.aster_spinner(
                             modifier = Modifier.size(28.dp),
-                            strokeWidth = 2.5.dp,
+                            stroke_width = 2.5.dp,
                             color = colors.accent_blue,
                         )
                     }
@@ -646,20 +634,16 @@ private fun profile_picture_option_row(
             .testTag(test_tag),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(option_icon_box)
-                .clip(CircleShape)
-                .background(accent.copy(alpha = if (enabled) 0.12f else 0.06f), CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = if (enabled) accent else colors.text_muted,
-                modifier = Modifier.size(22.dp),
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = when {
+                !enabled -> colors.text_muted
+                danger -> accent
+                else -> colors.text_secondary
+            },
+            modifier = Modifier.size(22.dp),
+        )
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -707,9 +691,9 @@ private fun profile_picture_gallery_view(
                     .navigationBarsPadding(),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator(
+                org.astermail.android.design.components.aster_spinner(
                     modifier = Modifier.size(28.dp),
-                    strokeWidth = 2.5.dp,
+                    stroke_width = 2.5.dp,
                     color = colors.accent_blue,
                 )
             }
@@ -886,9 +870,9 @@ private fun gallery_tile(
                         .background(colors.bg_primary.copy(alpha = 0.55f)),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator(
+                    org.astermail.android.design.components.aster_spinner(
                         modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp,
+                        stroke_width = 2.dp,
                         color = colors.accent_blue,
                     )
                 }

@@ -189,7 +189,7 @@
     <string name="guard_switches_paused">Sign-in prompts are paused until %1$s.</string>
     <string name="guard_switches_missing_rescue">You have no rescue code. To keep a way back into your account, create one.</string>
     <string name="guard_switches_not_guard_device">To change these settings, use one of your Guard devices.</string>
-    <string name="guard_switches_canceled">Nothing changed. To save, confirm it\'s you.</string>
+    <string name="guard_switches_canceled">Your changes weren\'t saved. To save them, verify it\'s you.</string>
     <string name="guard_switches_tools_section">Tools</string>
     <string name="guard_rotate_title">New rescue code</string>
     <string name="guard_rotate_row_subtitle">Replace the code you use to get back into your account</string>
@@ -203,9 +203,11 @@
     <string name="guard_devices_unnamed">Unnamed device</string>
     <string name="guard_devices_remove">Remove</string>
     <string name="guard_devices_remove_prompt_subtitle">Remove a Guard device</string>
+    <string name="guard_devices_remove_confirm">%1$s will no longer approve changes to your account. To use it again, join Guard from that device.</string>
     <string name="guard_security_row_on">Aster Guard is on</string>
     <string name="guard_security_row_off">Turn it on to approve sign-ins and hold risky changes from this phone</string>
     <string name="guard_changes_title">Held changes</string>
+    <string name="guard_changes_subtitle">Changes to your account wait here before they take effect.</string>
     <string name="guard_changes_body">These changes to your account are waiting before they take effect. If you didn\'t make one, cancel it.</string>
     <string name="guard_changes_empty">When someone changes forwarding, recovery, or your password, the change waits here first so you can stop it.</string>
     <string name="guard_changes_applies_at">This takes effect on %1$s.</string>
@@ -219,7 +221,7 @@
     <string name="guard_changes_step_up_required">To skip the wait, use a device you\'ve used for 7 days or more, or your security key.</string>
     <string name="guard_changes_not_guard_device">To cancel or stop a change, use one of your Guard devices.</string>
     <string name="guard_changes_prompt_subtitle">Confirm this change to your account</string>
-    <string name="guard_changes_prompt_canceled">Nothing changed. To continue, confirm it\'s you.</string>
+    <string name="guard_changes_prompt_canceled">To continue, verify it\'s you.</string>
     <string name="guard_changes_done_canceled">The change is canceled.</string>
     <string name="guard_changes_done_skipped">The change took effect.</string>
     <string name="guard_changes_done_stopped">The recovery is stopped.</string>

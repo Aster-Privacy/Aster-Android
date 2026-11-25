@@ -116,8 +116,16 @@ internal fun slot_sentence(resource: Int, vararg values: String): AnnotatedStrin
 
 @Composable
 fun remember_sender_trust(message: SenderTrustMessage?): SenderTrust? {
-    val context by SenderTrustStore.context.collectAsStateWithLifecycle()
+    val context = local_sender_trust_context.current ?: collected_sender_trust_context()
     return remember(message, context) { sender_trust_for(message, context) }
+}
+
+val local_sender_trust_context = androidx.compose.runtime.compositionLocalOf<org.astermail.android.security.SenderTrustContext?> { null }
+
+@Composable
+fun collected_sender_trust_context(): org.astermail.android.security.SenderTrustContext {
+    val context by SenderTrustStore.context.collectAsStateWithLifecycle()
+    return context
 }
 
 @Composable
@@ -184,6 +192,22 @@ private fun sender_trust_note(
     tag: String,
 ) {
     val colors = AsterMaterial.colors
+    if (!is_warning && title == null) {
+        compact_notice_bar(
+            modifier = Modifier.testTag(tag),
+            leading = { compact_notice_icon(TablerIcons.InfoCircle, icon_tint) },
+            surface = surface,
+        ) {
+            Text(
+                text = body,
+                color = colors.text_secondary,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        return
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()

@@ -21,16 +21,8 @@ package org.astermail.android.ui.common
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,6 +34,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,15 +44,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.stringResource
@@ -68,6 +64,7 @@ import androidx.compose.animation.core.animate
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import kotlinx.coroutines.launch
@@ -75,14 +72,16 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Job
 import java.util.concurrent.atomic.AtomicLong
 import org.astermail.android.design.SquircleShape
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterSpring
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.lighten
 import org.astermail.android.R
 
@@ -106,9 +105,21 @@ private val toast_key_counter = AtomicLong(0L)
 
 fun next_toast_key(): Long = toast_key_counter.incrementAndGet()
 
+internal val local_toast_card_bounds = staticCompositionLocalOf<((Long, toast_card_box?) -> Unit)?> { null }
+
 private val toast_control_size = 32.dp
 
 private val toast_max_width = 560.dp
+
+private const val toast_enter_ms = 220
+
+private const val toast_swap_ms = 120
+
+private const val toast_exit_ms = 200
+
+private val toast_hidden_margin = 24.dp
+
+private val toast_bottom_clearance = 72.dp
 
 @Composable
 private fun toast_action(
@@ -177,37 +188,56 @@ fun top_toast_overlay(
     state: TopToastState?,
     on_dismiss: (TopToastState) -> Unit,
     on_hold: (TopToastState, Boolean) -> Unit = { _, _ -> },
+    fill_width: Boolean = true,
+    top_padding: Dp? = null,
+    edge: ToastEdge = ToastEdge.top,
+    animate_first: Boolean = false,
+    on_presence: (Boolean) -> Unit = {},
 ) {
-    var last_state by remember { mutableStateOf<TopToastState?>(null) }
-    if (state != null) last_state = state
-    Box(modifier = Modifier.fillMaxWidth().statusBarsPadding(), contentAlignment = Alignment.TopCenter) {
-        AnimatedVisibility(
-            visible = state != null,
-            enter = slideInVertically(
-                animationSpec = spring(
-                    dampingRatio = 0.78f,
-                    stiffness = Spring.StiffnessMediumLow,
-                    visibilityThreshold = IntOffset(1, 1),
-                ),
-                initialOffsetY = { -it },
-            ) + fadeIn(animationSpec = tween(140)) + scaleIn(
-                animationSpec = spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow),
-                initialScale = 0.92f,
-                transformOrigin = TransformOrigin(0.5f, 0f),
-            ),
-            exit = slideOutVertically(animationSpec = tween(180), targetOffsetY = { -it }) +
-                fadeOut(animationSpec = tween(140)) +
-                scaleOut(animationSpec = tween(180), targetScale = 0.94f, transformOrigin = TransformOrigin(0.5f, 0f)),
-        ) {
-            val shown = last_state ?: return@AnimatedVisibility
-            key(shown.key) {
-                toast_card(
-                    toast = shown,
-                    is_current = state?.key == shown.key,
-                    on_dismiss = on_dismiss,
-                    on_hold = on_hold,
-                )
+    val reduce_motion = aster_reduce_motion()
+    val starts_shown = !animate_first && state != null
+    var shown by remember { mutableStateOf(if (starts_shown) state else null) }
+    val presence = remember { Animatable(if (starts_shown) 1f else 0f) }
+    val report_presence by rememberUpdatedState(on_presence)
+    if (state != null && shown?.key == state.key && shown !== state) shown = state
+    LaunchedEffect(state?.key) {
+        val target = state
+        if (target == null) {
+            if (shown != null) {
+                presence.animateTo(0f, tween(toast_exit_ms, easing = AsterEasing.emphasized_accelerate))
+                shown = null
             }
+            report_presence(false)
+            return@LaunchedEffect
+        }
+        report_presence(true)
+        val outgoing = shown
+        if (outgoing != null && outgoing.key != target.key && presence.value > 0f) {
+            presence.animateTo(0f, tween(toast_swap_ms, easing = AsterEasing.emphasized_accelerate))
+        }
+        shown = target
+        presence.animateTo(1f, tween(toast_enter_ms, easing = AsterEasing.emphasized_decelerate))
+    }
+    val frame = if (fill_width) Modifier.fillMaxWidth() else Modifier
+    val placed = when {
+        top_padding != null && edge == ToastEdge.top -> frame.padding(top = top_padding)
+        top_padding != null -> frame.padding(bottom = top_padding)
+        edge == ToastEdge.top -> frame.statusBarsPadding()
+        else -> frame.navigationBarsPadding().imePadding().padding(bottom = toast_bottom_clearance)
+    }
+    val alignment = if (edge == ToastEdge.top) Alignment.TopCenter else Alignment.BottomCenter
+    Box(modifier = placed, contentAlignment = alignment) {
+        val card = shown ?: return@Box
+        androidx.compose.runtime.key(card.key) {
+            toast_card(
+                toast = card,
+                is_current = state?.key == card.key,
+                edge = edge,
+                presence = { presence.value },
+                reduce_motion = reduce_motion,
+                on_dismiss = on_dismiss,
+                on_hold = on_hold,
+            )
         }
     }
 }
@@ -216,6 +246,9 @@ fun top_toast_overlay(
 private fun toast_card(
     toast: TopToastState,
     is_current: Boolean,
+    edge: ToastEdge,
+    presence: () -> Float,
+    reduce_motion: Boolean,
     on_dismiss: (TopToastState) -> Unit,
     on_hold: (TopToastState, Boolean) -> Unit,
 ) {
@@ -227,6 +260,7 @@ private fun toast_card(
     val active by rememberUpdatedState(is_current)
     val dismiss by rememberUpdatedState(on_dismiss)
     val hold by rememberUpdatedState(on_hold)
+    val current_edge by rememberUpdatedState(edge)
     var offset by remember { mutableFloatStateOf(0f) }
     var toast_height by remember { mutableFloatStateOf(0f) }
     var consumed by remember { mutableStateOf(false) }
@@ -253,23 +287,44 @@ private fun toast_card(
             offset = 0f
         }
     }
+    val report_bounds = local_toast_card_bounds.current
+    val card_key = toast.key
     DisposableEffect(Unit) {
-        onDispose { if (dragging) hold(latest, false) }
+        onDispose {
+            if (dragging) hold(latest, false)
+            report_bounds?.invoke(card_key, null)
+        }
     }
     val row_modifier = Modifier
-        .padding(horizontal = 12.dp, vertical = 10.dp)
-        .widthIn(max = toast_max_width)
-        .onSizeChanged { toast_height = it.height.toFloat() }
         .graphicsLayer {
+            val shown_fraction = presence().coerceIn(0f, 1f)
+            val margin = toast_hidden_margin.toPx()
+            val hidden = if (reduce_motion) 0f else toast_hidden_offset(edge, toast_height, margin)
             val raw = offset
-            translationY = if (raw > 0f) raw * toast_pull_resistance else raw
-            alpha = if (raw < 0f) {
-                (1f + raw / (toast_height.coerceAtLeast(1f) * 1.6f)).coerceIn(0.15f, 1f)
+            translationY = hidden * (1f - shown_fraction) + toast_drag_translation(edge, raw, toast_pull_resistance)
+            val toward_edge = raw * toast_enter_sign(edge) > 0f
+            val drag_alpha = if (toward_edge) {
+                (1f - kotlin.math.abs(raw) / (toast_height.coerceAtLeast(1f) * 1.6f)).coerceIn(0.15f, 1f)
             } else {
                 1f
             }
+            alpha = shown_fraction * drag_alpha
+            compositingStrategy = CompositingStrategy.Offscreen
         }
-        .shadow(18.dp, shape, clip = false)
+        .padding(horizontal = 12.dp, vertical = 10.dp)
+        .widthIn(max = toast_max_width)
+        .onSizeChanged { toast_height = it.height.toFloat() }
+        .then(
+            if (report_bounds == null) {
+                Modifier
+            } else {
+                Modifier.onGloballyPositioned { coordinates ->
+                    val bounds = coordinates.boundsInWindow()
+                    report_bounds(card_key, toast_card_box(bounds.left, bounds.top, bounds.right, bounds.bottom))
+                }
+            },
+        )
+        .shadow(6.dp, shape, clip = false)
         .clip(shape)
         .background(fill)
         .then(if (colors.is_dark) Modifier else Modifier.border(1.dp, colors.border_secondary, shape))
@@ -281,16 +336,14 @@ private fun toast_card(
         }
         .pointerInput(Unit) {
             val tracker = VelocityTracker()
-            val spring_back: (Float) -> Unit = { damping ->
+            val spring_back: (Float) -> Unit = { velocity ->
                 settle?.cancel()
                 settle = scope.launch {
                     animate(
                         initialValue = offset,
                         targetValue = 0f,
-                        animationSpec = spring(
-                            dampingRatio = damping,
-                            stiffness = Spring.StiffnessMediumLow,
-                        ),
+                        initialVelocity = velocity,
+                        animationSpec = AsterSpring.spatial(),
                     ) { value, _ -> offset = value }
                 }
             }
@@ -302,25 +355,36 @@ private fun toast_card(
                 },
                 onDragCancel = {
                     set_dragging(false)
-                    spring_back(0.68f)
+                    spring_back(0f)
                 },
                 onDragEnd = {
                     set_dragging(false)
                     val velocity = tracker.calculateVelocity().y
-                    val far_enough = offset < -toast_dismiss_distance.toPx()
-                    val fast_enough = velocity < -toast_dismiss_velocity.toPx()
-                    if ((far_enough || fast_enough) && active && !consumed) {
+                    val sign = toast_enter_sign(current_edge)
+                    val dismisses = toast_swipe_dismisses(
+                        current_edge,
+                        offset,
+                        velocity,
+                        toast_dismiss_distance.toPx(),
+                        toast_dismiss_velocity.toPx(),
+                    )
+                    if (dismisses && active && !consumed) {
                         settle?.cancel()
                         settle = scope.launch {
+                            val off_screen = sign * (toast_height + 120f)
                             animate(
                                 initialValue = offset,
-                                targetValue = -(toast_height + 120f),
-                                animationSpec = tween(durationMillis = 150),
-                            ) { value, _ -> offset = value }
+                                targetValue = off_screen,
+                                initialVelocity = if (sign < 0f) velocity.coerceAtMost(0f) else velocity.coerceAtLeast(0f),
+                                animationSpec = AsterSpring.fast_spatial(),
+                            ) { value, _ ->
+                                offset = value
+                                if (value * sign >= toast_height) finish { it.on_close?.invoke() }
+                            }
                             finish { it.on_close?.invoke() }
                         }
                     } else {
-                        spring_back(0.62f)
+                        spring_back(velocity)
                     }
                 },
             ) { change, drag ->

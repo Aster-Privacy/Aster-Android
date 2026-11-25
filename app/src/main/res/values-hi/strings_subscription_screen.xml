@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="subscription_load_failed_body">Aster आपका प्लान लोड नहीं कर सका। अपना कनेक्शन जांचें, फिर दोबारा कोशिश करें।</string>
+    <string name="billing_source_play">Google Play के ज़रिए बिल किया जाता है</string>
+    <string name="billing_source_card">कार्ड से बिल किया जाता है</string>
+    <string name="billing_source_crypto">क्रिप्टो से भुगतान किया गया</string>
+    <string name="billing_status_trial">ट्रायल</string>
+    <string name="billing_top_plan_title">आपके पास सबसे ऊंचा प्लान है</string>
+    <string name="billing_section_load_failed">Aster यह सेक्शन लोड नहीं कर सका।</string>
+</resources>

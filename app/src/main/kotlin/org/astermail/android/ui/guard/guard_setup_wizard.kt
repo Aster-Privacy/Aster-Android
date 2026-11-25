@@ -24,6 +24,7 @@ package org.astermail.android.ui.guard
 import android.content.ClipData
 import android.content.Context
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -65,6 +66,9 @@ import org.astermail.android.api.guard.GuardSwitch
 import org.astermail.android.crypto.guard.GuardCode
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.aster_shared_axis_slide_px
+import org.astermail.android.design.aster_shared_axis_x
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterTextField
@@ -185,7 +189,22 @@ fun guard_setup_screen(
             .fillMaxSize()
             .page_surface(colors),
     ) {
-        when (state.step) {
+        val reduce_motion = aster_reduce_motion()
+        val slide_px = aster_shared_axis_slide_px()
+        AnimatedContent(
+            targetState = state.step,
+            modifier = Modifier.fillMaxSize(),
+            transitionSpec = {
+                aster_shared_axis_x(
+                    forward = targetState.ordinal > initialState.ordinal,
+                    slide_px = slide_px,
+                    reduce_motion = reduce_motion,
+                )
+            },
+            contentKey = { if (it == guard_setup_step.working) guard_setup_step.loading else it },
+            label = "guard_setup_step",
+        ) { step ->
+        when (step) {
             guard_setup_step.loading, guard_setup_step.working -> guard_wizard_result {
                 guard_wordmark()
                 Spacer(Modifier.height(AsterSpacing.xxl + AsterSpacing.sm))
@@ -222,7 +241,7 @@ fun guard_setup_screen(
                 )
             }
             guard_setup_step.intro -> guard_wizard_scaffold(
-                step = guard_setup_step_number(state.step),
+                step = guard_setup_step_number(step),
                 title = stringResource(R.string.guard_setup_intro_title),
                 body = stringResource(R.string.guard_intro_lead),
                 on_back = on_close,
@@ -251,7 +270,7 @@ fun guard_setup_screen(
                 guard_intro_features()
             }
             guard_setup_step.choose -> guard_wizard_scaffold(
-                step = guard_setup_step_number(state.step),
+                step = guard_setup_step_number(step),
                 title = stringResource(R.string.guard_setup_choose_title),
                 body = stringResource(R.string.guard_setup_choose_body),
                 on_back = on_step_back,
@@ -277,7 +296,7 @@ fun guard_setup_screen(
                 }
             }
             guard_setup_step.rescue -> guard_wizard_scaffold(
-                step = guard_setup_step_number(state.step),
+                step = guard_setup_step_number(step),
                 title = stringResource(R.string.guard_setup_rescue_title),
                 body = stringResource(R.string.guard_setup_rescue_body),
                 on_back = on_step_back,
@@ -293,7 +312,7 @@ fun guard_setup_screen(
                 guard_setup_rescue(state.rescue_code, on_save_file, on_print, on_copy)
             }
             guard_setup_step.confirm_rescue -> guard_wizard_scaffold(
-                step = guard_setup_step_number(state.step),
+                step = guard_setup_step_number(step),
                 title = stringResource(R.string.guard_setup_confirm_title),
                 body = stringResource(R.string.guard_setup_confirm_body),
                 on_back = on_step_back,
@@ -326,7 +345,7 @@ fun guard_setup_screen(
                 )
             }
             guard_setup_step.password -> guard_wizard_scaffold(
-                step = guard_setup_step_number(state.step),
+                step = guard_setup_step_number(step),
                 title = stringResource(R.string.guard_setup_password_title),
                 body = stringResource(R.string.guard_setup_password_body),
                 on_back = on_step_back,
@@ -415,7 +434,7 @@ fun guard_setup_screen(
                 )
             }
             guard_setup_step.join_denied, guard_setup_step.join_expired -> guard_wizard_result {
-                val denied = state.step == guard_setup_step.join_denied
+                val denied = step == guard_setup_step.join_denied
                 guard_result_block(
                     title = stringResource(if (denied) R.string.guard_join_denied_title else R.string.guard_join_expired_title),
                     body = stringResource(if (denied) R.string.guard_join_denied else R.string.guard_join_expired),
@@ -425,6 +444,7 @@ fun guard_setup_screen(
                     on_secondary = on_close,
                 )
             }
+        }
         }
     }
 }

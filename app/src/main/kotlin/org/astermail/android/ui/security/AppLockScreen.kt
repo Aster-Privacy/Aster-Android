@@ -64,16 +64,15 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -92,9 +91,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.window.DialogWindowProvider
 import androidx.compose.ui.window.SecureFlagPolicy
-import androidx.core.view.WindowCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
@@ -105,7 +102,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.astermail.android.R
+import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterMotionSpec
+import org.astermail.android.design.aster_error_shake
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
@@ -145,22 +146,7 @@ fun AppLockScreen(store: AppLockStore, on_sign_out: () -> Unit) {
 
 @Composable
 fun lock_dialog_window_effect() {
-    val view = LocalView.current
-    SideEffect {
-        val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.setLayout(
-            android.view.WindowManager.LayoutParams.MATCH_PARENT,
-            android.view.WindowManager.LayoutParams.MATCH_PARENT,
-        )
-        window.setDimAmount(0f)
-        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-            @Suppress("DEPRECATION")
-            window.statusBarColor = android.graphics.Color.TRANSPARENT
-            @Suppress("DEPRECATION")
-            window.navigationBarColor = android.graphics.Color.TRANSPARENT
-        }
-    }
+    org.astermail.android.design.components.aster_popup_window_effect(full_window = true)
 }
 
 @Composable
@@ -169,7 +155,8 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val config = remember { store.get_config() }
+    var state_loaded by remember { mutableStateOf(false) }
+    var config by remember { mutableStateOf<org.astermail.android.security.AppLockConfig?>(null) }
     val pin_type = config?.pin_type ?: "numeric"
     val digits = config?.digits ?: 6
     val device_mode = config?.mode == AppLockMode.DEVICE
@@ -178,25 +165,53 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     var verifying by remember { mutableStateOf(false) }
     var error_msg by remember { mutableStateOf<String?>(null) }
     var shake_trigger by remember { mutableIntStateOf(0) }
-    var locked_out by remember { mutableStateOf(store.is_locked_out()) }
-    var lockout_secs by remember { mutableLongStateOf(store.lockout_remaining_seconds()) }
-    var attempt_notice by remember { mutableStateOf(store.attempt_notice()) }
+    var locked_out by remember { mutableStateOf(false) }
+    var lockout_secs by remember { mutableLongStateOf(0L) }
+    var attempt_notice by remember { mutableStateOf<org.astermail.android.security.PinAttemptNotice>(org.astermail.android.security.PinAttemptNotice.None) }
     var show_passphrase by remember { mutableStateOf(false) }
-    var biometric_available by remember {
-        mutableStateOf(BiometricManager.from(context).canAuthenticate(BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS)
-    }
+    var biometric_available by remember { mutableStateOf(false) }
     var auto_prompt_armed by remember { mutableStateOf(true) }
     var device_prompt_in_flight by remember { mutableStateOf(false) }
     val host_activity = remember(context) { context.find_host_activity() as? FragmentActivity }
     val lifecycle_owner = host_activity ?: LocalLifecycleOwner.current
     val lifecycle_state by lifecycle_owner.lifecycle.currentStateAsState()
-    var biometric_enrolled by remember {
-        mutableStateOf(
-            run {
-                BiometricUnlockGate.reconcile(context)
-                BiometricUnlockGate.is_enrolled(context)
-            },
-        )
+    var biometric_enrolled by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        val loaded = withContext(Dispatchers.IO) { load_lock_screen_state(store, context) }
+        config = loaded.config
+        locked_out = loaded.locked_out
+        lockout_secs = loaded.lockout_secs
+        attempt_notice = loaded.attempt_notice
+        biometric_available = loaded.biometric_available
+        biometric_enrolled = loaded.biometric_enrolled
+        state_loaded = true
+    }
+
+    val reduce_motion = aster_reduce_motion()
+    val reveal_alpha = remember { Animatable(1f) }
+    var revealing by remember { mutableStateOf(false) }
+
+    fun reveal_app() {
+        if (revealing) return
+        revealing = true
+        scope.launch {
+            store.begin_reveal()
+            var finished = false
+            try {
+                reveal_alpha.animateTo(
+                    0f,
+                    tween(
+                        durationMillis = if (reduce_motion) AsterMotionSpec.reduced_fade_out_ms else AsterMotionSpec.fade_exit_ms,
+                        easing = AsterEasing.emphasized_accelerate,
+                    ),
+                )
+                finished = true
+            } finally {
+                if (!finished) store.cancel_reveal()
+            }
+            store.mark_session_unlocked()
+        }
     }
 
     val locked_out_str = stringResource(R.string.app_lock_locked_out)
@@ -221,7 +236,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         val activity = host_activity
         val rebind = should_rebind_after_pin(BiometricUnlockGate.is_rebind_pending(context), biometric_available)
         if (activity == null || !rebind) {
-            store.mark_session_unlocked()
+            reveal_app()
             return
         }
         BiometricUnlockGate.clear_rebind_pending(context)
@@ -230,7 +245,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
             origin = BiometricEnrollOrigin.AFTER_PIN_ON_LOCK_SCREEN,
             pin_verified = true,
             biometric_available = biometric_available,
-        ) { store.mark_session_unlocked() }
+        ) { reveal_app() }
     }
 
     fun launch_device(from_user: Boolean) {
@@ -310,7 +325,9 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
             .build()
         val callback = object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                if (!store.complete_biometric_unlock(result.cryptoObject?.cipher ?: cipher)) {
+                if (store.complete_biometric_unlock(result.cryptoObject?.cipher ?: cipher, unlock_session = false)) {
+                    reveal_app()
+                } else {
                     BiometricUnlockGate.invalidate(context)
                     biometric_enrolled = false
                     error_msg = biometric_reset_str
@@ -348,7 +365,8 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         if (should_rearm_auto_prompt(lifecycle_state.isAtLeast(Lifecycle.State.STARTED))) auto_prompt_armed = true
     }
 
-    LaunchedEffect(auto_prompt_armed, lifecycle_state, biometric_available, biometric_enrolled) {
+    LaunchedEffect(state_loaded, auto_prompt_armed, lifecycle_state, biometric_available, biometric_enrolled) {
+        if (!state_loaded) return@LaunchedEffect
         val resumed = lifecycle_state.isAtLeast(Lifecycle.State.RESUMED)
         if (should_auto_prompt_biometric(auto_prompt_armed, resumed, biometric_available, biometric_enrolled)) {
             auto_prompt_armed = false
@@ -360,7 +378,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     }
 
     fun attempt_verify(value: String) {
-        if (verifying || locked_out) return
+        if (!state_loaded || verifying || locked_out) return
         scope.launch {
             verifying = true
             val ok = try {
@@ -404,6 +422,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .graphicsLayer { alpha = reveal_alpha.value }
             .background(colors.solid_bg)
             .pointerInput(Unit) {},
         contentAlignment = Alignment.Center,
@@ -416,7 +435,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
             Image(
                 painter = painterResource(R.drawable.aster_wordmark),
                 contentDescription = null,
-                modifier = Modifier.height(22.dp),
+                modifier = Modifier.height(org.astermail.android.ui.auth.auth_logo_height),
             )
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -436,7 +455,8 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                 }
             }
 
-            if (device_mode) {
+            if (!state_loaded) {
+            } else if (device_mode) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -466,7 +486,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                     PinDots(digits = digits, filled = input.length, shake_trigger = shake_trigger)
                     Box(modifier = Modifier.heightIn(min = 18.dp), contentAlignment = Alignment.Center) {
                         when {
-                            verifying -> CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = colors.accent_blue)
+                            verifying -> org.astermail.android.design.components.aster_spinner(modifier = Modifier.size(16.dp), stroke_width = 2.dp, color = colors.accent_blue)
                             error_msg != null -> Text(text = error_msg!!, color = colors.danger, fontSize = 12.sp, textAlign = TextAlign.Center)
                             attempt_hint != null -> Text(text = attempt_hint, color = colors.text_muted, fontSize = 12.sp, textAlign = TextAlign.Center)
                         }
@@ -592,18 +612,10 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
 @Composable
 fun PinDots(digits: Int, filled: Int, shake_trigger: Int) {
     val colors = AsterMaterial.colors
-    val offset_x = remember { Animatable(0f) }
-
-    LaunchedEffect(shake_trigger) {
-        if (shake_trigger == 0) return@LaunchedEffect
-        for (x in listOf(-10f, 10f, -10f, 10f, 0f)) {
-            offset_x.animateTo(x, animationSpec = tween(60))
-        }
-    }
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.offset { IntOffset(offset_x.value.roundToInt(), 0) },
+        modifier = Modifier.aster_error_shake(shake_trigger),
     ) {
         repeat(digits) { i ->
             Box(
@@ -715,14 +727,32 @@ fun PinIconKey(
 
 @Composable
 fun ShakeBox(trigger: Int, content: @Composable () -> Unit) {
-    val offset_x = remember { Animatable(0f) }
-    LaunchedEffect(trigger) {
-        if (trigger == 0) return@LaunchedEffect
-        for (x in listOf(-10f, 10f, -10f, 10f, 0f)) {
-            offset_x.animateTo(x, animationSpec = tween(60))
-        }
-    }
-    Box(modifier = Modifier.offset { IntOffset(offset_x.value.roundToInt(), 0) }) {
+    Box(modifier = Modifier.aster_error_shake(trigger)) {
         content()
     }
+}
+
+private class LockScreenState(
+    val config: org.astermail.android.security.AppLockConfig?,
+    val locked_out: Boolean,
+    val lockout_secs: Long,
+    val attempt_notice: org.astermail.android.security.PinAttemptNotice,
+    val biometric_available: Boolean,
+    val biometric_enrolled: Boolean,
+)
+
+private fun load_lock_screen_state(store: AppLockStore, context: android.content.Context): LockScreenState {
+    val config = runCatching { store.get_config() }.getOrNull()
+    val locked_out = runCatching { store.is_locked_out() }.getOrDefault(false)
+    val lockout_secs = runCatching { store.lockout_remaining_seconds() }.getOrDefault(0L)
+    val attempt_notice = runCatching { store.attempt_notice() }
+        .getOrDefault(org.astermail.android.security.PinAttemptNotice.None)
+    val biometric_available = runCatching {
+        BiometricManager.from(context).canAuthenticate(BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
+    }.getOrDefault(false)
+    val biometric_enrolled = runCatching {
+        BiometricUnlockGate.reconcile(context)
+        BiometricUnlockGate.is_enrolled(context)
+    }.getOrDefault(false)
+    return LockScreenState(config, locked_out, lockout_secs, attempt_notice, biometric_available, biometric_enrolled)
 }

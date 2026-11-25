@@ -42,6 +42,7 @@ import org.astermail.android.mail.is_sendable_address
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.common.sender_id_for_email
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun DefaultSenderScreen(on_back: () -> Unit) {
@@ -95,6 +96,15 @@ fun DefaultSenderScreen(on_back: () -> Unit) {
     detail_scaffold(
         title = stringResource(R.string.settings_default_sender),
         on_back = on_back,
+        on_refresh = {
+            vm.join_launched {
+                vm.load_profile(force = true)
+                vm.load_aliases(force = true)
+                vm.load_custom_domain_addresses(force = true)
+                vm.load_default_sender(force = true)
+            }
+        },
+        refresh_enabled = state.save_status != org.astermail.android.settings.SaveStatus.SAVING,
     ) {
         Text(
             text = stringResource(R.string.default_sender_description),

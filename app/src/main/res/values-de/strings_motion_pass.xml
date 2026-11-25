@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="billing_compare_upgrade_to">Upgrade auf %1$s</string>
+    <string name="billing_compare_switch_to">Zu %1$s wechseln</string>
+    <string name="billing_compare_downgrade_to">Downgrade auf %1$s</string>
+    <string name="billing_compare_gains_title">Das bietet %1$s zusätzlich</string>
+    <string name="billing_compare_you_have">Sie haben %1$s</string>
+    <string name="billing_compare_not_in_plan">Nicht in Ihrem Tarif</string>
+    <string name="billing_compare_everything_in">Alles aus %1$s</string>
+    <string name="billing_compare_free_forever">Dauerhaft kostenlos</string>
+    <string name="billing_compare_free_note">Um zum Tarif Kostenlos zu wechseln, kündigen Sie Ihren Tarif.</string>
+    <string name="billing_compare_tagline_free">Private E-Mail für den Einstieg</string>
+    <string name="billing_compare_tagline_star">Mehr Speicher und bis zu 5 Domains</string>
+    <string name="billing_compare_tagline_nova">Unbegrenzte Aliasse und 30 Domains</string>
+    <string name="billing_compare_tagline_supernova">Der meiste Speicher und Support</string>
+    <string name="billing_compare_tagline_duo">Zwei Konten, eine Rechnung</string>
+    <string name="billing_compare_tagline_family">Bis zu sechs Personen, ein Tarif</string>
+    <string name="contacts_close_search">Suche schließen</string>
+    <string name="contacts_show_favorites_only">Nur Favoriten anzeigen</string>
+    <string name="contacts_show_all">Alle Kontakte anzeigen</string>
+    <string name="guard_changes_subtitle">Änderungen an Ihrem Konto warten hier, bevor sie wirksam werden.</string>
+    <string name="hide_quoted_text">Zitierten Text ausblenden</string>
+    <string name="show_quoted_text">Zitierten Text einblenden</string>
+    <string name="search_keywords_more_exit">beenden, zurück, doppelt tippen, zweimal zurück, Zurück-Taste, App schließen, App verlassen, exit, back</string>
+    <string name="search_keywords_more_quick_actions">Schnellaktionen, Schnellfilter, Posteingang-Schaltflächen, Kopfzeilen-Schaltflächen, Filter-Schaltflächen, quick actions</string>
+    <string name="search_keywords_more_reduce_motion">Bewegung reduzieren, Animationen, Bewegung, Übergänge, Bedienungshilfen, Barrierefreiheit, Reisekrankheit, reduce motion</string>
+    <string name="search_keywords_more_high_contrast">Kontrast, Barrierefreiheit, Sehen, Lesbarkeit, Sehschwäche, contrast</string>
+    <string name="search_keywords_more_sign_out_everywhere">überall abmelden, alle Geräte abmelden, von allen Geräten abmelden, Sitzungen beenden, Geräte entfernen, sign out</string>
+    <string name="search_keywords_more_cancel_plan">Abo kündigen, Abonnement kündigen, Tarif kündigen, Downgrade, Verlängerung, automatische Verlängerung, Abrechnung, cancel subscription</string>
+    <string name="search_keywords_more_sound">Klingelton, Benachrichtigungston, Signalton, Hinweiston, Ton, Töne, ringtone</string>
+</resources>

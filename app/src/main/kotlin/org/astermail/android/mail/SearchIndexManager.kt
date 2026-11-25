@@ -28,7 +28,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.yield
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,6 +46,8 @@ import kotlinx.coroutines.sync.withLock
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.mail.MailItem
 import org.astermail.android.storage.search.AsterDatabase
+import org.astermail.android.storage.search.BodyBackfillRow
+import org.astermail.android.storage.search.MessageBodyIndexEntity
 import org.astermail.android.storage.search.DecryptedMailDao
 import org.astermail.android.storage.search.DecryptedMailEntity
 import org.astermail.android.storage.search.InboxWindowRow
@@ -94,12 +103,19 @@ data class IndexProgress(
     val indexed: Int,
     val total: Int,
     val started_at_ms: Long,
+    val waiting: Boolean = false,
 )
 
-internal fun body_index_progress_of(indexed: Int, skipped: Int, total: Int, started_at_ms: Long): IndexProgress? {
+internal fun body_index_progress_of(
+    indexed: Int,
+    skipped: Int,
+    total: Int,
+    started_at_ms: Long,
+    waiting: Boolean = false,
+): IndexProgress? {
     val handled = indexed.coerceAtLeast(0) + skipped.coerceAtLeast(0)
     if (total <= 0 || handled >= total) return null
-    return IndexProgress(indexed = handled, total = total, started_at_ms = started_at_ms)
+    return IndexProgress(indexed = handled, total = total, started_at_ms = started_at_ms, waiting = waiting)
 }
 
 @Singleton
@@ -121,6 +137,12 @@ class SearchIndexManager @Inject constructor(
     private var body_backfill_job: Job? = null
 
     private val body_failed_ids = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    @Volatile
+    private var body_cursor: BodyBackfillRow? = null
+
+    @Volatile
+    private var body_progress_published_at = 0L
 
     private val _index_ready = MutableStateFlow(false)
     val index_ready: StateFlow<Boolean> = _index_ready.asStateFlow()
@@ -158,7 +180,9 @@ class SearchIndexManager @Inject constructor(
                     android.util.Log.w("SearchIndexManager", "body index backfill stopped", error)
                 }
             } finally {
-                withContext(NonCancellable) { _body_index_progress.value = null }
+                withContext(NonCancellable) {
+                    if (!_index_paused.value) _body_index_progress.value = null
+                }
             }
         }
     }
@@ -175,33 +199,77 @@ class SearchIndexManager @Inject constructor(
         }.getOrDefault(false)
     }
 
-    private suspend fun publish_body_progress(started_at: Long) {
-        val total = body_dao.cached_mail_count()
-        val indexed = body_dao.indexed_cached_count()
-        _body_index_progress.value = body_index_progress_of(indexed, body_failed_ids.size, total, started_at)
+    private fun emit_body_progress(indexed: Int, total: Int, started_at: Long, waiting: Boolean, force: Boolean) {
+        val now = System.currentTimeMillis()
+        val next = body_index_progress_of(indexed, body_failed_ids.size, total, started_at, waiting)
+        if (next == null || should_publish_body_progress(body_progress_published_at, now, force)) {
+            _body_index_progress.value = next
+            body_progress_published_at = now
+        }
     }
 
+    private suspend fun fetch_thread_rows(
+        thread_token: String,
+        ids: List<String>,
+        on_bodies: ((Map<String, String>) -> Unit)? = null,
+    ): List<MessageBodyIndexEntity>? =
+        try {
+            withTimeoutOrNull(BODY_BACKFILL_FETCH_TIMEOUT_MS) { repository.thread_body_index_rows(thread_token, ids, on_bodies) }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            null
+        }
+
     private suspend fun run_body_backfill(started_epoch: Int) {
-        val started_at = System.currentTimeMillis()
+        val started_at = _body_index_progress.value?.started_at_ms ?: System.currentTimeMillis()
+        body_progress_published_at = 0L
+        val gate = Semaphore(BODY_BACKFILL_PARALLEL_THREADS)
         while (epoch.get() == started_epoch && !_index_paused.value) {
+            val total = body_dao.cached_mail_count()
+            val indexed = body_dao.indexed_cached_count()
+            if (body_index_progress_of(indexed, body_failed_ids.size, total, started_at) == null) {
+                body_cursor = null
+                return
+            }
             if (!on_unmetered_network()) {
-                _body_index_progress.value = null
+                emit_body_progress(indexed, total, started_at, waiting = true, force = true)
                 delay(BODY_BACKFILL_NETWORK_RECHECK_MS)
                 continue
             }
-            val rows = body_dao.unindexed_rows(body_failed_ids.take(BODY_BACKFILL_SKIP_LIMIT), BODY_BACKFILL_BATCH)
-            if (rows.isEmpty()) return
-            publish_body_progress(started_at)
-            for ((thread_token, members) in rows.groupBy { it.thread_token.orEmpty() }) {
-                if (epoch.get() != started_epoch || _index_paused.value || !on_unmetered_network()) break
-                val ids = members.map { it.id }
-                val result = kotlinx.coroutines.withTimeoutOrNull(BODY_BACKFILL_FETCH_TIMEOUT_MS) {
-                    repository.index_thread_bodies(thread_token, ids)
-                }
-                if (result?.isSuccess != true) body_failed_ids.addAll(ids)
-                publish_body_progress(started_at)
-                delay(BODY_BACKFILL_PAUSE_MS)
+            val cursor = body_cursor
+            val rows = if (cursor == null) {
+                body_dao.unindexed_head(BODY_BACKFILL_BATCH)
+            } else {
+                body_dao.unindexed_after(cursor.timestamp, cursor.id, BODY_BACKFILL_BATCH)
             }
+            if (rows.isEmpty()) {
+                body_cursor = null
+                return
+            }
+            emit_body_progress(indexed, total, started_at, waiting = false, force = true)
+            val done = java.util.concurrent.atomic.AtomicInteger(0)
+            val batch_rows = coroutineScope {
+                body_backfill_groups(rows, body_failed_ids).map { (thread_token, ids) ->
+                    async {
+                        gate.withPermit {
+                            if (epoch.get() != started_epoch || _index_paused.value) return@withPermit emptyList()
+                            val fetched = fetch_thread_rows(thread_token, ids)
+                            if (fetched == null) {
+                                body_failed_ids.addAll(ids)
+                            } else {
+                                done.addAndGet(ids.size)
+                            }
+                            emit_body_progress(indexed + done.get(), total, started_at, waiting = false, force = false)
+                            fetched.orEmpty()
+                        }
+                    }
+                }.awaitAll().flatten()
+            }
+            if (epoch.get() != started_epoch) return
+            repository.store_body_index_rows(batch_rows)
+            body_cursor = rows.last()
+            yield()
         }
     }
 
@@ -356,14 +424,23 @@ class SearchIndexManager @Inject constructor(
             val arrived_bodies = java.util.concurrent.ConcurrentHashMap<String, String>()
             val collect_bodies: ((Map<String, String>) -> Unit)? =
                 if (arrival_image_prefetch_wanted()) { bodies -> arrived_bodies.putAll(bodies) } else null
-            for ((thread_token, members) in missing.groupBy { it.thread_token!! }.entries.take(BODY_ARRIVAL_THREADS)) {
-                if (epoch.get() != my_epoch) return
-                val ids = members.map { it.id }
-                val result = kotlinx.coroutines.withTimeoutOrNull(BODY_BACKFILL_FETCH_TIMEOUT_MS) {
-                    repository.index_thread_bodies(thread_token, ids, collect_bodies)
-                }
-                if (result?.isSuccess != true) body_failed_ids.addAll(ids)
+            val threads = missing.groupBy { it.thread_token!! }.entries.take(BODY_ARRIVAL_THREADS)
+            val gate = Semaphore(BODY_BACKFILL_PARALLEL_THREADS)
+            val rows = coroutineScope {
+                threads.map { (thread_token, members) ->
+                    async {
+                        gate.withPermit {
+                            if (epoch.get() != my_epoch) return@withPermit emptyList()
+                            val ids = members.map { it.id }
+                            fetch_thread_rows(thread_token, ids, collect_bodies) ?: run {
+                                body_failed_ids.addAll(ids)
+                                emptyList()
+                            }
+                        }
+                    }
+                }.awaitAll().flatten()
             }
+            if (epoch.get() == my_epoch) repository.store_body_index_rows(rows)
             if (arrived_bodies.isNotEmpty()) {
                 val ordered = missing.asSequence()
                     .filterNot { it.is_spam || it.is_trashed }
@@ -625,6 +702,7 @@ class SearchIndexManager @Inject constructor(
             dao.clear_all()
             runCatching { body_dao.clear_all() }
             body_failed_ids.clear()
+            body_cursor = null
             _body_index_progress.value = null
             forget_build_state()
             _index_ready.value = false
@@ -828,11 +906,10 @@ class SearchIndexManager @Inject constructor(
     }
 
     private companion object {
-        const val BODY_BACKFILL_BATCH = 40
+        const val BODY_BACKFILL_BATCH = 120
+        const val BODY_BACKFILL_PARALLEL_THREADS = 4
         const val BODY_ARRIVAL_WINDOW = 25
         const val BODY_ARRIVAL_THREADS = 10
-        const val BODY_BACKFILL_SKIP_LIMIT = 900
-        const val BODY_BACKFILL_PAUSE_MS = 400L
         const val BODY_BACKFILL_FETCH_TIMEOUT_MS = 20_000L
         const val BODY_BACKFILL_NETWORK_RECHECK_MS = 30_000L
         const val KEY_INDEX_PAUSED = "index_paused"

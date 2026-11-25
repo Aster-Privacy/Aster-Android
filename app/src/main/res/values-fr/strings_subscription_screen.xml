@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="subscription_load_failed_body">Aster n\'a pas pu charger votre forfait. Vérifiez votre connexion, puis réessayez.</string>
+    <string name="billing_source_play">Facturé via Google Play</string>
+    <string name="billing_source_card">Facturé par carte</string>
+    <string name="billing_source_crypto">Payé en crypto</string>
+    <string name="billing_status_trial">Essai</string>
+    <string name="billing_top_plan_title">Vous avez le forfait le plus élevé</string>
+    <string name="billing_section_load_failed">Aster n\'a pas pu charger cette section.</string>
+</resources>

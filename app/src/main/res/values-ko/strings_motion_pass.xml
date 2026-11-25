@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="billing_compare_upgrade_to">%1$s(으)로 업그레이드</string>
+    <string name="billing_compare_switch_to">%1$s(으)로 전환</string>
+    <string name="billing_compare_downgrade_to">%1$s(으)로 다운그레이드</string>
+    <string name="billing_compare_gains_title">%1$s에서 추가되는 기능</string>
+    <string name="billing_compare_you_have">현재 요금제: %1$s</string>
+    <string name="billing_compare_not_in_plan">내 요금제에 포함되지 않음</string>
+    <string name="billing_compare_everything_in">%1$s의 모든 기능</string>
+    <string name="billing_compare_free_forever">평생 무료</string>
+    <string name="billing_compare_free_note">무료 요금제로 전환하려면 현재 요금제를 취소하세요.</string>
+    <string name="billing_compare_tagline_free">시작하기 좋은 비공개 이메일</string>
+    <string name="billing_compare_tagline_star">더 많은 공간과 최대 5개 도메인</string>
+    <string name="billing_compare_tagline_nova">무제한 별칭과 30개 도메인</string>
+    <string name="billing_compare_tagline_supernova">가장 많은 저장 공간과 지원</string>
+    <string name="billing_compare_tagline_duo">계정 2개, 청구서 1개</string>
+    <string name="billing_compare_tagline_family">최대 6명, 요금제 1개</string>
+    <string name="contacts_close_search">검색 닫기</string>
+    <string name="contacts_show_favorites_only">즐겨찾기만 표시</string>
+    <string name="contacts_show_all">모든 연락처 표시</string>
+    <string name="guard_changes_subtitle">계정 변경 사항은 적용되기 전에 여기에서 대기합니다.</string>
+    <string name="hide_quoted_text">인용된 텍스트 숨기기</string>
+    <string name="show_quoted_text">인용된 텍스트 표시</string>
+    <string name="search_keywords_more_exit">종료, 뒤로, 두 번 탭, 두 번 뒤로, 뒤로 두 번 누르기, 뒤로 버튼, 앱 닫기, 앱 나가기, exit, back</string>
+    <string name="search_keywords_more_quick_actions">빠른 작업, 빠른 필터, 받은편지함 버튼, 헤더 버튼, 필터 버튼, quick actions</string>
+    <string name="search_keywords_more_reduce_motion">모션 줄이기, 애니메이션, 모션, 전환 효과, 접근성, 멀미, reduce motion</string>
+    <string name="search_keywords_more_high_contrast">대비, 고대비, 접근성, 시력, 가독성, 저시력, contrast</string>
+    <string name="search_keywords_more_sign_out_everywhere">모든 곳에서 로그아웃, 모든 기기에서 로그아웃, 세션 종료, 기기 제거, sign out</string>
+    <string name="search_keywords_more_cancel_plan">구독 취소, 요금제 취소, 다운그레이드, 구독 중지, 갱신, 자동 갱신, 결제, cancel subscription</string>
+    <string name="search_keywords_more_sound">벨소리, 알림음, 차임, 경고음, 소리, 사운드, ringtone</string>
+</resources>

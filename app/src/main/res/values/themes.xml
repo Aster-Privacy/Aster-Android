@@ -24,6 +24,7 @@
         <item name="android:colorAccent">@color/aster_accent_blue</item>
         <item name="android:textColorPrimary">@color/aster_picker_text_light</item>
         <item name="android:windowBackground">@color/aster_picker_bg_light</item>
+        <item name="android:backgroundDimAmount">0.32</item>
         <item name="android:datePickerStyle">@style/Widget.Aster.DatePicker.Light</item>
         <item name="android:timePickerStyle">@style/Widget.Aster.TimePicker.Light</item>
     </style>
@@ -32,6 +33,7 @@
         <item name="android:colorAccent">@color/aster_accent_blue</item>
         <item name="android:textColorPrimary">@color/aster_picker_text_dark</item>
         <item name="android:windowBackground">@color/aster_picker_bg_dark</item>
+        <item name="android:backgroundDimAmount">0.32</item>
         <item name="android:datePickerStyle">@style/Widget.Aster.DatePicker</item>
         <item name="android:timePickerStyle">@style/Widget.Aster.TimePicker</item>
     </style>

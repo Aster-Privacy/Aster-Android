@@ -22,6 +22,7 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.Image
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,8 +38,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -65,6 +68,7 @@ import compose.icons.tablericons.Refresh
 import compose.icons.tablericons.Users
 import compose.icons.tablericons.World
 import org.astermail.android.R
+import kotlin.math.roundToInt
 import org.astermail.android.billing.plan_comparison_feed
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
@@ -83,6 +87,8 @@ internal fun billing_wordmark(modifier: Modifier = Modifier) {
         modifier = modifier.height(20.dp),
     )
 }
+
+private const val billing_cap_ratio = 0.73f
 
 internal data class billing_hero_action(
     val label: String,
@@ -123,22 +129,26 @@ internal fun billing_hero_card(
     on_primary: (() -> Unit)?,
     actions: List<billing_hero_action>,
     danger_action: billing_hero_action?,
+    payment_source_text: String? = null,
+    payment_source_icon: ImageVector? = null,
 ) {
     val colors = AsterMaterial.colors
     AsterCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                billing_wordmark(modifier = Modifier.padding(top = 2.dp))
+            val title_size = 21.sp
+            val cap_half_px = with(LocalDensity.current) { (title_size.toPx() * billing_cap_ratio / 2f).roundToInt() }
+            Row(modifier = Modifier.fillMaxWidth()) {
+                billing_wordmark(modifier = Modifier.alignBy { it.measuredHeight / 2 + cap_half_px })
                 Spacer(Modifier.width(AsterSpacing.sm))
                 Text(
                     text = plan_name,
                     color = colors.text_primary,
-                    fontSize = 21.sp,
+                    fontSize = title_size,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = (-0.5).sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
+                    modifier = Modifier.weight(1f, fill = false).alignByBaseline(),
                 )
                 if (status != billing_hero_status.free) {
                     Spacer(Modifier.width(AsterSpacing.sm))
@@ -152,7 +162,7 @@ internal fun billing_hero_card(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
-                        modifier = Modifier.padding(top = 3.dp),
+                        modifier = Modifier.alignByBaseline(),
                     )
                 }
             }
@@ -182,7 +192,7 @@ internal fun billing_hero_card(
             }
             if (price_text != null || schedule_text != null) {
                 Spacer(Modifier.height(AsterSpacing.lg))
-                Row(verticalAlignment = Alignment.Bottom) {
+                Row {
                     if (price_text != null) {
                         Text(
                             text = price_text,
@@ -191,13 +201,14 @@ internal fun billing_hero_card(
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = (-0.3).sp,
                             maxLines = 1,
+                            modifier = Modifier.alignByBaseline(),
                         )
                         if (interval_short != null) {
                             Text(
                                 text = interval_short,
                                 color = colors.text_secondary,
                                 fontSize = 13.sp,
-                                modifier = Modifier.padding(bottom = 3.dp),
+                                modifier = Modifier.alignByBaseline(),
                             )
                         }
                         Spacer(Modifier.width(AsterSpacing.md))
@@ -211,7 +222,7 @@ internal fun billing_hero_card(
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier
                                 .weight(1f)
-                                .padding(bottom = 3.dp),
+                                .alignByBaseline(),
                         )
                     }
                 }
@@ -222,6 +233,27 @@ internal fun billing_hero_card(
                         color = colors.accent_blue,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
+                    )
+                }
+            }
+            if (payment_source_text != null) {
+                Spacer(Modifier.height(AsterSpacing.sm))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (payment_source_icon != null) {
+                        Icon(
+                            imageVector = payment_source_icon,
+                            contentDescription = null,
+                            tint = colors.text_tertiary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(AsterSpacing.xs))
+                    }
+                    Text(
+                        text = payment_source_text,
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -363,9 +395,9 @@ private fun billing_hero_row(action: billing_hero_action) {
         }
         Spacer(Modifier.width(AsterSpacing.sm))
         if (action.loading) {
-            androidx.compose.material3.CircularProgressIndicator(
+            org.astermail.android.design.components.aster_spinner(
                 color = colors.accent_blue,
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
                 modifier = Modifier.size(16.dp),
             )
         } else {
@@ -579,11 +611,16 @@ internal fun billing_expander_row(
             }
         }
         Spacer(Modifier.width(AsterSpacing.sm))
+        val chevron_rotation by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = if (expanded) 180f else 0f,
+            animationSpec = androidx.compose.animation.core.tween(200, easing = org.astermail.android.design.AsterEasing.emphasized),
+            label = "chevron_rotation",
+        )
         Icon(
-            imageVector = if (expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
+            imageVector = TablerIcons.ChevronDown,
             contentDescription = null,
             tint = colors.text_tertiary,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(20.dp).graphicsLayer { rotationZ = chevron_rotation },
         )
     }
 }

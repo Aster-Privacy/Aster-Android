@@ -371,10 +371,15 @@
     <string name="block_sender">Block sender</string>
     <string name="copy_address">Copy address</string>
     <string name="sender_on_aster">Aster account</string>
+    <string name="sender_on_aster_logo">%1$s account</string>
     <string name="messages_from_sender">Find mail from this sender</string>
     <string name="send_email_to_sender">Write to this sender</string>
     <string name="add_to_contacts">Save to contacts</string>
     <string name="remove_from_contacts">Remove from contacts</string>
+    <string name="sender_action_new_message">New message</string>
+    <string name="sender_action_add_contact">Add contact</string>
+    <string name="sender_action_view_contact">View contact</string>
+    <string name="sender_action_in_contacts">In contacts</string>
     <string name="contact_added_named">Saved %1$s to contacts</string>
     <string name="contact_removed_named">Removed %1$s from contacts</string>
     <string name="message_unavailable">Message unavailable</string>
@@ -532,7 +537,7 @@
     <string name="unsubscribed">unsubscribed</string>
     <string name="scanning">Scanning...</string>
     <string name="no_mailing_lists">No mailing lists yet</string>
-    <string name="scan_inbox_hint">Tap "Scan inbox" to find newsletters and marketing senders.</string>
+    <string name="scan_inbox_hint">Pull down to scan your inbox for newsletters and marketing senders.</string>
     <string name="active_tab">Active</string>
     <string name="unsubscribed_tab">Unsubscribed</string>
     <string name="reactivate">Reactivate</string>
@@ -1263,6 +1268,7 @@
     <string name="unblock">Unblock</string>
     <string name="block_a_sender">Block a sender</string>
     <string name="block_sender_hint">Enter an email address or a domain. New mail from them goes straight to spam.</string>
+    <string name="block_sender_invalid">Enter an email address or a domain like example.com.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">Block</string>
     <string name="blocked_domain">Entire domain</string>
@@ -1839,6 +1845,22 @@
         <item quantity="one">Found %d new subscription</item>
         <item quantity="other">Found %d new subscriptions</item>
     </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">Scanned %1$s of %2$s messages and found %3$s sender</item>
+        <item quantity="other">Scanned %1$s of %2$s messages and found %3$s senders</item>
+    </plurals>
+    <string name="unsubscribe_in_progress">Unsubscribing</string>
+    <string name="subscription_hero_summary">%1$s active senders, %2$s unsubscribed, %3$s emails</string>
+    <string name="unsubscribe_rate_limited">You sent too many unsubscribe requests. Try again in a minute.</string>
+    <string name="unsubscribe_opened_in_browser">This sender only lets you unsubscribe on its website. Finish on the page that opened in your browser.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">Could not unsubscribe from %d sender</item>
+        <item quantity="other">Could not unsubscribe from %d senders</item>
+    </plurals>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="one">%d sender needs you to unsubscribe on its website</item>
+        <item quantity="other">%d senders need you to unsubscribe on their websites</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="one">Unsubscribed %d sender</item>
         <item quantity="other">Unsubscribed %d senders</item>
@@ -2060,8 +2082,8 @@
     <string name="public_key_copied">Public key copied to clipboard</string>
     <string name="created_at_format">Created %1$s</string>
     <string name="identity_key_unavailable_hint">Sign in again to restore your key material.</string>
-    <string name="export_public_key">Export Public Key</string>
-    <string name="export_private_key_label">Export Private Key</string>
+    <string name="export_public_key">Export public key</string>
+    <string name="export_private_key_label">Export private key</string>
     <string name="copy_fingerprint_action">Copy fingerprint</string>
     <string name="copy_public_key_action">Copy public key</string>
     <string name="copied">Copied</string>
@@ -3109,6 +3131,8 @@
     <string name="contact_add_failed">Could not save %1$s to contacts</string>
     <string name="contact_remove_failed">Could not remove %1$s from contacts</string>
     <string name="copy_failed">Couldn’t copy. Try again.</string>
+    <string name="copy_subject">Copy subject</string>
+    <string name="subject_copied">Subject copied</string>
     <string name="create_label_subtitle">Tag messages with a color you choose</string>
     <string name="delete_signature_message">Delete “%1$s”? This cannot be undone.</string>
     <string name="delete_vacation_reply_confirm">Your away message and its dates will be deleted. This cannot be undone.</string>
@@ -3219,6 +3243,9 @@
     <string name="translation_storage_remove_all">Remove all</string>
     <string name="translation_storage_removed">Language packs removed</string>
     <string name="translation_offer_download">This message is in %1$s. Translating it downloads a language pack.</string>
+    <string name="translation_bar_translate_to">Translate to %1$s</string>
+    <string name="translation_bar_translated_from">Translated from %1$s</string>
+    <string name="translation_bar_downloading">Downloading the %1$s language pack</string>
     <string name="contact_support">Contact support</string>
     <string name="domain_purchase_manage">Manage</string>
     <string name="domain_purchase_cancel_payment_title">Cancel this payment?</string>
@@ -3287,6 +3314,10 @@
     <string name="remove_photo">Remove photo</string>
     <string name="add_photo">Add photo</string>
     <string name="photo_too_large">Pick a smaller image</string>
+    <string name="contact_photo_unreadable">Aster can\'t open this image. Try a different photo.</string>
+    <string name="contact_discard_changes_title">Discard changes?</string>
+    <string name="contact_discard_changes_message">Your changes to this contact aren\'t saved.</string>
+    <string name="contact_keep_editing">Keep editing</string>
     <string name="no_contacts_yet">No contacts yet</string>
     <string name="no_contacts_match">No contacts match \"%1$s\"</string>
     <string name="no_contacts_in_trash">Trash is empty</string>
@@ -3435,8 +3466,8 @@
     <string name="read_only">Read only</string>
     <string name="with_attachments">With attachments</string>
     <string name="quick_actions">Quick actions</string>
-    <string name="archive_all_read_emails">Archive read emails</string>
-    <string name="delete_emails_older_than_30_days">Delete emails older than 30 days</string>
+    <string name="archive_all_read_emails">Archive read</string>
+    <string name="delete_emails_older_than_30_days">Delete older than 30 days</string>
     <string name="quick_action_unavailable">That quick action isn\'t available in this folder</string>
     <string name="quick_action_no_unread">Nothing to mark as read here</string>
     <string name="quick_action_no_read">No read emails to archive here</string>
@@ -3762,6 +3793,13 @@
         <item quantity="other">%d contacts added</item>
     </plurals>
     <string name="body_index_status" tools:ignore="PluralsCandidate">Indexing message text for search: %1$d of %2$d</string>
+    <string name="search_status_indexing_mail">Indexing mail</string>
+    <string name="search_status_indexing_text">Indexing message text</string>
+    <string name="search_status_waiting_wifi">Message text indexing continues on Wi-Fi</string>
+    <string name="search_status_paused">Indexing paused</string>
+    <string name="search_status_partial">Results might be incomplete</string>
+    <string name="search_status_count">%1$s of %2$s</string>
+    <string name="search_refine_placeholder">Search within results</string>
     <string name="mail_key_upgrade_title">Updating your saved mail</string>
     <string name="mail_key_upgrade_running">Aster Mail is re-encrypting your saved messages with your current keys. Keep this window open until it finishes.</string>
     <string name="mail_key_upgrade_failed">Aster Mail couldn\'t finish updating your saved messages. Your mail is unchanged. Check your connection, then try again.</string>
@@ -3786,10 +3824,23 @@
     <string name="attachment_unverified">Unverified attachment</string>
     <string name="confirm_back_exit">Confirm before exiting</string>
     <string name="confirm_back_exit_subtitle">Press back twice to leave the app from the inbox</string>
+    <string name="hide_quoted_text">Hide quoted text</string>
+    <string name="show_quoted_text">Show quoted text</string>
+    <string name="toast_position_title">In-app alert position</string>
+    <string name="toast_position_subtitle">Where alerts appear while you use the app</string>
+    <string name="toast_position_top">Top</string>
+    <string name="toast_position_bottom">Bottom</string>
     <string name="mail_priority">Priority</string>
     <string name="mail_priority_high">High</string>
     <string name="mail_priority_normal">Normal</string>
     <string name="mail_priority_low">Low</string>
     <string name="mail_high_priority">High priority</string>
     <string name="mail_low_priority">Low priority</string>
+    <string name="official_sender">Official Aster address</string>
+    <string name="official_sender_desc">This message is from an official Aster address. Aster will never ask for your password or recovery phrase by email.</string>
+    <string name="search_match_position">%1$d of %2$d</string>
+    <string name="search_match_position_description">Match %1$d of %2$d</string>
+    <string name="search_match_previous">Previous match</string>
+    <string name="search_match_next">Next match</string>
+    <string name="search_match_clear">Clear highlights</string>
 </resources>

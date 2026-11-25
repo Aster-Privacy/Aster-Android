@@ -368,7 +368,7 @@ internal fun billing_option_row(
                         color = if (enabled) colors.text_primary else colors.text_tertiary,
                         fontSize = 15.sp,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                        maxLines = 1,
+                        maxLines = if (selected) Int.MAX_VALUE else 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
@@ -388,7 +388,7 @@ internal fun billing_option_row(
                         text = subtitle,
                         color = colors.text_tertiary,
                         fontSize = 13.sp,
-                        maxLines = 2,
+                        maxLines = if (selected) Int.MAX_VALUE else 2,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(top = 2.dp),
                     )

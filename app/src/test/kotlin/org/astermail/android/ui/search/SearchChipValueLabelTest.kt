@@ -79,4 +79,12 @@ class SearchChipValueLabelTest {
         assertNull(operator_value_label(op("date", "2026-08-10")))
         assertNull(operator_value_label(op("before", "7d")))
     }
+
+    @Test
+    fun chip_row_fade_grows_with_scroll_distance() {
+        assertEquals(0f, chip_row_fade_strength(0f, 24f), 0f)
+        assertEquals(0.5f, chip_row_fade_strength(12f, 24f), 0.0001f)
+        assertEquals(1f, chip_row_fade_strength(500f, 24f), 0f)
+        assertEquals(0f, chip_row_fade_strength(10f, 0f), 0f)
+    }
 }

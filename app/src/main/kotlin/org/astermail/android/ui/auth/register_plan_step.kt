@@ -79,8 +79,11 @@ import org.astermail.android.billing.open_billing_tab
 import org.astermail.android.billing.play_price_label
 import org.astermail.android.billing.remember_play_install
 import org.astermail.android.billing.yearly_savings_percent
+import org.astermail.android.design.AsterExpandVisibility
+import org.astermail.android.design.AsterIconSwap
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterShapes
+import org.astermail.android.design.aster_animate_color
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.acrylic
@@ -285,25 +288,35 @@ fun RegisterPlanStep(
 
             Spacer(Modifier.height(AsterSpacing.lg))
 
-            state.error?.let { message ->
-                error_banner(message = message)
-                Spacer(Modifier.height(AsterSpacing.lg))
-            }
-            state.info?.let { message ->
-                plan_step_notice(title = null, message = message)
-                Spacer(Modifier.height(AsterSpacing.lg))
-            }
-            if (state.checking_payment) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                    Spacer(Modifier.size(AsterSpacing.sm))
-                    Text(text = stringResource(R.string.confirming_payment), color = colors.text_tertiary, fontSize = 13.sp)
+            var held_error by remember { mutableStateOf(state.error) }
+            var held_info by remember { mutableStateOf(state.info) }
+            LaunchedEffect(state.error) { state.error?.let { held_error = it } }
+            LaunchedEffect(state.info) { state.info?.let { held_info = it } }
+            AsterExpandVisibility(visible = state.error != null) {
+                Column {
+                    error_banner(message = state.error ?: held_error.orEmpty())
+                    Spacer(Modifier.height(AsterSpacing.lg))
                 }
-                Spacer(Modifier.height(AsterSpacing.lg))
+            }
+            AsterExpandVisibility(visible = state.info != null) {
+                Column {
+                    plan_step_notice(title = null, message = state.info ?: held_info.orEmpty())
+                    Spacer(Modifier.height(AsterSpacing.lg))
+                }
+            }
+            AsterExpandVisibility(visible = state.checking_payment) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        org.astermail.android.design.components.aster_spinner(color = colors.accent_blue, modifier = Modifier.size(16.dp), stroke_width = 2.dp)
+                        Spacer(Modifier.size(AsterSpacing.sm))
+                        Text(text = stringResource(R.string.confirming_payment), color = colors.text_tertiary, fontSize = 13.sp)
+                    }
+                    Spacer(Modifier.height(AsterSpacing.lg))
+                }
             }
 
             if (paid_at_entry) {
@@ -313,7 +326,7 @@ fun RegisterPlanStep(
                     modifier = Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator(color = colors.accent_blue, modifier = Modifier.size(24.dp))
+                    org.astermail.android.design.components.aster_spinner(color = colors.accent_blue, modifier = Modifier.size(24.dp))
                 }
             } else if (options.isEmpty()) {
                 Text(
@@ -443,29 +456,39 @@ private fun signup_plan_row(
         pluralStringResource(R.plurals.domains_count_plural, plan.max_custom_domains, plan.max_custom_domains)
     }
 
+    val row_background by aster_animate_color(
+        if (is_selected) tonal_surface_color(colors, colors.accent_blue) else colors.bg_card,
+        label = "signup_plan_background",
+    )
+    val row_border by aster_animate_color(
+        if (is_selected) colors.accent_blue else colors.border_secondary,
+        label = "signup_plan_border",
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .acrylic(
                 colors,
                 shape,
-                if (is_selected) tonal_surface_color(colors, colors.accent_blue) else colors.bg_card,
+                row_background,
             )
             .border(
                 if (is_selected) 2.dp else 1.dp,
-                if (is_selected) colors.accent_blue else colors.border_secondary,
+                row_border,
                 shape,
             )
             .selectable(selected = is_selected, role = Role.RadioButton, onClick = on_select)
             .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = if (is_selected) TablerIcons.CircleCheck else TablerIcons.Circle,
-            contentDescription = null,
-            tint = if (is_selected) colors.accent_blue else colors.text_tertiary,
-            modifier = Modifier.size(22.dp),
-        )
+        AsterIconSwap(target_state = is_selected, label = "signup_plan_check") { selected ->
+            Icon(
+                imageVector = if (selected) TablerIcons.CircleCheck else TablerIcons.Circle,
+                contentDescription = null,
+                tint = if (selected) colors.accent_blue else colors.text_tertiary,
+                modifier = Modifier.size(22.dp),
+            )
+        }
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

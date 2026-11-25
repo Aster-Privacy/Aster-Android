@@ -3,4 +3,8 @@
     <string name="fix_enc_codes_share_title">恢复代码</string>
     <string name="fix_enc_codes_file_note">每个代码只能使用一次。请将此文件保存在安全的位置。</string>
     <string name="fix_enc_codes_save_failed">现在无法保存文件。请改为复制这些代码。</string>
+    <string name="enc_hero_status_protected">受保护</string>
+    <string name="enc_hero_status_attention">需要处理</string>
+    <string name="enc_hero_summary">你的邮件使用只有你持有的密钥进行端到端加密。</string>
+    <string name="enc_hero_summary_missing">此设备上没有你的密钥。请重新登录以恢复密钥。</string>
 </resources>

@@ -21,12 +21,6 @@
 
 package org.astermail.android.ui.settings.detail
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -39,53 +33,30 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
-import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_appearance
 import org.astermail.android.design.components.shimmer_state
-
-private const val pulse_period_ms = 1600
-private const val pulse_min_alpha = 0.55f
-
-@Composable
-private fun pulse_alpha(reduce_motion: Boolean): State<Float> {
-    if (reduce_motion) return remember { mutableFloatStateOf(1f) }
-    val transition = rememberInfiniteTransition(label = "pulse_skeleton")
-    return transition.animateFloat(
-        initialValue = 1f,
-        targetValue = pulse_min_alpha,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = pulse_period_ms, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "pulse_alpha",
-    )
-}
+import org.astermail.android.design.components.skeleton_reveal
 
 @Composable
 internal fun pulse_skeleton(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.(shimmer_appearance) -> Unit,
 ) {
-    val tone = shimmer_state(animated = false)
-    val pulse = pulse_alpha(aster_reduce_motion())
+    val tone = shimmer_state()
     Column(
         modifier = modifier
             .clearAndSetSemantics {}
-            .graphicsLayer { alpha = pulse.value },
+            .skeleton_reveal(),
     ) {
         content(tone)
     }

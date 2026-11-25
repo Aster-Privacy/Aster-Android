@@ -189,9 +189,9 @@ internal fun alias_contact_pick_dialog(
                             .testTag("alias_pick_loading"),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator(
+                        org.astermail.android.design.components.aster_spinner(
                             color = colors.accent_blue,
-                            strokeWidth = 2.dp,
+                            stroke_width = 2.dp,
                             modifier = Modifier.size(24.dp),
                         )
                     }
@@ -586,20 +586,12 @@ private fun pick_notice(
             .testTag(test_tag),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(SquircleShape(AsterRadius.lg))
-                .background(colors.text_primary.copy(alpha = 0.06f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = colors.text_muted,
-                modifier = Modifier.size(24.dp),
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = colors.text_muted,
+            modifier = Modifier.size(28.dp),
+        )
         Spacer(Modifier.height(AsterSpacing.md))
         Text(
             text = title,

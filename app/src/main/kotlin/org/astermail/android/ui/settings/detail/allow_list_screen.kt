@@ -61,6 +61,7 @@ import org.astermail.android.design.components.AsterDialogPrimaryButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 private fun allowlist_kind_option(
@@ -104,6 +105,7 @@ fun AllowListScreen(on_back: () -> Unit) {
     var show_add_dialog by remember { mutableStateOf(false) }
     var add_value by remember { mutableStateOf("") }
     var add_is_domain by remember { mutableStateOf(false) }
+    var add_attempted by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     val senders = state.allowed_senders
     val filtered = remember(senders, query) {
@@ -117,15 +119,20 @@ fun AllowListScreen(on_back: () -> Unit) {
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
-        android.widget.Toast.makeText(action_result_context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg.toString())
         vm.clear_action_result()
     }
 
     LaunchedEffect(Unit) { vm.load_allowed_senders() }
 
-    detail_scaffold(title = stringResource(R.string.allowlist), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.allowlist),
+        on_back = on_back,
+        on_refresh = { vm.join_launched { vm.load_allowed_senders() } },
+    ) {
         when {
-            state.allowed_senders_loading && senders.isEmpty() -> filters_loading_block()
+            senders.isEmpty() && (state.allowed_senders_loading || !state.allowed_senders_loaded) ->
+                filters_loading_block()
 
             state.allowed_senders_error != null && senders.isEmpty() -> filters_error_card(
                 message = state.allowed_senders_error,
@@ -192,8 +199,9 @@ fun AllowListScreen(on_back: () -> Unit) {
         } else {
             add_value.contains("@") && add_value.substringAfter('@').contains(".")
         }
+        val close_dialog = { show_add_dialog = false; add_value = ""; add_is_domain = false; add_attempted = false }
         AsterDialog(
-            on_dismiss = { show_add_dialog = false; add_value = ""; add_is_domain = false },
+            on_dismiss = close_dialog,
             title = stringResource(R.string.add_to_allowlist),
             message = stringResource(R.string.add_to_allowlist_hint),
             body = {
@@ -202,24 +210,29 @@ fun AllowListScreen(on_back: () -> Unit) {
                         allowlist_kind_option(
                             label = stringResource(R.string.email_address),
                             selected = !add_is_domain,
-                            on_select = { add_is_domain = false },
+                            on_select = { add_is_domain = false; add_attempted = false },
                             test_tag = "allowlist_kind_email",
                         )
                         allowlist_kind_option(
                             label = stringResource(R.string.allowlist_entire_domain),
                             selected = add_is_domain,
-                            on_select = { add_is_domain = true },
+                            on_select = { add_is_domain = true; add_attempted = false },
                             test_tag = "allowlist_kind_domain",
                         )
                     }
                     v_gap(AsterSpacing.sm)
                     AsterTextField(
                         value = add_value,
-                        onValueChange = { add_value = it.trim().lowercase() },
+                        onValueChange = { add_value = it.trim().lowercase(); add_attempted = false },
                         placeholder = if (add_is_domain) {
                             stringResource(R.string.allowlist_domain_placeholder)
                         } else {
                             stringResource(R.string.allowlist_email_placeholder)
+                        },
+                        error_text = when {
+                            !add_attempted || can_add -> null
+                            add_is_domain -> stringResource(R.string.domain_add_invalid)
+                            else -> stringResource(R.string.alias_contact_invalid_email)
                         },
                         modifier = Modifier.fillMaxWidth().testTag("allowlist_add_input"),
                     )
@@ -228,16 +241,17 @@ fun AllowListScreen(on_back: () -> Unit) {
             footer = {
                 AsterDialogOutlineButton(
                     label = stringResource(R.string.cancel),
-                    onClick = { show_add_dialog = false; add_value = ""; add_is_domain = false },
+                    onClick = close_dialog,
                 )
                 AsterDialogPrimaryButton(
                     label = stringResource(R.string.alias_action_add),
-                    enabled = can_add,
                     onClick = {
-                        vm.allow_sender(add_value, add_is_domain)
-                        show_add_dialog = false
-                        add_value = ""
-                        add_is_domain = false
+                        if (can_add) {
+                            vm.allow_sender(add_value, add_is_domain)
+                            close_dialog()
+                        } else {
+                            add_attempted = true
+                        }
                     },
                 )
             },

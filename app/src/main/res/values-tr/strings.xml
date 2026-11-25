@@ -278,7 +278,7 @@
     <string name="unsubscribed">abonelikten çıkıldı</string>
     <string name="scanning">Taranıyor...</string>
     <string name="no_mailing_lists">Henüz e-posta listesi yok</string>
-    <string name="scan_inbox_hint">Bültenleri ve pazarlama gönderenlerini bulmak için \"Gelen kutusunu tara\" seçeneğine dokunun.</string>
+    <string name="scan_inbox_hint">Bültenleri ve pazarlama gönderenlerini bulmak üzere gelen kutunuzu taramak için aşağı çekin.</string>
     <string name="active_tab">Aktif</string>
     <string name="unsubscribed_tab">Abonelikten çıkılanlar</string>
     <string name="reactivate">Yeniden etkinleştir</string>
@@ -802,6 +802,7 @@
     <string name="unblock">Engeli kaldır</string>
     <string name="block_a_sender">Bir göndereni engelle</string>
     <string name="block_sender_hint">Bir e-posta adresi veya alan adı girin. Yeni iletiler doğrudan spam klasörüne gider.</string>
+    <string name="block_sender_invalid">Bir e-posta adresi veya example.com gibi bir alan adı girin.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">Engelle</string>
     <string name="blocked_domain">Tüm alan adı</string>
@@ -1251,6 +1252,18 @@
     <string name="unsubscribe_failed">Abonelik iptali başarısız</string>
     <string name="unsubscribe_manual_required">Bu gönderen otomatik abonelik iptalini desteklemiyor. E-postadaki bağlantı ile kendiniz iptal edebilirsiniz.</string>
     <string name="bulk_unsubscribe_failed">Toplu abonelik iptali başarısız</string>
+    <string name="unsubscribe_in_progress">Abonelik iptal ediliyor</string>
+    <string name="subscription_hero_summary">%1$s etkin gönderen, %2$s abonelik iptal edildi, %3$s e-posta</string>
+    <string name="unsubscribe_rate_limited">Çok fazla abonelikten çıkma isteği gönderdiniz. Bir dakika sonra tekrar deneyin.</string>
+    <string name="unsubscribe_opened_in_browser">Bu gönderen yalnızca kendi web sitesinde abonelikten çıkmanıza izin veriyor. İşlemi tarayıcınızda açılan sayfada tamamlayın.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="one">%d gönderenin aboneliğinden çıkılamadı</item>
+        <item quantity="other">%d gönderenin aboneliğinden çıkılamadı</item>
+    </plurals>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="one">%d gönderen için aboneliği web sitesinden iptal etmeniz gerekiyor</item>
+        <item quantity="other">%d gönderen için aboneliği web sitelerinden iptal etmeniz gerekiyor</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="one">%d göndericinin aboneliği iptal edildi</item>
         <item quantity="other">%d göndericinin aboneliği iptal edildi</item>
@@ -1582,10 +1595,15 @@
     <string name="reaction_remove_failed">Tepki kaldırılamadı</string>
     <string name="copy_address">Adresi kopyala</string>
     <string name="sender_on_aster">Aster hesabı</string>
+    <string name="sender_on_aster_logo">%1$s hesabı</string>
     <string name="messages_from_sender">Bu gönderenin postalarını bul</string>
     <string name="send_email_to_sender">Bu gönderene yaz</string>
     <string name="add_to_contacts">Kişilere kaydet</string>
     <string name="remove_from_contacts">Kişilerden kaldır</string>
+    <string name="sender_action_new_message">Yeni ileti</string>
+    <string name="sender_action_add_contact">Kişi ekle</string>
+    <string name="sender_action_view_contact">Kişiyi görüntüle</string>
+    <string name="sender_action_in_contacts">Kişilerde</string>
     <string name="contact_added_named">%1$s kişilere kaydedildi</string>
     <string name="contact_removed_named">%1$s kişilerden çıkarıldı</string>
     <string name="blocked_content_details_title">Engellenen içerik</string>
@@ -2364,6 +2382,10 @@
         <item quantity="one">%d yeni abonelik bulundu</item>
         <item quantity="other">%d yeni abonelik bulundu</item>
     </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">%2$s iletiden %1$s tanesi tarandı, %3$s gönderen bulundu</item>
+        <item quantity="other">%2$s iletiden %1$s tanesi tarandı, %3$s gönderen bulundu</item>
+    </plurals>
     <string name="reaction_info_title">Tepki</string>
     <string name="reaction_badge_label">Yeni tepki</string>
     <string name="notification_new_reaction">Yeni bir tepkiniz var</string>
@@ -2862,6 +2884,8 @@
     <string name="contact_add_failed">%1$s kişilere kaydedilemedi</string>
     <string name="contact_remove_failed">%1$s kişilerden kaldırılamadı</string>
     <string name="copy_failed">Kopyalanamadı. Tekrar deneyin.</string>
+    <string name="copy_subject">Konuyu kopyala</string>
+    <string name="subject_copied">Konu kopyalandı</string>
     <string name="create_label_subtitle">İletileri seçtiğiniz bir renkle işaretleyin</string>
     <string name="delete_signature_message">“%1$s” silinsin mi? Bu işlem geri alınamaz.</string>
     <string name="delete_vacation_reply_confirm">Otomatik yanıtınız ve tarihleri silinecek. Bu işlem geri alınamaz.</string>
@@ -3028,6 +3052,9 @@
     <string name="translation_storage_remove_all">Tümünü kaldır</string>
     <string name="translation_storage_removed">Dil paketleri kaldırıldı</string>
     <string name="translation_offer_download">Bu ileti %1$s dilinde. Çevirmek bir dil paketi indirir.</string>
+    <string name="translation_bar_translate_to">Şu dile çevir: %1$s</string>
+    <string name="translation_bar_translated_from">Şu dilden çevrildi: %1$s</string>
+    <string name="translation_bar_downloading">%1$s dil paketi indiriliyor</string>
     <string name="contact_support">Destek ile iletişime geç</string>
     <string name="domain_purchase_manage">Yönet</string>
     <string name="domain_purchase_cancel_payment_title">Bu ödeme iptal edilsin mi?</string>
@@ -3150,6 +3177,10 @@
     <string name="remove_photo">Fotoğrafı kaldır</string>
     <string name="add_photo">Fotoğraf ekle</string>
     <string name="photo_too_large">Daha küçük bir görsel seçin</string>
+    <string name="contact_photo_unreadable">Aster bu görseli açamıyor. Başka bir fotoğraf deneyin.</string>
+    <string name="contact_discard_changes_title">Değişiklikler silinsin mi?</string>
+    <string name="contact_discard_changes_message">Bu kişide yaptığınız değişiklikler kaydedilmedi.</string>
+    <string name="contact_keep_editing">Düzenlemeye devam et</string>
     <string name="no_contacts_yet">Henüz kişi yok</string>
     <string name="no_contacts_match">“%1$s” ile eşleşen kişi yok</string>
     <string name="no_contacts_in_trash">Çöp kutusu boş</string>
@@ -3711,6 +3742,13 @@
         <item quantity="other">%d kişi eklendi</item>
     </plurals>
     <string name="body_index_status">Arama için ileti metni dizine ekleniyor: %1$d / %2$d</string>
+    <string name="search_status_indexing_mail">Posta dizine ekleniyor</string>
+    <string name="search_status_indexing_text">Mesaj metni dizine ekleniyor</string>
+    <string name="search_status_waiting_wifi">Metin dizinleme Wi-Fi\'da devam eder</string>
+    <string name="search_status_paused">Dizinleme duraklatıldı</string>
+    <string name="search_status_partial">Sonuçlar eksik olabilir</string>
+    <string name="search_status_count">%1$s / %2$s</string>
+    <string name="search_refine_placeholder">Sonuçlarda ara</string>
     <string name="mail_key_upgrade_title">Kayıtlı e-postalarınız güncelleniyor</string>
     <string name="mail_key_upgrade_running">Aster Mail, kayıtlı iletilerinizi mevcut anahtarlarınızla yeniden şifreliyor. İşlem bitene kadar bu pencereyi açık tutun.</string>
     <string name="mail_key_upgrade_failed">Aster Mail kayıtlı iletilerinizin güncellenmesini tamamlayamadı. E-postalarınız değişmedi. Bağlantınızı kontrol edip yeniden deneyin.</string>
@@ -3735,10 +3773,21 @@
     <string name="attachment_unverified">Doğrulanmamış ek</string>
     <string name="confirm_back_exit">Çıkmadan önce onayla</string>
     <string name="confirm_back_exit_subtitle">Gelen kutusundan uygulamadan çıkmak için Geri tuşuna iki kez basın</string>
+    <string name="toast_position_title">Uygulama içi uyarı konumu</string>
+    <string name="toast_position_subtitle">Uygulamayı kullanırken uyarıların göründüğü yer</string>
+    <string name="toast_position_top">Üst</string>
+    <string name="toast_position_bottom">Alt</string>
     <string name="mail_priority">Öncelik</string>
     <string name="mail_priority_high">Yüksek</string>
     <string name="mail_priority_normal">Normal</string>
     <string name="mail_priority_low">Düşük</string>
     <string name="mail_high_priority">Yüksek öncelik</string>
     <string name="mail_low_priority">Düşük öncelik</string>
+    <string name="official_sender">Resmi Aster adresi</string>
+    <string name="official_sender_desc">Bu mesaj resmi bir Aster adresinden gönderildi. Aster parolanızı veya kurtarma ifadenizi asla e-posta ile istemez.</string>
+    <string name="search_match_position">%1$d / %2$d</string>
+    <string name="search_match_position_description">Eşleşme %1$d / %2$d</string>
+    <string name="search_match_previous">Önceki eşleşme</string>
+    <string name="search_match_next">Sonraki eşleşme</string>
+    <string name="search_match_clear">Vurguları temizle</string>
 </resources>

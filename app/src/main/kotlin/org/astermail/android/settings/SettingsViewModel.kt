@@ -203,6 +203,9 @@ data class AllowedSenderView(
 data class SettingsUiState(
     val user: UserInfo? = null,
     val sessions: List<SessionInfo> = emptyList(),
+    val sessions_loading: Boolean = false,
+    val sessions_loaded: Boolean = false,
+    val sessions_load_failed: Boolean = false,
     val revoking_session_ids: Set<String> = emptySet(),
     val revoking_all_sessions: Boolean = false,
     val sessions_held: org.astermail.android.guard.guard_held_notice? = null,
@@ -212,9 +215,13 @@ data class SettingsUiState(
     val hardware_key_held: org.astermail.android.guard.guard_held_notice? = null,
     val blocked_senders: List<BlockedSenderView> = emptyList(),
     val blocked_senders_loading: Boolean = false,
+    val blocked_senders_loaded: Boolean = false,
+    val labels_loaded_types: Set<String> = emptySet(),
+    val tags_loaded: Boolean = false,
     val blocked_senders_error: String? = null,
     val allowed_senders: List<AllowedSenderView> = emptyList(),
     val allowed_senders_loading: Boolean = false,
+    val allowed_senders_loaded: Boolean = false,
     val allowed_senders_error: String? = null,
     val aliases: List<AliasInfo> = emptyList(),
     val max_aliases: Int = 0,
@@ -226,6 +233,9 @@ data class SettingsUiState(
     val storage: StorageOverview? = null,
     val subscription: SubscriptionInfo? = null,
     val subscription_load_failed: Boolean = false,
+    val subscription_loading: Boolean = false,
+    val subscription_error: String? = null,
+    val subscription_cached: Boolean = false,
     val security_status: SecurityStatusResponse? = null,
     val labels: List<LabelItem> = emptyList(),
     val tags: List<TagItem> = emptyList(),
@@ -245,6 +255,7 @@ data class SettingsUiState(
     val api_keys: List<ApiKeyInfo> = emptyList(),
     val api_key_creating: Boolean = false,
     val forwarding_rules_load_failed: Boolean = false,
+    val forwarding_rules_loaded: Boolean = false,
     val webhooks: List<WebhookInfo> = emptyList(),
     val directories: List<AliasDirectory> = emptyList(),
     val directories_loading: Boolean = false,
@@ -275,6 +286,7 @@ data class SettingsUiState(
     val sending_blocks_loaded: Boolean = false,
     val sending_block_pending_ids: Set<String> = emptySet(),
     val expanded_alias_ids: Set<String> = emptySet(),
+    val collapsed_alias_ids: Set<String> = emptySet(),
     val alias_details: Map<String, AliasDetailState> = emptyMap(),
     val mail_rules: List<org.astermail.android.api.mail_rules.MailRule> = emptyList(),
     val recovery_email_address: String? = null,
@@ -302,6 +314,7 @@ data class SettingsUiState(
     val vanguard_status_load_failed: Boolean = false,
     val security_loading: Boolean = false,
     val pgp_key_info: org.astermail.android.api.encryption.PgpKeyInfo? = null,
+    val pgp_key_info_loaded: Boolean = false,
     val external_pgp_key: org.astermail.android.api.encryption.ExternalPgpKeyInfo? = null,
     val external_pgp_key_busy: Boolean = false,
     val recovery_methods: org.astermail.android.api.recovery.RecoveryMethodsResponse? = null,
@@ -440,11 +453,13 @@ class SettingsViewModel @Inject constructor(
     internal var settings_load_backoff: List<Long> = settings_load_backoff_ms
     private var hardware_keys_job: kotlinx.coroutines.Job? = null
     private var trusted_devices_job: kotlinx.coroutines.Job? = null
+    private var sessions_job: kotlinx.coroutines.Job? = null
     private var audit_log_job: kotlinx.coroutines.Job? = null
 
     private val _state = MutableStateFlow(SettingsUiState())
     private val alias_run_polls = mutableMapOf<String, kotlinx.coroutines.Job>()
     private var last_subscription_load_ms = 0L
+    private var subscription_job: kotlinx.coroutines.Job? = null
     private var last_tags_load_ms = 0L
     private val optimistic_label_tokens = java.util.Collections.newSetFromMap(
         ConcurrentHashMap<String, Boolean>(),
@@ -506,6 +521,7 @@ class SettingsViewModel @Inject constructor(
         hydrate_cached_tags()
         hydrate_twin_address()
         hydrate_cached_storage()
+        hydrate_cached_subscription()
         load_preferences()
         watch_account_key_readiness()
         watch_identity_key()
@@ -559,6 +575,24 @@ class SettingsViewModel @Inject constructor(
             cached_preferences_json.encodeToString(StorageOverview.serializer(), overview)
         }.getOrNull() ?: return
         preferences_cache.write_storage(key, raw)
+    }
+
+    private fun hydrate_cached_subscription() {
+        if (_state.value.subscription != null) return
+        val raw = preferences_cache.read_subscription(cache_account_key()) ?: return
+        val cached = runCatching {
+            cached_preferences_json.decodeFromString(SubscriptionInfo.serializer(), raw)
+        }.getOrNull() ?: return
+        if (cached.effective_plan_name.isNullOrBlank() && cached.status.isNullOrBlank()) return
+        _state.update { if (it.subscription == null) it.copy(subscription = cached, subscription_cached = true) else it }
+    }
+
+    private fun persist_cached_subscription(sub: SubscriptionInfo) {
+        val key = cache_account_key() ?: return
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(SubscriptionInfo.serializer(), sub)
+        }.getOrNull() ?: return
+        preferences_cache.write_subscription(key, raw)
     }
 
     fun clear_cached_preferences(account_key: String?) {
@@ -770,9 +804,9 @@ class SettingsViewModel @Inject constructor(
         preferences_cache.write_badges(key, raw)
     }
 
-    fun load_default_sender() {
+    fun load_default_sender(force: Boolean = false) {
         val now = System.currentTimeMillis()
-        if (now - last_default_sender_load_ms < PREFERENCES_TTL_MS) return
+        if (!force && now - last_default_sender_load_ms < PREFERENCES_TTL_MS) return
         last_default_sender_load_ms = now
         viewModelScope.launch {
             try {
@@ -789,9 +823,9 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun load_product_updates() {
+    fun load_product_updates(force: Boolean = false) {
         val now = System.currentTimeMillis()
-        if (now - last_product_updates_load_ms < PREFERENCES_TTL_MS) return
+        if (!force && now - last_product_updates_load_ms < PREFERENCES_TTL_MS) return
         last_product_updates_load_ms = now
         if (!_state.value.product_updates_available) {
             _state.value = _state.value.copy(product_updates_settled = false)
@@ -910,20 +944,23 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun load_sessions() {
-        viewModelScope.launch {
-            _state.value = _state.value.copy(is_loading = true, error = null)
-            try {
-                val response = settings_api.list_sessions()
-                _state.value = _state.value.copy(
-                    sessions = response.sessions,
-                    is_loading = false,
-                )
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                _state.value = _state.value.copy(
-                    is_loading = false,
-                    error = user_facing_error(t),
-                )
+        if (sessions_job?.isActive == true) return
+        _state.update { it.copy(sessions_loading = true, sessions_load_failed = false) }
+        sessions_job = viewModelScope.launch {
+            load_settings_resource(await_session = await_session_ready, backoff_ms = settings_load_backoff) {
+                settings_api.list_sessions()
+            }.onSuccess { response ->
+                _state.update {
+                    it.copy(
+                        sessions = response.sessions,
+                        sessions_loading = false,
+                        sessions_loaded = true,
+                        sessions_load_failed = false,
+                    )
+                }
+            }.onFailure { t ->
+                _state.update { it.copy(sessions_loading = false, sessions_load_failed = !it.sessions_loaded) }
+                if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_sessions", t)
             }
         }
     }
@@ -1066,6 +1103,8 @@ class SettingsViewModel @Inject constructor(
         last_preferences_raw_json = null
         last_synced_preferences = null
         last_subscription_load_ms = 0L
+        subscription_job?.cancel()
+        subscription_job = null
         last_tags_load_ms = 0L
         last_preferences_load_ms = 0L
         last_default_sender_load_ms = 0L
@@ -1082,6 +1121,8 @@ class SettingsViewModel @Inject constructor(
         hardware_keys_job = null
         trusted_devices_job?.cancel()
         trusted_devices_job = null
+        sessions_job?.cancel()
+        sessions_job = null
         audit_log_job?.cancel()
         audit_log_job = null
         last_labels_load_ms.clear()
@@ -1094,6 +1135,7 @@ class SettingsViewModel @Inject constructor(
         hydrate_cached_preferences()
         hydrate_cached_tags()
         hydrate_cached_storage()
+        hydrate_cached_subscription()
     }
 
     fun load_blocked_senders() {
@@ -1114,13 +1156,18 @@ class SettingsViewModel @Inject constructor(
                     }
                 }
                 _state.update {
-                    it.copy(blocked_senders = decrypted, blocked_senders_loading = false)
+                    it.copy(
+                        blocked_senders = decrypted,
+                        blocked_senders_loading = false,
+                        blocked_senders_loaded = true,
+                    )
                 }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update {
                     it.copy(
                         blocked_senders_loading = false,
+                        blocked_senders_loaded = true,
                         blocked_senders_error = user_facing_error(t),
                     )
                 }
@@ -1385,13 +1432,18 @@ class SettingsViewModel @Inject constructor(
                     }
                 }
                 _state.update {
-                    it.copy(allowed_senders = decrypted, allowed_senders_loading = false)
+                    it.copy(
+                        allowed_senders = decrypted,
+                        allowed_senders_loading = false,
+                        allowed_senders_loaded = true,
+                    )
                 }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update {
                     it.copy(
                         allowed_senders_loading = false,
+                        allowed_senders_loaded = true,
                         allowed_senders_error = user_facing_error(t),
                     )
                 }
@@ -2098,32 +2150,33 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun toggle_alias_expanded(alias_id: String) {
-        val expanded = _state.value.expanded_alias_ids.contains(alias_id)
-        set_alias_expanded(alias_id, !expanded)
-    }
-
-    fun set_alias_expanded(alias_id: String, expanded: Boolean) {
-        if (_state.value.expanded_alias_ids.contains(alias_id) == expanded) {
-            if (expanded) load_alias_detail(alias_id)
-            return
-        }
+    fun toggle_alias_expanded(alias_id: String, expanded_by_default: Boolean = false) {
         _state.update { s ->
-            s.copy(
-                expanded_alias_ids = if (expanded) {
-                    s.expanded_alias_ids + alias_id
-                } else {
-                    s.expanded_alias_ids - alias_id
-                },
-            )
+            if (expanded_by_default) {
+                s.copy(
+                    collapsed_alias_ids = if (s.collapsed_alias_ids.contains(alias_id)) {
+                        s.collapsed_alias_ids - alias_id
+                    } else {
+                        s.collapsed_alias_ids + alias_id
+                    },
+                )
+            } else {
+                s.copy(
+                    expanded_alias_ids = if (s.expanded_alias_ids.contains(alias_id)) {
+                        s.expanded_alias_ids - alias_id
+                    } else {
+                        s.expanded_alias_ids + alias_id
+                    },
+                )
+            }
         }
-        if (expanded) load_alias_detail(alias_id)
     }
 
     fun load_alias_detail(alias_id: String, force: Boolean = false) {
         val existing = _state.value.alias_details[alias_id]
         if (!force && existing != null && (existing.loaded || existing.loading)) return
-        update_alias_detail(alias_id) { it.copy(loading = true) }
+        val keep_visible = existing?.loaded == true
+        if (!keep_visible) update_alias_detail(alias_id) { it.copy(loading = true) }
         viewModelScope.launch {
             val stats = fetch_alias_section { alias_detail_api.get_stats(alias_id) }
             val pins = fetch_alias_section { alias_detail_api.list_pins(alias_id) }
@@ -2161,6 +2214,11 @@ class SettingsViewModel @Inject constructor(
                 }
             }
             val section_failed = listOf(stats, pins, contacts, log, rules, apply_run).any { it.failed }
+            if (keep_visible && section_failed) {
+                update_alias_detail(alias_id) { it.copy(loading = false) }
+                _state.update { it.copy(action_result = context.getString(R.string.failed_to_load)) }
+                return@launch
+            }
             update_alias_detail(alias_id) {
                 it.copy(
                     loading = false,
@@ -3058,12 +3116,37 @@ class SettingsViewModel @Inject constructor(
         return try {
             val health = settings_api.get_domain_health(domain_id)
             _state.update { it.copy(domain_health = it.domain_health + (domain_id to health)) }
+            persist_cached_domain_health(domain_id, health)
             health
         } catch (t: Throwable) {
             if (t is kotlinx.coroutines.CancellationException) throw t
             if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "get_domain_health_now", t)
             null
         }
+    }
+
+    private val domain_health_map_serializer = kotlinx.serialization.builtins.MapSerializer(
+        kotlinx.serialization.serializer<String>(),
+        org.astermail.android.api.settings.DomainHealth.serializer(),
+    )
+
+    private fun read_cached_domain_health_map(): Map<String, org.astermail.android.api.settings.DomainHealth> {
+        val raw = preferences_cache.read_domain_health(cache_account_key()) ?: return emptyMap()
+        return runCatching {
+            cached_preferences_json.decodeFromString(domain_health_map_serializer, raw)
+        }.getOrNull().orEmpty()
+    }
+
+    fun cached_domain_health(domain_id: String): org.astermail.android.api.settings.DomainHealth? =
+        _state.value.domain_health[domain_id] ?: read_cached_domain_health_map()[domain_id]
+
+    private fun persist_cached_domain_health(domain_id: String, health: org.astermail.android.api.settings.DomainHealth) {
+        val key = cache_account_key() ?: return
+        val merged = read_cached_domain_health_map() + (domain_id to health)
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(domain_health_map_serializer, merged)
+        }.getOrNull() ?: return
+        preferences_cache.write_domain_health(key, raw)
     }
 
     sealed interface DkimShortKeyOutcome {
@@ -3933,20 +4016,29 @@ class SettingsViewModel @Inject constructor(
 
     fun load_subscription(force: Boolean = true) {
         val now = System.currentTimeMillis()
-        if (!force && _state.value.subscription != null && now - last_subscription_load_ms < SUBSCRIPTION_TTL_MS) return
+        val current = _state.value
+        if (!force && current.subscription != null && !current.subscription_cached &&
+            now - last_subscription_load_ms < SUBSCRIPTION_TTL_MS
+        ) return
+        if (subscription_job?.isActive == true) return
         last_subscription_load_ms = now
-        viewModelScope.launch {
-            _state.value = _state.value.copy(is_loading = true, error = null, subscription_load_failed = false)
+        subscription_job = viewModelScope.launch {
+            _state.update { it.copy(subscription_loading = true, subscription_error = null, subscription_load_failed = false) }
             try {
                 val sub = load_settings_resource(await_session_ready, settings_load_backoff) { settings_api.get_subscription() }.getOrThrow()
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.i("SettingsVM", "subscription loaded status=${sub.status} plan=${sub.plan_name}")
                 }
-                _state.value = _state.value.copy(
-                    subscription = sub,
-                    is_loading = false,
-                    subscription_load_failed = false,
-                )
+                _state.update {
+                    it.copy(
+                        subscription = sub,
+                        subscription_loading = false,
+                        subscription_error = null,
+                        subscription_load_failed = false,
+                        subscription_cached = false,
+                    )
+                }
+                persist_cached_subscription(sub)
                 org.astermail.android.billing.PaymentFailedNotifier.observe(
                     context,
                     sub.status,
@@ -3959,13 +4051,24 @@ class SettingsViewModel @Inject constructor(
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.w("SettingsVM", "load_subscription failed", t)
                 }
-                _state.value = _state.value.copy(
-                    is_loading = false,
-                    error = user_facing_error(t),
-                    subscription_load_failed = true,
-                )
+                last_subscription_load_ms = 0L
+                _state.update {
+                    it.copy(
+                        subscription_loading = false,
+                        subscription_error = org.astermail.android.localized_api_error(
+                            context,
+                            t,
+                            context.getString(R.string.subscription_load_failed_body),
+                        ),
+                        subscription_load_failed = true,
+                    )
+                }
             }
         }
+    }
+
+    fun clear_subscription_error() {
+        _state.update { it.copy(subscription_error = null) }
     }
 
     fun load_security_status() {
@@ -4364,9 +4467,10 @@ class SettingsViewModel @Inject constructor(
             try {
                 val info = encryption_api.get_pgp_key_info()
                     .takeIf { org.astermail.android.auth.pgp_key_role_is_internal(it.role) }
-                _state.update { it.copy(pgp_key_info = info) }
+                _state.update { it.copy(pgp_key_info = info, pgp_key_info_loaded = true) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                _state.update { it.copy(pgp_key_info_loaded = true) }
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_pgp_key_info", t)
             }
         }
@@ -5250,7 +5354,16 @@ class SettingsViewModel @Inject constructor(
         val now = System.currentTimeMillis()
         val labels_key = folder_type ?: "all"
         if (!force && last_labels_load_ms[labels_key]?.let { now - it < LIST_TTL_MS } == true) return
-        viewModelScope.launch { fetch_labels(folder_type, silent = false) }
+        val gen = account_generation
+        viewModelScope.launch {
+            try {
+                fetch_labels(folder_type, silent = false)
+            } finally {
+                if (gen == account_generation) {
+                    _state.update { it.copy(labels_loaded_types = it.labels_loaded_types + labels_key) }
+                }
+            }
+        }
     }
 
     fun reload_labels_from_sync() {
@@ -5565,7 +5678,14 @@ class SettingsViewModel @Inject constructor(
             if (last_tags_load_ms > 0L && now - last_tags_load_ms < TAGS_TTL_MS) return
             if (tags_load_job?.isActive == true) return
         }
-        tags_load_job = viewModelScope.launch { fetch_tags(silent = false) }
+        val gen = account_generation
+        tags_load_job = viewModelScope.launch {
+            try {
+                fetch_tags(silent = false)
+            } finally {
+                if (gen == account_generation) _state.update { it.copy(tags_loaded = true) }
+            }
+        }
     }
 
     fun reload_tags_from_sync() {
@@ -6352,7 +6472,18 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun load_referral_info() {
+        hydrate_cached_referral()
         viewModelScope.launch {
+            val history_job = async {
+                try {
+                    kotlinx.coroutines.withTimeout(10_000L) {
+                        labels_api.get_referral_history().referrals
+                    }
+                } catch (t: Throwable) {
+                    if (t is kotlinx.coroutines.CancellationException) throw t
+                    null
+                }
+            }
             val info: ReferralInfoResponse? = try {
                 kotlinx.coroutines.withTimeout(10_000L) {
                     labels_api.get_referral_info()
@@ -6361,20 +6492,41 @@ class SettingsViewModel @Inject constructor(
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 null
             }
-            val history = try {
-                kotlinx.coroutines.withTimeout(10_000L) {
-                    labels_api.get_referral_history().referrals
-                }
-            } catch (t: Throwable) {
-                if (t is kotlinx.coroutines.CancellationException) throw t
-                emptyList()
+            _state.update {
+                it.copy(
+                    referral = info ?: it.referral,
+                    referral_load_failed = info == null && it.referral == null,
+                )
             }
-            _state.value = _state.value.copy(
-                referral = info ?: _state.value.referral,
-                referral_history = history,
-                referral_load_failed = info == null,
-            )
+            val history = history_job.await()
+            _state.update { it.copy(referral_history = history ?: it.referral_history) }
+            if (info != null) persist_cached_referral(info, history ?: _state.value.referral_history)
         }
+    }
+
+    @kotlinx.serialization.Serializable
+    private data class cached_referral(
+        val info: ReferralInfoResponse,
+        val history: List<ReferralHistoryItem> = emptyList(),
+    )
+
+    private fun hydrate_cached_referral() {
+        if (_state.value.referral != null) return
+        val raw = preferences_cache.read_referral(cache_account_key()) ?: return
+        val cached = runCatching {
+            cached_preferences_json.decodeFromString(cached_referral.serializer(), raw)
+        }.getOrNull() ?: return
+        _state.update {
+            if (it.referral == null) it.copy(referral = cached.info, referral_history = cached.history, referral_load_failed = false) else it
+        }
+    }
+
+    private fun persist_cached_referral(info: ReferralInfoResponse, history: List<ReferralHistoryItem>) {
+        val key = cache_account_key() ?: return
+        val raw = runCatching {
+            cached_preferences_json.encodeToString(cached_referral.serializer(), cached_referral(info, history))
+        }.getOrNull() ?: return
+        preferences_cache.write_referral(key, raw)
     }
 
     private suspend fun await_identity_key(max_attempts: Int = 12, delay_ms: Long = 200): String? {
@@ -7736,6 +7888,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     forwarding_rules = response.rules,
                     forwarding_rules_load_failed = false,
+                    forwarding_rules_loaded = true,
                     is_loading = false,
                 )
             } catch (t: Throwable) {
@@ -7743,6 +7896,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_loading = false,
                     forwarding_rules_load_failed = true,
+                    forwarding_rules_loaded = true,
                     error = user_facing_error(t),
                 )
             }

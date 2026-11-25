@@ -40,12 +40,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,7 +59,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
@@ -71,6 +74,7 @@ import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_appearance
 import org.astermail.android.design.components.shimmer_line
 import org.astermail.android.design.components.shimmer_state
+import org.astermail.android.design.components.skeleton_reveal
 import org.astermail.android.ui.common.page_surface
 
 const val inbox_skeleton_tag = "inbox_skeleton"
@@ -80,7 +84,6 @@ internal const val skeleton_defer_ms = 150L
 internal const val skeleton_min_visible_ms = 140L
 internal const val skeleton_fade_out_ms = 90
 internal const val skeleton_handoff_ms = 90
-internal const val skeleton_await_rows_ms = 60L
 
 internal fun skeleton_visible_after(has_data: Boolean, pending: Boolean, pending_for_ms: Long): Boolean =
     !has_data && pending && pending_for_ms >= skeleton_defer_ms
@@ -255,46 +258,54 @@ fun remember_row_geometry(live: SkeletonGeometry?): SkeletonGeometry {
     return shown.value
 }
 
-internal fun initial_skeleton_phase(wanted: Boolean, rows_imminent: Boolean): SkeletonPhase = when {
+internal fun initial_skeleton_phase(wanted: Boolean, behind_splash: Boolean = false): SkeletonPhase = when {
     !wanted -> SkeletonPhase.content
-    rows_imminent -> SkeletonPhase.blank
-    else -> SkeletonPhase.skeleton
+    behind_splash -> SkeletonPhase.skeleton
+    else -> SkeletonPhase.blank
 }
+
+internal fun visible_skeleton_phase(stored: SkeletonPhase, wanted: Boolean): SkeletonPhase =
+    if (stored == SkeletonPhase.blank && !wanted) SkeletonPhase.content else stored
 
 internal fun plan_skeleton_step(
     current: SkeletonPhase,
     wanted: Boolean,
-    rows_imminent: Boolean,
     skeleton_shown_for_ms: Long,
 ): SkeletonStep = when {
     wanted && current == SkeletonPhase.skeleton -> SkeletonStep(SkeletonPhase.skeleton, 0L)
-    wanted && (rows_imminent || current == SkeletonPhase.content) ->
-        SkeletonStep(SkeletonPhase.skeleton, skeleton_await_rows_ms)
-    wanted -> SkeletonStep(SkeletonPhase.skeleton, 0L)
+    wanted -> SkeletonStep(SkeletonPhase.skeleton, skeleton_defer_ms)
     current == SkeletonPhase.skeleton ->
         SkeletonStep(SkeletonPhase.content, (skeleton_min_visible_ms - skeleton_shown_for_ms).coerceAtLeast(0L))
     else -> SkeletonStep(SkeletonPhase.content, 0L)
 }
 
 @Composable
-fun remember_skeleton_phase(wanted: Boolean, rows_imminent: Boolean): State<SkeletonPhase> {
-    val phase = remember { mutableStateOf(initial_skeleton_phase(wanted, rows_imminent)) }
+fun remember_skeleton_phase(wanted: Boolean): State<SkeletonPhase> {
+    val behind_splash = remember { !org.astermail.android.ui.common.first_frame_gate.is_ready }
+    val phase = remember { mutableStateOf(initial_skeleton_phase(wanted, behind_splash)) }
     val shown_at = remember {
-        longArrayOf(if (phase.value == SkeletonPhase.skeleton) android.os.SystemClock.uptimeMillis() else 0L)
+        longArrayOf(
+            when {
+                phase.value != SkeletonPhase.skeleton -> 0L
+                behind_splash -> android.os.SystemClock.uptimeMillis() - skeleton_min_visible_ms
+                else -> android.os.SystemClock.uptimeMillis()
+            },
+        )
     }
-    LaunchedEffect(wanted, rows_imminent) {
+    LaunchedEffect(wanted) {
         val shown_for = if (phase.value == SkeletonPhase.skeleton) {
             android.os.SystemClock.uptimeMillis() - shown_at[0]
         } else {
             0L
         }
-        val step = plan_skeleton_step(phase.value, wanted, rows_imminent, shown_for)
+        val step = plan_skeleton_step(phase.value, wanted, shown_for)
         if (step.after_ms > 0L) delay(step.after_ms)
         if (phase.value == step.target) return@LaunchedEffect
         if (step.target == SkeletonPhase.skeleton) shown_at[0] = android.os.SystemClock.uptimeMillis()
         phase.value = step.target
     }
-    return phase
+    val wanted_now = rememberUpdatedState(wanted)
+    return remember { derivedStateOf { visible_skeleton_phase(phase.value, wanted_now.value) } }
 }
 
 @Composable
@@ -306,12 +317,23 @@ fun Modifier.skeleton_handoff(phase: SkeletonPhase): Modifier {
             SkeletonPhase.skeleton -> alpha.snapTo(0f)
             SkeletonPhase.blank -> Unit
             SkeletonPhase.content -> if (alpha.value < 1f) {
-                if (reduce_motion) alpha.snapTo(1f) else alpha.animateTo(1f, tween(skeleton_handoff_ms))
+                alpha.animateTo(1f, tween(if (reduce_motion) org.astermail.android.design.AsterMotionSpec.reduced_fade_out_ms else skeleton_handoff_ms, easing = org.astermail.android.design.AsterEasing.standard_decelerate))
             }
         }
     }
     return this.graphicsLayer { this.alpha = alpha.value }
 }
+
+internal data class SkeletonRowGroupPosition(val is_first: Boolean, val is_last: Boolean)
+
+internal fun skeleton_row_group_position(
+    index: Int,
+    row_count: Int,
+    list_ends_on_screen: Boolean = false,
+): SkeletonRowGroupPosition = SkeletonRowGroupPosition(
+    is_first = index == 0,
+    is_last = list_ends_on_screen && index == row_count - 1,
+)
 
 @Composable
 fun inbox_skeleton(
@@ -330,14 +352,16 @@ fun inbox_skeleton(
             .fillMaxSize()
             .graphicsLayer()
             .page_surface(colors)
-            .testTag(inbox_skeleton_tag),
+            .testTag(inbox_skeleton_tag)
+            .skeleton_reveal(),
     ) {
         repeat(row_count) { index ->
+            val position = skeleton_row_group_position(index, row_count)
             inbox_skeleton_row(
                 state = state,
                 list_density = list_density,
-                is_first = index == 0,
-                is_last = index == row_count - 1,
+                is_first = position.is_first,
+                is_last = position.is_last,
                 show_avatar = show_avatar,
                 show_preview = show_preview,
                 row_height = if (index == 0 && first_row_height > 0.dp) first_row_height else row_height,
@@ -368,7 +392,7 @@ fun inbox_skeleton_layer(
         visible = phase == SkeletonPhase.skeleton,
         modifier = modifier,
         enter = EnterTransition.None,
-        exit = if (reduce_motion) ExitTransition.None else fadeOut(tween(skeleton_fade_out_ms)),
+        exit = fadeOut(tween(if (reduce_motion) org.astermail.android.design.AsterMotionSpec.reduced_fade_out_ms else skeleton_fade_out_ms, easing = org.astermail.android.design.AsterEasing.emphasized_accelerate)),
     ) {
         val loading_label = stringResource(R.string.loading)
         inbox_skeleton(
@@ -391,12 +415,12 @@ private fun skeleton_text_line(
     state: shimmer_appearance,
     modifier: Modifier = Modifier,
 ) {
-    Text(
-        text = " ",
-        style = style,
-        maxLines = 1,
-        modifier = modifier.shimmer_line(state),
-    )
+    val measurer = rememberTextMeasurer(cacheSize = 4)
+    val density = LocalDensity.current
+    val line_height = remember(style, density, measurer) {
+        with(density) { measurer.measure(" ", style, maxLines = 1).size.height.toDp() }
+    }
+    Box(modifier = modifier.height(line_height).shimmer_line(state))
 }
 
 @Composable

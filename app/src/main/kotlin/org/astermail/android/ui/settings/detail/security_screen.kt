@@ -21,16 +21,15 @@
 
 package org.astermail.android.ui.settings.detail
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.widthIn
+import org.astermail.android.design.AsterRadius
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -66,6 +65,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -100,6 +100,7 @@ import org.astermail.android.design.components.AsterAlertDialog
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_state
+import org.astermail.android.design.components.skeleton_reveal
 import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.components.AsterSwitch
@@ -113,6 +114,7 @@ import org.astermail.android.auth.request_passkey_json
 import org.astermail.android.ui.common.find_host_activity
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.ui.settings.join_launched
 
 private const val activity_preview_count = 5
 private const val trusted_preview_count = 3
@@ -203,6 +205,7 @@ fun SecurityScreen(
 
     val lock_vm: AppLockViewModel = hiltViewModel()
     val guard_entry_vm: org.astermail.android.ui.guard.GuardEntryViewModel = hiltViewModel()
+    remember(guard_entry_vm) { guard_entry_vm.bind_account(vm.account_store.get_current_id()) }
     val guard_entry by guard_entry_vm.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { guard_entry_vm.refresh() }
 
@@ -221,7 +224,7 @@ fun SecurityScreen(
 
     LaunchedEffect(state.action_result) {
         val msg = state.action_result ?: return@LaunchedEffect
-        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg.toString())
         vm.clear_action_result()
     }
 
@@ -235,12 +238,13 @@ fun SecurityScreen(
         state.login_alerts_enabled != null &&
         state.vanguard_enabled != null &&
         (state.hardware_keys_loaded || state.hardware_keys_load_failed) &&
+        guard_entry.loaded &&
         !state.is_loading
 
     var content_ready by remember {
         mutableStateOf(
             sec != null && prefs != null && state.login_alerts_enabled != null && state.vanguard_enabled != null &&
-                (state.hardware_keys_loaded || state.hardware_keys_load_failed),
+                (state.hardware_keys_loaded || state.hardware_keys_load_failed) && guard_entry.loaded,
         )
     }
     LaunchedEffect(security_signals_ready) {
@@ -386,6 +390,24 @@ fun SecurityScreen(
         title = stringResource(R.string.security),
         on_back = on_back,
         scroll_state = scroll_state,
+        on_refresh = {
+            kotlinx.coroutines.coroutineScope {
+                launch { guard_entry_vm.join_launched { guard_entry_vm.refresh() } }
+                launch {
+                    vm.join_launched {
+                        vm.load_security_status()
+                        vm.load_login_alerts()
+                        vm.load_recovery_email()
+                        vm.load_hardware_keys()
+                        vm.load_trusted_devices()
+                        vm.load_audit_log()
+                        vm.load_vanguard_status()
+                        vm.load_subscription(force = true)
+                        vm.load_recovery_codes_status()
+                    }
+                }
+            }
+        },
     ) {
         if (!content_ready) {
             security_loading_skeleton(show_banner = prefs?.account_security_banner_dismissed != true)
@@ -462,8 +484,8 @@ fun SecurityScreen(
             prefs?.account_security_banner_dismissed != true
         AnimatedVisibility(
             visible = banner_visible,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut(),
+            enter = settings_expand_in(org.astermail.android.design.aster_reduce_motion()),
+            exit = org.astermail.android.design.aster_collapse_out(org.astermail.android.design.aster_reduce_motion()),
         ) {
             Column(modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.md)) {
                 protection_banner(
@@ -573,8 +595,8 @@ fun SecurityScreen(
                     )
                     AnimatedVisibility(
                         visible = hardware_keys_expanded,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut(),
+                        enter = settings_expand_in(org.astermail.android.design.aster_reduce_motion()),
+                        exit = org.astermail.android.design.aster_collapse_out(org.astermail.android.design.aster_reduce_motion()),
                     ) {
                         Column {
                             state.hardware_keys.forEach { key ->
@@ -1008,9 +1030,9 @@ private fun vanguard_section(
                             onClick = { vm.load_vanguard_status() },
                         )
                     } else if (state.vanguard_enabled == null) {
-                        androidx.compose.material3.CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
+                        org.astermail.android.design.components.aster_spinner(
+                            modifier = Modifier.size(20.dp).skeleton_reveal(),
+                            stroke_width = 2.dp,
                             color = colors.text_muted,
                         )
                     } else if (is_nova_plus || state.subscription == null) {
@@ -1042,8 +1064,8 @@ private fun vanguard_section(
             }
             AnimatedVisibility(
                 visible = app_lock_rows_visible(state.vanguard_enabled, lock_configured),
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut(),
+                enter = settings_expand_in(org.astermail.android.design.aster_reduce_motion()),
+                exit = org.astermail.android.design.aster_collapse_out(org.astermail.android.design.aster_reduce_motion()),
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     settings_row_gap()
@@ -1230,17 +1252,22 @@ private fun protection_banner(
                     Spacer(Modifier.width(AsterSpacing.xs))
                     tone_badge(text = protected_items.size.toString(), tone = colors.success)
                     Spacer(Modifier.weight(1f))
+                    val protected_chevron_rotation by androidx.compose.animation.core.animateFloatAsState(
+                        targetValue = if (show_protected) 180f else 0f,
+                        animationSpec = androidx.compose.animation.core.tween(200, easing = org.astermail.android.design.AsterEasing.emphasized),
+                        label = "protected_chevron_rotation",
+                    )
                     Icon(
-                        imageVector = if (show_protected) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
+                        imageVector = TablerIcons.ChevronDown,
                         contentDescription = null,
                         tint = colors.text_muted,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(18.dp).graphicsLayer { rotationZ = protected_chevron_rotation },
                     )
                 }
                 AnimatedVisibility(
                     visible = show_protected,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut(),
+                    enter = settings_expand_in(org.astermail.android.design.aster_reduce_motion()),
+                    exit = org.astermail.android.design.aster_collapse_out(org.astermail.android.design.aster_reduce_motion()),
                 ) {
                     Column { protected_items.forEach { protection_item_row(it) } }
                 }
@@ -1410,11 +1437,13 @@ private fun trusted_device_row(
             .testTag("trusted_device_row"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        list_icon_tile(icon = TablerIcons.DeviceLaptop, tint = colors.text_secondary)
+        val device_label = org.astermail.android.ui.settings.clean_trusted_device_label(device.label)
+        val device_kind = trusted_device_kind_of(device_label)
+        trusted_device_tile(device_kind)
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = org.astermail.android.ui.settings.clean_trusted_device_label(device.label)
+                text = device_label
                     .ifBlank { stringResource(R.string.trusted_device_default_label) },
                 color = colors.text_primary,
                 fontSize = 15.sp,
@@ -1444,10 +1473,41 @@ private fun trusted_device_row(
             }
         }
         Spacer(Modifier.width(AsterSpacing.sm))
-        revoke_pill_button(
+        org.astermail.android.design.components.AsterCompactDestructiveButton(
             label = stringResource(R.string.revoke),
-            in_flight = false,
-            on_click = { show_revoke_confirm = true },
+            onClick = { show_revoke_confirm = true },
+            modifier = Modifier.widthIn(min = 84.dp).testTag("trusted_device_revoke"),
+        )
+    }
+}
+
+
+internal enum class TrustedDeviceKind { phone, tablet, desktop, laptop }
+
+internal fun trusted_device_kind_of(label: String): TrustedDeviceKind {
+    val value = label.lowercase()
+    return when {
+        listOf("ipad", "tablet", "tab ").any { value.contains(it) } -> TrustedDeviceKind.tablet
+        listOf("android", "iphone", "phone", "pixel", "galaxy", "mobile", "ios").any { value.contains(it) } -> TrustedDeviceKind.phone
+        listOf("windows", "linux", "desktop", "pc").any { value.contains(it) } -> TrustedDeviceKind.desktop
+        else -> TrustedDeviceKind.laptop
+    }
+}
+
+@Composable
+private fun trusted_device_tile(kind: TrustedDeviceKind) {
+    val icon = when (kind) {
+        TrustedDeviceKind.phone -> TablerIcons.DeviceMobile
+        TrustedDeviceKind.tablet -> TablerIcons.DeviceTablet
+        TrustedDeviceKind.desktop -> TablerIcons.DeviceDesktop
+        TrustedDeviceKind.laptop -> TablerIcons.DeviceLaptop
+    }
+    Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = AsterMaterial.colors.text_secondary,
+            modifier = Modifier.size(22.dp),
         )
     }
 }

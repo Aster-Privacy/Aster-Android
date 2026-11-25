@@ -278,7 +278,7 @@
     <string name="unsubscribed">수신 거부됨</string>
     <string name="scanning">스캔 중...</string>
     <string name="no_mailing_lists">아직 메일링 리스트가 없습니다</string>
-    <string name="scan_inbox_hint">"받은편지함 스캔"을 탭하여 뉴스레터와 마케팅 발신자를 찾으세요.</string>
+    <string name="scan_inbox_hint">아래로 당겨 받은편지함에서 뉴스레터와 마케팅 발신자를 찾으세요.</string>
     <string name="active_tab">활성</string>
     <string name="unsubscribed_tab">수신 거부됨</string>
     <string name="reactivate">재활성화</string>
@@ -802,6 +802,7 @@
     <string name="unblock">차단 해제</string>
     <string name="block_a_sender">발신자 차단</string>
     <string name="block_sender_hint">이메일 주소 또는 도메인을 입력하세요. 해당 주소에서 오는 새 메일은 바로 스팸으로 이동합니다.</string>
+    <string name="block_sender_invalid">이메일 주소 또는 example.com 같은 도메인을 입력하세요.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">차단</string>
     <string name="blocked_domain">도메인 전체</string>
@@ -1249,6 +1250,16 @@
     <string name="unsubscribe_failed">구독 취소에 실패했습니다</string>
     <string name="unsubscribe_manual_required">이 발신자는 자동 구독 취소를 지원하지 않습니다. 메일에 있는 링크에서 직접 구독을 취소할 수 있습니다.</string>
     <string name="bulk_unsubscribe_failed">일괄 구독 취소에 실패했습니다</string>
+    <string name="unsubscribe_in_progress">구독 취소 중</string>
+    <string name="subscription_hero_summary">활성 발신자 %1$s명, 구독 취소 %2$s명, 이메일 %3$s개</string>
+    <string name="unsubscribe_rate_limited">구독 취소 요청을 너무 많이 보냈습니다. 1분 후에 다시 시도하세요.</string>
+    <string name="unsubscribe_opened_in_browser">이 발신자는 웹사이트에서만 구독을 취소할 수 있습니다. 브라우저에서 열린 페이지에서 완료하세요.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="other">발신자 %d명의 구독을 취소하지 못했습니다</item>
+    </plurals>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="other">발신자 %d명은 해당 웹사이트에서 직접 구독을 취소해야 합니다</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="other">발신자 %d명의 구독을 취소했습니다</item>
     </plurals>
@@ -1578,10 +1589,15 @@
     <string name="reaction_remove_failed">반응을 삭제하지 못했습니다</string>
     <string name="copy_address">주소 복사</string>
     <string name="sender_on_aster">Aster 계정</string>
+    <string name="sender_on_aster_logo">%1$s 계정</string>
     <string name="messages_from_sender">이 발신자의 메일 찾기</string>
     <string name="send_email_to_sender">이 발신자에게 메일 쓰기</string>
     <string name="add_to_contacts">연락처에 저장</string>
     <string name="remove_from_contacts">연락처에서 제거</string>
+    <string name="sender_action_new_message">새 메시지</string>
+    <string name="sender_action_add_contact">연락처 추가</string>
+    <string name="sender_action_view_contact">연락처 보기</string>
+    <string name="sender_action_in_contacts">연락처에 있음</string>
     <string name="contact_added_named">%1$s을(를) 연락처에 저장했습니다</string>
     <string name="contact_removed_named">%1$s을(를) 연락처에서 삭제했습니다</string>
     <string name="blocked_content_details_title">차단된 콘텐츠</string>
@@ -2355,6 +2371,9 @@
     <plurals name="subscriptions_found_count">
         <item quantity="other">새 구독 %d개를 찾았습니다</item>
     </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="other">메시지 %2$s개 중 %1$s개를 스캔했으며 발신자 %3$s명을 찾았습니다</item>
+    </plurals>
     <string name="reaction_info_title">반응</string>
     <string name="reaction_badge_label">새 반응</string>
     <string name="notification_new_reaction">새 반응이 있습니다</string>
@@ -2845,6 +2864,8 @@
     <string name="contact_add_failed">%1$s을(를) 연락처에 저장하지 못했습니다</string>
     <string name="contact_remove_failed">%1$s을(를) 연락처에서 삭제하지 못했습니다</string>
     <string name="copy_failed">복사하지 못했습니다. 다시 시도하세요.</string>
+    <string name="copy_subject">제목 복사</string>
+    <string name="subject_copied">제목을 복사했습니다</string>
     <string name="create_label_subtitle">원하는 색으로 메일에 표시하세요</string>
     <string name="delete_signature_message">“%1$s”을(를) 삭제할까요? 되돌릴 수 없습니다.</string>
     <string name="delete_vacation_reply_confirm">부재중 메시지와 기간이 삭제됩니다. 되돌릴 수 없습니다.</string>
@@ -3009,6 +3030,9 @@
     <string name="translation_storage_remove_all">모두 삭제</string>
     <string name="translation_storage_removed">언어 팩을 삭제했습니다</string>
     <string name="translation_offer_download">이 메시지는 %1$s입니다. 번역하면 언어 팩을 다운로드합니다.</string>
+    <string name="translation_bar_translate_to">%1$s(으)로 번역</string>
+    <string name="translation_bar_translated_from">%1$s에서 번역됨</string>
+    <string name="translation_bar_downloading">%1$s 언어 팩 다운로드 중</string>
     <string name="contact_support">고객 지원에 문의</string>
     <string name="domain_purchase_manage">관리</string>
     <string name="domain_purchase_cancel_payment_title">이 결제를 취소할까요?</string>
@@ -3128,6 +3152,10 @@
     <string name="remove_photo">사진 제거</string>
     <string name="add_photo">사진 추가</string>
     <string name="photo_too_large">더 작은 이미지를 선택하세요</string>
+    <string name="contact_photo_unreadable">Aster에서 이 이미지를 열 수 없습니다. 다른 사진을 사용해 보세요.</string>
+    <string name="contact_discard_changes_title">변경사항을 삭제할까요?</string>
+    <string name="contact_discard_changes_message">이 연락처의 변경사항이 저장되지 않았습니다.</string>
+    <string name="contact_keep_editing">계속 편집</string>
     <string name="no_contacts_yet">아직 연락처가 없습니다</string>
     <string name="no_contacts_match">\"%1$s\"와 일치하는 연락처가 없습니다.</string>
     <string name="no_contacts_in_trash">휴지통이 비어 있습니다</string>
@@ -3685,6 +3713,13 @@
         <item quantity="other">연락처 %d개를 추가했습니다</item>
     </plurals>
     <string name="body_index_status">검색을 위해 메시지 본문 색인 중: %2$d개 중 %1$d개</string>
+    <string name="search_status_indexing_mail">메일 색인 중</string>
+    <string name="search_status_indexing_text">메시지 본문 색인 중</string>
+    <string name="search_status_waiting_wifi">본문 색인은 Wi-Fi에 연결되면 다시 시작됩니다</string>
+    <string name="search_status_paused">색인 일시중지됨</string>
+    <string name="search_status_partial">결과가 완전하지 않을 수 있습니다</string>
+    <string name="search_status_count">%1$s/%2$s</string>
+    <string name="search_refine_placeholder">결과 내 검색</string>
     <string name="mail_key_upgrade_title">저장된 메일 업데이트 중</string>
     <string name="mail_key_upgrade_running">Aster Mail이 저장된 메시지를 현재 키로 다시 암호화하고 있습니다. 완료될 때까지 이 창을 열어 두세요.</string>
     <string name="mail_key_upgrade_failed">Aster Mail이 저장된 메시지 업데이트를 완료하지 못했습니다. 메일은 변경되지 않았습니다. 연결을 확인한 후 다시 시도하세요.</string>
@@ -3706,10 +3741,21 @@
     <string name="attachment_unverified">확인되지 않은 첨부 파일</string>
     <string name="confirm_back_exit">종료 전에 확인</string>
     <string name="confirm_back_exit_subtitle">받은편지함에서 뒤로를 두 번 눌러 앱을 종료합니다</string>
+    <string name="toast_position_title">앱 내 알림 위치</string>
+    <string name="toast_position_subtitle">앱을 사용하는 동안 알림이 표시되는 위치</string>
+    <string name="toast_position_top">위</string>
+    <string name="toast_position_bottom">아래</string>
     <string name="mail_priority">중요도</string>
     <string name="mail_priority_high">높음</string>
     <string name="mail_priority_normal">보통</string>
     <string name="mail_priority_low">낮음</string>
     <string name="mail_high_priority">높은 중요도</string>
     <string name="mail_low_priority">낮은 중요도</string>
+    <string name="official_sender">Aster 공식 주소</string>
+    <string name="official_sender_desc">이 메시지는 Aster 공식 주소에서 발송되었습니다. Aster는 이메일로 비밀번호나 복구 문구를 요청하지 않습니다.</string>
+    <string name="search_match_position">%1$d/%2$d</string>
+    <string name="search_match_position_description">일치 항목 %2$d개 중 %1$d번째</string>
+    <string name="search_match_previous">이전 일치 항목</string>
+    <string name="search_match_next">다음 일치 항목</string>
+    <string name="search_match_clear">강조 표시 지우기</string>
 </resources>

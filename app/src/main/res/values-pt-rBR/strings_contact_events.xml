@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_events">Eventos</string>
+    <string name="contact_event_anniversary">Data comemorativa</string>
+    <string name="contact_add_event">Adicionar evento</string>
+    <string name="contact_remove_event">Remover evento</string>
+    <string name="contact_event_type">Tipo de evento</string>
+    <string name="contact_event_year_range">Digite um ano entre %1$d e %2$d</string>
+    <string name="contacts_add_to_favorites">Adicionar aos favoritos</string>
+    <string name="contacts_remove_from_favorites">Remover dos favoritos</string>
+    <string name="contacts_favorites_failed">Não foi possível atualizar os favoritos. Tente de novo.</string>
+    <string name="contacts_recently_added">Adicionados recentemente</string>
+    <string name="contacts_today">Hoje</string>
+</resources>

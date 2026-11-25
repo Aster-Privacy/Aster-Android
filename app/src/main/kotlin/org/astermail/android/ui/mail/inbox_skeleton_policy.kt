@@ -48,8 +48,22 @@ internal fun inbox_skeleton_wanted(
     showing_error: Boolean,
     refreshing_known_empty: Boolean,
     emptied_by_action: Boolean,
+    refill_pending: Boolean = false,
 ): Boolean {
     if (rows_deriving) return skeleton_showing
+    if (refill_pending) return true
     if (refreshing_known_empty || emptied_by_action) return false
     return cache_pending || loading_without_rows || (!showing_error && waiting_for_rows)
+}
+
+internal fun filtered_inbox_skeleton_wanted(
+    cache_skeleton_allowed: Boolean,
+    has_rows: Boolean,
+    is_loading: Boolean,
+    initial: Boolean,
+    has_error: Boolean,
+    showing_requested: Boolean,
+): Boolean {
+    if (!cache_skeleton_allowed || has_rows) return false
+    return is_loading || !showing_requested || (initial && !has_error)
 }

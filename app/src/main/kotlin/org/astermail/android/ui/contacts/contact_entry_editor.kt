@@ -21,9 +21,12 @@
 
 package org.astermail.android.ui.contacts
 
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -173,9 +176,10 @@ private fun TypePicker(
     Box {
         Row(
             modifier = Modifier
+                .heightIn(min = 48.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .clickable(onClickLabel = change_type) { expanded = true }
-                .padding(horizontal = AsterSpacing.sm, vertical = 6.dp),
+                .clickable(onClickLabel = change_type, role = Role.Button) { expanded = true }
+                .padding(horizontal = AsterSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -240,6 +244,7 @@ private fun RowHeader(
 @Composable
 private fun CustomLabelField(label: String, on_change: (String) -> Unit) {
     AsterTextField(
+        rest_border = true,
         value = label,
         onValueChange = { on_change(it.take(64)) },
         label = stringResource(R.string.contact_custom_label),
@@ -256,8 +261,9 @@ internal fun AddRowButton(label: String, on_click: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = on_click)
+            .clickable(onClick = on_click, role = Role.Button)
             .padding(vertical = AsterSpacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -280,11 +286,13 @@ fun ContactEntryRows(
     add_label: String,
     field_label: String,
     keyboard_type: KeyboardType,
-    error_for: (String) -> String? = { null },
+    error_for: (String, Boolean) -> String? = { _, _ -> null },
 ) {
+    var blurred_rows by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(listOf<Int>()) }
     Column(verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs)) {
         entries.forEachIndexed { index, entry ->
             fun update(next: EditableEntry) = on_change(entries.toMutableList().also { it[index] = next })
+            var was_focused by remember { mutableStateOf(false) }
             Column {
                 RowHeader(
                     kind = kind,
@@ -292,13 +300,24 @@ fun ContactEntryRows(
                     label = entry.label,
                     custom = entry.custom,
                     on_pick = { type, custom -> update(entry.copy(type = type, custom = custom)) },
-                    on_remove = { on_change(entries.filterIndexed { i, _ -> i != index }) },
+                    on_remove = {
+                        blurred_rows = blurred_rows.filter { it != index }.map { if (it > index) it - 1 else it }
+                        on_change(entries.filterIndexed { i, _ -> i != index })
+                    },
                 )
                 AsterTextField(
+                    rest_border = true,
                     value = entry.value,
                     onValueChange = { update(entry.copy(value = it)) },
                     label = field_label,
-                    error_text = error_for(entry.value),
+                    modifier = Modifier.onFocusChanged { focus ->
+                        if (focus.isFocused) {
+                            was_focused = true
+                        } else if (was_focused && index !in blurred_rows) {
+                            blurred_rows = blurred_rows + index
+                        }
+                    },
+                    error_text = error_for(entry.value, index in blurred_rows),
                     keyboard_options = KeyboardOptions(keyboardType = keyboard_type, imeAction = ImeAction.Next),
                 )
                 if (entry.custom) {
@@ -368,6 +387,7 @@ private fun PostalField(
     on_change: (String) -> Unit,
 ) {
     AsterTextField(
+        rest_border = true,
         value = value,
         onValueChange = on_change,
         label = label,

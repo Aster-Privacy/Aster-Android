@@ -234,4 +234,35 @@ class OptimisticSendsTest {
 
         assertEquals(1, optimistic_send_aliases(listOf(first, second), "user_1", server).size)
     }
+
+    @Test
+    fun `a send with a known item id only matches that item`() {
+        val committed = send("p1").copy(committed = true, mail_item_id = "srv_9")
+        val other = listOf(server_message("srv_1", "sent", started_at_ms + 1_000L))
+
+        assertFalse(optimistic_send_has_server_copy(committed, other))
+        assertTrue(optimistic_send_aliases(listOf(committed), "user_1", other).isEmpty())
+    }
+
+    @Test
+    fun `snapshot gains the sent copy under its server id`() {
+        val committed = send("p1").copy(committed = true, mail_item_id = "srv_1")
+        val existing = listOf(server_message("m1", "received", started_at_ms - 60_000L), send("p0").message)
+
+        val next = thread_snapshot_with_sent_copy(existing, committed)
+
+        assertEquals(listOf("m1", "srv_1"), next?.map { it.id })
+        assertEquals(null, next?.last()?.raw_item?.send_status)
+    }
+
+    @Test
+    fun `snapshot is untouched when the copy is present or unknown`() {
+        val committed = send("p1").copy(committed = true, mail_item_id = "srv_1")
+        val with_copy = listOf(server_message("srv_1", "sent", started_at_ms))
+
+        assertEquals(null, thread_snapshot_with_sent_copy(with_copy, committed))
+        assertEquals(null, thread_snapshot_with_sent_copy(null, committed))
+        assertEquals(null, thread_snapshot_with_sent_copy(with_copy, send("p2").copy(committed = true)))
+        assertEquals(null, thread_snapshot_with_sent_copy(with_copy, send("p3")))
+    }
 }

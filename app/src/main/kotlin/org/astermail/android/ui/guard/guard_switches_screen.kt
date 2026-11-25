@@ -21,15 +21,23 @@
 
 package org.astermail.android.ui.guard
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -47,10 +55,16 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.astermail.android.R
 import org.astermail.android.api.guard.GuardDeviceInfo
 import org.astermail.android.api.guard.GuardSwitch
+import org.astermail.android.design.AsterExpandVisibility
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
-import org.astermail.android.design.components.AsterGhostButton
+import org.astermail.android.design.components.AsterCompactButton
+import org.astermail.android.design.components.AsterCompactGhostButton
+import org.astermail.android.design.components.AsterCompactDestructiveButton
+import org.astermail.android.design.components.AsterDialog
+import org.astermail.android.design.components.AsterDialogDestructiveButton
+import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.guard.GuardHeldBanner
 import org.astermail.android.guard.guard_format_instant
 import org.astermail.android.guard.guard_parse_instant
@@ -63,6 +77,9 @@ import org.astermail.android.ui.settings.detail.load_failed_card
 import org.astermail.android.ui.settings.detail.recommendation_note
 import org.astermail.android.ui.settings.detail.section_label
 import org.astermail.android.ui.settings.detail.settings_row_gap
+import org.astermail.android.ui.settings.detail.skeleton_card_list
+import org.astermail.android.ui.settings.detail.skeleton_hero_card
+import org.astermail.android.ui.settings.detail.skeleton_section_label
 
 @Composable
 fun guard_switches_host(
@@ -104,6 +121,7 @@ fun guard_switches_host(
         on_retry = view_model::refresh,
         on_open = on_open,
         rescued = rescued,
+        on_refresh = { view_model.load() },
     )
 }
 
@@ -122,8 +140,18 @@ fun guard_switches_screen(
     on_retry: () -> Unit,
     on_open: (String) -> Unit,
     rescued: Boolean = false,
+    on_refresh: (suspend () -> Unit)? = null,
 ) {
-    detail_scaffold(title = stringResource(R.string.guard_setup_title), on_back = on_back) {
+    detail_scaffold(
+        title = "",
+        on_back = on_back,
+        on_refresh = on_refresh,
+        refresh_enabled = guard_switches_can_refresh(state),
+    ) {
+        guard_page_hero(
+            title = stringResource(R.string.guard_setup_title),
+            info = stringResource(R.string.guard_setup_intro),
+        )
         if (rescued && state.status != null && !state.guard_on) {
             org.astermail.android.ui.settings.detail.recommendation_note(stringResource(R.string.guard_rescued_notice))
             Spacer(Modifier.height(AsterSpacing.md))
@@ -131,11 +159,19 @@ fun guard_switches_screen(
         when {
             state.hidden -> error_banner(stringResource(R.string.guard_setup_unavailable))
             state.load_failed && state.status == null -> load_failed_card(null, on_retry)
-            state.status == null -> Unit
+            state.status == null -> guard_switches_skeleton()
             !state.guard_on -> guard_switches_off_card(on_open)
             else -> guard_switches_on_content(state, on_toggle, on_toggle_scope, on_save, on_discard, on_remove, on_open)
         }
     }
+}
+
+@Composable
+private fun guard_switches_skeleton() {
+    skeleton_hero_card(lines = 1)
+    Spacer(Modifier.height(AsterSpacing.md))
+    skeleton_section_label()
+    skeleton_card_list(rows = 4, trailing_width = 44.dp)
 }
 
 @Composable
@@ -202,28 +238,34 @@ private fun guard_switches_on_content(
             },
         )
     }
-    if (state.dirty) {
-        Spacer(Modifier.height(AsterSpacing.md))
-        Text(
-            text = stringResource(R.string.guard_switches_off_waits),
-            color = AsterMaterial.colors.text_secondary,
-            fontSize = 13.sp,
-        )
-        Spacer(Modifier.height(AsterSpacing.sm))
-        AsterButton(
-            label = stringResource(R.string.guard_switches_save),
-            onClick = on_save,
-            enabled = state.can_save,
-            is_loading = state.saving,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(AsterSpacing.sm))
-        AsterGhostButton(
-            label = stringResource(R.string.guard_switches_discard),
-            onClick = on_discard,
-            enabled = !state.saving,
-            modifier = Modifier.fillMaxWidth(),
-        )
+    AsterExpandVisibility(visible = state.dirty) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Spacer(Modifier.height(AsterSpacing.md))
+            Text(
+                text = stringResource(R.string.guard_switches_off_waits),
+                color = AsterMaterial.colors.text_secondary,
+                fontSize = 13.sp,
+            )
+            Spacer(Modifier.height(AsterSpacing.sm))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.sm, Alignment.End),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                AsterCompactGhostButton(
+                    label = stringResource(R.string.guard_switches_discard),
+                    onClick = on_discard,
+                    enabled = !state.saving,
+                )
+                AsterCompactButton(
+                    label = stringResource(R.string.guard_switches_save),
+                    onClick = on_save,
+                    enabled = state.can_save,
+                    is_loading = state.saving,
+                    modifier = Modifier.testTag("guard_switches_save"),
+                )
+            }
+        }
     }
 
     Spacer(Modifier.height(AsterSpacing.lg))
@@ -299,8 +341,30 @@ private fun guard_device_row(
     on_remove: () -> Unit,
 ) {
     val subtitle = if (is_this) stringResource(R.string.guard_devices_this_device) else null
+    val device_name = device.name.ifBlank { stringResource(R.string.guard_devices_unnamed) }
+    var confirm_remove by remember { mutableStateOf(false) }
+    if (confirm_remove) {
+        AsterDialog(
+            on_dismiss = { confirm_remove = false },
+            title = stringResource(R.string.are_you_sure),
+            message = stringResource(R.string.guard_devices_remove_confirm, device_name),
+            footer = {
+                AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { confirm_remove = false },
+                )
+                AsterDialogDestructiveButton(
+                    label = stringResource(R.string.guard_devices_remove),
+                    onClick = {
+                        confirm_remove = false
+                        on_remove()
+                    },
+                )
+            },
+        )
+    }
     detail_row(
-        title = device.name.ifBlank { stringResource(R.string.guard_devices_unnamed) },
+        title = device_name,
         subtitle = subtitle,
         leading = {
             guard_vector_tile(
@@ -311,10 +375,11 @@ private fun guard_device_row(
         },
         trailing = if (can_remove) {
             {
-                AsterGhostButton(
+                AsterCompactDestructiveButton(
                     label = stringResource(R.string.guard_devices_remove),
-                    onClick = on_remove,
-                    enabled = !removing,
+                    onClick = { confirm_remove = true },
+                    is_loading = removing,
+                    modifier = Modifier.widthIn(min = 84.dp).testTag("guard_device_remove"),
                 )
             }
         } else {

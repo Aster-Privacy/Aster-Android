@@ -248,3 +248,10 @@ fun device_client_glyph(browser: String, kind: DeviceClientKind, size_dp: Int = 
         modifier = Modifier.size(size_dp.dp),
     )
 }
+
+@Composable
+fun device_client_tile(browser: String, kind: DeviceClientKind) {
+    Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+        device_client_glyph(browser = browser, kind = kind, size_dp = 22)
+    }
+}

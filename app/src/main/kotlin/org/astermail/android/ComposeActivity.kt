@@ -143,8 +143,13 @@ class ComposeActivity :
         val thread_ghost_email = intent?.getStringExtra(extra_thread_ghost)?.takeIf { it.isNotBlank() }
         val selected_alias = intent?.getStringExtra(extra_selected_alias)?.takeIf { it.isNotBlank() }
         enableEdgeToEdge()
+        org.astermail.android.ui.common.install_aster_motion_scale(this)
+        val boot_background_argb = org.astermail.android.ui.common.theme_boot_background_argb(this)
         setContent {
-            if (!secure_storage_ready.value) return@setContent
+            if (!secure_storage_ready.value) {
+                org.astermail.android.ui.common.aster_boot_placeholder(boot_background_argb)
+                return@setContent
+            }
             aster_theme_root {
                 val lock_vm: AppLockViewModel = hiltViewModel()
                 val is_locked by lock_vm.store.is_locked.collectAsStateWithLifecycle()

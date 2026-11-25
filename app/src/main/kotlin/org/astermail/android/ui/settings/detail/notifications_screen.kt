@@ -44,6 +44,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -57,6 +58,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import org.astermail.android.R
 import org.astermail.android.design.components.AsterSwitch
+import org.astermail.android.design.components.aster_show
 import org.astermail.android.notifications.MailPollingWorker
 import org.astermail.android.notifications.NotificationActionChoices
 import org.astermail.android.ui.common.picker_theme_res
@@ -68,6 +70,7 @@ import org.astermail.android.design.components.UpgradeGate
 import org.astermail.android.settings.SaveStatus
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.shared_settings_view_model
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 private fun switch_row(
@@ -75,12 +78,14 @@ private fun switch_row(
     subtitle: String?,
     checked: Boolean,
     info: String? = null,
+    enabled: Boolean = true,
     on_change: (Boolean) -> Unit,
 ) {
     settings_toggle_row(
         title = title,
         subtitle = subtitle,
         checked = checked,
+        enabled = enabled,
         info_title = if (info != null) title else null,
         info_description = info,
         on_change = on_change,
@@ -110,11 +115,7 @@ fun NotificationsScreen(
     LaunchedEffect(Unit) { offer_vm.load() }
     LaunchedEffect(offer_prefs.save_failed) {
         if (!offer_prefs.save_failed) return@LaunchedEffect
-        android.widget.Toast.makeText(
-            context,
-            context.getString(R.string.special_offers_save_failed),
-            android.widget.Toast.LENGTH_SHORT,
-        ).show()
+        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.special_offers_save_failed).toString())
         offer_vm.clear_save_failed()
     }
 
@@ -130,6 +131,7 @@ fun NotificationsScreen(
     var quiet_hours by remember(prefs_seeded) { mutableStateOf(prefs?.quiet_hours_enabled ?: false) }
     var quiet_hours_start by remember(prefs_seeded) { mutableStateOf(prefs?.quiet_hours_start?.takeIf { it.isNotBlank() } ?: "22:00") }
     var quiet_hours_end by remember(prefs_seeded) { mutableStateOf(prefs?.quiet_hours_end?.takeIf { it.isNotBlank() } ?: "07:00") }
+    var toast_position by remember(prefs_seeded) { mutableStateOf(prefs?.toast_position ?: org.astermail.android.ui.common.default_toast_position) }
     var save_trigger by remember { mutableIntStateOf(0) }
     var prefs_loaded by remember { mutableStateOf(false) }
 
@@ -153,7 +155,7 @@ fun NotificationsScreen(
         onDispose { lifecycle_owner.lifecycle.removeObserver(observer) }
     }
 
-    LaunchedEffect(prefs, state.preferences_authoritative) {
+    LaunchedEffect(prefs, state.preferences_authoritative, prefs_loaded) {
         if (prefs != null && state.preferences_authoritative && !prefs_loaded) {
             prefs_loaded = true
             push = prefs.push_notifications
@@ -166,6 +168,7 @@ fun NotificationsScreen(
             quiet_hours = prefs.quiet_hours_enabled
             quiet_hours_start = prefs.quiet_hours_start.takeIf { it.isNotBlank() } ?: "22:00"
             quiet_hours_end = prefs.quiet_hours_end.takeIf { it.isNotBlank() } ?: "07:00"
+            toast_position = prefs.toast_position
             MailPollingWorker.set_quiet_hours(context, quiet_hours, quiet_hours_start, quiet_hours_end)
             MailPollingWorker.set_notify_new_email(context, new_email)
             MailPollingWorker.set_notify_replies(context, replies)
@@ -186,6 +189,8 @@ fun NotificationsScreen(
         quiet_hours = base.quiet_hours_enabled
         quiet_hours_start = base.quiet_hours_start.takeIf { it.isNotBlank() } ?: "22:00"
         quiet_hours_end = base.quiet_hours_end.takeIf { it.isNotBlank() } ?: "07:00"
+        toast_position = base.toast_position
+        org.astermail.android.ui.common.set_toast_position(toast_position)
         save_trigger = 0
         MailPollingWorker.set_push_enabled(context, push)
         MailPollingWorker.set_quiet_hours(context, quiet_hours, quiet_hours_start, quiet_hours_end)
@@ -207,6 +212,7 @@ fun NotificationsScreen(
                 quiet_hours_enabled = quiet_hours,
                 quiet_hours_start = quiet_hours_start,
                 quiet_hours_end = quiet_hours_end,
+                toast_position = toast_position,
             ),
         )
         MailPollingWorker.set_quiet_hours(context, quiet_hours, quiet_hours_start, quiet_hours_end)
@@ -254,7 +260,7 @@ fun NotificationsScreen(
             time_picker_theme,
             { _, hour, minute -> on_pick(String.format(java.util.Locale.US, "%02d:%02d", hour, minute)) },
             h, m, uses_24h,
-        ).show()
+        ).aster_show()
     }
 
     LaunchedEffect(save_trigger) {
@@ -277,6 +283,20 @@ fun NotificationsScreen(
     detail_scaffold(
         title = stringResource(R.string.notifications),
         on_back = on_back,
+        on_refresh = {
+            refresh_battery_exempt()
+            kotlinx.coroutines.coroutineScope {
+                launch {
+                    vm.join_launched {
+                        vm.load_preferences(force = true)
+                        vm.load_product_updates(force = true)
+                    }
+                }
+                launch { offer_vm.join_launched { offer_vm.load() } }
+            }
+            if (save_trigger == 0) prefs_loaded = false
+        },
+        refresh_enabled = save_trigger == 0,
     ) {
         preferences_save_error_banner()
         if (prefs == null || !state.preferences_authoritative) {
@@ -347,7 +367,8 @@ fun NotificationsScreen(
                     persistent_push = it
                     org.astermail.android.notifications.PersistentPushService.set_enabled(context, it)
                 }
-                if (persistent_push) {
+                SettingsExpand(visible = persistent_push) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
                     settings_row_gap(modifier = Modifier)
                     detail_row(
                         title = stringResource(R.string.persistent_push_autostart_title),
@@ -359,6 +380,7 @@ fun NotificationsScreen(
                             )
                         },
                     )
+                    }
                 }
             }
             v_gap(AsterSpacing.lg)
@@ -367,21 +389,21 @@ fun NotificationsScreen(
                 switch_row(stringResource(R.string.new_emails), null, new_email) { new_email = it; save_trigger++; MailPollingWorker.set_notify_new_email(context, it) }
                 settings_row_gap(modifier = Modifier)
                 switch_row(stringResource(R.string.replies), null, replies) { replies = it; save_trigger++; MailPollingWorker.set_notify_replies(context, it) }
-                if (state.product_updates_available) {
-                    settings_row_gap(modifier = Modifier)
-                    switch_row(
-                        stringResource(R.string.product_updates),
-                        stringResource(R.string.product_updates_subtitle),
-                        state.product_updates,
-                        stringResource(R.string.product_updates_info),
-                    ) { vm.set_product_updates(it) }
-                }
-                if (org.astermail.android.BuildConfig.SPECIAL_OFFER && offer_prefs.available) {
+                settings_row_gap(modifier = Modifier)
+                switch_row(
+                    stringResource(R.string.product_updates),
+                    stringResource(R.string.product_updates_subtitle),
+                    state.product_updates,
+                    stringResource(R.string.product_updates_info),
+                    enabled = state.product_updates_available,
+                ) { vm.set_product_updates(it) }
+                if (org.astermail.android.BuildConfig.SPECIAL_OFFER) {
                     settings_row_gap(modifier = Modifier)
                     switch_row(
                         stringResource(R.string.special_offers),
                         stringResource(R.string.special_offers_description),
                         offer_prefs.enabled,
+                        enabled = offer_prefs.available,
                     ) { offer_vm.set_enabled(it) }
                 }
             }
@@ -479,6 +501,40 @@ fun NotificationsScreen(
                             on_click = { show_time_picker(quiet_hours_end) { quiet_hours_end = it; save_trigger++ } },
                             trailing = { Text(text = display_time(quiet_hours_end), color = colors.text_secondary, fontSize = 15.sp) },
                         )
+                    }
+                }
+            }
+            v_gap(AsterSpacing.lg)
+            section_label(stringResource(R.string.toast_position_title))
+            val toast_choice = org.astermail.android.ui.common.toast_position_choice_for(toast_position)
+            val toast_options = listOf(
+                org.astermail.android.ui.common.toast_position_top to stringResource(R.string.toast_position_top),
+                org.astermail.android.ui.common.toast_position_bottom to stringResource(R.string.toast_position_bottom),
+            )
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                alias_select_row(
+                    title = stringResource(R.string.toast_position_title),
+                    subtitle = stringResource(R.string.toast_position_subtitle),
+                    value = toast_options.firstOrNull { it.first == toast_choice }?.second.orEmpty(),
+                    test_tag = "toast_position_selector",
+                ) { expanded, dismiss ->
+                    org.astermail.android.design.components.aster_menu(expanded = expanded, on_dismiss = dismiss) {
+                        toast_options.forEach { (option, label) ->
+                            org.astermail.android.design.components.aster_menu_item(
+                                label = label,
+                                selected = option == toast_choice,
+                                on_click = {
+                                    dismiss()
+                                    val next = org.astermail.android.ui.common.toast_position_after_pick(toast_position, option)
+                                        ?: option
+                                    if (next != toast_position) {
+                                        toast_position = next
+                                        org.astermail.android.ui.common.set_toast_position(next)
+                                        save_trigger++
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
             }

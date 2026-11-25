@@ -12,4 +12,10 @@
         <item quantity="many">%d dni temu</item>
         <item quantity="other">%d dnia temu</item>
     </plurals>
+    <plurals name="search_match_count">
+        <item quantity="one">%d dopasowanie</item>
+        <item quantity="few">%d dopasowania</item>
+        <item quantity="many">%d dopasowań</item>
+        <item quantity="other">%d dopasowania</item>
+    </plurals>
 </resources>

@@ -24,6 +24,10 @@ package org.astermail.android.contacts
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.graphics.Matrix
+import android.media.ExifInterface
+import android.os.Build
 import android.net.Uri
 import android.util.Base64
 import java.io.ByteArrayInputStream
@@ -35,8 +39,78 @@ const val CONTACT_PHOTO_MAX_BYTES = 180 * 1024
 
 private val QUALITY_STEPS = intArrayOf(85, 70, 55, 40, 25)
 
+sealed interface ContactPhotoEncodeResult {
+    data class Encoded(val data_uri: String) : ContactPhotoEncodeResult
+    data object Unreadable : ContactPhotoEncodeResult
+    data object TooLarge : ContactPhotoEncodeResult
+}
+
 fun encode_contact_photo(context: Context, uri: Uri): String? =
-    encode_contact_photo_stream { context.contentResolver.openInputStream(uri) }
+    (encode_contact_photo_result(context, uri) as? ContactPhotoEncodeResult.Encoded)?.data_uri
+
+fun encode_contact_photo_result(context: Context, uri: Uri): ContactPhotoEncodeResult {
+    val decoded = runCatching { decode_contact_photo_uri(context, uri) }
+        .getOrNull()
+        ?: return ContactPhotoEncodeResult.Unreadable
+    return compress_contact_photo(decoded)
+        ?.let { ContactPhotoEncodeResult.Encoded(it) }
+        ?: ContactPhotoEncodeResult.TooLarge
+}
+
+private fun decode_contact_photo_uri(context: Context, uri: Uri): Bitmap? {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        val from_decoder = runCatching {
+            val source = ImageDecoder.createSource(context.contentResolver, uri)
+            ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
+                decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                decoder.isMutableRequired = false
+                val width = info.size.width
+                val height = info.size.height
+                val short_edge = minOf(width, height)
+                if (short_edge > CONTACT_PHOTO_MAX_EDGE * 2) {
+                    val ratio = (CONTACT_PHOTO_MAX_EDGE * 2).toFloat() / short_edge
+                    decoder.setTargetSize(
+                        (width * ratio).toInt().coerceAtLeast(1),
+                        (height * ratio).toInt().coerceAtLeast(1),
+                    )
+                }
+            }
+        }.getOrNull()
+        if (from_decoder != null) return from_decoder
+    }
+    val decoded = decode_sampled_stream { context.contentResolver.openInputStream(uri) } ?: return null
+    val orientation = runCatching {
+        context.contentResolver.openInputStream(uri)?.use { stream ->
+            ExifInterface(stream).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+        }
+    }.getOrNull() ?: ExifInterface.ORIENTATION_NORMAL
+    return apply_contact_photo_orientation(decoded, orientation)
+}
+
+private fun apply_contact_photo_orientation(bitmap: Bitmap, orientation: Int): Bitmap {
+    val matrix = Matrix()
+    when (orientation) {
+        ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.setScale(-1f, 1f)
+        ExifInterface.ORIENTATION_ROTATE_180 -> matrix.setRotate(180f)
+        ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.setScale(1f, -1f)
+        ExifInterface.ORIENTATION_TRANSPOSE -> {
+            matrix.setRotate(90f)
+            matrix.postScale(-1f, 1f)
+        }
+        ExifInterface.ORIENTATION_ROTATE_90 -> matrix.setRotate(90f)
+        ExifInterface.ORIENTATION_TRANSVERSE -> {
+            matrix.setRotate(-90f)
+            matrix.postScale(-1f, 1f)
+        }
+        ExifInterface.ORIENTATION_ROTATE_270 -> matrix.setRotate(-90f)
+        else -> return bitmap
+    }
+    val rotated = runCatching {
+        Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    }.getOrNull() ?: return bitmap
+    if (rotated != bitmap) bitmap.recycle()
+    return rotated
+}
 
 fun encode_contact_photo_bytes(bytes: ByteArray): String? =
     encode_contact_photo_stream { ByteArrayInputStream(bytes) }
@@ -60,6 +134,11 @@ fun normalize_contact_photo(data_uri: String): String {
 }
 
 private fun encode_contact_photo_stream(open: () -> InputStream?): String? {
+    val decoded = decode_sampled_stream(open) ?: return null
+    return compress_contact_photo(decoded)
+}
+
+private fun decode_sampled_stream(open: () -> InputStream?): Bitmap? {
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     val bounds_stream = open() ?: return null
     bounds_stream.use { stream -> BitmapFactory.decodeStream(stream, null, bounds) }
@@ -74,10 +153,12 @@ private fun encode_contact_photo_stream(open: () -> InputStream?): String? {
     }
 
     val options = BitmapFactory.Options().apply { inSampleSize = sample }
-    val decoded = open()?.use { stream ->
+    return open()?.use { stream ->
         BitmapFactory.decodeStream(stream, null, options)
-    } ?: return null
+    }
+}
 
+private fun compress_contact_photo(decoded: Bitmap): String? {
     val scaled = scale_to_square(decoded)
     if (scaled != decoded) decoded.recycle()
 

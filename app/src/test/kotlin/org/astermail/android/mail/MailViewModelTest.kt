@@ -82,6 +82,7 @@ class MailViewModelTest {
             "Something went wrong"
         repository = mockk(relaxed = true)
         every { repository.is_conversation_grouping_enabled } returns true
+        every { repository.visible_order } returns kotlinx.coroutines.flow.MutableStateFlow(emptyList())
         search_index_manager = mockk(relaxed = true)
         folder_cache_store = mockk(relaxed = true)
         every { folder_cache_store.cached_stats(any()) } returns null
@@ -3506,7 +3507,7 @@ class MailViewModelTest {
     }
 
     @Test
-    fun `fallback tick refetches after a live event dropped while loading more`() = runTest {
+    fun `live event during load more is replayed when loading finishes`() = runTest {
         var now = 1_000_000L
         vm.override_clock_ms = { now }
         vm.foreground_check = { true }
@@ -3531,13 +3532,47 @@ class MailViewModelTest {
 
         gate.complete(Result.success(InboxPage(items = emptyList(), has_more = false, next_cursor = null, total = 3)))
         advanceUntilIdle()
-        val after_drop = fetches
 
-        now += 60_000L
-        vm.foreground_fallback_tick(live_sync_connected = true)
+        assertTrue(fetches > before_event)
+    }
+
+    @Test
+    fun `live event is ignored while the app is locked`() = runTest {
+        vm.foreground_check = { true }
+        var fetches = 0
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } coAnswers {
+            fetches++
+            Result.success(fake_inbox_page(3))
+        }
+        vm.load_inbox()
+        advanceUntilIdle()
+        every { repository.session_locked() } returns true
+        val before = fetches
+
+        vm.on_live_sync_event(LiveSyncEvent.new_mail)
+        vm.on_live_sync_poll()
         advanceUntilIdle()
 
-        assertTrue(fetches > after_drop)
+        assertEquals(before, fetches)
+    }
+
+    @Test
+    fun `live sync poll revalidates the list when idle`() = runTest {
+        vm.foreground_check = { true }
+        var fetches = 0
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } coAnswers {
+            fetches++
+            Result.success(fake_inbox_page(3))
+        }
+        vm.load_inbox()
+        advanceUntilIdle()
+        every { repository.session_locked() } returns false
+        val before = fetches
+
+        vm.on_live_sync_poll()
+        advanceUntilIdle()
+
+        assertTrue(fetches > before)
     }
 
     @Test

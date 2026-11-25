@@ -204,12 +204,13 @@
     <string name="guard_switches_paused">Les demandes de connexion sont suspendues jusqu\'au %1$s.</string>
     <string name="guard_switches_missing_rescue">Vous n\'avez pas de code de secours. Pour garder un moyen de revenir dans votre compte, créez-en un.</string>
     <string name="guard_switches_not_guard_device">Pour modifier ces réglages, utilisez l\'un de vos appareils Guard.</string>
-    <string name="guard_switches_canceled">Rien n\'a changé. Pour enregistrer, confirmez votre identité.</string>
+    <string name="guard_switches_canceled">Vos modifications n\'ont pas été enregistrées. Pour les enregistrer, confirmez votre identité.</string>
     <string name="guard_switches_code_subtitle">Approuver une connexion sans notification</string>
     <string name="guard_devices_section">Appareils Guard</string>
     <string name="guard_devices_this_device">Ce téléphone</string>
     <string name="guard_devices_unnamed">Appareil sans nom</string>
     <string name="guard_devices_remove_prompt_subtitle">Supprimer un appareil Guard</string>
+    <string name="guard_devices_remove_confirm">%1$s ne pourra plus approuver les modifications de votre compte. Pour l\'utiliser à nouveau, rejoignez Guard depuis cet appareil.</string>
     <string name="guard_security_row_off">Activez-le pour approuver les connexions et retenir les modifications risquées depuis ce téléphone</string>
     <string name="guard_changes_title">Modifications en attente</string>
     <string name="guard_changes_body">Ces modifications de votre compte attendent avant de prendre effet. Si vous n\'en avez pas fait une, annulez-la.</string>
@@ -225,7 +226,7 @@
     <string name="guard_changes_step_up_required">Pour passer l\'attente, utilisez un appareil que vous utilisez depuis 7 jours ou plus, ou votre clé de sécurité.</string>
     <string name="guard_changes_not_guard_device">Pour annuler ou arrêter une modification, utilisez l\'un de vos appareils Guard.</string>
     <string name="guard_changes_prompt_subtitle">Confirmez cette modification de votre compte</string>
-    <string name="guard_changes_prompt_canceled">Rien n\'a changé. Pour continuer, confirmez votre identité.</string>
+    <string name="guard_changes_prompt_canceled">Pour continuer, confirmez votre identité.</string>
     <string name="guard_changes_done_canceled">La modification est annulée.</string>
     <string name="guard_changes_done_skipped">La modification a pris effet.</string>
     <string name="guard_changes_done_stopped">La récupération est arrêtée.</string>

@@ -1,0 +1,11 @@
+What's new:
+
+- Search terms are highlighted in the message you open, with buttons to move between matches.
+- Contacts can hold events such as anniversaries, and you can favorite several at once.
+
+Fixed:
+
+- Threads open at their final height, and verified badges are larger.
+- Unsubscribe works for more senders and shows one result when you're done.
+- Your inbox and App lock appear sooner when you open the app.
+- An edited reply subject stays when you switch reply modes.

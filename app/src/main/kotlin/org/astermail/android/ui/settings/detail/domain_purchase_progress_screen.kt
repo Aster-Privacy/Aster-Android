@@ -111,6 +111,7 @@ fun DomainPurchaseProgressScreen(
             ?.let { stringResource(R.string.domain_purchase_progress_title, it) }
             ?: stringResource(R.string.domain_purchase_title),
         on_back = on_back,
+        on_refresh = { retry_key += 1 },
     ) {
         progress_body(
             order = order,
@@ -149,9 +150,9 @@ private fun progress_body(
                     .padding(top = 48.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator(
+                org.astermail.android.design.components.aster_spinner(
                     modifier = Modifier.size(28.dp),
-                    strokeWidth = 3.dp,
+                    stroke_width = 3.dp,
                     color = colors.accent_blue,
                 )
             }
@@ -186,9 +187,9 @@ private fun progress_step_marker(done: Boolean, active: Boolean) {
     Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
         when {
             done -> domain_status_disc(available = true, size = 24.dp)
-            active -> CircularProgressIndicator(
+            active -> org.astermail.android.design.components.aster_spinner(
                 modifier = Modifier.size(22.dp),
-                strokeWidth = 2.dp,
+                stroke_width = 2.dp,
                 color = colors.accent_blue,
             )
             else -> Box(

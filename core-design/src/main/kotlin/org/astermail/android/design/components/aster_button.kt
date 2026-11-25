@@ -21,7 +21,9 @@
 
 package org.astermail.android.design.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -39,6 +41,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -55,6 +62,12 @@ import androidx.compose.ui.unit.sp
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterMotionSpec
+import org.astermail.android.design.aster_collapse_horizontal_out
+import org.astermail.android.design.aster_expand_horizontal_in
+import org.astermail.android.design.aster_fade_in
+import org.astermail.android.design.aster_fade_out
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.AsterShapes
 import androidx.compose.material3.ripple
@@ -68,6 +81,7 @@ private val aster_button_compact_label_size = 14.sp
 private val aster_button_shape = AsterShapes.control
 private val aster_button_label_size = 16.sp
 private val aster_button_spinner_size = 20.dp
+private const val aster_button_min_label_scale = 0.75f
 
 private val depth_red = Color(0xFFDC2626)
 
@@ -77,24 +91,47 @@ private fun aster_button_label(
     content_color: Color,
     label_size: androidx.compose.ui.unit.TextUnit = aster_button_label_size,
     modifier: Modifier = Modifier,
+    fit_width: Boolean = false,
 ) {
-    Text(
+    if (!fit_width) {
+        Text(
+            text = label,
+            fontSize = label_size,
+            fontWeight = FontWeight.SemiBold,
+            color = content_color,
+            maxLines = 1,
+            softWrap = false,
+            modifier = modifier,
+        )
+        return
+    }
+    BasicText(
         text = label,
-        fontSize = label_size,
-        fontWeight = FontWeight.SemiBold,
-        color = content_color,
+        modifier = modifier,
+        style = LocalTextStyle.current.merge(
+            TextStyle(
+                fontSize = label_size,
+                fontWeight = FontWeight.SemiBold,
+                color = content_color,
+                textAlign = TextAlign.Center,
+            ),
+        ),
         maxLines = 1,
         softWrap = false,
-        modifier = modifier,
+        autoSize = TextAutoSize.StepBased(
+            minFontSize = label_size * aster_button_min_label_scale,
+            maxFontSize = label_size,
+            stepSize = 0.5.sp,
+        ),
     )
 }
 
 @Composable
 private fun aster_button_spinner(content_color: Color) {
-    CircularProgressIndicator(
+    org.astermail.android.design.components.aster_spinner(
         modifier = Modifier.size(aster_button_spinner_size),
         color = content_color,
-        strokeWidth = 2.dp,
+        stroke_width = 2.dp,
     )
 }
 
@@ -107,25 +144,56 @@ private fun aster_button_content(
     stretch: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val reduce_motion = aster_reduce_motion()
     if (!stretch) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
             aster_button_label(label, content_color, label_size)
-            if (is_loading) {
-                Spacer(modifier = Modifier.width(AsterSpacing.sm))
-                aster_button_spinner(content_color)
+            AnimatedVisibility(
+                visible = is_loading,
+                enter = aster_expand_horizontal_in(reduce_motion),
+                exit = aster_collapse_horizontal_out(reduce_motion),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(modifier = Modifier.width(AsterSpacing.sm))
+                    aster_button_spinner(content_color)
+                }
             }
         }
         return
     }
+    val label_alpha by animateFloatAsState(
+        targetValue = if (is_loading) 0f else 1f,
+        animationSpec = when {
+            reduce_motion -> tween(
+                if (is_loading) AsterMotionSpec.reduced_fade_out_ms else AsterMotionSpec.reduced_fade_ms,
+                easing = LinearEasing,
+            )
+            is_loading -> tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.emphasized_accelerate)
+            else -> tween(AsterMotionSpec.fade_enter_ms, easing = AsterEasing.emphasized_decelerate)
+        },
+        label = "btn_label_alpha",
+    )
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
-        aster_button_label(label, content_color, label_size, Modifier.alpha(if (is_loading) 0f else 1f))
-        if (is_loading) aster_button_spinner(content_color)
+        aster_button_label(
+            label,
+            content_color,
+            label_size,
+            Modifier.graphicsLayer { alpha = label_alpha },
+            fit_width = true,
+        )
+        AnimatedVisibility(
+            visible = is_loading,
+            enter = aster_fade_in(reduce_motion),
+            exit = aster_fade_out(reduce_motion),
+        ) {
+            aster_button_spinner(content_color)
+        }
     }
 }
 
@@ -346,6 +414,27 @@ fun AsterCompactGhostButton(
     ) {
         aster_button_content(label, false, resolved_color, aster_button_compact_label_size, false)
     }
+}
+
+@Composable
+fun AsterCompactDestructiveButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    is_loading: Boolean = false,
+) {
+    depth_button(
+        label = label,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        is_loading = is_loading,
+        fill = depth_red,
+        stretch = false,
+        height = aster_button_compact_height,
+        label_size = aster_button_compact_label_size,
+    )
 }
 
 @Composable

@@ -207,23 +207,15 @@ class EmailBodyOverflowTest {
     }
 
     @Test
-    fun a_measured_overflow_reloads_the_page_in_a_viewport_that_holds_it() {
-        val document = build_email_html(
-            body = EmailHtmlSanitizer.sanitize(charges_newsletter),
-            is_dark = false,
-            fg_hex = "#111111",
-            link_hex = "#1a73e8",
-            forwarded_label = "Forwarded",
-            image_failed_label = "Image failed",
-            force_dark_emails = false,
-            dyslexia_font = false,
-            translate_mode = "off",
-            fit_width_override = 492,
-        )
+    fun every_body_uses_one_fixed_device_width_viewport() {
+        val fixed = "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no\">"
+        for (body in listOf(EmailHtmlSanitizer.sanitize(charges_newsletter), newsletter, "<p>Short note</p>", "plain text body")) {
+            val document = render(body)
 
-        assertEquals(492, fitted_viewport_width(document))
-        assertTrue(document.contains("<meta name=\"viewport\" content=\"width=492,maximum-scale=5,user-scalable=yes\">"))
-        assertFalse(document.contains("width=device-width"))
+            assertNull(fitted_viewport_width(document))
+            assertTrue(document.contains(fixed))
+            assertFalse(document.contains("user-scalable=yes"))
+        }
     }
 
     @Test

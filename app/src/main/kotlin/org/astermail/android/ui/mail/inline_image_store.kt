@@ -91,6 +91,20 @@ internal object InlineImageStore {
 
     fun url_for(key: String): String = INLINE_IMAGE_URL_PREFIX + key
 
+    private val sizes = object : LinkedHashMap<String, Pair<Int, Int>>(16, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Pair<Int, Int>>?): Boolean =
+            size > STORE_MAX_RELOADERS
+    }
+
+    fun remember_size(url: String, bytes: ByteArray) {
+        val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        runCatching { android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds) }
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return
+        synchronized(sizes) { sizes[url] = bounds.outWidth to bounds.outHeight }
+    }
+
+    fun size_for(url: String): Pair<Int, Int>? = synchronized(sizes) { sizes[url] }
+
     fun key_for_path(path: String?): String? {
         if (path == null || !path.startsWith(INLINE_IMAGE_PATH_PREFIX)) return null
         return path.removePrefix(INLINE_IMAGE_PATH_PREFIX).takeIf { it.isNotBlank() }

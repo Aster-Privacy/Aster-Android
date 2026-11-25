@@ -170,7 +170,7 @@ fun guard_veto_screen(
                     Spacer(Modifier.height(AsterSpacing.sm))
                     guard_wizard_body(stringResource(R.string.guard_veto_working), Modifier.fillMaxWidth(), TextAlign.Center)
                     Spacer(Modifier.height(AsterSpacing.xxl))
-                    CircularProgressIndicator(color = colors.text_secondary, modifier = Modifier.size(28.dp))
+                    org.astermail.android.design.components.aster_spinner(color = colors.text_secondary, modifier = Modifier.size(28.dp))
                 }
                 guard_veto_state.done -> if (on_change_password != null) {
                     guard_result_block(

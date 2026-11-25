@@ -127,6 +127,8 @@ internal fun prepare_email_body(
     image_failed_label: String,
     is_newsletter: Boolean,
     simple_dark: Boolean,
+    hide_quote_label: String? = null,
+    show_quote_label: String? = null,
 ): String = try {
     val doc = Jsoup.parseBodyFragment(body).apply { outputSettings(raw_body_output_settings()) }
     val root = doc.body()
@@ -139,6 +141,7 @@ internal fun prepare_email_body(
     prune_empty_signature_blocks(root)
     reveal_fully_hidden_content(root)
     collapse_quoted_content(root, forwarded_label)
+    if (!hide_quote_label.isNullOrBlank()) append_quote_hide_pills(root, hide_quote_label, show_quote_label ?: hide_quote_label)
     if (simple_dark) BlockedImagePlaceholder.repaint(root, BlockedImagePlaceholder.DARK)
     wrap_images_for_zoom(root)
     label_images_for_failure(root, image_failed_label)
@@ -147,6 +150,71 @@ internal fun prepare_email_body(
     root.html()
 } catch (_: Throwable) {
     "<div class=\"aster-quoted-content aster-quoted-solo\">$body</div>"
+}
+
+internal const val QUOTE_HIDE_SCHEME = "asterquote"
+
+internal const val QUOTE_CLOSE_ACTION = "close"
+
+internal const val QUOTE_OPEN_ACTION = "open"
+
+internal const val QUOTE_COVER_ACTION = "cover"
+
+internal const val QUOTE_MANAGED_CLASS = "aster-quote-managed"
+
+private const val QUOTE_DETAILS_SELECTOR = "details.aster-quoted-wrapper, details.aster-forwarded-collapse"
+
+private fun append_quote_hide_pills(root: Element, hide_label: String, show_label: String) {
+    root.select("a.aster-quote-close, a.aster-quote-cover, a.aster-quote-open").remove()
+    var index = 0
+    for (details in root.select(QUOTE_DETAILS_SELECTOR)) {
+        val summary = details.children().firstOrNull()?.takeIf { it.tagName().equals("summary", ignoreCase = true) } ?: continue
+        val forwarded = details.hasClass("aster-forwarded-collapse")
+        details.removeAttr("open")
+        details.addClass(QUOTE_MANAGED_CLASS)
+        details.attr("data-aster-quote", index.toString())
+        val open = Element("a")
+            .addClass("aster-quote-open")
+            .attr("href", "$QUOTE_HIDE_SCHEME:$QUOTE_OPEN_ACTION:$index")
+            .attr("translate", "no")
+            .attr("role", "button")
+            .attr("aria-label", show_label)
+        summary.appendChild(open)
+        val action = if (forwarded) QUOTE_COVER_ACTION else QUOTE_CLOSE_ACTION
+        val close = Element("a")
+            .addClass(if (forwarded) "aster-quote-cover" else "aster-quote-close")
+            .attr("href", "$QUOTE_HIDE_SCHEME:$action:$index")
+            .attr("translate", "no")
+            .attr("role", "button")
+        if (forwarded) close.attr("aria-label", hide_label) else close.text(hide_label)
+        summary.appendChild(close)
+        index++
+    }
+}
+
+internal data class quote_link(val action: String, val index: Int?)
+
+internal fun parse_quote_link(scheme_specific: String?): quote_link? {
+    val parts = scheme_specific?.split(':') ?: return null
+    val action = parts.getOrNull(0)?.takeIf { it == QUOTE_OPEN_ACTION || it == QUOTE_CLOSE_ACTION || it == QUOTE_COVER_ACTION }
+        ?: return null
+    val index = parts.getOrNull(1)?.toIntOrNull()?.takeIf { it >= 0 }
+    if (action == QUOTE_OPEN_ACTION && index == null) return null
+    return quote_link(action, index)
+}
+
+private val managed_quote_tag = Regex("""<details\b[^>]*\bdata-aster-quote="(\d+)"[^>]*>""")
+
+internal fun with_open_quotes(html: String, open: Set<Int>): String {
+    if (open.isEmpty()) return html
+    return managed_quote_tag.replace(html) { match ->
+        val index = match.groupValues[1].toIntOrNull()
+        if (index != null && index in open) {
+            match.value.dropLast(1) + " open>"
+        } else {
+            match.value
+        }
+    }
 }
 
 private const val RENDERABLE_SCAN_LIMIT = 32768
@@ -816,6 +884,21 @@ private fun reveal_orphaned_quotes(root: Element) {
     for (element in root.select(HIDDEN_QUOTE_SELECTOR)) {
         if (element.closest(".aster-quoted-content, .aster-forwarded-content") == null) reveal_element(element)
     }
+}
+
+internal fun reply_without_quote(body: String): String? = try {
+    val root = Jsoup.parseBodyFragment(body).body()
+    collapse_first_quote(root, "")
+    val quoted = root.select(".aster-quoted-content").filter { it.closest(".aster-forwarded-content") == null }
+    if (quoted.isEmpty()) {
+        null
+    } else {
+        quoted.forEach { it.remove() }
+        root.select(".aster-quote-toggle").remove()
+        if (root.text().isBlank()) null else root.html()
+    }
+} catch (_: Throwable) {
+    null
 }
 
 private fun collapse_quoted_content(root: Element, forwarded_label: String) {

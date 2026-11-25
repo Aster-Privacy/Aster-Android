@@ -21,6 +21,7 @@
 
 package org.astermail.android
 
+import org.astermail.android.ui.common.find_host_activity
 import androidx.lifecycle.repeatOnLifecycle
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
@@ -55,6 +56,10 @@ import org.astermail.android.ui.common.nav_forward_enter
 import org.astermail.android.ui.common.nav_forward_exit
 import org.astermail.android.ui.common.nav_sheet_enter
 import org.astermail.android.ui.common.nav_sheet_exit
+import org.astermail.android.ui.common.nav_predictive_pop_enter
+import org.astermail.android.ui.common.nav_predictive_pop_exit
+import org.astermail.android.ui.common.nav_search_enter
+import org.astermail.android.ui.common.nav_search_exit
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -88,6 +93,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -212,12 +218,13 @@ class MainActivity :
         const val EXTRA_GUARD_ACCOUNT_ID = "guard_account_id"
         const val EXTRA_OPEN_CONTACT_SYNC = "open_contact_sync"
         const val EXTRA_ACCOUNT_LINK_REQUEST = "account_link_request"
-        private const val FIRST_FRAME_INSET_TIMEOUT_MS = 1000L
         private const val CONTENT_INSET_TIMEOUT_MS = 4000L
         private const val STATE_LAUNCH_PENDING = "launch_intent_pending"
     }
 
     private val insets_applied = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    private val insets_ready = androidx.compose.runtime.mutableStateOf(false)
 
     private val secure_storage_ready = androidx.compose.runtime.mutableStateOf(
         org.astermail.android.storage.SecurePrefs.warm_complete.value,
@@ -225,8 +232,13 @@ class MainActivity :
 
     val pending_launch = pending_launch_state()
 
+    private var boot_background_argb: Int = 0
+
     @javax.inject.Inject
     lateinit var app_lock_store: org.astermail.android.security.AppLockStore
+
+    @javax.inject.Inject
+    lateinit var auth_repository: dagger.Lazy<org.astermail.android.auth.AuthRepository>
 
     private val lockdown_listener =
         android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
@@ -257,10 +269,12 @@ class MainActivity :
             consume_open_email_extra(intent)
             consume_share_intent(intent)
         }
+        if (saved_instance_state == null) org.astermail.android.ui.common.first_frame_gate.arm()
+        if (app_lock_store.is_locked.value) org.astermail.android.ui.common.first_frame_gate.mark_ready()
         apply_boot_background()
         enableEdgeToEdge()
+        org.astermail.android.ui.common.install_aster_motion_scale(this)
         setContent {
-            val insets_ready = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
             window_inset_probe {
                 insets_applied.set(true)
                 insets_ready.value = true
@@ -278,21 +292,46 @@ class MainActivity :
                 ) {
                     if (secure_storage_ready.value) {
                         AsterRoot()
+                    } else {
+                        org.astermail.android.ui.common.aster_boot_placeholder(boot_background_argb)
+                    }
+                }
+                app_lock_cover_layer()
+            }
+        }
+        hold_first_frame_until_ready()
+    }
+
+    private fun hold_first_frame_until_ready() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            runCatching {
+                splashScreen.setOnExitAnimationListener { splash ->
+                    val motion = org.astermail.android.design.AsterMotionScale
+                    if (motion.reduced || motion.system_disabled) {
+                        splash.remove()
+                    } else {
+                        splash.animate()
+                            .alpha(0f)
+                            .setDuration(org.astermail.android.design.AsterMotionSpec.fade_exit_ms.toLong())
+                            .withEndAction { splash.remove() }
+                            .start()
                     }
                 }
             }
         }
-        hold_first_frame_until_insets()
-    }
-
-    private fun hold_first_frame_until_insets() {
         val content = findViewById<android.view.View>(android.R.id.content) ?: return
-        val deadline = android.os.SystemClock.uptimeMillis() + FIRST_FRAME_INSET_TIMEOUT_MS
+        val started = android.os.SystemClock.uptimeMillis()
         content.viewTreeObserver.addOnPreDrawListener(
             object : android.view.ViewTreeObserver.OnPreDrawListener {
                 override fun onPreDraw(): Boolean {
-                    if (insets_applied.get() || android.os.SystemClock.uptimeMillis() > deadline) {
+                    val may_draw = org.astermail.android.ui.common.first_frame_may_draw(
+                        insets_applied = insets_applied.get(),
+                        content_ready = org.astermail.android.ui.common.first_frame_gate.is_ready,
+                        elapsed_ms = android.os.SystemClock.uptimeMillis() - started,
+                    )
+                    if (may_draw) {
                         content.viewTreeObserver.removeOnPreDrawListener(this)
+                        insets_ready.value = true
                         return true
                     }
                     content.postInvalidateOnAnimation()
@@ -302,8 +341,28 @@ class MainActivity :
         )
     }
 
+    @androidx.compose.runtime.Composable
+    private fun app_lock_cover_layer() {
+        val locked = app_lock_store.is_locked.collectAsState()
+        val reveal_started = app_lock_store.reveal_started.collectAsState()
+        val storage_ready = secure_storage_ready.value
+        val signed_in = if (storage_ready) {
+            auth_repository.get().is_signed_in.collectAsState().value
+        } else {
+            true
+        }
+        val visible = org.astermail.android.ui.common.app_lock_cover_visible(
+            is_locked = locked.value,
+            reveal_started = reveal_started.value,
+            storage_ready = storage_ready,
+            signed_in = signed_in,
+        )
+        if (visible) org.astermail.android.ui.common.app_lock_cover(boot_background_argb)
+    }
+
     private fun apply_boot_background() {
         val argb = org.astermail.android.ui.common.theme_boot_background_argb(this)
+        boot_background_argb = argb
         window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(argb))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             runCatching {
@@ -746,29 +805,10 @@ private fun AsterNavHost() {
 
     val nav_scope = rememberCoroutineScope()
 
+    val splash_was_shown = remember { mutableStateOf(!is_ready) }
     if (!is_ready) {
-        androidx.compose.foundation.layout.Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(AsterMaterial.colors.bg_primary),
-            verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
-            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-        ) {
-            androidx.compose.foundation.Image(
-                painter = androidx.compose.ui.res.painterResource(R.drawable.aster_wordmark),
-                contentDescription = null,
-                modifier = Modifier.height(22.dp),
-            )
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(20.dp))
-            androidx.compose.material3.LinearProgressIndicator(
-                color = AsterMaterial.colors.accent_blue,
-                trackColor = AsterMaterial.colors.border_secondary,
-                modifier = Modifier
-                    .width(160.dp)
-                    .height(3.dp)
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp)),
-            )
-        }
+        androidx.compose.runtime.SideEffect { org.astermail.android.ui.common.first_frame_gate.mark_ready() }
+        aster_launch_splash(Modifier)
         return
     }
 
@@ -777,13 +817,26 @@ private fun AsterNavHost() {
         runCatching { lock_vm.store.forget_unverifiable_lock(signed_in = is_signed_in_state) }
     }
 
-    val start = remember(is_ready) {
-        when {
-            is_signed_in_state -> routes.inbox
-            org.astermail.android.ui.guard.has_pending_guard_sign_in(guard_context) -> routes.sign_in
-            !theme_vm.onboarding_seen.value -> routes.onboarding
-            else -> routes.welcome
-        }
+    val start_kind = remember(is_ready) {
+        org.astermail.android.ui.common.launch_start_for(
+            is_signed_in = is_signed_in_state,
+            pending_guard_sign_in = !is_signed_in_state &&
+                org.astermail.android.ui.guard.has_pending_guard_sign_in(guard_context),
+            onboarding_seen = theme_vm.onboarding_seen.value,
+        )
+    }
+    val start = when (start_kind) {
+        org.astermail.android.ui.common.launch_start.inbox -> routes.inbox
+        org.astermail.android.ui.common.launch_start.sign_in -> routes.sign_in
+        org.astermail.android.ui.common.launch_start.onboarding -> routes.onboarding
+        org.astermail.android.ui.common.launch_start.welcome -> routes.welcome
+    }
+    val ready_before_inbox = org.astermail.android.ui.common.first_frame_ready_before_inbox(
+        start = start_kind,
+        is_locked = is_locked && is_signed_in_state,
+    )
+    androidx.compose.runtime.SideEffect {
+        if (ready_before_inbox) org.astermail.android.ui.common.first_frame_gate.mark_ready()
     }
     val nav_controller = rememberNavController()
     val notification_prompt_route by nav_controller.currentBackStackEntryAsState()
@@ -794,17 +847,19 @@ private fun AsterNavHost() {
     )
     val context = LocalContext.current
     val a11y = local_accessibility.current
-    val nav_duration = if (a11y.reduce_motion) 0 else nav_anim_duration_ms
+    val nav_duration = if (org.astermail.android.design.aster_reduce_motion()) 0 else nav_anim_duration_ms
+    val nav_back_duration = if (nav_duration == 0) 0 else org.astermail.android.ui.common.nav_anim_backward_ms
 
     val session_expired_state by auth_gate.session_expired.collectAsStateWithLifecycle()
     androidx.compose.runtime.LaunchedEffect(session_expired_state, is_signed_in_state) {
         if (!session_expired_state || is_signed_in_state) return@LaunchedEffect
         auth_gate.consume_session_expired()
-        android.widget.Toast.makeText(
-            context,
-            context.getString(R.string.session_expired_sign_in),
-            android.widget.Toast.LENGTH_LONG,
-        ).show()
+        org.astermail.android.ui.common.app_toast.show(
+            org.astermail.android.ui.common.TopToastState(
+                message = context.getString(R.string.session_expired_sign_in),
+                duration_ms = org.astermail.android.ui.common.toast_action_duration_ms,
+            ),
+        )
         nav_controller.navigate(routes.welcome) {
             popUpTo(0) { inclusive = true }
             launchSingleTop = true
@@ -815,11 +870,12 @@ private fun AsterNavHost() {
     androidx.compose.runtime.LaunchedEffect(vault_open_failed_state, is_signed_in_state) {
         if (!vault_open_failed_state || !is_signed_in_state) return@LaunchedEffect
         auth_gate.consume_vault_open_failed()
-        android.widget.Toast.makeText(
-            context,
-            context.getString(R.string.vault_open_failed_notice),
-            android.widget.Toast.LENGTH_LONG,
-        ).show()
+        org.astermail.android.ui.common.app_toast.show(
+            org.astermail.android.ui.common.TopToastState(
+                message = context.getString(R.string.vault_open_failed_notice),
+                duration_ms = org.astermail.android.ui.common.toast_action_duration_ms,
+            ),
+        )
     }
 
     val forced_switch_settings_vm = org.astermail.android.settings.shared_settings_view_model()
@@ -970,6 +1026,11 @@ private fun AsterNavHost() {
         androidx.compose.runtime.LaunchedEffect(is_signed_in_state) {
             preferences_sync_vm.load_preferences()
         }
+        org.astermail.android.ui.mail.live_sync_host(
+            active = !is_locked,
+            on_folders_changed = { preferences_sync_vm.reload_labels_from_sync() },
+            on_tags_changed = { preferences_sync_vm.reload_tags_from_sync() },
+        )
         val undo_route by nav_controller.currentBackStackEntryAsState()
         val undo_context = androidx.compose.ui.platform.LocalContext.current
         org.astermail.android.ui.mail.undo_send_events(
@@ -986,17 +1047,19 @@ private fun AsterNavHost() {
 
     val nav_pop_enter: androidx.compose.animation.AnimatedContentTransitionScope<androidx.navigation.NavBackStackEntry>.() -> EnterTransition = {
         val initial = initialState.destination.route
-        if (initial?.startsWith("compose") == true) {
+        if (initial?.startsWith("compose") == true || is_search_route(initial)) {
             androidx.compose.animation.EnterTransition.None
         } else {
-            nav_backward_enter(nav_duration)
+            nav_backward_enter(nav_back_duration)
         }
     }
     val nav_pop_exit: androidx.compose.animation.AnimatedContentTransitionScope<androidx.navigation.NavBackStackEntry>.() -> ExitTransition = {
         if (targetState.destination.route?.startsWith("compose") == true) {
             androidx.compose.animation.ExitTransition.None
+        } else if (is_search_route(initialState.destination.route)) {
+            nav_search_exit(nav_duration)
         } else {
-            nav_backward_exit(nav_duration)
+            nav_backward_exit(nav_back_duration)
         }
     }
 
@@ -1016,13 +1079,15 @@ private fun AsterNavHost() {
         enterTransition = {
             if (initialState.destination.route?.startsWith("compose") == true || is_detail_swipe(targetState)) {
                 androidx.compose.animation.EnterTransition.None
+            } else if (is_search_route(targetState.destination.route)) {
+                nav_search_enter(nav_duration)
             } else {
                 nav_forward_enter(nav_duration)
             }
         },
         exitTransition = {
             val target = targetState.destination.route
-            if (target?.startsWith("compose") == true || is_detail_swipe(targetState)) {
+            if (target?.startsWith("compose") == true || is_detail_swipe(targetState) || is_search_route(target)) {
                 androidx.compose.animation.ExitTransition.None
             } else {
                 nav_forward_exit(nav_duration)
@@ -1030,12 +1095,21 @@ private fun AsterNavHost() {
         },
         popEnterTransition = nav_pop_enter,
         popExitTransition = nav_pop_exit,
-        predictivePopEnterTransition = { nav_pop_enter() },
+        predictivePopEnterTransition = {
+            val initial = initialState.destination.route
+            if (initial?.startsWith("compose") == true || is_search_route(initial)) {
+                androidx.compose.animation.EnterTransition.None
+            } else {
+                nav_predictive_pop_enter(nav_duration)
+            }
+        },
         predictivePopExitTransition = {
             if (initialState.destination.route?.startsWith("compose") == true) {
                 nav_sheet_exit(nav_duration)
+            } else if (targetState.destination.route?.startsWith("compose") == true) {
+                androidx.compose.animation.ExitTransition.None
             } else {
-                nav_pop_exit()
+                nav_predictive_pop_exit(nav_duration)
             }
         },
     ) {
@@ -1154,11 +1228,7 @@ private fun AsterNavHost() {
                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                         )
                     } catch (_: Throwable) {
-                        android.widget.Toast.makeText(
-                            context,
-                            context.getString(R.string.could_not_open_link),
-                            android.widget.Toast.LENGTH_SHORT,
-                        ).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.could_not_open_link))
                     }
                 },
                 on_privacy_click = {
@@ -1168,11 +1238,7 @@ private fun AsterNavHost() {
                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                         )
                     } catch (_: Throwable) {
-                        android.widget.Toast.makeText(
-                            context,
-                            context.getString(R.string.could_not_open_link),
-                            android.widget.Toast.LENGTH_SHORT,
-                        ).show()
+                        org.astermail.android.ui.common.app_toast.show(context.getString(R.string.could_not_open_link))
                     }
                 },
             )
@@ -1303,7 +1369,7 @@ private fun AsterNavHost() {
             }
             MailDetailScreen(
                 email_id = email_id,
-                on_back = { pop_once(nav_controller) },
+                on_back = { pop_entry(nav_controller, entry) },
                 on_reply = { msg_id, ghost ->
                     org.astermail.android.ui.compose.publish_compose_thread_seed(detail_thread_state)
                     context.startActivity(ComposeActivity.intent_for(context, reply_to = msg_id, mode = "reply", thread_ghost_email = ghost))
@@ -1330,6 +1396,10 @@ private fun AsterNavHost() {
                         path == "settings" -> routes.settings
                         path == "pending_send_preview" -> routes.pending_send_preview
                         path.startsWith("search:") -> routes.search_for(path.removePrefix("search:"))
+                        path.startsWith("contact:") -> path.removePrefix("contact:").takeIf { it.isNotBlank() }
+                            ?.let { routes.contact_detail_for(it) }
+                        path.startsWith("alias:") -> path.removePrefix("alias:").takeIf { it.isNotBlank() }
+                            ?.let { routes.alias_detail_for(it) }
                         else -> null
                     }
                     if (route != null) navigate_once(nav_controller, route)
@@ -1552,10 +1622,82 @@ private fun AsterNavHost() {
                 on_open = { id -> navigate_once(nav_controller, routes.settings_detail(id)) },
             )
         }
-        composable(routes.settings_search) {
+        composable(routes.settings_search) { entry ->
+            val account_inbox_entry = remember(entry) {
+                try { nav_controller.getBackStackEntry(routes.inbox) } catch (_: Throwable) { null }
+            }
+            val account_settings_vm = org.astermail.android.settings.shared_settings_view_model()
+            val account_settings_state by account_settings_vm.state.collectAsStateWithLifecycle()
+            val account_accounts_vm: org.astermail.android.accounts.AccountsViewModel =
+                if (account_inbox_entry != null) hiltViewModel(account_inbox_entry) else hiltViewModel()
+            val account_accounts_state by account_accounts_vm.state.collectAsStateWithLifecycle()
+            val account_mail_vm: org.astermail.android.mail.MailViewModel? =
+                if (account_inbox_entry != null) hiltViewModel(account_inbox_entry) else null
+            val account_stats = account_mail_vm?.inbox_state?.collectAsStateWithLifecycle()?.value?.stats
+            val account_storage = account_storage_usage_for(account_settings_state.storage, account_stats)
+            val account_user_email = account_user_email_for(account_settings_state, account_accounts_state)
+            val account_display_email = org.astermail.android.ui.common.remember_display_address(
+                account_settings_state,
+                account_user_email,
+            )
+            val account_storage_label = account_profile_storage_label(
+                account_storage.used_bytes,
+                account_storage.total_bytes,
+            )
             org.astermail.android.ui.settings.settings_search_screen(
                 on_back = { pop_once(nav_controller) },
                 on_open = { id -> navigate_once(nav_controller, routes.settings_detail(id)) },
+                trailing_action = { dismiss_keyboard ->
+                    org.astermail.android.ui.settings.settings_account_button(
+                        accounts = account_accounts_state.accounts,
+                        current_account_id = account_accounts_state.current_account_id,
+                        user_email = account_user_email,
+                        display_email = account_display_email,
+                        plan_code = account_settings_state.subscription?.plan?.code,
+                        storage_used_fraction = account_storage.fraction,
+                        storage_used_label = account_storage_label,
+                        max_accounts = account_accounts_state.max_accounts,
+                        is_unlimited_accounts = account_accounts_state.is_unlimited,
+                        can_add_account = account_accounts_state.can_add_more,
+                        needs_sign_in = { account ->
+                            account.id != account_accounts_state.current_account_id &&
+                                !account_accounts_vm.has_stored_session(account.id)
+                        },
+                        on_open_sheet = {
+                            dismiss_keyboard()
+                            account_accounts_vm.refresh_with_profile()
+                        },
+                        on_switch_account = { account ->
+                            switch_to_stored_account(
+                                account,
+                                nav_controller,
+                                account_accounts_vm,
+                                account_settings_vm,
+                                account_mail_vm,
+                            ) {}
+                        },
+                        on_add_account = {
+                            open_add_account(nav_controller, account_accounts_state.can_add_more)
+                        },
+                        on_manage_account = {
+                            nav_controller.navigate(routes.settings_detail("profile"))
+                        },
+                        on_open_storage = {
+                            nav_controller.navigate(routes.settings_detail("storage"))
+                        },
+                        on_logout = {
+                            sign_out_current_account(
+                                nav_controller,
+                                account_accounts_vm,
+                                account_settings_vm,
+                                account_mail_vm,
+                            ) {}
+                        },
+                        on_logout_all = {
+                            sign_out_all_accounts(nav_controller, account_accounts_vm, account_settings_vm)
+                        },
+                    )
+                },
             )
         }
         composable(routes.mailing_lists) {
@@ -2163,6 +2305,51 @@ composable(routes.settings_detail("family")) {
         )
     }
     }
+    if (splash_was_shown.value) {
+        val splash_alpha = remember { androidx.compose.animation.core.Animatable(1f) }
+        val splash_reduce = org.astermail.android.design.aster_reduce_motion()
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            splash_alpha.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(
+                    durationMillis = if (splash_reduce) {
+                        org.astermail.android.design.AsterMotionSpec.reduced_fade_out_ms
+                    } else {
+                        org.astermail.android.design.AsterMotionSpec.fade_exit_ms
+                    },
+                    easing = org.astermail.android.design.AsterEasing.emphasized_accelerate,
+                ),
+            )
+            splash_was_shown.value = false
+        }
+        aster_launch_splash(Modifier.graphicsLayer { alpha = splash_alpha.value })
+    }
+}
+
+@Composable
+private fun aster_launch_splash(modifier: Modifier) {
+    androidx.compose.foundation.layout.Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(AsterMaterial.colors.bg_primary),
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+    ) {
+        androidx.compose.foundation.Image(
+            painter = androidx.compose.ui.res.painterResource(R.drawable.aster_wordmark),
+            contentDescription = null,
+            modifier = Modifier.height(22.dp),
+        )
+        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(20.dp))
+        org.astermail.android.design.components.aster_linear_progress(
+            color = AsterMaterial.colors.accent_blue,
+            track_color = AsterMaterial.colors.text_primary.copy(alpha = 0.14f),
+            modifier = Modifier
+                .width(160.dp)
+                .height(3.dp)
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp)),
+        )
+    }
 }
 
 private val mail_folder_ids = setOf(
@@ -2241,7 +2428,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
     androidx.compose.runtime.LaunchedEffect(settings_state.action_result) {
         val msg = settings_state.action_result ?: return@LaunchedEffect
-        android.widget.Toast.makeText(drawer_context, msg, android.widget.Toast.LENGTH_SHORT).show()
+        org.astermail.android.ui.common.app_toast.show(msg)
         settings_vm.clear_action_result()
     }
 
@@ -2261,7 +2448,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
 
     androidx.compose.runtime.LaunchedEffect(drawer_state.isOpen) {
         if (drawer_state.isOpen) {
-            kotlinx.coroutines.delay(220)
+            androidx.compose.runtime.snapshotFlow { drawer_state.isAnimationRunning }.first { !it }
+            kotlinx.coroutines.delay(120)
             settings_vm.load_labels()
             settings_vm.load_tags()
             settings_vm.load_aliases()
@@ -2312,6 +2500,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         org.astermail.android.ui.mail.AsterTimePreferences.set_account_relative_dates(
             prefs?.relative_dates ?: true,
         )
+    }
+
+    androidx.compose.runtime.LaunchedEffect(prefs?.toast_position) {
+        org.astermail.android.ui.common.set_toast_position(prefs?.toast_position)
     }
 
     androidx.compose.runtime.LaunchedEffect(
@@ -2366,21 +2558,23 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
     val inbox_counts_ready = inbox_state.current_folder == "inbox" &&
         (inbox_state.items.isNotEmpty() || !inbox_state.is_loading)
-    val category_unread = androidx.compose.runtime.remember(
+    val category_unread by androidx.compose.runtime.produceState(
+        initialValue = last_inbox_category_unread.filterKeys { it in active_category_tabs },
         inbox_state.items,
         inbox_counts_ready,
         active_category_tabs,
-        last_inbox_category_unread,
+        accounts_state.current_account_id,
         prefs?.conversation_grouping,
     ) {
-        if (inbox_counts_ready) {
-            org.astermail.android.mail.category_unread_counts(
-                inbox_state.items,
-                active_category_tabs,
-                prefs?.conversation_grouping != false,
-            )
-        } else {
-            last_inbox_category_unread.filterKeys { it in active_category_tabs }
+        val tabs = active_category_tabs
+        if (!inbox_counts_ready) {
+            value = last_inbox_category_unread.filterKeys { it in tabs }
+            return@produceState
+        }
+        val items = inbox_state.items
+        val grouping = prefs?.conversation_grouping != false
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            org.astermail.android.mail.category_unread_counts(items, tabs, grouping)
         }
     }
     androidx.compose.runtime.LaunchedEffect(category_unread, inbox_counts_ready) {
@@ -2455,22 +2649,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         theme_vm_inbox.set_text_size_from_key(prefs.font_size_scale)
     }
 
-    val storage = settings_state.storage
-    val used_bytes = when {
-        storage != null && storage.used_bytes > 0 -> storage.used_bytes
-        stats != null && stats.storage_used_bytes > 0 -> stats.storage_used_bytes
-        else -> 0L
-    }
-    val total_bytes = when {
-        storage != null && storage.total_bytes > 0 -> storage.total_bytes
-        stats != null && stats.storage_total_bytes > 0 -> stats.storage_total_bytes
-        else -> 0L
-    }
-    val storage_fraction = when {
-        total_bytes > 0 -> (used_bytes.toFloat() / total_bytes).coerceIn(0f, 1f)
-        storage != null && storage.percentage_used > 0 -> (storage.percentage_used / 100.0).toFloat().coerceIn(0f, 1f)
-        else -> 0f
-    }
+    val storage_usage = account_storage_usage_for(settings_state.storage, stats)
+    val used_bytes = storage_usage.used_bytes
+    val total_bytes = storage_usage.total_bytes
+    val storage_fraction = storage_usage.fraction
     val storage_label = when {
         total_bytes > 0 -> stringResource(
             R.string.common_storage_used_of_total,
@@ -2484,11 +2666,45 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         else -> ""
     }
 
-    val user_email = settings_state.user?.email
-        ?: accounts_state.accounts.firstOrNull { it.id == accounts_state.current_account_id }?.email
-        ?: accounts_state.accounts.firstOrNull()?.email
-        ?: ""
+    val user_email = account_user_email_for(settings_state, accounts_state)
     val display_email = org.astermail.android.ui.common.remember_display_address(settings_state, user_email)
+
+    var show_account_manager by remember { mutableStateOf(false) }
+    if (show_account_manager) {
+        org.astermail.android.ui.settings.account_manager_sheet(
+            accounts = accounts_state.accounts,
+            current_account_id = accounts_state.current_account_id,
+            user_email = user_email,
+            display_email = display_email,
+            plan_code = settings_state.subscription?.plan?.code,
+            storage_used_fraction = storage_fraction,
+            storage_used_label = account_profile_storage_label(used_bytes, total_bytes),
+            max_accounts = accounts_state.max_accounts,
+            is_unlimited_accounts = accounts_state.is_unlimited,
+            can_add_account = accounts_state.can_add_more,
+            needs_sign_in = { account ->
+                account.id != accounts_state.current_account_id &&
+                    !accounts_vm.has_stored_session(account.id)
+            },
+            on_dismiss = { show_account_manager = false },
+            on_switch_account = { account ->
+                switch_to_stored_account(account, nav_controller, accounts_vm, settings_vm, mail_vm) {
+                    selected_folder = "inbox"
+                    filter_kind = null
+                }
+            },
+            on_add_account = { open_add_account(nav_controller, accounts_state.can_add_more) },
+            on_manage_account = { navigate_once(nav_controller, routes.settings) },
+            on_open_storage = { navigate_once(nav_controller, routes.settings_detail("storage")) },
+            on_logout = {
+                sign_out_current_account(nav_controller, accounts_vm, settings_vm, mail_vm) {
+                    selected_folder = "inbox"
+                    filter_kind = null
+                }
+            },
+            on_logout_all = { sign_out_all_accounts(nav_controller, accounts_vm, settings_vm) },
+        )
+    }
 
     val folder_nodes = remember(settings_state.labels) {
         org.astermail.android.folders.flatten_folder_tree(settings_state.labels)
@@ -2756,14 +2972,14 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 selected_id = selected_folder,
                 on_select = { id ->
                     when {
-                        id == "settings" -> nav_controller.navigate(routes.settings)
+                        id == "settings" -> { nav_controller.navigate(routes.settings); scope.launch { drawer_state.close() } }
                         id == "contacts" -> { filter_kind = null; selected_folder = "contacts"; scope.launch { drawer_state.close() } }
                         id == "subscriptions" -> { filter_kind = null; selected_folder = "subscriptions"; scope.launch { drawer_state.close() } }
-                        id == "plan" -> nav_controller.navigate(routes.settings_detail("billing"))
-                        id == "aliases_settings" -> nav_controller.navigate(routes.settings_detail("aliases"))
-                        id == "aliases_create" -> nav_controller.navigate(routes.settings_detail("aliases") + "?create=true")
-                        id == "referral" -> nav_controller.navigate(routes.settings_detail("referral"))
-                        id == "feedback" -> nav_controller.navigate(routes.settings_detail("feedback"))
+                        id == "plan" -> { nav_controller.navigate(routes.settings_detail("billing")); scope.launch { drawer_state.close() } }
+                        id == "aliases_settings" -> { nav_controller.navigate(routes.settings_detail("aliases")); scope.launch { drawer_state.close() } }
+                        id == "aliases_create" -> { nav_controller.navigate(routes.settings_detail("aliases") + "?create=true"); scope.launch { drawer_state.close() } }
+                        id == "referral" -> { nav_controller.navigate(routes.settings_detail("referral")); scope.launch { drawer_state.close() } }
+                        id == "feedback" -> { nav_controller.navigate(routes.settings_detail("feedback")); scope.launch { drawer_state.close() } }
                         id in mail_folder_ids -> { filter_kind = null; selected_folder = id; scope.launch { drawer_state.close() } }
                         else -> { filter_kind = null; selected_folder = id; scope.launch { drawer_state.close() } }
                     }
@@ -2831,38 +3047,24 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 api_folder_items = api_folders,
                 api_label_items = api_labels,
                 api_alias_items = api_aliases,
+                folders_settled = settings_state.labels_loaded_types.let { "all" in it || "folder" in it },
+                labels_settled = settings_state.tags_loaded && settings_state.labels_loaded_types.let {
+                    "all" in it || "label" in it
+                },
+                aliases_settled = settings_state.aliases_settled,
                 accounts = accounts_state.accounts,
                 current_account_id = accounts_state.current_account_id,
                 can_add_account = accounts_state.can_add_more,
                 on_switch_account = { account ->
                     scope.launch { drawer_state.close() }
-                    if (accounts_vm.has_stored_session(account.id)) {
-                        mail_vm.reset_for_account_switch()
-                        settings_vm.reset_for_account_switch()
-                        accounts_vm.switch_account(account.id) { restored ->
-                            if (restored) {
-                                settings_vm.load_preferences(force = true)
-                                settings_vm.load_signature()
-                                selected_folder = "inbox"
-                                filter_kind = null
-                                nav_controller.navigate(routes.inbox) {
-                                    popUpTo(0) { inclusive = true }
-                                }
-                            } else {
-                                nav_controller.navigate(routes.sign_in_for(account.email))
-                            }
-                        }
-                    } else {
-                        nav_controller.navigate(routes.sign_in_for(account.email))
+                    switch_to_stored_account(account, nav_controller, accounts_vm, settings_vm, mail_vm) {
+                        selected_folder = "inbox"
+                        filter_kind = null
                     }
                 },
                 on_add_account = {
-                    if (accounts_state.can_add_more) {
-                        nav_controller.navigate(routes.sign_in_for(""))
-                    } else {
-                        scope.launch { drawer_state.close() }
-                        nav_controller.navigate(routes.settings_detail("billing"))
-                    }
+                    open_add_account(nav_controller, accounts_state.can_add_more)
+                    scope.launch { drawer_state.close() }
                 },
                 on_open_workspace_sheet = {
                     accounts_vm.refresh_with_profile()
@@ -2947,23 +3149,10 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     nav_controller.navigate(routes.settings_detail("storage"))
                 },
                 on_logout_all = {
-                    settings_vm.logout_all {
-                        accounts_vm.refresh()
-                        nav_controller.navigate(routes.welcome) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    }
+                    sign_out_all_accounts(nav_controller, accounts_vm, settings_vm)
                 },
                 plan_code = settings_state.subscription?.plan?.code,
-                profile_storage_label = if (total_bytes > 0) {
-                    stringResource(
-                        R.string.profile_menu_storage_of_used,
-                        format_storage_bytes(used_bytes),
-                        format_storage_bytes(total_bytes),
-                    )
-                } else {
-                    ""
-                },
+                profile_storage_label = account_profile_storage_label(used_bytes, total_bytes),
                 max_accounts = accounts_state.max_accounts,
                 is_unlimited_accounts = accounts_state.is_unlimited,
                 needs_sign_in = { account ->
@@ -2971,30 +3160,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         !accounts_vm.has_stored_session(account.id)
                 },
                 on_logout = {
-                    settings_vm.logout { switched_account ->
-                        accounts_vm.refresh()
-                        if (switched_account) {
-                            mail_vm.reset_for_account_switch()
-                            settings_vm.reset_for_account_switch()
-                            settings_vm.load_preferences(force = true)
-                            settings_vm.load_signature()
-                            selected_folder = "inbox"
-                            filter_kind = null
-                            nav_controller.navigate(routes.inbox) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                            return@logout
-                        }
-                        val next = accounts_vm.state.value.accounts.firstOrNull()
-                        if (next != null) {
-                            nav_controller.navigate(routes.sign_in_for(next.email)) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        } else {
-                            nav_controller.navigate(routes.welcome) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        }
+                    sign_out_current_account(nav_controller, accounts_vm, settings_vm, mail_vm) {
+                        selected_folder = "inbox"
+                        filter_kind = null
                     }
                 },
                 initial_more_collapsed = prefs?.sidebar_more_collapsed ?: false,
@@ -3026,41 +3194,46 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
         val exit_context = LocalContext.current
         val exit_hint = stringResource(R.string.tap_again_to_exit)
         var last_back_press by remember { mutableStateOf(0L) }
+        var inbox_selection_active by remember { mutableStateOf(false) }
         BackHandler(enabled = drawer_state.isOpen) {
             scope.launch { drawer_state.close() }
         }
-        BackHandler(enabled = !drawer_state.isOpen) {
+        BackHandler(enabled = !drawer_state.isOpen && !inbox_selection_active) {
             val now = android.os.SystemClock.elapsedRealtime()
             if (!org.astermail.android.settings.ExitConfirmPref.is_enabled(exit_context)) {
-                (exit_context as? android.app.Activity)?.finish()
+                exit_context.find_host_activity()?.finish()
             } else if (now - last_back_press in 1L..2000L) {
-                (exit_context as? android.app.Activity)?.finish()
+                exit_context.find_host_activity()?.finish()
             } else {
                 last_back_press = now
-                android.widget.Toast.makeText(exit_context, exit_hint, android.widget.Toast.LENGTH_SHORT).show()
+                org.astermail.android.ui.common.app_toast.show(exit_hint)
             }
         }
         val saveable_state_holder = rememberSaveableStateHolder()
         var inbox_scroll_top_token by remember { mutableStateOf(0) }
-        val folder_anim_duration = if (local_accessibility.current.reduce_motion) 0 else nav_anim_duration_ms
+        val folder_anim_duration = if (org.astermail.android.design.aster_reduce_motion()) 0 else nav_anim_duration_ms
         AnimatedContent(
             targetState = folder_key,
-            modifier = Modifier.edge_swipe_to_open(enabled = !drawer_state.isOpen) {
-                scope.launch { drawer_state.open() }
-            },
+            modifier = Modifier
+                .fillMaxSize()
+                .edge_swipe_to_open(enabled = !drawer_state.isOpen) {
+                    scope.launch { drawer_state.open() }
+                },
             transitionSpec = {
                 val from_depth = folder_key_depth(initialState)
                 val to_depth = folder_key_depth(targetState)
-                when {
+                val transform = when {
                     folder_anim_duration == 0 ->
-                        EnterTransition.None togetherWith ExitTransition.None
+                        org.astermail.android.design.aster_crossfade(true)
                     to_depth > from_depth ->
                         nav_forward_enter(folder_anim_duration) togetherWith nav_forward_exit(folder_anim_duration)
                     to_depth < from_depth ->
                         nav_backward_enter(folder_anim_duration) togetherWith nav_backward_exit(folder_anim_duration)
                     else ->
-                        fadeIn(animationSpec = tween(120)) togetherWith fadeOut(animationSpec = tween(80))
+                        fadeIn(animationSpec = tween(folder_switch_fade_ms, easing = folder_switch_in_easing)) togetherWith
+                            fadeOut(animationSpec = tween(folder_switch_fade_ms, easing = folder_switch_out_easing))
                 }
+                transform using null
             },
             label = "folder_switch",
         ) { active_key ->
@@ -3082,7 +3255,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
             saveable_state_holder.SaveableStateProvider(active_key) {
                 when {
                     slot_filter_kind != null -> {
-                        BackHandler(enabled = !drawer_state.isOpen) {
+                        BackHandler(enabled = !drawer_state.isOpen && !inbox_selection_active) {
                             saveable_state_holder.removeState("inbox:inbox")
                             inbox_scroll_top_token += 1
                             filter_kind = null
@@ -3121,6 +3294,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_view_pending_send = { nav_controller.navigate(routes.pending_send_preview) },
                             on_open_email = { id -> open_mail_detail(nav_controller, id) },
                             on_open_settings = { nav_controller.navigate(routes.settings) },
+                            on_open_account = {
+                                accounts_vm.refresh_with_profile()
+                                show_account_manager = true
+                            },
+                            stored_account = accounts_state.accounts.firstOrNull { it.id == accounts_state.current_account_id },
                             on_open_low_network = {
                                 nav_controller.navigate(routes.settings_low_network)
                             },
@@ -3149,6 +3327,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                             on_custom_folder_change = { id, name -> request_custom_folder(id, name) },
                             folder_unread_counts = quick_folder_counts,
                             on_customize_toolbar = { nav_controller.navigate(routes.settings_detail("customize_toolbar")) },
+                            select_back_enabled = !drawer_state.isOpen,
+                            on_select_mode_change = { active -> inbox_selection_active = active },
+                            on_list_settled = { ids -> org.astermail.android.mail.message_preloader.request_visible(ids) },
                         )
                     }
                     slot_selected_folder == "subscriptions" -> {
@@ -3159,6 +3340,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         }
                         MailingListsScreen(
                             on_open_drawer = { scope.launch { drawer_state.open() } },
+                            on_open_account = {
+                                accounts_vm.refresh_with_profile()
+                                show_account_manager = true
+                            },
+                            stored_account = accounts_state.accounts.firstOrNull { it.id == accounts_state.current_account_id },
                             on_open_search = { nav_controller.navigate(routes.search) },
                             on_search_sender = { sender ->
                                 org.astermail.android.ui.search.build_sender_mail_query(sender)?.let { query ->
@@ -3176,6 +3362,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                         ContactsScreen(
                             on_open_drawer = { scope.launch { drawer_state.open() } },
                             search_back_enabled = !drawer_state.isOpen,
+                            on_open_account = {
+                                accounts_vm.refresh_with_profile()
+                                show_account_manager = true
+                            },
+                            stored_account = accounts_state.accounts.firstOrNull { it.id == accounts_state.current_account_id },
                             on_open_contact = { id -> nav_controller.navigate(routes.contact_detail_for(id)) },
                             on_open_group = { id -> navigate_once(nav_controller, routes.contact_group_for(id)) },
                             on_create_contact = { nav_controller.navigate(routes.contact_edit_new) },
@@ -3191,7 +3382,7 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                     }
                     else -> {
                         BackHandler(
-                            enabled = !drawer_state.isOpen &&
+                            enabled = !drawer_state.isOpen && !inbox_selection_active &&
                                 (slot_selected_folder != "inbox" || inbox_category != "primary"),
                         ) {
                             saveable_state_holder.removeState("inbox:inbox")
@@ -3213,6 +3404,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                                 }
                             },
                             on_open_settings = { nav_controller.navigate(routes.settings) },
+                            on_open_account = {
+                                accounts_vm.refresh_with_profile()
+                                show_account_manager = true
+                            },
+                            stored_account = accounts_state.accounts.firstOrNull { it.id == accounts_state.current_account_id },
                             on_open_low_network = {
                                 nav_controller.navigate(routes.settings_low_network)
                             },
@@ -3246,6 +3442,9 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                                 selected_folder = "inbox"
                                 inbox_category = cat
                             },
+                            select_back_enabled = !drawer_state.isOpen,
+                            on_select_mode_change = { active -> inbox_selection_active = active },
+                            on_list_settled = { ids -> org.astermail.android.mail.message_preloader.request_visible(ids) },
                         )
                     }
                 }
@@ -3469,6 +3668,23 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
 }
 
+private const val folder_switch_fade_ms = 200
+
+private val folder_switch_out_easing = org.astermail.android.design.aster_threshold_easing(
+    org.astermail.android.design.AsterEasing.emphasized,
+    0f,
+    org.astermail.android.design.AsterMotionSpec.fade_through_threshold,
+)
+
+private val folder_switch_in_easing = org.astermail.android.design.aster_threshold_easing(
+    org.astermail.android.design.AsterEasing.emphasized,
+    org.astermail.android.design.AsterMotionSpec.fade_through_threshold,
+    1f,
+)
+
+private fun is_search_route(route: String?): Boolean =
+    route == routes.search || route == routes.search_with_query
+
 private fun is_detail_swipe(entry: androidx.navigation.NavBackStackEntry): Boolean =
     entry.destination.route == routes.mail_detail && (entry.arguments?.getInt("swipe") ?: 0) != 0
 
@@ -3491,9 +3707,135 @@ private fun navigate_once(nav_controller: NavHostController, route: String) {
 
 private fun open_mail_detail(nav_controller: NavHostController, email_id: String) {
     val entry = nav_controller.currentBackStackEntry ?: return
-    if (!entry.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
+    if (!entry.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return
     if (entry.destination.route == routes.mail_detail) return
     nav_controller.navigate(routes.mail_detail_for(email_id)) { launchSingleTop = true }
+}
+
+private data class account_storage_usage(
+    val used_bytes: Long,
+    val total_bytes: Long,
+    val fraction: Float,
+)
+
+private fun account_storage_usage_for(
+    storage: org.astermail.android.api.settings.StorageOverview?,
+    stats: org.astermail.android.api.mail.MailUserStatsResponse?,
+): account_storage_usage {
+    val used_bytes = when {
+        storage != null && storage.used_bytes > 0 -> storage.used_bytes
+        stats != null && stats.storage_used_bytes > 0 -> stats.storage_used_bytes
+        else -> 0L
+    }
+    val total_bytes = when {
+        storage != null && storage.total_bytes > 0 -> storage.total_bytes
+        stats != null && stats.storage_total_bytes > 0 -> stats.storage_total_bytes
+        else -> 0L
+    }
+    val fraction = when {
+        total_bytes > 0 -> (used_bytes.toFloat() / total_bytes).coerceIn(0f, 1f)
+        storage != null && storage.percentage_used > 0 -> (storage.percentage_used / 100.0).toFloat().coerceIn(0f, 1f)
+        else -> 0f
+    }
+    return account_storage_usage(used_bytes, total_bytes, fraction)
+}
+
+@Composable
+private fun account_profile_storage_label(used_bytes: Long, total_bytes: Long): String =
+    if (total_bytes > 0) {
+        stringResource(
+            R.string.profile_menu_storage_of_used,
+            format_storage_bytes(used_bytes),
+            format_storage_bytes(total_bytes),
+        )
+    } else {
+        ""
+    }
+
+private fun account_user_email_for(
+    settings_state: org.astermail.android.settings.SettingsUiState,
+    accounts_state: org.astermail.android.accounts.AccountsUiState,
+): String =
+    settings_state.user?.email
+        ?: accounts_state.accounts.firstOrNull { it.id == accounts_state.current_account_id }?.email
+        ?: accounts_state.accounts.firstOrNull()?.email
+        ?: ""
+
+private fun switch_to_stored_account(
+    account: org.astermail.android.storage.StoredAccount,
+    nav_controller: NavHostController,
+    accounts_vm: org.astermail.android.accounts.AccountsViewModel,
+    settings_vm: org.astermail.android.settings.SettingsViewModel,
+    mail_vm: org.astermail.android.mail.MailViewModel?,
+    on_restored: () -> Unit,
+) {
+    if (!accounts_vm.has_stored_session(account.id)) {
+        nav_controller.navigate(routes.sign_in_for(account.email))
+        return
+    }
+    mail_vm?.reset_for_account_switch()
+    settings_vm.reset_for_account_switch()
+    accounts_vm.switch_account(account.id) { restored ->
+        if (restored) {
+            settings_vm.load_preferences(force = true)
+            settings_vm.load_signature()
+            on_restored()
+            nav_controller.navigate(routes.inbox) {
+                popUpTo(0) { inclusive = true }
+            }
+        } else {
+            nav_controller.navigate(routes.sign_in_for(account.email))
+        }
+    }
+}
+
+private fun open_add_account(nav_controller: NavHostController, can_add_more: Boolean) {
+    if (can_add_more) {
+        nav_controller.navigate(routes.sign_in_for(""))
+    } else {
+        nav_controller.navigate(routes.settings_detail("billing"))
+    }
+}
+
+private fun sign_out_current_account(
+    nav_controller: NavHostController,
+    accounts_vm: org.astermail.android.accounts.AccountsViewModel,
+    settings_vm: org.astermail.android.settings.SettingsViewModel,
+    mail_vm: org.astermail.android.mail.MailViewModel?,
+    on_switched: () -> Unit,
+) {
+    settings_vm.logout { switched_account ->
+        accounts_vm.refresh()
+        if (switched_account) {
+            mail_vm?.reset_for_account_switch()
+            settings_vm.reset_for_account_switch()
+            settings_vm.load_preferences(force = true)
+            settings_vm.load_signature()
+            on_switched()
+            nav_controller.navigate(routes.inbox) {
+                popUpTo(0) { inclusive = true }
+            }
+        } else {
+            val next = accounts_vm.state.value.accounts.firstOrNull()
+            val target = if (next != null) routes.sign_in_for(next.email) else routes.welcome
+            nav_controller.navigate(target) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+}
+
+private fun sign_out_all_accounts(
+    nav_controller: NavHostController,
+    accounts_vm: org.astermail.android.accounts.AccountsViewModel,
+    settings_vm: org.astermail.android.settings.SettingsViewModel,
+) {
+    settings_vm.logout_all {
+        accounts_vm.refresh()
+        nav_controller.navigate(routes.welcome) {
+            popUpTo(0) { inclusive = true }
+        }
+    }
 }
 
 private fun format_storage_bytes(bytes: Long): String {

@@ -223,6 +223,83 @@ internal fun declares_light_background(body: String): Boolean =
         COLOR_TOKEN.findAll(value).any { reads_as_light_surface(it.value) }
     }
 
+private const val PLAIN_TEXT_IMAGE_LIMIT = 2
+
+private const val PLAIN_WHITE_LUMINANCE = 0.85
+
+internal fun reads_as_plain_light_text(body: String): Boolean = reads_as_plain_text(body, allow_unstyled = false)
+
+internal fun reads_as_plain_table_correspondence(body: String): Boolean = try {
+    when {
+        BACKGROUND_ATTRIBUTE.containsMatchIn(body) -> false
+        else -> {
+            val doc = org.jsoup.Jsoup.parseBodyFragment(body)
+            when {
+                doc.select("style").any { BACKGROUND_SOURCE.containsMatchIn(it.data()) } -> false
+                doc.select("table, thead, tbody, tfoot, tr, td, th")
+                    .any { BACKGROUND_SOURCE.containsMatchIn(it.attr("style")) } -> false
+                else -> reads_as_plain_text(body, allow_unstyled = true)
+            }
+        }
+    }
+} catch (_: Throwable) {
+    false
+}
+
+private val BGCOLOR_ATTRIBUTE = Regex("<[^>]*\\sbgcolor\\s*=", RegexOption.IGNORE_CASE)
+
+private val BACKGROUND_ATTRIBUTE = Regex("<[^>]*\\sbackground\\s*=", RegexOption.IGNORE_CASE)
+
+private fun reads_as_plain_text(body: String, allow_unstyled: Boolean): Boolean = try {
+    val doc = org.jsoup.Jsoup.parseBodyFragment(body)
+    val decorated = doc.select("img").size
+    val sources = BACKGROUND_SOURCE.findAll(body).map { match -> match.groupValues[1].ifEmpty { match.groupValues[2] } }.toList()
+    when {
+        decorated > PLAIN_TEXT_IMAGE_LIMIT -> false
+        BGCOLOR_ATTRIBUTE.containsMatchIn(body) -> false
+        sources.isEmpty() -> allow_unstyled && doc.body().text().isNotBlank()
+        sources.any { declares_background_image("background:$it") } -> false
+        doc.select("[background]").isNotEmpty() -> false
+        doc.body().text().isBlank() -> false
+        else -> sources.all { value ->
+            val tokens = COLOR_TOKEN.findAll(value).map { it.value }.toList()
+            val bare = value.trim().removeSuffix("!important").trim().lowercase()
+            if (tokens.isEmpty()) {
+                bare in PLAIN_NEUTRAL_BACKGROUNDS
+            } else {
+                tokens.all { token -> is_translucent(token) || reads_as_neutral_white(token) }
+            }
+        }
+    }
+} catch (_: Throwable) {
+    false
+}
+
+private fun reads_as_neutral_white(raw: String): Boolean {
+    val value = raw.trim().lowercase()
+    if (value == "white") return true
+    val channels = when {
+        value.startsWith("#") -> {
+            val hex = value.drop(1)
+            val expanded = when (hex.length) {
+                3, 4 -> hex.take(3).map { "$it$it" }.joinToString("")
+                6, 8 -> hex.take(6)
+                else -> return false
+            }
+            val parsed = expanded.toLongOrNull(16) ?: return false
+            listOf((parsed shr 16) and 0xFF, (parsed shr 8) and 0xFF, parsed and 0xFF).map { it.toDouble() }
+        }
+        value.startsWith("rgb") -> functional_components(value).take(3).takeIf { it.size == 3 } ?: return false
+        else -> return false
+    }
+    val spread = channels.max() - channels.min()
+    return spread <= PLAIN_WHITE_SPREAD && (color_luminance(value) ?: 0.0) >= PLAIN_WHITE_LUMINANCE
+}
+
+private const val PLAIN_WHITE_SPREAD = 24.0
+
+private val PLAIN_NEUTRAL_BACKGROUNDS = setOf("transparent", "none", "inherit", "initial", "unset", "window", "")
+
 internal fun is_page_surface(raw: String): Boolean {
     val value = color_luminance(raw) ?: return false
     return value >= PAGE_SURFACE_LUMINANCE_LIMIT
@@ -446,4 +523,198 @@ hr{border-color:#374151!important;background-color:#374151!important;color:#3741
 blockquote{border-left-color:$quote_border!important;color:$quote_color!important}
 ${image_paper_css()}
 """
+}
+
+internal const val INK_ATTRIBUTE = "data-aster-ink"
+
+internal const val INK_LINK_ATTRIBUTE = "data-aster-ink-link"
+
+internal const val INK_DARK = "dark"
+
+internal const val INK_LIGHT = "light"
+
+internal const val LIGHT_INK_LINK = "#8ab4f8"
+
+internal const val MIN_TEXT_CONTRAST = 2.5
+
+internal const val DARK_PAGE_SURFACE = "#1a1a1a"
+
+private const val INK_SWITCH_LUMINANCE = 0.179
+
+private const val MAX_CONTRAST_RULES = 400
+
+private val INHERITED_BACKGROUND_VALUES = setOf("", "transparent", "none", "inherit", "initial", "unset", "revert", "currentcolor")
+
+private val CONTRAST_SKIPPED_TAGS = setOf(
+    "style", "script", "head", "meta", "link", "title", "img", "br", "hr", "svg", "picture",
+    "source", "video", "audio", "iframe", "object", "embed", "input", "textarea", "select",
+)
+
+internal fun contrast_ratio(first: Double, second: Double): Double =
+    (maxOf(first, second) + 0.05) / (minOf(first, second) + 0.05)
+
+internal fun keeps_readable_contrast(background: String, ink: String): Boolean {
+    val surface = color_luminance(background) ?: return true
+    val text = color_luminance(ink) ?: return true
+    return contrast_ratio(surface, text) >= MIN_TEXT_CONTRAST
+}
+
+internal fun text_contrast_css(): String =
+    "#m [$INK_ATTRIBUTE=\"$INK_DARK\"]{color:$PAPER_INK!important}" +
+        "#m [$INK_ATTRIBUTE=\"$INK_LIGHT\"]{color:$FORCED_DARK_INK!important}" +
+        "#m a[$INK_LINK_ATTRIBUTE=\"$INK_DARK\"],#m a[$INK_LINK_ATTRIBUTE=\"$INK_DARK\"] *{color:$PAPER_LINK!important}" +
+        "#m a[$INK_LINK_ATTRIBUTE=\"$INK_LIGHT\"],#m a[$INK_LINK_ATTRIBUTE=\"$INK_LIGHT\"] *{color:$LIGHT_INK_LINK!important}"
+
+private sealed interface surface_reading {
+    data object inherited : surface_reading
+    data object unknown : surface_reading
+    data class solid(val luminance: Double) : surface_reading
+}
+
+private fun read_surface(raw: String): surface_reading {
+    val bare = IMPORTANT_FLAG.replace(raw, "").trim()
+    if (bare.lowercase() in INHERITED_BACKGROUND_VALUES) return surface_reading.inherited
+    if (declares_background_image("background:$bare")) return surface_reading.unknown
+    if (is_translucent(bare)) return surface_reading.inherited
+    color_luminance(bare)?.let { return surface_reading.solid(it) }
+    val tokens = COLOR_TOKEN.findAll(bare).map { it.value }.filterNot(::is_translucent).mapNotNull(::color_luminance).toList()
+    return if (tokens.isEmpty()) surface_reading.unknown else surface_reading.solid(tokens.average())
+}
+
+private fun read_ink(raw: String): Double? {
+    val bare = IMPORTANT_FLAG.replace(raw, "").trim()
+    if (is_translucent(bare)) return null
+    return color_luminance(bare)
+}
+
+private fun inline_background_value(element: org.jsoup.nodes.Element): String? {
+    val style = element.attr("style")
+    val declared = if (style.isEmpty()) null else BACKGROUND_COLOR_DECLARATION.findAll(style).lastOrNull()?.groupValues?.get(1)
+    return declared ?: element.attr("bgcolor").trim().ifEmpty { null }
+}
+
+private fun inline_ink_value(element: org.jsoup.nodes.Element): String? {
+    val style = element.attr("style")
+    val declared = if (style.isEmpty()) null else COLOR_DECLARATION.findAll(style).lastOrNull()?.groupValues?.get(1)
+    if (declared != null) return declared
+    return if (element.tagName() == "font") element.attr("color").trim().ifEmpty { null } else null
+}
+
+private class sheet_hints(
+    val backgrounds: Map<org.jsoup.nodes.Element, String>,
+    val inks: Map<org.jsoup.nodes.Element, String>,
+    val images: Set<org.jsoup.nodes.Element>,
+)
+
+private fun collect_sheet_hints(doc: org.jsoup.nodes.Document, honors_backgrounds: Boolean): sheet_hints {
+    val backgrounds = HashMap<org.jsoup.nodes.Element, String>()
+    val inks = HashMap<org.jsoup.nodes.Element, String>()
+    val images = HashSet<org.jsoup.nodes.Element>()
+    var budget = MAX_CONTRAST_RULES
+    for (sheet in doc.select("style")) {
+        for (rule in STYLE_RULE.findAll(sheet.data())) {
+            if (budget-- <= 0) return sheet_hints(backgrounds, inks, images)
+            val declarations = rule.groupValues[2]
+            val image = honors_backgrounds && declares_background_image(declarations)
+            val background = if (!honors_backgrounds || image) {
+                null
+            } else {
+                BACKGROUND_COLOR_DECLARATION.findAll(declarations).lastOrNull()?.groupValues?.get(1)
+            }
+            val ink = COLOR_DECLARATION.findAll(declarations).lastOrNull()?.groupValues?.get(1)
+            if (!image && background == null && ink == null) continue
+            for (part in rule.groupValues[1].split(',')) {
+                val selector = part.trim()
+                if (selector.isEmpty() || selector.startsWith("@") || selector.contains(':')) continue
+                val matches = try {
+                    doc.body().select(selector)
+                } catch (_: org.jsoup.select.Selector.SelectorParseException) {
+                    continue
+                }
+                for (element in matches) {
+                    if (image) images.add(element)
+                    if (background != null) backgrounds[element] = background
+                    if (ink != null) inks[element] = ink
+                }
+            }
+        }
+    }
+    return sheet_hints(backgrounds, inks, images)
+}
+
+private fun ink_for(surface: Double): String = if (surface > INK_SWITCH_LUMINANCE) INK_DARK else INK_LIGHT
+
+private fun ink_luminance(ink: String): Double =
+    color_luminance(if (ink == INK_DARK) PAPER_INK else FORCED_DARK_INK) ?: 0.0
+
+private fun drop_important_ink(element: org.jsoup.nodes.Element) {
+    val style = element.attr("style")
+    if (style.isEmpty()) return
+    val relaxed = COLOR_DECLARATION.replace(style) { match ->
+        "color:" + IMPORTANT_FLAG.replace(match.groupValues[1], "").trim()
+    }
+    if (relaxed != style) element.attr("style", relaxed)
+}
+
+private class contrast_frame(val element: org.jsoup.nodes.Element, val surface: Double?, val ink: Double?)
+
+internal fun enforce_text_contrast(
+    body: String,
+    page_background: String,
+    page_ink: String,
+    link_color: String,
+    forced_dark: Boolean,
+): String = try {
+    val page_surface = color_luminance(page_background)
+    val page_text = color_luminance(page_ink)
+    val link_text = color_luminance(link_color)
+    if (page_surface == null || page_text == null) {
+        body
+    } else {
+        val doc = org.jsoup.Jsoup.parseBodyFragment(body)
+        doc.outputSettings(org.jsoup.nodes.Document.OutputSettings().prettyPrint(false))
+        val hints = collect_sheet_hints(doc, honors_backgrounds = !forced_dark)
+        var changed = false
+        val stack = ArrayDeque<contrast_frame>()
+        for (child in doc.body().children().reversed()) stack.addLast(contrast_frame(child, page_surface, page_text))
+        while (stack.isNotEmpty()) {
+            val frame = stack.removeLast()
+            val element = frame.element
+            if (element.tagName() in CONTRAST_SKIPPED_TAGS || element.hasAttr(PAPER_ATTRIBUTE)) continue
+            val honors_inline = !forced_dark || element.hasAttr(KEEP_BACKGROUND_ATTRIBUTE)
+            val image = !forced_dark && (
+                element.hasAttr(BACKGROUND_IMAGE_ATTRIBUTE) || has_image_background(element) || element in hints.images
+                )
+            val declared_surface = (if (honors_inline) inline_background_value(element) else null) ?: hints.backgrounds[element]
+            val reading = when {
+                image -> surface_reading.unknown
+                declared_surface == null -> surface_reading.inherited
+                else -> read_surface(declared_surface)
+            }
+            val surface = when (reading) {
+                surface_reading.inherited -> frame.surface
+                surface_reading.unknown -> null
+                is surface_reading.solid -> reading.luminance
+            }
+            val inline_ink = inline_ink_value(element)
+            val declared_ink = inline_ink ?: hints.inks[element]
+            var text = declared_ink?.let(::read_ink) ?: frame.ink
+            if (surface != null && text != null && contrast_ratio(surface, text) < MIN_TEXT_CONTRAST) {
+                val ink = ink_for(surface)
+                element.attr(INK_ATTRIBUTE, ink)
+                if (inline_ink != null) drop_important_ink(element)
+                text = ink_luminance(ink)
+                changed = true
+            } else if (element.tagName() == "a" && declared_ink == null && surface != null && link_text != null &&
+                contrast_ratio(surface, link_text) < MIN_TEXT_CONTRAST
+            ) {
+                element.attr(INK_LINK_ATTRIBUTE, ink_for(surface))
+                changed = true
+            }
+            for (child in element.children().reversed()) stack.addLast(contrast_frame(child, surface, text))
+        }
+        if (changed) doc.body().html() else body
+    }
+} catch (_: Throwable) {
+    body
 }

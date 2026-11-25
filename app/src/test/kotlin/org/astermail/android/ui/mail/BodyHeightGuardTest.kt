@@ -19,42 +19,16 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 //
 
-
 package org.astermail.android.ui.mail
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BodyHeightGuardTest {
 
     private val max_height = 76190
-
-    @Test
-    fun a_body_measured_at_the_height_cap_is_measured_again() {
-        val guard = body_height_guard()
-
-        assertTrue(guard.should_remeasure_capped(max_height, max_height))
-    }
-
-    @Test
-    fun an_ordinary_height_is_trusted() {
-        val guard = body_height_guard()
-
-        assertFalse(guard.should_remeasure_capped(5664, max_height))
-        assertFalse(guard.should_remeasure_capped(max_height - 1, max_height))
-    }
-
-    @Test
-    fun a_body_that_really_is_that_tall_stops_being_remeasured() {
-        val guard = body_height_guard(max_capped_remeasures = 2)
-
-        assertTrue(guard.should_remeasure_capped(max_height, max_height))
-        assertTrue(guard.should_remeasure_capped(max_height, max_height))
-        assertFalse(guard.should_remeasure_capped(max_height, max_height))
-    }
 
     @Test
     fun a_new_layout_width_invalidates_the_measured_height() {
@@ -75,91 +49,11 @@ class BodyHeightGuardTest {
     }
 
     @Test
-    fun growth_by_the_same_factor_each_pass_is_rejected() {
-        val guard = body_growth_guard()
-
-        assertEquals(208, guard.settle(179, 208))
-        assertEquals(241, guard.settle(208, 241))
-        assertEquals(179, guard.settle(241, 279))
-        assertEquals(179, guard.settle(179, 208))
-    }
-
-    @Test
-    fun a_body_that_grows_once_keeps_its_new_height() {
-        val guard = body_growth_guard()
-
-        assertEquals(838, guard.settle(106, 838))
-        assertEquals(838, guard.settle(838, 838))
-        assertEquals(400, guard.settle(838, 400))
-    }
-
-    @Test
-    fun uneven_growth_from_late_images_is_accepted() {
-        val guard = body_growth_guard()
-
-        assertEquals(300, guard.settle(200, 300))
-        assertEquals(620, guard.settle(300, 620))
-        assertEquals(700, guard.settle(620, 700))
-        assertEquals(1900, guard.settle(700, 1900))
-    }
-
-    @Test
-    fun a_reset_guard_accepts_growth_again() {
-        val guard = body_growth_guard()
-        guard.settle(179, 208)
-        guard.settle(208, 241)
-        guard.settle(241, 279)
-
-        guard.reset()
-
-        assertEquals(279, guard.settle(241, 279))
-    }
-
-    @Test
-    fun a_zoomed_body_grows_with_the_zoom_ratio_up_to_the_general_cap() {
-        assertEquals(30000f, zoomed_body_height_dp(15000f, 2f, max_height))
-        assertEquals(60000f, zoomed_body_height_dp(15000f, 4f, max_height))
-        assertEquals(max_height.toFloat(), zoomed_body_height_dp(30000f, 3f, max_height))
-        assertEquals(1f, zoomed_body_height_dp(0f, 2f, max_height))
-        assertEquals(1f, zoomed_body_height_dp(500f, 2f, 0))
-    }
-
-    @Test
     fun a_page_wider_than_the_screen_overflows_sideways() {
         assertTrue(body_overflows_sideways(1727, 1080))
         assertFalse(body_overflows_sideways(1080, 1080))
         assertFalse(body_overflows_sideways(1081, 1080))
         assertFalse(body_overflows_sideways(1727, 0))
-    }
-
-    @Test
-    fun a_height_that_only_fills_the_stretched_viewport_is_not_a_measurement() {
-        assertTrue(body_height_viewport_filled(213, 133, 1727, 1080))
-        assertTrue(body_height_viewport_filled(187, 133, 1510, 1080))
-        assertFalse(body_height_viewport_filled(900, 133, 1727, 1080))
-        assertFalse(body_height_viewport_filled(213, 133, 1080, 1080))
-        assertFalse(body_height_viewport_filled(0, 133, 1727, 1080))
-        assertFalse(body_height_viewport_filled(213, 0, 1727, 1080))
-    }
-
-    @Test
-    fun a_page_that_overflows_sideways_gets_a_viewport_wide_enough_to_hold_it() {
-        assertEquals(492, overflow_fit_width(scroll_range = 1470, scroll_extent = 1080, scale = 3f, current_fit = null))
-        assertEquals(1600, overflow_fit_width(scroll_range = 9000, scroll_extent = 1080, scale = 3f, current_fit = null))
-    }
-
-    @Test
-    fun a_page_that_fits_or_barely_overflows_keeps_its_viewport() {
-        assertNull(overflow_fit_width(scroll_range = 1080, scroll_extent = 1080, scale = 3f, current_fit = null))
-        assertNull(overflow_fit_width(scroll_range = 1089, scroll_extent = 1080, scale = 3f, current_fit = null))
-        assertNull(overflow_fit_width(scroll_range = 1470, scroll_extent = 1080, scale = 0f, current_fit = null))
-    }
-
-    @Test
-    fun a_fitted_viewport_only_grows() {
-        assertNull(overflow_fit_width(scroll_range = 1470, scroll_extent = 1080, scale = 3f, current_fit = 492))
-        assertNull(overflow_fit_width(scroll_range = 1470, scroll_extent = 1080, scale = 3f, current_fit = 600))
-        assertEquals(602, overflow_fit_width(scroll_range = 1800, scroll_extent = 1080, scale = 3f, current_fit = 492))
     }
 
     @Test
@@ -195,77 +89,4 @@ class BodyHeightGuardTest {
         assertEquals(listOf("p1", "b"), thread_item_keys(listOf("a", "b"), mapOf("a" to "p1", "b" to "p1")))
     }
 
-    @Test
-    fun a_finger_tap_that_drifts_past_sixteen_pixels_still_remeasures() {
-        assertTrue(body_tap_may_toggle(dx = 20f, dy = 6f, touch_slop_px = 21f, duration_ms = 90, long_press_ms = 400, multi_touch = false))
-        assertTrue(body_tap_may_toggle(dx = 30f, dy = 24f, touch_slop_px = 24f, duration_ms = 120, long_press_ms = 400, multi_touch = false))
-    }
-
-    @Test
-    fun a_still_tap_remeasures() {
-        assertTrue(body_tap_may_toggle(dx = 0f, dy = 0f, touch_slop_px = 21f, duration_ms = 60, long_press_ms = 400, multi_touch = false))
-    }
-
-    @Test
-    fun a_drag_long_press_or_pinch_does_not_remeasure() {
-        assertFalse(body_tap_may_toggle(dx = 0f, dy = 120f, touch_slop_px = 21f, duration_ms = 90, long_press_ms = 400, multi_touch = false))
-        assertFalse(body_tap_may_toggle(dx = 2f, dy = 2f, touch_slop_px = 21f, duration_ms = 400, long_press_ms = 400, multi_touch = false))
-        assertFalse(body_tap_may_toggle(dx = 2f, dy = 2f, touch_slop_px = 21f, duration_ms = 90, long_press_ms = 400, multi_touch = true))
-    }
-
-    @Test
-    fun a_fitted_viewport_never_shrinks_text_below_half_size() {
-        assertEquals(824, readable_fit_width(412))
-        assertEquals(720, readable_fit_width(360))
-        assertEquals(1600, readable_fit_width(900))
-        assertEquals(1600, readable_fit_width(0))
-        assertEquals(824, overflow_fit_width(scroll_range = 9000, scroll_extent = 1080, scale = 2.625f, current_fit = null, max_width = readable_fit_width(412)))
-        assertEquals(602, overflow_fit_width(scroll_range = 1575, scroll_extent = 1080, scale = 2.625f, current_fit = null, max_width = readable_fit_width(412)))
-        assertNull(overflow_fit_width(scroll_range = 9000, scroll_extent = 1080, scale = 1.31f, current_fit = 824, max_width = readable_fit_width(412)))
-    }
-
-    @Test
-    fun content_that_grows_with_the_viewport_is_not_chased() {
-        assertTrue(overflow_tracks_viewport(411.4f, 427.4f, 429.4f, 445.4f))
-        assertTrue(overflow_tracks_viewport(411.4f, 617f, 619f, 928f))
-        assertFalse(overflow_tracks_viewport(411.4f, 600f, 602f, 602f))
-        assertFalse(overflow_tracks_viewport(411.4f, 560f, 562f, 602f))
-        assertFalse(overflow_tracks_viewport(411.4f, 560f, 411.4f, 600f))
-    }
-
-    @Test
-    fun a_fitted_body_uses_the_scale_the_web_view_applied() {
-        assertEquals(0.5686f, natural_body_scale(0.587f, 1.4925f, 2.625f), 0.0005f)
-        assertEquals(1f, natural_body_scale(0.587f, 3.2f, 2.625f), 0.0001f)
-        assertEquals(0.1f, natural_body_scale(0.587f, 0.05f, 2.625f), 0.0001f)
-    }
-
-    @Test
-    fun an_unknown_web_view_scale_keeps_the_estimate() {
-        assertEquals(0.587f, natural_body_scale(0.587f, 0f, 2.625f), 0f)
-        assertEquals(0.587f, natural_body_scale(0.587f, 1.49f, 0f), 0f)
-    }
-
-    @Test
-    fun a_measured_height_follows_a_corrected_scale() {
-        assertEquals(1370.5f, rescaled_body_height_dp(1415f, 0.587f, 0.5686f), 0.5f)
-        assertEquals(80f, rescaled_body_height_dp(80f, 0.5f, 0.5f), 0f)
-        assertEquals(0f, rescaled_body_height_dp(0f, 0.587f, 0.5686f), 0f)
-        assertEquals(500f, rescaled_body_height_dp(500f, 0f, 0.5686f), 0f)
-        assertEquals(500f, rescaled_body_height_dp(500f, 0.587f, 0f), 0f)
-    }
-
-    @Test
-    fun a_collapse_probe_ignores_the_old_viewport_height_until_it_updates() {
-        assertTrue(probe_read_is_stale(1200, 1200, 1200, probe_shrank = true, slack_css = 4))
-        assertTrue(probe_read_is_stale(1192, 1192, 1190, probe_shrank = true, slack_css = 4))
-    }
-
-    @Test
-    fun a_fresh_or_unshrunk_probe_read_is_trusted() {
-        assertFalse(probe_read_is_stale(640, 1200, 1200, probe_shrank = true, slack_css = 4))
-        assertFalse(probe_read_is_stale(1200, 1200, 1200, probe_shrank = false, slack_css = 4))
-        assertFalse(probe_read_is_stale(1600, 1600, 1200, probe_shrank = true, slack_css = 4))
-        assertFalse(probe_read_is_stale(0, 1200, 1200, probe_shrank = true, slack_css = 4))
-    }
 }

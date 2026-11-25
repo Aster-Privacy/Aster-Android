@@ -21,7 +21,7 @@
 
 package org.astermail.android.ui.settings
 
-import org.astermail.android.ui.common.vertical_scroll_with_indicator
+import org.astermail.android.ui.common.vertical_scroll_with_fade
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -75,6 +75,7 @@ import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.components.AsterTopBar
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_state
+import org.astermail.android.design.components.skeleton_reveal
 import org.astermail.android.settings.SettingsViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.ui.common.current_user_avatar
@@ -203,64 +204,78 @@ fun SettingsScreen(
         val is_family = settings_state.subscription?.effective_plan_name
             ?.contains("family", ignoreCase = true) == true
         val sections = build_settings_sections(is_family)
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .vertical_scroll_with_indicator(),
+        settings_pull_refresh_box(
+            on_refresh = {
+                settings_vm.join_launched {
+                    settings_vm.load_profile(force = true)
+                    settings_vm.load_subscription(force = true)
+                    settings_vm.load_storage(force = true)
+                    settings_vm.load_aliases(force = true)
+                    settings_vm.load_ghost_aliases()
+                    settings_vm.load_custom_domain_addresses(force = true)
+                }
+            },
+            modifier = Modifier.fillMaxSize(),
         ) {
-            Spacer(Modifier.size(AsterSpacing.md))
-            val live_account by settings_vm.account_store.current_account.collectAsStateWithLifecycle(
-                initialValue = settings_vm.account_store.get_current()
-            )
-            val cached_display_name = live_account?.display_name?.takeIf { it.isNotBlank() }
-            profile_header(
-                account_store = settings_vm.account_store,
-                profile_picture_url = settings_state.user?.profile_picture,
-                display_name = cached_display_name
-                    ?: settings_state.user?.display_name?.ifBlank { null }
-                    ?: settings_state.user?.username
-                    ?: "",
-                username = settings_state.user?.username ?: live_account?.email?.substringBefore("@") ?: "",
-                email = org.astermail.android.ui.common.remember_display_address(
-                    settings_state,
-                    settings_state.user?.email ?: live_account?.email ?: "",
-                ),
-                subscription = settings_state.subscription,
-                profile_loading = (settings_state.user == null && live_account == null) ||
-                    (settings_state.user == null && cached_display_name == null && settings_state.is_loading),
-                plan_loading = settings_state.subscription == null,
-                on_click = { on_open("profile") },
-                on_upgrade = { on_open("billing") },
-            )
-            Spacer(Modifier.size(AsterSpacing.lg))
-            sections.forEach { section ->
-                section_header(stringResource(section.title_res))
-                org.astermail.android.design.components.AsterCard(
-                    modifier = Modifier
-                        .padding(horizontal = AsterSpacing.lg)
-                        .fillMaxWidth(),
-                ) {
-                    Column {
-                        section.rows.forEachIndexed { index, row ->
-                            if (index > 0) settings_row_gap()
-                            settings_row(row) {
-                                if (row.id == "contact_support") {
-                                    context.startActivity(
-                                        org.astermail.android.ComposeActivity.intent_for(
-                                            context,
-                                            prefill_to = support_address,
-                                        ),
-                                    )
-                                } else {
-                                    on_open(row.id)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .vertical_scroll_with_fade(),
+            ) {
+                Spacer(Modifier.size(AsterSpacing.md))
+                val live_account by settings_vm.account_store.current_account.collectAsStateWithLifecycle(
+                    initialValue = settings_vm.account_store.get_current()
+                )
+                val cached_display_name = live_account?.display_name?.takeIf { it.isNotBlank() }
+                profile_header(
+                    account_store = settings_vm.account_store,
+                    profile_picture_url = settings_state.user?.profile_picture,
+                    display_name = cached_display_name
+                        ?: settings_state.user?.display_name?.ifBlank { null }
+                        ?: settings_state.user?.username
+                        ?: "",
+                    username = settings_state.user?.username ?: live_account?.email?.substringBefore("@") ?: "",
+                    email = org.astermail.android.ui.common.remember_display_address(
+                        settings_state,
+                        settings_state.user?.email ?: live_account?.email ?: "",
+                    ),
+                    subscription = settings_state.subscription,
+                    profile_loading = (settings_state.user == null && live_account == null) ||
+                        (settings_state.user == null && cached_display_name == null && settings_state.is_loading),
+                    plan_loading = settings_state.subscription == null,
+                    on_click = { on_open("profile") },
+                    on_upgrade = { on_open("billing") },
+                )
+                Spacer(Modifier.size(AsterSpacing.lg))
+                sections.forEach { section ->
+                    section_header(stringResource(section.title_res))
+                    org.astermail.android.design.components.AsterCard(
+                        modifier = Modifier
+                            .padding(horizontal = AsterSpacing.lg)
+                            .fillMaxWidth(),
+                    ) {
+                        Column {
+                            section.rows.forEachIndexed { index, row ->
+                                if (index > 0) settings_row_gap()
+                                settings_row(row) {
+                                    if (row.id == "contact_support") {
+                                        context.startActivity(
+                                            org.astermail.android.ComposeActivity.intent_for(
+                                                context,
+                                                prefill_to = support_address,
+                                            ),
+                                        )
+                                    } else {
+                                        on_open(row.id)
+                                    }
                                 }
                             }
                         }
                     }
+                    Spacer(Modifier.size(AsterSpacing.sm))
                 }
-                Spacer(Modifier.size(AsterSpacing.sm))
+                Spacer(Modifier.size(AsterSpacing.xxl))
             }
-            Spacer(Modifier.size(AsterSpacing.xxl))
         }
     }
 }
@@ -286,6 +301,8 @@ private fun profile_header(
             (!plan_name.isNullOrBlank() && plan_name.trim().equals(free_label, ignoreCase = true))
         )
 
+    val cached_paid_plan = remember_has_paid_plan()
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -298,7 +315,7 @@ private fun profile_header(
                 .clickable(onClick = on_click),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            plan_ring(size = 88.dp, enabled = remember_has_paid_plan()) {
+            plan_ring(size = 88.dp, enabled = cached_paid_plan) {
                 current_user_avatar(
                     account_store = account_store,
                     size = 88.dp,
@@ -310,6 +327,7 @@ private fun profile_header(
                 val profile_shimmer = shimmer_state()
                 Box(
                     modifier = Modifier
+                        .skeleton_reveal()
                         .width(150.dp)
                         .height(20.dp)
                         .shimmer(profile_shimmer, SquircleShape(6.dp)),
@@ -317,6 +335,7 @@ private fun profile_header(
                 Spacer(Modifier.size(6.dp))
                 Box(
                     modifier = Modifier
+                        .skeleton_reveal()
                         .width(196.dp)
                         .height(13.dp)
                         .shimmer(profile_shimmer, SquircleShape(6.dp)),
@@ -342,15 +361,16 @@ private fun profile_header(
                 }
             }
         }
-        if (plan_loading) {
+        if (plan_loading && !cached_paid_plan) {
             Spacer(Modifier.size(12.dp))
             Box(
                 modifier = Modifier
+                    .skeleton_reveal()
                     .width(112.dp)
                     .height(40.dp)
                     .shimmer(shimmer_state(), SquircleShape(999.dp)),
             )
-        } else if (is_free) {
+        } else if (!plan_loading && is_free) {
             Spacer(Modifier.size(12.dp))
             org.astermail.android.design.components.AsterCompactButton(
                 label = stringResource(R.string.settings_upgrade_cta),

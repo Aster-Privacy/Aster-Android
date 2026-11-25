@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="billing_compare_upgrade_to">Fazer upgrade para %1$s</string>
+    <string name="billing_compare_switch_to">Mudar para %1$s</string>
+    <string name="billing_compare_downgrade_to">Fazer downgrade para %1$s</string>
+    <string name="billing_compare_gains_title">O que o %1$s adiciona</string>
+    <string name="billing_compare_you_have">Você tem o %1$s</string>
+    <string name="billing_compare_not_in_plan">Não incluso no seu plano</string>
+    <string name="billing_compare_everything_in">Tudo do %1$s</string>
+    <string name="billing_compare_free_forever">Grátis para sempre</string>
+    <string name="billing_compare_free_note">Para mudar para o Grátis, cancele seu plano.</string>
+    <string name="billing_compare_tagline_free">E-mail privado para começar</string>
+    <string name="billing_compare_tagline_star">Mais espaço e até 5 domínios</string>
+    <string name="billing_compare_tagline_nova">Aliases ilimitados e 30 domínios</string>
+    <string name="billing_compare_tagline_supernova">O máximo de armazenamento e suporte</string>
+    <string name="billing_compare_tagline_duo">Duas contas, uma fatura</string>
+    <string name="billing_compare_tagline_family">Até seis pessoas, um plano</string>
+    <string name="contacts_close_search">Fechar pesquisa</string>
+    <string name="contacts_show_favorites_only">Mostrar só favoritos</string>
+    <string name="contacts_show_all">Mostrar todos os contatos</string>
+    <string name="guard_changes_subtitle">As alterações na sua conta aguardam aqui antes de entrar em vigor.</string>
+    <string name="hide_quoted_text">Ocultar texto citado</string>
+    <string name="show_quoted_text">Mostrar texto citado</string>
+    <string name="search_keywords_more_exit">sair, voltar, toque duplo, voltar duas vezes, apertar voltar duas vezes, botão voltar, fechar app, sair do app, exit, back</string>
+    <string name="search_keywords_more_quick_actions">ações rápidas, filtros rápidos, botões da caixa de entrada, botões do cabeçalho, botões de filtro, quick actions</string>
+    <string name="search_keywords_more_reduce_motion">reduzir movimento, animações, movimento, transições, acessibilidade, enjoo, reduce motion</string>
+    <string name="search_keywords_more_high_contrast">contraste, acessibilidade, visão, legibilidade, baixa visão, contrast</string>
+    <string name="search_keywords_more_sign_out_everywhere">sair de todos os lugares, sair de todos os dispositivos, encerrar sessões, remover dispositivos, sign out</string>
+    <string name="search_keywords_more_cancel_plan">cancelar assinatura, cancelar plano, downgrade, parar assinatura, renovação, renovação automática, cobrança, cancel subscription</string>
+    <string name="search_keywords_more_sound">toque, som de notificação, sinal sonoro, som de alerta, tom, sons, ringtone</string>
+</resources>

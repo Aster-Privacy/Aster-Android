@@ -27,6 +27,13 @@ import org.astermail.android.ui.compose.ReactionSenderIdentity
 enum class UnsubscribeOutcome {
     unsubscribed,
     manual_required,
+    rate_limited,
+}
+
+enum class ProxyUnsubscribeResult {
+    accepted,
+    rejected,
+    rate_limited,
 }
 
 data class UnsubscribeSender(
@@ -74,16 +81,33 @@ suspend fun execute_unsubscribe(
     info: UnsubscribeInfo,
     sender: UnsubscribeSender = UnsubscribeSender(),
     send: suspend (ProxyUnsubscribeRequest) -> Boolean,
+): UnsubscribeOutcome = execute_unsubscribe_checked(info, sender) { request ->
+    if (send(request)) ProxyUnsubscribeResult.accepted else ProxyUnsubscribeResult.rejected
+}
+
+suspend fun execute_unsubscribe_checked(
+    info: UnsubscribeInfo,
+    sender: UnsubscribeSender = UnsubscribeSender(),
+    send: suspend (ProxyUnsubscribeRequest) -> ProxyUnsubscribeResult,
 ): UnsubscribeOutcome {
     for (request in build_proxy_unsubscribe_requests(info, sender)) {
-        val succeeded = try {
+        val result = try {
             send(request)
         } catch (t: kotlinx.coroutines.CancellationException) {
             throw t
         } catch (_: Throwable) {
-            false
+            ProxyUnsubscribeResult.rejected
         }
-        if (succeeded) return UnsubscribeOutcome.unsubscribed
+        when (result) {
+            ProxyUnsubscribeResult.accepted -> return UnsubscribeOutcome.unsubscribed
+            ProxyUnsubscribeResult.rate_limited -> return UnsubscribeOutcome.rate_limited
+            ProxyUnsubscribeResult.rejected -> Unit
+        }
     }
     return UnsubscribeOutcome.manual_required
+}
+
+fun is_web_unsubscribe_url(url: String?): Boolean {
+    val value = url?.trim() ?: return false
+    return value.startsWith("https://", ignoreCase = true) || value.startsWith("http://", ignoreCase = true)
 }

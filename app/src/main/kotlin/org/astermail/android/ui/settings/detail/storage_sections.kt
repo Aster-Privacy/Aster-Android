@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -67,7 +68,6 @@ import org.astermail.android.R
 import org.astermail.android.api.mail.MailUserStatsResponse
 import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
@@ -241,6 +241,7 @@ internal fun storage_usage_bar(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(fraction)
+                        .widthIn(min = 24.dp)
                         .fillMaxHeight()
                         .background(fallback_color),
                 )
@@ -248,6 +249,7 @@ internal fun storage_usage_bar(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(fraction)
+                        .widthIn(min = 24.dp)
                         .fillMaxHeight(),
                     horizontalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
@@ -560,14 +562,10 @@ private fun cleanup_row(
             )
         }
         Spacer(Modifier.width(AsterSpacing.sm))
-        if (is_busy) {
-            CircularProgressIndicator(
-                color = colors.accent_blue,
-                strokeWidth = 2.dp,
-                modifier = Modifier.size(18.dp),
-            )
-        } else {
-            AsterGhostButton(label = action_label, onClick = on_action)
-        }
+        org.astermail.android.design.components.AsterCompactDestructiveButton(
+            label = action_label,
+            onClick = on_action,
+            is_loading = is_busy,
+        )
     }
 }

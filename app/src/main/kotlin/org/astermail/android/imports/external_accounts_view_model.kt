@@ -66,6 +66,7 @@ data class ExternalAccountsUiState(
     val accounts: List<ExternalAccount> = emptyList(),
     val decrypted: Map<String, ExternalAccountData> = emptyMap(),
     val loading: Boolean = false,
+    val accounts_loaded: Boolean = false,
     val connecting_provider: String? = null,
     val authorize_url: String? = null,
     val error: ExternalAccountsError? = null,
@@ -143,12 +144,12 @@ class ExternalAccountsViewModel @Inject constructor(
                             keys.forEach { it.fill(0) }
                         }
                     }
-                    _state.value = _state.value.copy(accounts = res.accounts, decrypted = decrypted, loading = false)
+                    _state.value = _state.value.copy(accounts = res.accounts, decrypted = decrypted, loading = false, accounts_loaded = true)
                     track_health(res.accounts, generation)
                 }
                 .onFailure {
                     if (it is CancellationException) throw it
-                    _state.value = _state.value.copy(loading = false, error = ExternalAccountsError.LOAD_FAILED)
+                    _state.value = _state.value.copy(loading = false, accounts_loaded = true, error = ExternalAccountsError.LOAD_FAILED)
                 }
         }
     }

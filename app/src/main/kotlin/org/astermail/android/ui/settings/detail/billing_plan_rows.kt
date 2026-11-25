@@ -19,19 +19,13 @@
 package org.astermail.android.ui.settings.detail
 
 import android.os.Build
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,27 +35,29 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
@@ -70,12 +66,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -84,19 +77,24 @@ import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Check
-import compose.icons.tablericons.Minus
 import compose.icons.tablericons.X
+import kotlinx.coroutines.launch
 import org.astermail.android.R
 import org.astermail.android.billing.format_money
 import org.astermail.android.billing.plan_comparison_feed
 import org.astermail.android.billing.plan_comparison_row
+import org.astermail.android.billing.plan_comparison_value
+import org.astermail.android.billing.plan_tier_rank
 import org.astermail.android.design.AsterMaterial
-import org.astermail.android.design.AsterShapes
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterIconButton
+import org.astermail.android.design.components.AsterPlanTag
 import org.astermail.android.design.components.AsterSecondaryButton
+import org.astermail.android.design.components.aster_plan_kind_of
+import org.astermail.android.design.field_surface_color
 
 internal data class billing_plan_option(
     val code: String,
@@ -278,13 +276,17 @@ internal fun billing_plan_picker(
     }
 }
 
-internal data class compare_column(
+private data class compare_page(
     val code: String,
     val name: String,
-    val price: String?,
+    val tagline: String,
     val option: billing_plan_option?,
     val is_current: Boolean,
 )
+
+private val compare_shared_codes = setOf("duo", "family")
+
+private const val compare_gain_limit = 6
 
 internal fun compare_columns_for(
     feed: plan_comparison_feed,
@@ -295,9 +297,53 @@ internal fun compare_columns_for(
     options.forEach { option -> if (feed.plan(option.code) != null) add(option.code) }
 }
 
-internal fun compare_row_differs(row: plan_comparison_row, codes: List<String>): Boolean =
-    codes.map { row.value_for(it) }.distinct().size > 1
+internal fun compare_value_magnitude(text: String): Double? {
+    val trimmed = text.trim().lowercase()
+    if (trimmed.startsWith("unlimited")) return Double.MAX_VALUE
+    val match = Regex("""^(\d[\d.,]*)\s*([a-z]*)""").find(trimmed) ?: return null
+    val number = match.groupValues[1].filter { it.isDigit() }.toDoubleOrNull() ?: return null
+    val scale = when (match.groupValues[2]) {
+        "tb", "to", "tib" -> 1_000_000.0
+        "gb", "go", "gib" -> 1_000.0
+        else -> 1.0
+    }
+    return number * scale
+}
 
+internal fun compare_row_gain(row: plan_comparison_row, code: String, base_code: String): Boolean {
+    val target = row.value_for(code)
+    if (!target.included) return false
+    val base = row.value_for(base_code)
+    if (!base.included) return true
+    if (target == base) return false
+    val target_text = target.text ?: return false
+    val base_text = base.text ?: return false
+    val target_size = compare_value_magnitude(target_text)
+    val base_size = compare_value_magnitude(base_text)
+    if (target_size != null && base_size != null) return target_size > base_size
+    return plan_tier_rank(code) > plan_tier_rank(base_code)
+}
+
+internal fun compare_start_index(codes: List<String>, initial_code: String, current_code: String): Int {
+    val initial = codes.indexOf(initial_code)
+    if (initial >= 0 && initial_code != current_code) return initial
+    val current = codes.indexOf(current_code)
+    if (current < 0) return initial.coerceAtLeast(0)
+    val shared = current_code in compare_shared_codes
+    val next = codes.drop(current + 1).firstOrNull { (it in compare_shared_codes) == shared }
+    return next?.let { codes.indexOf(it) } ?: current
+}
+
+@Composable
+private fun compare_short_tagline(code: String, fallback: String): String = when (code) {
+    "free" -> stringResource(R.string.billing_compare_tagline_free)
+    "star" -> stringResource(R.string.billing_compare_tagline_star)
+    "nova" -> stringResource(R.string.billing_compare_tagline_nova)
+    "supernova" -> stringResource(R.string.billing_compare_tagline_supernova)
+    "duo" -> stringResource(R.string.billing_compare_tagline_duo)
+    "family" -> stringResource(R.string.billing_compare_tagline_family)
+    else -> fallback
+}
 
 @Composable
 internal fun billing_compare_view(
@@ -320,23 +366,12 @@ internal fun billing_compare_view(
         onDismissRequest = on_dismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
-        val view = LocalView.current
-        SideEffect {
-            val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-            window.setDimAmount(0f)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) window.isNavigationBarContrastEnforced = false
-            WindowCompat.getInsetsController(window, view).apply {
-                isAppearanceLightStatusBars = light_bars
-                isAppearanceLightNavigationBars = light_bars
-            }
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-                @Suppress("DEPRECATION")
-                window.navigationBarColor = android.graphics.Color.TRANSPARENT
-                @Suppress("DEPRECATION")
-                window.statusBarColor = android.graphics.Color.TRANSPARENT
-            }
-        }
+        org.astermail.android.design.components.aster_popup_window_effect(
+            light_status_bars = light_bars,
+            light_navigation_bars = light_bars,
+            full_window = true,
+        )
+        Box(modifier = Modifier.fillMaxSize()) {
         billing_compare_content(
             feed = feed,
             options = individual_options + family_options,
@@ -350,6 +385,8 @@ internal fun billing_compare_view(
             on_see_pricing = on_see_pricing,
             on_dismiss = on_dismiss,
         )
+        org.astermail.android.ui.common.app_toast_host(nested = true)
+        }
     }
 }
 
@@ -368,15 +405,43 @@ private fun billing_compare_content(
     on_dismiss: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    var code by remember(initial_code) { mutableStateOf(initial_code) }
-    var differences_only by remember { mutableStateOf(true) }
-    val selected = options.firstOrNull { it.code == code }
-        ?: options.firstOrNull { it.is_recommended && !it.is_current }
-        ?: options.firstOrNull { !it.is_current }
-        ?: options.firstOrNull()
+    val base_code = current_code ?: "free"
     val is_yearly = billing_interval == "year"
-    val per_month_unit = stringResource(R.string.fix_billing_per_month_short)
-    val free_price = money_short(0, currency)
+    val reduce_motion = aster_reduce_motion()
+    val scope = rememberCoroutineScope()
+    val free_name = stringResource(R.string.plan_name_free)
+    val codes = if (feed != null) {
+        compare_columns_for(feed, options, include_free = true)
+    } else {
+        listOf("free") + options.map { it.code }
+    }
+    val pages = codes.map { code ->
+        val option = options.firstOrNull { it.code == code }
+        val name = option?.name ?: if (code == "free") free_name else feed?.plan(code)?.name ?: code
+        compare_page(
+            code = code,
+            name = name,
+            tagline = compare_short_tagline(code, option?.tagline.orEmpty()),
+            option = option,
+            is_current = code == base_code || option?.is_current == true,
+        )
+    }
+    val base_name = pages.firstOrNull { it.code == base_code }?.name ?: free_name
+    val start_index = remember(codes, initial_code, base_code) { compare_start_index(codes, initial_code, base_code) }
+    val pager_state = rememberPagerState(initialPage = start_index) { pages.size }
+    val chip_state = rememberLazyListState()
+    val page_index = pager_state.currentPage.coerceIn(0, (pages.size - 1).coerceAtLeast(0))
+    LaunchedEffect(page_index) {
+        val info = chip_state.layoutInfo
+        val item = info.visibleItemsInfo.firstOrNull { it.index == page_index }
+        val fully_visible = item != null &&
+            item.offset >= info.viewportStartOffset &&
+            item.offset + item.size <= info.viewportEndOffset
+        if (!fully_visible) {
+            val target = (page_index - 1).coerceAtLeast(0)
+            if (reduce_motion) chip_state.scrollToItem(target) else chip_state.animateScrollToItem(target)
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -414,361 +479,469 @@ private fun billing_compare_content(
             )
             Spacer(Modifier.size(48.dp))
         }
-        if (feed == null) {
-            Spacer(Modifier.height(AsterSpacing.xl))
-            billing_link_row(text = stringResource(R.string.see_pricing), on_click = on_see_pricing)
-            Spacer(Modifier.weight(1f))
+        compare_plan_chips(
+            pages = pages,
+            selected_index = page_index,
+            list_state = chip_state,
+            on_select = { index ->
+                scope.launch {
+                    if (reduce_motion) pager_state.scrollToPage(index) else pager_state.animateScrollToPage(index)
+                }
+            },
+        )
+        HorizontalPager(
+            state = pager_state,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .testTag("billing_compare_pager"),
+            verticalAlignment = Alignment.Top,
+            key = { index -> pages[index].code },
+        ) { index ->
+            compare_plan_page(
+                page = pages[index],
+                feed = feed,
+                base_code = base_code,
+                base_name = base_name,
+                is_yearly = is_yearly,
+                currency = currency,
+                on_see_pricing = on_see_pricing,
+            )
+        }
+        HorizontalDivider(color = colors.border_primary, thickness = 1.dp)
+        val page = pages.getOrNull(page_index)
+        if (page != null) {
+            compare_plan_footer(
+                page = page,
+                options = options,
+                base_code = base_code,
+                is_yearly = is_yearly,
+                busy = busy,
+                on_interval_change = on_interval_change,
+                on_choose = on_choose,
+                on_see_pricing = on_see_pricing,
+            )
+        }
+    }
+}
+
+@Composable
+private fun compare_plan_chips(
+    pages: List<compare_page>,
+    selected_index: Int,
+    list_state: LazyListState,
+    on_select: (Int) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val current_label = stringResource(R.string.current)
+    LazyRow(
+        state = list_state,
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectableGroup()
+            .testTag("billing_compare_chips"),
+        contentPadding = PaddingValues(horizontal = AsterSpacing.lg),
+        horizontalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        itemsIndexed(pages, key = { _, page -> page.code }) { index, page ->
+            val starts_shared = index > 0 &&
+                page.code in compare_shared_codes &&
+                pages[index - 1].code !in compare_shared_codes
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (starts_shared) {
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(20.dp)
+                            .background(colors.border_primary),
+                    )
+                    Spacer(Modifier.width(AsterSpacing.xs))
+                }
+                val selected = index == selected_index
+                Row(
+                    modifier = Modifier
+                        .minimumInteractiveComponentSize()
+                        .clip(CircleShape)
+                        .background(if (selected) colors.accent_blue else field_surface_color(colors))
+                        .selectable(selected = selected, role = Role.Tab, onClick = { on_select(index) })
+                        .heightIn(min = 36.dp)
+                        .padding(horizontal = AsterSpacing.lg)
+                        .testTag("billing_compare_chip_${page.code}"),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = page.name,
+                        color = if (selected) colors.on_accent else colors.text_secondary,
+                        fontSize = 14.sp,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                    if (page.is_current) {
+                        Spacer(Modifier.width(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(if (selected) colors.on_accent else colors.accent_blue)
+                                .semantics { contentDescription = current_label },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun compare_plan_page(
+    page: compare_page,
+    feed: plan_comparison_feed?,
+    base_code: String,
+    base_name: String,
+    is_yearly: Boolean,
+    currency: String,
+    on_see_pricing: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val groups = remember(feed, page.code) {
+        feed?.groups_for(listOf(page.code), include_family = true)
+            ?.map { group -> group.copy(rows = group.rows.filter { it.value_for(page.code).included }) }
+            ?.filter { it.rows.isNotEmpty() }
+            .orEmpty()
+    }
+    val gains = remember(groups, page.code, page.is_current, base_code) {
+        if (page.is_current) {
+            emptyList()
         } else {
-            val codes = compare_columns_for(feed, options, include_free = true)
-            val columns = codes.map { column_code ->
-                val option = options.firstOrNull { it.code == column_code }
-                compare_column(
-                    code = column_code,
-                    name = option?.name ?: feed.plan(column_code)?.name ?: column_code,
-                    price = if (column_code == "free") {
-                        free_price
-                    } else {
-                        option?.let { per_month_cents(it, is_yearly) }?.let { money_short(it, currency) }
-                    },
-                    option = option,
-                    is_current = column_code == (current_code ?: "free"),
+            groups.flatMap { it.rows }.filter { compare_row_gain(it, page.code, base_code) }.take(compare_gain_limit)
+        }
+    }
+    val not_in_plan = stringResource(R.string.billing_compare_not_in_plan)
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("billing_compare_page_${page.code}"),
+        contentPadding = PaddingValues(
+            start = AsterSpacing.lg,
+            end = AsterSpacing.lg,
+            top = AsterSpacing.sm,
+            bottom = AsterSpacing.xl,
+        ),
+    ) {
+        item(key = "hero") {
+            compare_plan_hero(page = page, is_yearly = is_yearly, currency = currency)
+        }
+        if (feed == null) {
+            item(key = "pricing") {
+                Spacer(Modifier.height(AsterSpacing.lg))
+                billing_link_row(text = stringResource(R.string.see_pricing), on_click = on_see_pricing)
+            }
+        }
+        if (gains.isNotEmpty()) {
+            item(key = "gains") {
+                compare_section_heading(stringResource(R.string.billing_compare_gains_title, page.name))
+                AsterCard(modifier = Modifier.fillMaxWidth()) {
+                    Column {
+                        gains.forEachIndexed { index, row ->
+                            if (index > 0) settings_row_gap()
+                            val base = row.value_for(base_code)
+                            compare_plan_feature_row(
+                                label = row.label,
+                                tip = row.tip,
+                                value = row.value_for(page.code),
+                                note = when {
+                                    !base.included -> not_in_plan
+                                    base.text != null -> stringResource(R.string.billing_compare_you_have, base.text)
+                                    else -> null
+                                },
+                                emphasized = true,
+                            )
+                        }
+                    }
+                }
+            }
+            item(key = "everything") {
+                Text(
+                    text = stringResource(R.string.billing_compare_everything_in, page.name),
+                    color = colors.text_primary,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .padding(start = AsterSpacing.xs, end = AsterSpacing.xs, top = AsterSpacing.xxl)
+                        .semantics { heading() },
                 )
             }
-            val groups = feed.groups_for(codes, include_family = true)
-                .map { group ->
-                    if (differences_only) group.copy(rows = group.rows.filter { compare_row_differs(it, codes) }) else group
-                }
-                .filter { it.rows.isNotEmpty() }
-            Box(modifier = Modifier.padding(horizontal = AsterSpacing.lg)) {
+        }
+        groups.forEach { group ->
+            item(key = "group_${group.id}") {
+                compare_section_heading(group.title)
                 AsterCard(modifier = Modifier.fillMaxWidth()) {
-                    settings_toggle_row(
-                        title = stringResource(R.string.billing_compare_differences_only),
-                        checked = differences_only,
-                        test_tag = "billing_compare_differences_toggle",
-                        on_change = { differences_only = it },
-                    )
-                }
-            }
-            Spacer(Modifier.height(AsterSpacing.sm))
-            BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                val count = columns.size.coerceAtLeast(1)
-                val fit_width = (maxWidth - compare_side_padding * 2 - compare_column_gap * (count - 1)) / count
-                val column_width = if (fit_width < compare_min_column_width) compare_scroll_column_width else fit_width
-                val h_scroll = rememberScrollState()
-                Column(modifier = Modifier.fillMaxSize()) {
-                    compare_header(
-                        columns = columns,
-                        column_width = column_width,
-                        h_scroll = h_scroll,
-                        selected_code = selected?.code,
-                        per_month_unit = per_month_unit,
-                        busy = busy,
-                        on_select = { code = it },
-                    )
-                    HorizontalDivider(color = colors.border_primary, thickness = 1.dp)
-                    LazyColumn(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .testTag("billing_compare_table"),
-                        contentPadding = PaddingValues(bottom = AsterSpacing.lg),
-                    ) {
-                        groups.forEach { group ->
-                            item(key = "group_${group.id}") {
-                                Text(
-                                    text = group.title.uppercase(),
-                                    color = colors.text_tertiary,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    letterSpacing = 0.8.sp,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(
-                                            start = compare_side_padding,
-                                            end = compare_side_padding,
-                                            top = AsterSpacing.xl,
-                                            bottom = AsterSpacing.xs,
-                                        )
-                                        .semantics { heading() },
-                                )
-                            }
-                            items(group.rows, key = { "row_${group.id}_${it.id}" }) { row ->
-                                compare_feature_row(
-                                    row = row,
-                                    columns = columns,
-                                    column_width = column_width,
-                                    h_scroll = h_scroll,
-                                    selected_code = selected?.code,
-                                )
-                            }
+                    Column {
+                        group.rows.forEachIndexed { index, row ->
+                            if (index > 0) settings_row_gap()
+                            compare_plan_feature_row(
+                                label = row.label,
+                                tip = row.tip,
+                                value = row.value_for(page.code),
+                                note = null,
+                                emphasized = false,
+                            )
                         }
                     }
                 }
             }
         }
-        HorizontalDivider(color = colors.border_primary, thickness = 1.dp)
-        if (selected != null) {
-            Column(modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)) {
-                val save = yearly_save_percent(selected)
-                if (selected.monthly_cents != null && selected.yearly_cents != null) {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        aster_segmented(
-                            value = if (is_yearly) "year" else "month",
-                            options = listOf(
-                                switcher_option(
-                                    id = "year",
-                                    label = if (save > 0) {
-                                        stringResource(R.string.billing_compare_yearly_save, save)
-                                    } else {
-                                        stringResource(R.string.billing_pay_yearly)
-                                    },
-                                ),
-                                switcher_option(id = "month", label = stringResource(R.string.billing_pay_monthly)),
-                            ),
-                            on_change = on_interval_change,
-                        )
-                    }
-                    Spacer(Modifier.height(AsterSpacing.sm))
-                }
-                val price_cents = if (is_yearly) selected.yearly_cents else selected.monthly_cents
-                AsterButton(
-                    label = plan_cta_label(selected),
-                    onClick = { on_choose(selected) },
-                    enabled = !busy && !selected.is_current && price_cents != null,
+    }
+}
+
+@Composable
+private fun compare_section_heading(text: String) {
+    Box(modifier = Modifier.semantics(mergeDescendants = true) { heading() }) {
+        section_label(text)
+    }
+}
+
+@Composable
+private fun compare_plan_hero(page: compare_page, is_yearly: Boolean, currency: String) {
+    val colors = AsterMaterial.colors
+    val option = page.option
+    val price_cents = if (page.code == "free" && option == null) 0 else option?.let { per_month_cents(it, is_yearly) }
+    val yearly_total = option?.yearly_cents
+    AsterCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(AsterSpacing.lg)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = page.name,
+                    color = colors.text_primary,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-0.4).sp,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("billing_compare_cta"),
+                        .weight(1f, fill = false)
+                        .semantics { heading() },
                 )
-                if (price_cents != null && !selected.is_current) {
-                    Spacer(Modifier.height(AsterSpacing.xs))
+                if (page.is_current) {
+                    Spacer(Modifier.width(AsterSpacing.sm))
+                    AsterPlanTag(
+                        text = stringResource(R.string.current),
+                        plan = aster_plan_kind_of(page.code),
+                    )
+                } else if (option?.is_recommended == true) {
+                    Spacer(Modifier.width(AsterSpacing.sm))
                     Text(
-                        text = if (is_yearly) {
-                            stringResource(R.string.billing_billed_yearly_total, money_short(price_cents, currency))
-                        } else {
-                            stringResource(R.string.billing_billed_monthly)
-                        },
-                        color = colors.text_tertiary,
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(R.string.fix_billing_plan_recommended),
+                        color = colors.accent_blue,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
                     )
                 }
+            }
+            if (page.tagline.isNotEmpty()) {
+                Spacer(Modifier.height(AsterSpacing.xs))
+                Text(
+                    text = page.tagline,
+                    color = colors.text_secondary,
+                    fontSize = 14.sp,
+                    lineHeight = 19.sp,
+                )
+            }
+            Spacer(Modifier.height(AsterSpacing.lg))
+            if (price_cents != null) {
+                Row {
+                    Text(
+                        text = money_short(price_cents, currency),
+                        color = colors.text_primary,
+                        fontSize = 34.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.8).sp,
+                        modifier = Modifier.alignByBaseline(),
+                    )
+                    Spacer(Modifier.width(2.dp))
+                    Text(
+                        text = stringResource(R.string.fix_billing_per_month_short),
+                        color = colors.text_tertiary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.alignByBaseline(),
+                    )
+                }
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = when {
+                        option == null -> stringResource(R.string.billing_compare_free_forever)
+                        is_yearly && yearly_total != null -> stringResource(
+                            R.string.billing_billed_yearly_total,
+                            money_short(yearly_total, currency),
+                        )
+                        else -> stringResource(R.string.billing_billed_monthly)
+                    },
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.see_pricing),
+                    color = colors.text_tertiary,
+                    fontSize = 14.sp,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun compare_fit_text(
-    text: String,
-    color: Color,
-    max_size: TextUnit,
-    min_size: TextUnit,
-    weight: FontWeight,
-    modifier: Modifier = Modifier,
-) {
-    BasicText(
-        text = text,
-        style = LocalTextStyle.current.merge(
-            TextStyle(
-                color = color,
-                fontSize = max_size,
-                fontWeight = weight,
-                textAlign = TextAlign.Center,
-            ),
-        ),
-        maxLines = 1,
-        softWrap = false,
-        overflow = TextOverflow.Clip,
-        autoSize = TextAutoSize.StepBased(minFontSize = min_size, maxFontSize = max_size, stepSize = 0.5.sp),
-        modifier = modifier.fillMaxWidth(),
-    )
-}
-
-@Composable
-private fun compare_header(
-    columns: List<compare_column>,
-    column_width: Dp,
-    h_scroll: ScrollState,
-    selected_code: String?,
-    per_month_unit: String,
-    busy: Boolean,
-    on_select: (String) -> Unit,
+private fun compare_plan_feature_row(
+    label: String,
+    tip: String?,
+    value: plan_comparison_value,
+    note: String?,
+    emphasized: Boolean,
 ) {
     val colors = AsterMaterial.colors
-    val shape = AsterShapes.control
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.bg_primary)
-            .horizontalScroll(h_scroll)
-            .padding(horizontal = compare_side_padding, vertical = AsterSpacing.sm)
-            .selectableGroup()
-            .testTag("billing_compare_header"),
-        horizontalArrangement = Arrangement.spacedBy(compare_column_gap),
+            .heightIn(min = settings_row_min_height)
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)
+            .semantics(mergeDescendants = true) {},
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        columns.forEach { column ->
-            val highlighted = column.code == selected_code
-            val selectable = column.option != null && !busy
-            Column(
-                modifier = Modifier
-                    .width(column_width)
-                    .clip(shape)
-                    .background(if (highlighted) colors.accent_blue.copy(alpha = 0.12f) else colors.bg_card)
-                    .border(1.dp, if (highlighted) colors.accent_blue else colors.border_primary, shape)
-                    .then(
-                        if (column.option != null) {
-                            Modifier.selectable(
-                                selected = highlighted,
-                                enabled = selectable,
-                                role = Role.RadioButton,
-                                onClick = { on_select(column.code) },
-                            )
-                        } else {
-                            Modifier
-                        },
-                    )
-                    .heightIn(min = 76.dp)
-                    .padding(horizontal = AsterSpacing.xs, vertical = AsterSpacing.sm)
-                    .testTag("billing_compare_column_${column.code}"),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                compare_fit_text(
-                    text = column.name,
-                    color = if (highlighted) colors.accent_blue else colors.text_primary,
-                    max_size = 14.sp,
-                    min_size = 9.sp,
-                    weight = FontWeight.SemiBold,
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = label,
+                    color = colors.text_primary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    lineHeight = 20.sp,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
-                Spacer(Modifier.height(2.dp))
-                compare_fit_text(
-                    text = column.price?.let { it + per_month_unit } ?: "",
-                    color = if (highlighted) colors.accent_blue else colors.text_secondary,
-                    max_size = 12.sp,
-                    min_size = 8.sp,
-                    weight = FontWeight.Medium,
-                )
-                val badge = when {
-                    column.is_current -> stringResource(R.string.current)
-                    column.option?.is_recommended == true -> stringResource(R.string.fix_billing_plan_recommended)
-                    else -> null
+                if (tip != null) {
+                    Spacer(Modifier.width(2.dp))
+                    info_dialog_button(title = label, description = tip)
                 }
-                Spacer(Modifier.height(2.dp))
-                compare_fit_text(
-                    text = badge ?: "",
-                    color = if (column.is_current) colors.text_tertiary else colors.success,
-                    max_size = 11.sp,
-                    min_size = 7.sp,
-                    weight = FontWeight.SemiBold,
+            }
+            if (note != null) {
+                Text(
+                    text = note,
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
                 )
             }
+        }
+        Spacer(Modifier.width(AsterSpacing.md))
+        val text = value.text
+        if (text != null) {
+            Text(
+                text = text,
+                color = if (emphasized) colors.accent_blue else colors.text_secondary,
+                fontSize = 14.sp,
+                fontWeight = if (emphasized) FontWeight.SemiBold else FontWeight.Medium,
+                textAlign = TextAlign.End,
+                modifier = Modifier.widthIn(max = 140.dp),
+            )
+        } else {
+            Icon(
+                imageVector = TablerIcons.Check,
+                contentDescription = stringResource(R.string.billing_compare_included),
+                tint = colors.accent_blue,
+                modifier = Modifier.size(20.dp),
+            )
         }
     }
 }
 
-private val compare_column_gap = 4.dp
-private val compare_side_padding = AsterSpacing.lg
-private val compare_min_column_width = 52.dp
-private val compare_scroll_column_width = 76.dp
-
 @Composable
-private fun compare_feature_row(
-    row: plan_comparison_row,
-    columns: List<compare_column>,
-    column_width: Dp,
-    h_scroll: ScrollState,
-    selected_code: String?,
+private fun compare_plan_footer(
+    page: compare_page,
+    options: List<billing_plan_option>,
+    base_code: String,
+    is_yearly: Boolean,
+    busy: Boolean,
+    on_interval_change: (String) -> Unit,
+    on_choose: (billing_plan_option) -> Unit,
+    on_see_pricing: () -> Unit,
 ) {
     val colors = AsterMaterial.colors
-    val included_label = stringResource(R.string.billing_compare_included)
-    val excluded_label = stringResource(R.string.billing_compare_not_included)
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = AsterSpacing.sm)
-            .semantics(mergeDescendants = true) {},
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(horizontal = compare_side_padding)
-                .heightIn(min = 28.dp),
-        ) {
-            Text(
-                text = row.label,
-                color = colors.text_primary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                lineHeight = 20.sp,
-                modifier = Modifier.weight(1f, fill = false),
-            )
-            if (row.tip != null) {
-                Spacer(Modifier.width(AsterSpacing.xs))
-                info_dialog_button(title = row.label, description = row.tip)
+    val option = page.option
+    val interval_plan = option?.takeIf { it.monthly_cents != null && it.yearly_cents != null }
+        ?: options.firstOrNull { it.monthly_cents != null && it.yearly_cents != null }
+    Column(modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)) {
+        if (interval_plan != null) {
+            val save = yearly_save_percent(interval_plan)
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                aster_segmented(
+                    value = if (is_yearly) "year" else "month",
+                    options = listOf(
+                        switcher_option(
+                            id = "year",
+                            label = if (save > 0) {
+                                stringResource(R.string.billing_compare_yearly_save, save)
+                            } else {
+                                stringResource(R.string.billing_pay_yearly)
+                            },
+                        ),
+                        switcher_option(id = "month", label = stringResource(R.string.billing_pay_monthly)),
+                    ),
+                    on_change = on_interval_change,
+                )
             }
+            Spacer(Modifier.height(AsterSpacing.sm))
         }
-        Spacer(Modifier.height(AsterSpacing.xs))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(h_scroll)
-                .padding(horizontal = compare_side_padding)
-                .height(IntrinsicSize.Min),
-            horizontalArrangement = Arrangement.spacedBy(compare_column_gap),
-        ) {
-            columns.forEach { column ->
-                val value = row.value_for(column.code)
-                val highlighted = column.code == selected_code
-                val description = when {
-                    value.text != null -> "${column.name}: ${value.text}"
-                    value.included -> "${column.name}: $included_label"
-                    else -> "${column.name}: $excluded_label"
-                }
-                Box(
-                    modifier = Modifier
-                        .width(column_width)
-                        .fillMaxHeight()
-                        .heightIn(min = 44.dp)
-                        .clip(AsterShapes.item)
-                        .background(if (highlighted) colors.accent_blue.copy(alpha = 0.10f) else colors.bg_card)
-                        .padding(horizontal = 2.dp, vertical = AsterSpacing.sm)
-                        .semantics { contentDescription = description },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    when {
-                        value.text != null && !value.text.trim().contains(' ') -> compare_fit_text(
-                            text = value.text.trim(),
-                            color = if (highlighted) colors.accent_blue else colors.text_primary,
-                            max_size = 13.sp,
-                            min_size = 8.sp,
-                            weight = if (highlighted) FontWeight.SemiBold else FontWeight.Medium,
-                        )
-                        value.text != null -> Text(
-                            text = value.text,
-                            color = if (highlighted) colors.accent_blue else colors.text_primary,
-                            fontSize = 13.sp,
-                            lineHeight = 16.sp,
-                            fontWeight = if (highlighted) FontWeight.SemiBold else FontWeight.Medium,
-                            textAlign = TextAlign.Center,
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        value.included -> Icon(
-                            imageVector = TablerIcons.Check,
-                            contentDescription = null,
-                            tint = if (highlighted) colors.accent_blue else colors.success,
-                            modifier = Modifier.size(20.dp),
-                        )
-                        else -> Icon(
-                            imageVector = TablerIcons.Minus,
-                            contentDescription = null,
-                            tint = colors.text_muted,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                }
+        val cta_modifier = Modifier
+            .fillMaxWidth()
+            .testTag("billing_compare_cta")
+        val price_cents = option?.let { if (is_yearly) it.yearly_cents else it.monthly_cents }
+        when {
+            option?.is_interval_switch == true -> AsterButton(
+                label = stringResource(R.string.switch_to_yearly),
+                onClick = { on_choose(option) },
+                enabled = !busy,
+                modifier = cta_modifier,
+            )
+            page.is_current -> AsterSecondaryButton(
+                label = stringResource(R.string.current_plan),
+                onClick = {},
+                enabled = false,
+                modifier = cta_modifier,
+            )
+            option == null -> Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = stringResource(R.string.billing_compare_free_note),
+                    color = colors.text_tertiary,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                )
             }
+            price_cents == null -> AsterSecondaryButton(
+                label = stringResource(R.string.see_pricing),
+                onClick = on_see_pricing,
+                enabled = !busy,
+                modifier = cta_modifier,
+            )
+            option.is_downgrade -> AsterSecondaryButton(
+                label = stringResource(R.string.billing_compare_downgrade_to, option.name),
+                onClick = { on_choose(option) },
+                enabled = !busy,
+                modifier = cta_modifier,
+            )
+            else -> AsterButton(
+                label = if (plan_tier_rank(option.code) > plan_tier_rank(base_code)) {
+                    stringResource(R.string.billing_compare_upgrade_to, option.name)
+                } else {
+                    stringResource(R.string.billing_compare_switch_to, option.name)
+                },
+                onClick = { on_choose(option) },
+                enabled = !busy,
+                modifier = cta_modifier,
+            )
         }
     }
 }

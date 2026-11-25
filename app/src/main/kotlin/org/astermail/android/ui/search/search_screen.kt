@@ -22,12 +22,11 @@
 package org.astermail.android.ui.search
 
 import org.astermail.android.ui.common.vertical_scroll_with_indicator
+import org.astermail.android.ui.common.lazy_top_fade
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,6 +39,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.PaddingValues
@@ -47,6 +47,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -61,6 +62,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.key
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -86,12 +88,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -121,6 +125,9 @@ import org.astermail.android.ui.mail.search_field_bg_color
 import org.astermail.android.ui.common.glass_bar
 import org.astermail.android.ui.common.page_surface
 import org.astermail.android.design.acrylic
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 private data class FilterToggle(val key: String, val value: String, val label_res: Int)
 
@@ -150,7 +157,29 @@ private val operator_chips_saver = listSaver<List<SearchOperator>, String>(
 
 private const val BODY_HITS_TIMEOUT_MS = 2_000L
 
-private const val BODY_INDEX_STEP_SIZE = 20
+private const val BODY_INDEX_STEP_SIZE = 100
+private const val CORPUS_SETTLE_MS = 400L
+
+private const val SEARCH_READ_FADE_SCALE = 0.5f
+
+private enum class SearchBodyKind { tips, loading, empty, results }
+
+private const val SAME_QUERY_REFRESH_SETTLE_MS = 180L
+
+internal fun clear_search_screen_cache() {
+    search_screen_cache.clear()
+}
+
+internal fun same_result_items(
+    a: List<org.astermail.android.mail.InboxItem>,
+    b: List<org.astermail.android.mail.InboxItem>,
+): Boolean {
+    if (a.size != b.size) return false
+    for (i in a.indices) {
+        if (a[i] !== b[i]) return false
+    }
+    return true
+}
 
 internal fun body_index_step(indexed: Int?): Int =
     if (indexed == null) -1 else indexed.coerceAtLeast(0) / BODY_INDEX_STEP_SIZE
@@ -158,57 +187,48 @@ internal fun body_index_step(indexed: Int?): Int =
 internal fun body_index_fraction(indexed: Int, total: Int): Float =
     if (total <= 0) 0f else (indexed.toFloat() / total).coerceIn(0f, 1f)
 
-@Composable
-private fun body_index_banner(indexed: Int, total: Int) {
-    val colors = AsterMaterial.colors
-    val fraction = body_index_fraction(indexed, total)
-    val animated by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = fraction,
-        label = "body_index_progress",
-    )
-    val percent = remember(fraction) {
-        java.text.NumberFormat.getPercentInstance().format(fraction.toDouble())
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)
-            .testTag("body_index_banner"),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
-        ) {
-            Text(
-                text = stringResource(R.string.body_index_status, indexed, total),
-                color = colors.text_muted,
-                fontSize = 12.sp,
-                lineHeight = 16.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = percent,
-                color = colors.text_secondary,
-                fontSize = 12.sp,
-                lineHeight = 16.sp,
-                fontWeight = FontWeight.Medium,
-            )
-        }
-        androidx.compose.material3.LinearProgressIndicator(
-            progress = { animated },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(3.dp)
-                .clip(SquircleShape(2.dp)),
-            color = colors.accent_blue,
-            trackColor = colors.bg_secondary,
-            gapSize = 0.dp,
-            drawStopIndicator = {},
+private class search_filtered_results(
+    val items: List<org.astermail.android.mail.InboxItem>,
+    val ids: Set<String>,
+)
+
+private class search_corpus_lookup(
+    val by_id: Map<String, org.astermail.android.mail.InboxItem>,
+    val thread_index: Map<String, List<String>>,
+    val trashed_ids: Set<String>,
+)
+
+private class search_selection_flags(
+    val all_starred: Boolean,
+    val all_read: Boolean,
+    val delete_plan: org.astermail.android.mail.SelectionDeletePlan,
+)
+
+private val EMPTY_FILTERED = search_filtered_results(emptyList(), emptySet())
+
+private fun search_selection_flags_of(
+    selection: List<String>,
+    expand: (List<String>) -> List<String>,
+    lookup: search_corpus_lookup?,
+    shown_ids: Set<String>,
+): search_selection_flags {
+    if (selection.isEmpty() || lookup == null) {
+        return search_selection_flags(
+            all_starred = false,
+            all_read = false,
+            delete_plan = org.astermail.android.mail.plan_selection_delete(emptyMap(), emptySet(), emptySet()),
         )
     }
+    val picked = expand(selection).mapNotNull { lookup.by_id[it] }
+    return search_selection_flags(
+        all_starred = picked.isNotEmpty() && picked.all { it.is_starred },
+        all_read = picked.isNotEmpty() && picked.all { it.is_read },
+        delete_plan = org.astermail.android.mail.plan_selection_delete(
+            rows = selection.associateWith { expand(listOf(it)) },
+            shown_ids = shown_ids,
+            trashed_ids = lookup.trashed_ids,
+        ),
+    )
 }
 
 private object search_screen_cache {
@@ -224,13 +244,56 @@ private object search_screen_cache {
     var outcome_day: Long = Long.MIN_VALUE
     var outcome_body_step: Int = Int.MIN_VALUE
     var people_corpus: List<org.astermail.android.mail.InboxItem>? = null
+    var threads_source: List<org.astermail.android.mail.InboxItem>? = null
+    var threads_grouping: Boolean = true
+    var threads_tags: List<*>? = null
+    var threads: List<ThreadRow> = emptyList()
     var people: ChipPeopleLists? = null
+    var filtered_source: List<org.astermail.android.mail.InboxItem>? = null
+    var filtered_revision: Long = Long.MIN_VALUE
+    var filtered: search_filtered_results? = null
+    var lookup_corpus: List<org.astermail.android.mail.InboxItem>? = null
+    var lookup: search_corpus_lookup? = null
+
+    fun clear() {
+        source = null
+        lock_revision = Long.MIN_VALUE
+        visible = null
+        corpus = null
+        sorted = null
+        parsed = null
+        env_labels = null
+        outcome = null
+        outcome_corpus = null
+        outcome_day = Long.MIN_VALUE
+        outcome_body_step = Int.MIN_VALUE
+        people_corpus = null
+        threads_source = null
+        threads_grouping = true
+        threads_tags = null
+        threads = emptyList()
+        people = null
+        filtered_source = null
+        filtered_revision = Long.MIN_VALUE
+        filtered = null
+        lookup_corpus = null
+        lookup = null
+    }
+
+    fun filtered_for(source: List<org.astermail.android.mail.InboxItem>, revision: Long) =
+        filtered.takeIf { filtered_source === source && filtered_revision == revision }
+
+    fun lookup_for(corpus: List<org.astermail.android.mail.InboxItem>) =
+        lookup.takeIf { lookup_corpus === corpus }
 
     fun sorted_for(corpus: List<org.astermail.android.mail.InboxItem>) =
         sorted.takeIf { this.corpus === corpus }
 
     fun people_for(corpus: List<org.astermail.android.mail.InboxItem>) =
         people.takeIf { people_corpus === corpus }
+
+    fun threads_for(source: List<org.astermail.android.mail.InboxItem>, grouping: Boolean, tags: List<*>) =
+        threads.takeIf { threads_source === source && threads_grouping == grouping && threads_tags == tags }
 
     fun outcome_for(
         parsed: ParsedQuery,
@@ -343,7 +406,13 @@ fun SearchScreen(
 
     BackHandler(enabled = sheet_open) { close_open_sheets() }
 
-    BackHandler(enabled = select_mode && !sheet_open) { exit_select_mode() }
+    key(select_mode) {
+        if (select_mode) {
+            BackHandler(enabled = !sheet_open) { exit_select_mode() }
+        }
+    }
+
+    val reduce_motion = org.astermail.android.design.aster_reduce_motion()
 
     val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
     val focus_manager = androidx.compose.ui.platform.LocalFocusManager.current
@@ -359,8 +428,6 @@ fun SearchScreen(
             on_back()
         }
     }
-
-    BackHandler(enabled = !select_mode && !sheet_open) { dismiss_and_back() }
 
     LaunchedEffect(Unit) {
         mail_vm.build_search_index()
@@ -428,6 +495,7 @@ fun SearchScreen(
             value = it
             return@produceState
         }
+        if (value != null) kotlinx.coroutines.delay(CORPUS_SETTLE_MS)
         val sorted = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
             visible_corpus
                 .map { it to parse_item_timestamp(it.timestamp) }
@@ -439,31 +507,48 @@ fun SearchScreen(
         value = sorted
     }
 
-    val body_progress by mail_vm.body_index_progress.collectAsStateWithLifecycle()
-    val body_step = body_index_step(body_progress?.indexed)
+    val body_step_flow = remember(mail_vm) {
+        mail_vm.body_index_progress
+            .map { body_index_step(it?.indexed) }
+            .distinctUntilChanged()
+    }
+    val body_step by body_step_flow.collectAsStateWithLifecycle(
+        initialValue = body_index_step(mail_vm.body_index_progress.value?.indexed),
+    )
 
+    val query_body_step = if (body_search_terms(parsed).isEmpty()) -1 else body_step
+    var search_running by remember { mutableStateOf(false) }
+    val results_scrolling = remember { mutableStateOf(false) }
     val computed by androidx.compose.runtime.produceState<SearchOutcome?>(
         initialValue = search_screen_cache.outcome_for(parsed, search_labels, sorted_corpus),
-        parsed, search_labels, sorted_corpus, has_query, body_step,
+        parsed, search_labels, sorted_corpus, has_query, query_body_step,
     ) {
         if (!has_query) {
-            value = SearchOutcome(emptyList(), 0)
+            search_running = false
+            value = null
             return@produceState
         }
         val corpus = sorted_corpus
         if (corpus == null) {
+            search_running = false
             value = null
             return@produceState
         }
         val body_terms = body_search_terms(parsed)
-        val body_current = body_terms.isEmpty() || search_screen_cache.outcome_body_step == body_step
+        val body_current = body_terms.isEmpty() || search_screen_cache.outcome_body_step == query_body_step
         search_screen_cache.outcome_for(parsed, search_labels, corpus)?.takeIf { body_current }?.let {
+            search_running = false
             value = it
             return@produceState
         }
         val same_query = search_screen_cache.parsed == parsed && search_screen_cache.env_labels == search_labels
-        if (!same_query) value = null
-        if (parsed.terms.isNotEmpty()) kotlinx.coroutines.delay(120)
+        search_running = !same_query
+        if (same_query && search_screen_cache.outcome != null) {
+            androidx.compose.runtime.snapshotFlow { results_scrolling.value }.first { !it }
+            kotlinx.coroutines.delay(SAME_QUERY_REFRESH_SETTLE_MS)
+        } else if (parsed.terms.isNotEmpty()) {
+            kotlinx.coroutines.delay(120)
+        }
         val base_env = current_search_env(search_labels).let { env ->
             if (body_terms.isEmpty()) {
                 env
@@ -502,15 +587,23 @@ fun SearchScreen(
                     hidden++
                 }
             }
-            SearchOutcome(results, hidden)
+            val previous = search_screen_cache.outcome
+            if (same_query && previous != null && previous.hidden_spam_trash == hidden &&
+                same_result_items(previous.results, results)
+            ) {
+                previous
+            } else {
+                SearchOutcome(results, hidden)
+            }
         }
         search_screen_cache.parsed = parsed
         search_screen_cache.env_labels = search_labels
         search_screen_cache.outcome = outcome
         search_screen_cache.outcome_corpus = corpus
         search_screen_cache.outcome_day = env_day
-        search_screen_cache.outcome_body_step = body_step
+        search_screen_cache.outcome_body_step = query_body_step
         value = outcome
+        search_running = false
     }
 
     var last_results by remember {
@@ -550,36 +643,125 @@ fun SearchScreen(
     val chip_people = people_lists.first
     val chip_recipients = people_lists.second
     val visible_results = computed?.results ?: last_results
-    val filtered = remember(visible_results, lock_revision) {
-        org.astermail.android.folders.filter_locked_items(visible_results)
+    val filtered_state by androidx.compose.runtime.produceState(
+        initialValue = search_screen_cache.filtered_for(visible_results, lock_revision.toLong())
+            ?.let { visible_results to it }
+            ?: (null to EMPTY_FILTERED),
+        visible_results, lock_revision,
+    ) {
+        val revision = lock_revision.toLong()
+        search_screen_cache.filtered_for(visible_results, revision)?.let {
+            value = visible_results to it
+            return@produceState
+        }
+        val source = visible_results
+        val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            val items = org.astermail.android.folders.filter_locked_items(source)
+            search_filtered_results(items, items.mapTo(HashSet(items.size)) { it.id })
+        }
+        search_screen_cache.filtered_source = source
+        search_screen_cache.filtered_revision = revision
+        search_screen_cache.filtered = result
+        value = source to result
     }
+    val filtered = filtered_state.second.items
+    val filtered_ids = filtered_state.second.ids
+    val filtered_settled = filtered_state.first === visible_results
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
-    val result_threads = remember(filtered, grouping_enabled, settings_state.tags) {
-        search_result_threads(filtered, grouping_enabled, context_for_prefs, settings_state.tags)
-    }
-    val thread_index = remember(visible_corpus, grouping_enabled) {
-        if (grouping_enabled) search_thread_index(visible_corpus) else emptyMap()
-    }
-    val thread_member_ids = remember(result_threads, thread_index, grouping_enabled) {
-        if (grouping_enabled) thread_member_ids_from_index(result_threads, thread_index) else emptyMap()
-    }
-    fun expand_selection(ids: List<String>): List<String> =
-        expand_thread_selection(ids, thread_member_ids, grouping_enabled)
-
-    val selection_all_starred = selected_ids.isNotEmpty() &&
-        expand_selection(selected_ids.toList()).toSet().let { ids ->
-            val picked = visible_corpus.filter { it.id in ids }
-            picked.isNotEmpty() && picked.none { !it.is_starred }
+    val result_tags = settings_state.tags
+    val threads_state by androidx.compose.runtime.produceState(
+        initialValue = search_screen_cache.threads_for(filtered, grouping_enabled, result_tags)
+            ?.let { filtered to it }
+            ?: (null to emptyList()),
+        filtered, grouping_enabled, result_tags,
+    ) {
+        search_screen_cache.threads_for(filtered, grouping_enabled, result_tags)?.let {
+            value = filtered to it
+            return@produceState
         }
-
-    val selection_all_read = selected_ids.isNotEmpty() &&
-        expand_selection(selected_ids.toList()).toSet().let { ids ->
-            val picked = visible_corpus.filter { it.id in ids }
-            picked.isNotEmpty() && picked.none { !it.is_read }
+        val source = filtered
+        val threads = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            search_result_threads(source, grouping_enabled, context_for_prefs, result_tags)
         }
+        search_screen_cache.threads_source = source
+        search_screen_cache.threads_grouping = grouping_enabled
+        search_screen_cache.threads_tags = result_tags
+        search_screen_cache.threads = threads
+        value = source to threads
+    }
+    val result_threads = threads_state.second
+    val threads_settled = threads_state.first === filtered
+    val threads_catching_up = !threads_settled && filtered.isNotEmpty()
+    val corpus_lookup by androidx.compose.runtime.produceState<search_corpus_lookup?>(
+        initialValue = search_screen_cache.lookup_for(visible_corpus),
+        visible_corpus,
+    ) {
+        search_screen_cache.lookup_for(visible_corpus)?.let {
+            value = it
+            return@produceState
+        }
+        val corpus = visible_corpus
+        val lookup = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            search_corpus_lookup(
+                by_id = corpus.associateBy { it.id },
+                thread_index = search_thread_index(corpus),
+                trashed_ids = corpus.asSequence().filter { it.is_trashed }.mapTo(HashSet()) { it.id },
+            )
+        }
+        search_screen_cache.lookup_corpus = corpus
+        search_screen_cache.lookup = lookup
+        value = lookup
+    }
+    val member_ids_state by androidx.compose.runtime.produceState<Pair<List<ThreadRow>?, Map<String, List<String>>>>(
+        initialValue = null to emptyMap(),
+        result_threads, corpus_lookup, grouping_enabled,
+    ) {
+        val index = corpus_lookup?.thread_index
+        val threads = result_threads
+        if (!grouping_enabled) {
+            value = threads to emptyMap()
+            return@produceState
+        }
+        if (index == null) return@produceState
+        val members = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            thread_member_ids_from_index(threads, index)
+        }
+        value = threads to members
+    }
+    val thread_member_ids = member_ids_state.second
+    val members_settled = member_ids_state.first === result_threads
+    var shown_query by remember { mutableStateOf<ParsedQuery?>(null) }
+    LaunchedEffect(parsed, filtered_settled, threads_settled, search_running) {
+        if (!search_running && filtered_settled && threads_settled) shown_query = parsed
+    }
+    val query_catching_up = shown_query != parsed && (!filtered_settled || !threads_settled)
+    val search_refreshing = has_query &&
+        (search_running || query_catching_up || (select_mode && !members_settled))
+    fun expand_selection(ids: List<String>): List<String> {
+        val members = when {
+            !grouping_enabled || members_settled -> thread_member_ids
+            else -> thread_member_ids_from_index(
+                result_threads,
+                corpus_lookup?.thread_index ?: search_thread_index(visible_corpus),
+            )
+        }
+        return expand_thread_selection(ids, members, grouping_enabled)
+    }
 
-    LaunchedEffect(result_threads, results_pending) {
-        if (select_mode && !results_pending) {
+    val selection_snapshot = selected_ids.toList()
+    val selection_flags = remember(selection_snapshot, thread_member_ids, grouping_enabled, corpus_lookup, filtered_ids) {
+        search_selection_flags_of(
+            selection = selection_snapshot,
+            expand = { expand_thread_selection(it, thread_member_ids, grouping_enabled) },
+            lookup = corpus_lookup,
+            shown_ids = filtered_ids,
+        )
+    }
+    val selection_all_starred = selection_flags.all_starred
+    val selection_all_read = selection_flags.all_read
+
+    LaunchedEffect(result_threads, results_pending, search_refreshing) {
+        if (select_mode && !results_pending && !search_refreshing) {
             if (result_threads.isEmpty()) {
                 exit_select_mode()
             } else {
@@ -602,19 +784,10 @@ fun SearchScreen(
         exit_select_mode()
     }
 
-    val selection_delete_plan = if (selected_ids.isEmpty()) {
-        org.astermail.android.mail.plan_selection_delete(emptyMap(), emptySet(), emptySet())
-    } else {
-        org.astermail.android.mail.plan_selection_delete(
-            rows = selected_ids.associateWith { expand_selection(listOf(it)) },
-            shown_ids = filtered.mapTo(HashSet()) { it.id },
-            trashed_ids = visible_corpus.filter { it.is_trashed }.mapTo(HashSet()) { it.id },
-        )
-    }
-    val selection_all_trashed = selection_delete_plan.all_trashed
+    val selection_all_trashed = selection_flags.delete_plan.all_trashed
 
     fun delete_selected() {
-        val plan = selection_delete_plan
+        val plan = selection_flags.delete_plan
         if (plan.trash_ids.isNotEmpty()) mail_vm.trash(plan.trash_ids, plan.trash_row_count)
         if (plan.permanent_ids.isEmpty()) {
             exit_select_mode()
@@ -669,7 +842,12 @@ fun SearchScreen(
             .systemBarsPadding()
             .imePadding(),
     ) {
-        if (select_mode) {
+        androidx.compose.animation.AnimatedContent(
+            targetState = select_mode,
+            transitionSpec = { org.astermail.android.design.aster_crossfade(reduce_motion) },
+            label = "search_top_bar",
+        ) { top_select_mode ->
+        if (top_select_mode) {
             search_select_top_bar(
                 selected_count = selected_ids.size,
                 on_close = { exit_select_mode() },
@@ -690,7 +868,10 @@ fun SearchScreen(
             search_input_bar(
                 field_value = field_value,
                 on_field_change = { apply_field_change(it) },
-                show_placeholder = free_text.isEmpty() && operator_chips.isEmpty(),
+                show_placeholder = free_text.isEmpty(),
+                placeholder = stringResource(
+                    if (operator_chips.isNotEmpty()) R.string.search_refine_placeholder else R.string.search_mail,
+                ),
                 show_clear = free_text.isNotEmpty() || operator_chips.isNotEmpty(),
                 on_clear = { set_free_text(""); operator_chips = emptyList() },
                 on_back = dismiss_and_back,
@@ -703,8 +884,9 @@ fun SearchScreen(
                 },
             )
         }
+        }
 
-        if (!select_mode) {
+        org.astermail.android.design.AsterExpandVisibility(visible = !select_mode) {
             search_chip_row(
                 operators = shown_operators,
                 people = chip_people,
@@ -719,7 +901,14 @@ fun SearchScreen(
             )
         }
 
-        AsterDivider()
+        search_status_section(
+            mail_vm = mail_vm,
+            has_query = has_query,
+            metadata_indexing = search_state.is_indexing,
+            partial = search_state.is_partial,
+            search_refreshing = search_refreshing,
+            reduce_motion = reduce_motion,
+        )
 
         if (has_query && !select_mode && !results_pending && hidden_spam_trash > 0) {
             Column(
@@ -751,257 +940,166 @@ fun SearchScreen(
             }
         }
 
-        if (has_query && search_state.is_indexing) {
-            androidx.compose.material3.LinearProgressIndicator(
-                modifier = Modifier.fillMaxWidth().height(2.dp),
-                color = colors.accent_blue,
-                trackColor = Color.Transparent,
-            )
+        val search_body = when {
+            !has_query -> SearchBodyKind.tips
+            result_threads.isNotEmpty() -> SearchBodyKind.results
+            results_pending || threads_catching_up -> SearchBodyKind.loading
+            else -> SearchBodyKind.empty
         }
-
-        val index_progress by mail_vm.search_index_progress.collectAsStateWithLifecycle()
-        val index_paused by mail_vm.search_index_paused.collectAsStateWithLifecycle()
-        if (has_query && (search_state.is_indexing || index_paused)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(AsterSpacing.lg),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(AsterSpacing.xs),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
+        androidx.compose.animation.AnimatedContent(
+            targetState = search_body,
+            transitionSpec = { org.astermail.android.design.aster_crossfade(reduce_motion) },
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            label = "search_body",
+        ) { body_kind ->
+            when (body_kind) {
+                SearchBodyKind.tips -> Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .vertical_scroll_with_indicator()
+                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.lg),
                 ) {
-                    if (!index_paused) {
-                        CircularProgressIndicator(
-                            color = colors.accent_blue,
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                        )
-                    }
                     Text(
-                        text = stringResource(
-                            if (index_paused) R.string.index_download_paused else R.string.decrypting_indexing,
-                        ),
+                        text = stringResource(R.string.search_operators),
                         color = colors.text_muted,
-                        fontSize = 13.sp,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
                     )
-                }
-                val progress = index_progress
-                if (progress != null && progress.total > 0) {
+                    Spacer(Modifier.height(AsterSpacing.md))
+                    search_tip(stringResource(R.string.op_from), stringResource(R.string.op_from_desc)) { set_free_text("from:"); focus_requester.requestFocus() }
+                    search_tip(stringResource(R.string.op_to), stringResource(R.string.op_to_desc)) { set_free_text("to:"); focus_requester.requestFocus() }
+                    search_tip(stringResource(R.string.op_subject), stringResource(R.string.op_subject_desc)) { set_free_text("subject:"); focus_requester.requestFocus() }
+                    search_tip(stringResource(R.string.op_has_attachment), stringResource(R.string.op_has_attachment_desc)) { set_free_text("has:attachment"); focus_requester.requestFocus() }
+                    search_tip(stringResource(R.string.op_is_unread), stringResource(R.string.op_is_unread_desc)) { set_free_text("is:unread"); focus_requester.requestFocus() }
+                    search_tip(stringResource(R.string.op_is_starred), stringResource(R.string.op_is_starred_desc)) { set_free_text("is:starred"); focus_requester.requestFocus() }
+                    search_tip(stringResource(R.string.op_in_inbox), stringResource(R.string.op_in_inbox_desc)) { set_free_text("in:"); focus_requester.requestFocus() }
+                    search_tip(stringResource(R.string.op_before), stringResource(R.string.op_before_desc)) { set_free_text("before:"); focus_requester.requestFocus() }
+                    search_tip(stringResource(R.string.op_after), stringResource(R.string.op_after_desc)) { set_free_text("after:"); focus_requester.requestFocus() }
+                    search_tip(stringResource(R.string.op_date_today), stringResource(R.string.op_date_today_desc)) { set_free_text("date:"); focus_requester.requestFocus() }
+                    search_tip(stringResource(R.string.op_label), stringResource(R.string.op_label_desc)) { set_free_text("label:"); focus_requester.requestFocus() }
+                    search_tip(stringResource(R.string.op_filename), stringResource(R.string.op_filename_desc)) { set_free_text("filename:"); focus_requester.requestFocus() }
+                    search_tip(stringResource(R.string.op_negate), stringResource(R.string.op_negate_desc)) { set_free_text("-from:"); focus_requester.requestFocus() }
+                    Spacer(Modifier.height(AsterSpacing.lg))
                     Text(
-                        text = stringResource(
-                            R.string.message_download_status,
-                            progress.indexed,
-                            progress.total,
-                        ),
+                        text = stringResource(R.string.search_privacy_note),
                         color = colors.text_muted,
                         fontSize = 12.sp,
+                        lineHeight = 18.sp,
                     )
-                    if (!index_paused && progress.indexed in 1 until progress.total) {
-                        val elapsed = System.currentTimeMillis() - progress.started_at_ms
-                        if (elapsed > 2_000L) {
-                            val remaining_ms = elapsed.toDouble() / progress.indexed *
-                                (progress.total - progress.indexed)
-                            val remaining_min = (remaining_ms / 60_000.0).toInt()
-                            Text(
-                                text = if (remaining_min >= 1) {
-                                    stringResource(R.string.index_time_remaining_min, remaining_min)
-                                } else {
-                                    stringResource(R.string.index_time_remaining_less_min)
+                }
+                SearchBodyKind.loading -> {
+                    val search_skeleton_geometry = org.astermail.android.ui.mail.remember_skeleton_geometry(
+                        org.astermail.android.ui.mail.SkeletonPhase.skeleton,
+                        org.astermail.android.ui.mail.skeleton_geometry_of(settings_state.preferences),
+                    )
+                    org.astermail.android.ui.mail.inbox_skeleton(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = AsterSpacing.sm),
+                        list_density = search_skeleton_geometry.list_density,
+                        show_avatar = search_skeleton_geometry.show_avatar,
+                        show_preview = search_skeleton_geometry.show_preview,
+                    )
+                }
+                SearchBodyKind.empty -> Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(AsterSpacing.xxl),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    val corpus_error = search_state.error
+                    val filters_active = parsed.operators.isNotEmpty()
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = if (corpus_error != null) TablerIcons.AlertCircle else TablerIcons.Search,
+                            contentDescription = null,
+                            tint = colors.text_muted,
+                            modifier = Modifier.size(40.dp),
+                        )
+                        Spacer(Modifier.height(AsterSpacing.md))
+                        Text(
+                            text = corpus_error ?: stringResource(
+                                if (filters_active) R.string.search_no_results_filtered else R.string.no_results_found,
+                            ),
+                            color = colors.text_muted,
+                            fontSize = 15.sp,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        )
+                        if (corpus_error != null) {
+                            Spacer(Modifier.height(AsterSpacing.md))
+                            org.astermail.android.design.components.AsterSecondaryButton(
+                                label = stringResource(R.string.retry),
+                                onClick = { mail_vm.build_search_index(force = true) },
+                            )
+                        } else if (filters_active) {
+                            Spacer(Modifier.height(AsterSpacing.md))
+                            org.astermail.android.design.components.AsterSecondaryButton(
+                                label = stringResource(R.string.search_clear_filters),
+                                onClick = {
+                                    set_free_text(parse_query(free_text).free_text)
+                                    operator_chips = emptyList()
                                 },
-                                color = colors.text_muted,
-                                fontSize = 12.sp,
                             )
                         }
                     }
                 }
-                Text(
-                    text = stringResource(if (index_paused) R.string.resume else R.string.pause),
-                    color = colors.accent_blue,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .clip(SquircleShape(8.dp))
-                        .clickable {
-                            if (index_paused) mail_vm.resume_search_indexing()
-                            else mail_vm.pause_search_indexing()
-                        }
-                        .padding(horizontal = AsterSpacing.sm, vertical = 4.dp),
-                )
-            }
-        }
-
-        val body_status = body_progress
-        if (has_query && body_status != null && body_status.total > 0 && !search_state.is_indexing && !index_paused) {
-            body_index_banner(indexed = body_status.indexed, total = body_status.total)
-        }
-
-        if (has_query && search_state.is_partial && !search_state.is_indexing && !index_paused) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(AsterSpacing.md),
-            ) {
-                Text(
-                    text = stringResource(R.string.search_results_incomplete),
-                    color = colors.text_muted,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = stringResource(R.string.retry),
-                    color = colors.accent_blue,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .clip(SquircleShape(8.dp))
-                        .clickable { mail_vm.build_search_index(force = true) }
-                        .padding(horizontal = AsterSpacing.sm, vertical = 4.dp),
-                )
-            }
-        }
-
-        if (!has_query) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .vertical_scroll_with_indicator()
-                    .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.lg),
-            ) {
-                Text(
-                    text = stringResource(R.string.search_operators),
-                    color = colors.text_muted,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Spacer(Modifier.height(AsterSpacing.md))
-                search_tip(stringResource(R.string.op_from), stringResource(R.string.op_from_desc)) { set_free_text("from:"); focus_requester.requestFocus() }
-                search_tip(stringResource(R.string.op_to), stringResource(R.string.op_to_desc)) { set_free_text("to:"); focus_requester.requestFocus() }
-                search_tip(stringResource(R.string.op_subject), stringResource(R.string.op_subject_desc)) { set_free_text("subject:"); focus_requester.requestFocus() }
-                search_tip(stringResource(R.string.op_has_attachment), stringResource(R.string.op_has_attachment_desc)) { set_free_text("has:attachment"); focus_requester.requestFocus() }
-                search_tip(stringResource(R.string.op_is_unread), stringResource(R.string.op_is_unread_desc)) { set_free_text("is:unread"); focus_requester.requestFocus() }
-                search_tip(stringResource(R.string.op_is_starred), stringResource(R.string.op_is_starred_desc)) { set_free_text("is:starred"); focus_requester.requestFocus() }
-                search_tip(stringResource(R.string.op_in_inbox), stringResource(R.string.op_in_inbox_desc)) { set_free_text("in:"); focus_requester.requestFocus() }
-                search_tip(stringResource(R.string.op_before), stringResource(R.string.op_before_desc)) { set_free_text("before:"); focus_requester.requestFocus() }
-                search_tip(stringResource(R.string.op_after), stringResource(R.string.op_after_desc)) { set_free_text("after:"); focus_requester.requestFocus() }
-                search_tip(stringResource(R.string.op_date_today), stringResource(R.string.op_date_today_desc)) { set_free_text("date:"); focus_requester.requestFocus() }
-                search_tip(stringResource(R.string.op_label), stringResource(R.string.op_label_desc)) { set_free_text("label:"); focus_requester.requestFocus() }
-                search_tip(stringResource(R.string.op_filename), stringResource(R.string.op_filename_desc)) { set_free_text("filename:"); focus_requester.requestFocus() }
-                search_tip(stringResource(R.string.op_negate), stringResource(R.string.op_negate_desc)) { set_free_text("-from:"); focus_requester.requestFocus() }
-                Spacer(Modifier.height(AsterSpacing.lg))
-                Text(
-                    text = stringResource(R.string.search_privacy_note),
-                    color = colors.text_muted,
-                    fontSize = 12.sp,
-                    lineHeight = 18.sp,
-                )
-            }
-        } else if (result_threads.isEmpty() && results_pending) {
-            val search_skeleton_geometry = org.astermail.android.ui.mail.remember_skeleton_geometry(
-                org.astermail.android.ui.mail.SkeletonPhase.skeleton,
-                org.astermail.android.ui.mail.skeleton_geometry_of(settings_state.preferences),
-            )
-            org.astermail.android.ui.mail.inbox_skeleton(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(top = AsterSpacing.sm),
-                list_density = search_skeleton_geometry.list_density,
-                show_avatar = search_skeleton_geometry.show_avatar,
-                show_preview = search_skeleton_geometry.show_preview,
-            )
-        } else if (result_threads.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                val corpus_error = search_state.error
-                val filters_active = parsed.operators.isNotEmpty()
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = if (corpus_error != null) TablerIcons.AlertCircle else TablerIcons.Search,
-                        contentDescription = null,
-                        tint = colors.text_muted,
-                        modifier = Modifier.size(40.dp),
-                    )
-                    Spacer(Modifier.height(AsterSpacing.md))
+                SearchBodyKind.results -> Column(modifier = Modifier.fillMaxSize()) {
                     Text(
-                        text = corpus_error ?: stringResource(
-                            if (filters_active) R.string.search_no_results_filtered else R.string.no_results_found,
-                        ),
+                        text = pluralStringResource(R.plurals.search_results_count, result_threads.size, result_threads.size),
                         color = colors.text_muted,
-                        fontSize = 15.sp,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp,
+                        modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
                     )
-                    if (corpus_error != null) {
-                        Spacer(Modifier.height(AsterSpacing.md))
-                        org.astermail.android.design.components.AsterSecondaryButton(
-                            label = stringResource(R.string.retry),
-                            onClick = { mail_vm.build_search_index(force = true) },
-                        )
-                    } else if (filters_active) {
-                        Spacer(Modifier.height(AsterSpacing.md))
-                        org.astermail.android.design.components.AsterSecondaryButton(
-                            label = stringResource(R.string.search_clear_filters),
-                            onClick = {
-                                set_free_text(parse_query(free_text).free_text)
-                                operator_chips = emptyList()
+                    val row_highlight_terms = remember(parsed) { search_highlight_terms_for(parsed) }
+                    androidx.compose.runtime.CompositionLocalProvider(
+                        org.astermail.android.ui.mail.local_read_fade_scale provides SEARCH_READ_FADE_SCALE,
+                        local_search_row_terms provides row_highlight_terms,
+                    ) {
+                        search_results_list(
+                            threads = result_threads,
+                            select_mode = select_mode,
+                            selected_ids = selected_ids,
+                            on_open_email = { id ->
+                                if (visible_corpus.firstOrNull { it.id == id }?.raw_item?.item_type == "draft") {
+                                    on_open_draft(id)
+                                } else {
+                                    search_highlight_handoff.offer(id, row_highlight_terms)
+                                    on_open_email(id)
+                                }
                             },
+                            on_toggle_selection = { toggle_selection(it) },
+                            on_enter_select_mode = { id ->
+                                dismiss_keyboard()
+                                select_mode = true
+                                selected_ids.clear()
+                                selected_ids.add(id)
+                            },
+                            on_toggle_star = { mail_vm.toggle_star(it) },
+                            on_set_selection = { ids ->
+                                dismiss_keyboard()
+                                select_mode = true
+                                selected_ids.clear()
+                                selected_ids.addAll(ids)
+                            },
+                            on_scroll_busy = { results_scrolling.value = it },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    org.astermail.android.design.AsterExpandVisibility(visible = select_mode) {
+                        search_select_bottom_bar(
+                            selected_count = selected_ids.size,
+                            custom_actions = selection_toolbar_slots,
+                            on_action = { run_selection_action(it) },
+                            on_more = { show_selection_overflow = true },
+                            selection_all_starred = selection_all_starred,
+                            selection_all_read = selection_all_read,
+                            selection_all_trashed = selection_all_trashed,
                         )
                     }
                 }
-            }
-        } else if (result_threads.isNotEmpty()) {
-            Text(
-                text = pluralStringResource(R.plurals.search_results_count, result_threads.size, result_threads.size),
-                color = colors.text_muted,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
-            )
-            search_results_list(
-                threads = result_threads,
-                select_mode = select_mode,
-                selected_ids = selected_ids,
-                on_open_email = { id ->
-                    if (visible_corpus.firstOrNull { it.id == id }?.raw_item?.item_type == "draft") {
-                        on_open_draft(id)
-                    } else {
-                        on_open_email(id)
-                    }
-                },
-                on_toggle_selection = { toggle_selection(it) },
-                on_enter_select_mode = { id ->
-                    dismiss_keyboard()
-                    select_mode = true
-                    selected_ids.clear()
-                    selected_ids.add(id)
-                },
-                on_toggle_star = { mail_vm.toggle_star(it) },
-                on_set_selection = { ids ->
-                    dismiss_keyboard()
-                    select_mode = true
-                    selected_ids.clear()
-                    selected_ids.addAll(ids)
-                },
-                modifier = Modifier.weight(1f),
-            )
-            if (select_mode) {
-                search_select_bottom_bar(
-                    selected_count = selected_ids.size,
-                    custom_actions = selection_toolbar_slots,
-                    on_action = { run_selection_action(it) },
-                    on_more = { show_selection_overflow = true },
-                    selection_all_starred = selection_all_starred,
-                    selection_all_read = selection_all_read,
-                    selection_all_trashed = selection_all_trashed,
-                )
             }
         }
     }
@@ -1138,14 +1236,16 @@ private fun search_tip(syntax: String, description: String, on_click: () -> Unit
             color = colors.accent_blue,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.width(140.dp),
-            maxLines = 1,
+            modifier = Modifier.weight(0.42f),
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
+        Spacer(Modifier.width(AsterSpacing.sm))
         Text(
             text = description,
             color = colors.text_muted,
             fontSize = 13.sp,
+            modifier = Modifier.weight(0.58f),
         )
     }
 }
@@ -1200,16 +1300,8 @@ private fun search_chip(text: String, selected: Boolean, on_click: () -> Unit) {
         colors.bg_secondary
     }
     val text_color = if (selected) colors.on_accent else colors.text_secondary
-    val animated_bg by animateColorAsState(
-        targetValue = bg,
-        animationSpec = tween(org.astermail.android.design.AsterDuration.menu_state_change),
-        label = "chip_bg",
-    )
-    val animated_text by animateColorAsState(
-        targetValue = text_color,
-        animationSpec = tween(org.astermail.android.design.AsterDuration.menu_state_change),
-        label = "chip_text",
-    )
+    val animated_bg by org.astermail.android.design.aster_animate_color(bg, label = "chip_bg")
+    val animated_text by org.astermail.android.design.aster_animate_color(text_color, label = "chip_text")
     Box(
         modifier = Modifier
             .clip(SquircleShape(999.dp))
@@ -1223,16 +1315,32 @@ private fun search_chip(text: String, selected: Boolean, on_click: () -> Unit) {
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
+            softWrap = false,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.widthIn(max = search_chip_max_width),
         )
     }
 }
+
+private val search_bar_height = 52.dp
+
+private val search_chip_max_width = 220.dp
+
+private val search_field_text_style = TextStyle(
+    fontSize = 16.sp,
+    lineHeight = 22.sp,
+    lineHeightStyle = LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Center,
+        trim = LineHeightStyle.Trim.None,
+    ),
+)
 
 @Composable
 private fun search_input_bar(
     field_value: TextFieldValue,
     on_field_change: (TextFieldValue) -> Unit,
     show_placeholder: Boolean,
+    placeholder: String,
     show_clear: Boolean,
     on_clear: () -> Unit,
     on_back: () -> Unit,
@@ -1248,7 +1356,7 @@ private fun search_input_bar(
             .fillMaxWidth()
             .padding(horizontal = AsterSpacing.sm)
             .padding(top = AsterSpacing.sm, bottom = AsterSpacing.xs)
-            .height(52.dp),
+            .heightIn(min = search_bar_height),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AsterIconButton(
@@ -1261,34 +1369,54 @@ private fun search_input_bar(
         Row(
             modifier = Modifier
                 .weight(1f)
-                .height(52.dp)
-                .padding(horizontal = AsterSpacing.sm)
+                .padding(horizontal = AsterSpacing.xs)
+                .heightIn(min = search_bar_height)
                 .acrylic(colors, SquircleShape(26.dp), search_field_bg_color(colors))
-                .padding(horizontal = AsterSpacing.lg),
+                .padding(
+                    start = AsterSpacing.md + AsterSpacing.xs / 2,
+                    end = if (show_clear) AsterSpacing.xs else AsterSpacing.md,
+                    top = AsterSpacing.xs,
+                    bottom = AsterSpacing.xs,
+                ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (show_clear) {
-                Spacer(Modifier.width(28.dp + AsterSpacing.sm))
-            }
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                if (show_placeholder) {
-                    Text(
-                        text = stringResource(R.string.search_mail),
-                        color = colors.text_muted,
-                        fontSize = 16.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+            Icon(
+                imageVector = TablerIcons.Search,
+                contentDescription = null,
+                tint = colors.text_muted,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(AsterSpacing.sm + AsterSpacing.xs / 2))
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                val placeholder_alpha by androidx.compose.animation.core.animateFloatAsState(
+                    targetValue = if (show_placeholder) 1f else 0f,
+                    animationSpec = androidx.compose.animation.core.tween(if (show_placeholder) 120 else 60),
+                    label = "search_placeholder_alpha",
+                )
+                if (show_placeholder || placeholder_alpha > 0f) {
+                    androidx.compose.animation.Crossfade(
+                        targetState = placeholder,
+                        animationSpec = androidx.compose.animation.core.tween(160),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer { alpha = placeholder_alpha },
+                        label = "search_placeholder",
+                    ) { hint ->
+                        Text(
+                            text = hint,
+                            style = search_field_text_style.copy(color = colors.text_muted),
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.fillMaxWidth().testTag("search_placeholder"),
+                        )
+                    }
                 }
                 BasicTextField(
                     value = field_value,
                     onValueChange = on_field_change,
                     singleLine = true,
-                    textStyle = TextStyle(
-                        color = colors.text_primary,
-                        fontSize = 16.sp,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    ),
+                    textStyle = search_field_text_style.copy(color = colors.text_primary),
                     cursorBrush = SolidColor(colors.accent_blue),
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                         imeAction = androidx.compose.ui.text.input.ImeAction.Search,
@@ -1300,10 +1428,10 @@ private fun search_input_bar(
                 )
             }
             if (show_clear) {
-                Spacer(Modifier.width(AsterSpacing.sm))
+                Spacer(Modifier.width(AsterSpacing.xs))
                 Box(
                     modifier = Modifier
-                        .size(28.dp)
+                        .size(40.dp)
                         .clip(SquircleShape(999.dp))
                         .clickable(onClick = on_clear)
                         .testTag("search_clear"),
@@ -1355,6 +1483,59 @@ private fun search_input_bar(
 }
 
 @Composable
+private fun search_status_section(
+    mail_vm: MailViewModel,
+    has_query: Boolean,
+    metadata_indexing: Boolean,
+    partial: Boolean,
+    search_refreshing: Boolean,
+    reduce_motion: Boolean,
+) {
+    val colors = AsterMaterial.colors
+    val index_progress by mail_vm.search_index_progress.collectAsStateWithLifecycle()
+    val index_paused by mail_vm.search_index_paused.collectAsStateWithLifecycle()
+    val body_progress by mail_vm.body_index_progress.collectAsStateWithLifecycle()
+    val search_status = search_status_of(
+        has_query = has_query,
+        metadata_indexing = metadata_indexing,
+        paused = index_paused,
+        metadata_progress = index_progress,
+        body_progress = body_progress,
+        partial = partial,
+    )
+    search_status_strip(
+        status = search_status,
+        on_action = { action ->
+            when (action) {
+                SearchStatusAction.pause -> mail_vm.pause_search_indexing()
+                SearchStatusAction.resume -> mail_vm.resume_search_indexing()
+                SearchStatusAction.retry -> mail_vm.build_search_index(force = true)
+            }
+        },
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(2.dp),
+    ) {
+        val refresh_bar_visible = org.astermail.android.design.remember_steady_flag(search_refreshing && search_status == null)
+        androidx.compose.animation.AnimatedVisibility(
+            visible = refresh_bar_visible,
+            enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(if (reduce_motion) 0 else 160)),
+            exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(if (reduce_motion) 0 else 220)),
+        ) {
+            org.astermail.android.design.components.aster_linear_progress(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(2.dp),
+                color = colors.accent_blue,
+                track_color = Color.Transparent,
+            )
+        }
+    }
+}
+
+@Composable
 internal fun search_results_list(
     threads: List<ThreadRow>,
     select_mode: Boolean,
@@ -1364,10 +1545,19 @@ internal fun search_results_list(
     on_enter_select_mode: (String) -> Unit,
     on_toggle_star: (String) -> Unit,
     on_set_selection: (List<String>) -> Unit = {},
+    on_scroll_busy: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val selected_set = selected_ids.toSet()
     val list_state = rememberLazyListState()
+    val live_scroll_busy by rememberUpdatedState(on_scroll_busy)
+    LaunchedEffect(list_state) {
+        androidx.compose.runtime.snapshotFlow { list_state.isScrollInProgress }
+            .collect { live_scroll_busy(it) }
+    }
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { live_scroll_busy(false) }
+    }
     val haptics = LocalHapticFeedback.current
     val settings_vm = org.astermail.android.settings.optional_shared_settings_view_model()
     val settings_state = settings_vm?.state?.collectAsStateWithLifecycle()?.value
@@ -1379,11 +1569,11 @@ internal fun search_results_list(
     val live_threads by rememberUpdatedState(threads)
     val live_enter_select_mode by rememberUpdatedState(on_enter_select_mode)
     val live_set_selection by rememberUpdatedState(on_set_selection)
-    val id_at_offset: (Float) -> String? = remember(list_state) {
+    val index_at_visible_offset: (Float) -> Int? = remember(list_state) {
         { y ->
             list_state.layoutInfo.visibleItemsInfo
                 .firstOrNull { y >= it.offset && y < it.offset + it.size }
-                ?.key as? String
+                ?.index
         }
     }
     val drag_anchor_index = remember { androidx.compose.runtime.mutableIntStateOf(-1) }
@@ -1394,9 +1584,8 @@ internal fun search_results_list(
     var drag_selecting by remember { mutableStateOf(false) }
 
     fun index_at_offset(y: Float): Int? {
-        val id = id_at_offset(y) ?: return null
-        val idx = live_threads.indexOfFirst { it.newest.id == id }
-        return if (idx >= 0) idx else null
+        val idx = index_at_visible_offset(y) ?: return null
+        return idx.takeIf { it in live_threads.indices }
     }
 
     fun apply_drag_selection(y: Float) {
@@ -1440,6 +1629,7 @@ internal fun search_results_list(
         state = list_state,
         modifier = Modifier
             .fillMaxSize()
+            .lazy_top_fade(list_state)
             .testTag("search_results")
             .pointerInput(Unit) {
                 detectDragGesturesAfterLongPress(
@@ -1534,7 +1724,7 @@ internal fun search_select_top_bar(
         modifier = Modifier
             .fillMaxWidth()
             .glass_bar(colors)
-            .height(56.dp)
+            .heightIn(min = 56.dp)
             .padding(horizontal = AsterSpacing.xs)
             .testTag("search_select_bar"),
         verticalAlignment = Alignment.CenterVertically,
@@ -1596,13 +1786,15 @@ internal fun search_select_bottom_bar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                custom_actions.forEach { action_id ->
-                    val action = org.astermail.android.ui.mail.selection_toolbar_action_for(
-                        action_id,
-                        selection_all_starred,
-                        selection_all_read,
-                        selection_all_trashed,
-                    ) ?: return@forEach
+                val shared_label_size = remember { androidx.compose.runtime.mutableFloatStateOf(11f) }
+                androidx.compose.runtime.CompositionLocalProvider(local_search_label_size provides shared_label_size) {
+                org.astermail.android.ui.mail.resolve_selection_toolbar(
+                    custom_actions,
+                    selection_all_starred,
+                    selection_all_read,
+                    selection_all_trashed,
+                ).forEach { action ->
+                    val action_id = action.id
                     search_select_action(
                         icon = action.icon,
                         label = stringResource(action.label_res),
@@ -1619,10 +1811,13 @@ internal fun search_select_bottom_bar(
                     on_click = on_more,
                     test_tag = "search_sel_action_more",
                 )
+                }
             }
         }
     }
 }
+
+private val local_search_label_size = androidx.compose.runtime.compositionLocalOf<androidx.compose.runtime.MutableFloatState?> { null }
 
 @Composable
 private fun androidx.compose.foundation.layout.RowScope.search_select_action(
@@ -1651,11 +1846,13 @@ private fun androidx.compose.foundation.layout.RowScope.search_select_action(
             tint = resolved_tint,
             modifier = Modifier.size(22.dp),
         )
-        var label_size by remember(label) { mutableStateOf(11.sp) }
+        val shared_size = local_search_label_size.current
+        var own_size by remember(label) { mutableStateOf(11f) }
+        val label_size = shared_size?.floatValue ?: own_size
         Text(
             text = label,
             color = resolved_tint,
-            fontSize = label_size,
+            fontSize = label_size.sp,
             lineHeight = 13.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
@@ -1663,8 +1860,8 @@ private fun androidx.compose.foundation.layout.RowScope.search_select_action(
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             overflow = TextOverflow.Ellipsis,
             onTextLayout = { result ->
-                if (result.hasVisualOverflow && label_size.value > 8f) {
-                    label_size = (label_size.value - 0.5f).sp
+                if (result.hasVisualOverflow && label_size > 8f) {
+                    if (shared_size != null) shared_size.floatValue = label_size - 0.5f else own_size = label_size - 0.5f
                 }
             },
         )

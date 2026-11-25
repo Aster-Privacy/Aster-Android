@@ -82,7 +82,7 @@ fun guard_rotate_rescue_screen(
     on_passkey: () -> Unit = {},
 ) {
     secure_screen()
-    detail_scaffold(title = stringResource(R.string.guard_rotate_title), on_back = on_back) {
+    detail_scaffold(title = "", on_back = on_back) {
         when (val result = state.result) {
             guard_rotate_result.applied -> {
                 guard_result_block(
@@ -101,17 +101,23 @@ fun guard_rotate_rescue_screen(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-            null -> guard_rotate_form(
-                state,
-                on_save_file,
-                on_print,
-                on_copy,
-                on_confirm_input,
-                on_password,
-                on_totp,
-                on_submit,
-                on_passkey,
-            )
+            null -> {
+                guard_page_hero(
+                    title = stringResource(R.string.guard_rotate_title),
+                    info = stringResource(R.string.guard_intro_rescue_body),
+                )
+                guard_rotate_form(
+                    state,
+                    on_save_file,
+                    on_print,
+                    on_copy,
+                    on_confirm_input,
+                    on_password,
+                    on_totp,
+                    on_submit,
+                    on_passkey,
+                )
+            }
         }
     }
 }

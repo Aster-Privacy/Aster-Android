@@ -278,7 +278,7 @@
     <string name="unsubscribed">تم إلغاء الاشتراك</string>
     <string name="scanning">جارٍ الفحص...</string>
     <string name="no_mailing_lists">لا توجد قوائم بريدية بعد</string>
-    <string name="scan_inbox_hint">انقر على «فحص البريد الوارد» للعثور على النشرات الإخبارية والمرسلين التسويقيين.</string>
+    <string name="scan_inbox_hint">اسحب للأسفل لفحص بريدك الوارد بحثًا عن النشرات الإخبارية والمرسلين التسويقيين.</string>
     <string name="active_tab">نشط</string>
     <string name="unsubscribed_tab">الاشتراكات الملغاة</string>
     <string name="reactivate">إعادة التفعيل</string>
@@ -802,6 +802,7 @@
     <string name="unblock">إلغاء الحظر</string>
     <string name="block_a_sender">حظر مُرسِل</string>
     <string name="block_sender_hint">أدخل عنوان بريد إلكتروني أو نطاقًا. سينتقل البريد الجديد منهم مباشرة إلى الرسائل المزعجة.</string>
+    <string name="block_sender_invalid">أدخل عنوان بريد إلكتروني أو نطاقًا مثل example.com.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">حظر</string>
     <string name="blocked_domain">النطاق بالكامل</string>
@@ -1259,6 +1260,26 @@
     <string name="unsubscribe_failed">فشل إلغاء الاشتراك</string>
     <string name="unsubscribe_manual_required">لا يدعم هذا المرسل إلغاء الاشتراك التلقائي. يتيح لك الرابط الموجود في الرسالة إلغاء الاشتراك بنفسك.</string>
     <string name="bulk_unsubscribe_failed">فشل إلغاء الاشتراك المجمع</string>
+    <string name="unsubscribe_in_progress">جارٍ إلغاء الاشتراك</string>
+    <string name="subscription_hero_summary">%1$s من المرسلين النشطين، و%2$s تم إلغاء الاشتراك منهم، و%3$s من الرسائل</string>
+    <string name="unsubscribe_rate_limited">لقد أرسلت عددًا كبيرًا جدًا من طلبات إلغاء الاشتراك. حاول مرة أخرى بعد دقيقة.</string>
+    <string name="unsubscribe_opened_in_browser">لا يتيح لك هذا المرسل إلغاء الاشتراك إلا من موقعه الإلكتروني. أكمل العملية في الصفحة التي فُتحت في متصفحك.</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="zero">تعذّر إلغاء الاشتراك من %d مرسل</item>
+        <item quantity="one">تعذّر إلغاء الاشتراك من مرسل واحد</item>
+        <item quantity="two">تعذّر إلغاء الاشتراك من مرسلَين</item>
+        <item quantity="few">تعذّر إلغاء الاشتراك من %d مرسلين</item>
+        <item quantity="many">تعذّر إلغاء الاشتراك من %d مرسلًا</item>
+        <item quantity="other">تعذّر إلغاء الاشتراك من %d مرسل</item>
+    </plurals>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="zero">لا يوجد مرسلون يتطلبون إلغاء الاشتراك من مواقعهم</item>
+        <item quantity="one">مرسل واحد يتطلب منك إلغاء الاشتراك من موقعه</item>
+        <item quantity="two">مرسلان يتطلبان منك إلغاء الاشتراك من موقعيهما</item>
+        <item quantity="few">%d مرسلين يتطلبون منك إلغاء الاشتراك من مواقعهم</item>
+        <item quantity="many">%d مرسلًا يتطلبون منك إلغاء الاشتراك من مواقعهم</item>
+        <item quantity="other">%d مرسل يتطلبون منك إلغاء الاشتراك من مواقعهم</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="zero">تم إلغاء الاشتراك من %d مرسل</item>
         <item quantity="one">تم إلغاء الاشتراك من مرسل واحد</item>
@@ -1598,10 +1619,15 @@
     <string name="reaction_remove_failed">تعذّرت إزالة التفاعل</string>
     <string name="copy_address">نسخ العنوان</string>
     <string name="sender_on_aster">حساب Aster</string>
+    <string name="sender_on_aster_logo">حساب %1$s</string>
     <string name="messages_from_sender">البحث عن بريد من هذا المرسل</string>
     <string name="send_email_to_sender">مراسلة هذا المرسل</string>
     <string name="add_to_contacts">حفظ في جهات الاتصال</string>
     <string name="remove_from_contacts">إزالة من جهات الاتصال</string>
+    <string name="sender_action_new_message">رسالة جديدة</string>
+    <string name="sender_action_add_contact">إضافة جهة اتصال</string>
+    <string name="sender_action_view_contact">عرض جهة الاتصال</string>
+    <string name="sender_action_in_contacts">في جهات الاتصال</string>
     <string name="contact_added_named">تم حفظ %1$s في جهات الاتصال</string>
     <string name="contact_removed_named">تمت إزالة %1$s من جهات الاتصال</string>
     <string name="blocked_content_details_title">محتوى محظور</string>
@@ -2404,6 +2430,14 @@
         <item quantity="many">تم العثور على %d اشتراكًا جديدًا</item>
         <item quantity="other">تم العثور على %d اشتراك جديد</item>
     </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="zero">تم فحص %1$s من %2$s رسالة ولم يتم العثور على مرسلين</item>
+        <item quantity="one">تم فحص %1$s من %2$s رسالة والعثور على مرسل واحد</item>
+        <item quantity="two">تم فحص %1$s من %2$s رسالة والعثور على مرسلَين</item>
+        <item quantity="few">تم فحص %1$s من %2$s رسالة والعثور على %3$s مرسلين</item>
+        <item quantity="many">تم فحص %1$s من %2$s رسالة والعثور على %3$s مرسلًا</item>
+        <item quantity="other">تم فحص %1$s من %2$s رسالة والعثور على %3$s مرسل</item>
+    </plurals>
     <string name="reaction_info_title">تفاعل</string>
     <string name="reaction_badge_label">تفاعل جديد</string>
     <string name="notification_new_reaction">لديك تفاعل جديد</string>
@@ -2938,6 +2972,8 @@
     <string name="contact_add_failed">تعذّر حفظ %1$s في جهات الاتصال</string>
     <string name="contact_remove_failed">تعذّرت إزالة %1$s من جهات الاتصال</string>
     <string name="copy_failed">تعذّر النسخ. حاول مرة أخرى.</string>
+    <string name="copy_subject">نسخ الموضوع</string>
+    <string name="subject_copied">تم نسخ الموضوع</string>
     <string name="create_label_subtitle">ميّز الرسائل بلون تختاره</string>
     <string name="delete_signature_message">هل تريد حذف «%1$s»؟ لا يمكن التراجع عن ذلك.</string>
     <string name="delete_vacation_reply_confirm">سيتم حذف رسالة الغياب وتواريخها، ولا يمكن التراجع عن ذلك.</string>
@@ -3112,6 +3148,9 @@
     <string name="translation_storage_remove_all">إزالة الكل</string>
     <string name="translation_storage_removed">تمت إزالة حزم اللغات</string>
     <string name="translation_offer_download">هذه الرسالة بلغة %1$s. ستؤدي ترجمتها إلى تنزيل حزمة لغة.</string>
+    <string name="translation_bar_translate_to">الترجمة إلى %1$s</string>
+    <string name="translation_bar_translated_from">مترجمة من %1$s</string>
+    <string name="translation_bar_downloading">جارٍ تنزيل حزمة لغة %1$s</string>
     <string name="contact_support">تواصل مع الدعم</string>
     <string name="domain_purchase_manage">إدارة</string>
     <string name="domain_purchase_cancel_payment_title">إلغاء هذه الدفعة؟</string>
@@ -3246,6 +3285,10 @@
     <string name="remove_photo">إزالة الصورة</string>
     <string name="add_photo">إضافة صورة</string>
     <string name="photo_too_large">اختر صورة أصغر</string>
+    <string name="contact_photo_unreadable">يتعذر على Aster فتح هذه الصورة. جرّب صورة أخرى.</string>
+    <string name="contact_discard_changes_title">هل تريد تجاهل التغييرات؟</string>
+    <string name="contact_discard_changes_message">لم يتم حفظ تغييراتك على جهة الاتصال هذه.</string>
+    <string name="contact_keep_editing">متابعة التعديل</string>
     <string name="no_contacts_yet">لا توجد جهات اتصال بعد</string>
     <string name="no_contacts_match">لا توجد جهات اتصال تطابق \"%1$s\"</string>
     <string name="no_contacts_in_trash">المهملات فارغة</string>
@@ -3822,6 +3865,13 @@
         <item quantity="other">تمت إضافة %d جهة اتصال</item>
     </plurals>
     <string name="body_index_status">جارٍ فهرسة نصوص الرسائل للبحث: %1$d من %2$d</string>
+    <string name="search_status_indexing_mail">جارٍ فهرسة البريد</string>
+    <string name="search_status_indexing_text">جارٍ فهرسة نص الرسائل</string>
+    <string name="search_status_waiting_wifi">تُستأنف فهرسة نص الرسائل عند الاتصال بشبكة Wi-Fi</string>
+    <string name="search_status_paused">الفهرسة متوقفة مؤقتًا</string>
+    <string name="search_status_partial">قد تكون النتائج غير مكتملة</string>
+    <string name="search_status_count">%1$s من %2$s</string>
+    <string name="search_refine_placeholder">البحث ضمن النتائج</string>
     <string name="mail_key_upgrade_title">جارٍ تحديث بريدك المحفوظ</string>
     <string name="mail_key_upgrade_running">يعيد Aster Mail تشفير رسائلك المحفوظة باستخدام مفاتيحك الحالية. أبقِ هذه النافذة مفتوحة حتى تنتهي العملية.</string>
     <string name="mail_key_upgrade_failed">تعذّر على Aster Mail إكمال تحديث رسائلك المحفوظة. لم يتغير بريدك. تحقق من اتصالك، ثم حاول مرة أخرى.</string>
@@ -3858,10 +3908,21 @@
     <string name="attachment_unverified">مرفق لم يتم التحقق منه</string>
     <string name="confirm_back_exit">التأكيد قبل الخروج</string>
     <string name="confirm_back_exit_subtitle">اضغط على زر الرجوع مرتين لمغادرة التطبيق من البريد الوارد</string>
+    <string name="toast_position_title">موضع التنبيهات داخل التطبيق</string>
+    <string name="toast_position_subtitle">مكان ظهور التنبيهات أثناء استخدام التطبيق</string>
+    <string name="toast_position_top">أعلى</string>
+    <string name="toast_position_bottom">أسفل</string>
     <string name="mail_priority">الأولوية</string>
     <string name="mail_priority_high">عالية</string>
     <string name="mail_priority_normal">عادية</string>
     <string name="mail_priority_low">منخفضة</string>
     <string name="mail_high_priority">أولوية عالية</string>
     <string name="mail_low_priority">أولوية منخفضة</string>
+    <string name="official_sender">عنوان Aster الرسمي</string>
+    <string name="official_sender_desc">هذه الرسالة من عنوان Aster رسمي. لن يطلب منك Aster كلمة المرور أو عبارة الاسترداد عبر البريد الإلكتروني أبدًا.</string>
+    <string name="search_match_position">%1$d من %2$d</string>
+    <string name="search_match_position_description">التطابق %1$d من %2$d</string>
+    <string name="search_match_previous">التطابق السابق</string>
+    <string name="search_match_next">التطابق التالي</string>
+    <string name="search_match_clear">مسح التمييز</string>
 </resources>

@@ -70,6 +70,7 @@ data class ContactsUiState(
     val trashed_contacts: List<Contact> = emptyList(),
     val selected_contact: Contact? = null,
     val is_loading: Boolean = false,
+    val contact_loading: Boolean = false,
     val is_syncing: Boolean = false,
     val sync_message: String? = null,
     val error: String? = null,
@@ -88,6 +89,7 @@ data class ContactsUiState(
     val import_total: Int = 0,
     val pending_ids: Set<String> = emptySet(),
     val contacts_loaded: Boolean = false,
+    val contacts_settled: Boolean = false,
     val groups_loaded: Boolean = false,
     val groups_load_failed: Boolean = false,
     val group_memberships: Map<String, Set<String>>? = null,
@@ -136,6 +138,17 @@ class ContactsViewModel @Inject constructor(
     private var groups_in_flight = false
     private var groups_reload_pending = false
 
+    private fun remember_deleted(contacts: Collection<Contact>) {
+        if (contacts.isEmpty()) return
+        val account_id = repository.current_account() ?: return
+        runCatching { DeletedContactTombstones(context).record(account_id, deletion_tombstone_keys(contacts)) }
+    }
+
+    private fun forget_deleted(contact: Contact) {
+        val account_id = repository.current_account() ?: return
+        runCatching { DeletedContactTombstones(context).forget(account_id, deletion_tombstone_keys(contact)) }
+    }
+
     init {
         viewModelScope.launch {
             org.astermail.android.contacts.sync.ContactSyncAccounts.remote_updated.collect {
@@ -156,8 +169,18 @@ class ContactsViewModel @Inject constructor(
     fun load_contacts(quiet: Boolean = false) {
         if (list_in_flight) return
         list_in_flight = true
-        if (!quiet) _state.value = _state.value.copy(is_loading = true, error = null)
+        val needs_first_paint = _state.value.contacts.isEmpty() && !_state.value.contacts_loaded
+        if (!quiet) {
+            _state.value = _state.value.copy(is_loading = _state.value.contacts.isEmpty(), error = null)
+        }
         viewModelScope.launch {
+            if (needs_first_paint) {
+                val cached = repository.cached_contacts_snapshot()
+                    ?.filterNot { is_trash_expired(it.deleted_at) }
+                if (!cached.isNullOrEmpty() && _state.value.contacts.isEmpty() && !_state.value.contacts_loaded) {
+                    _state.value = with_contacts(_state.value, cached).copy(is_loading = false)
+                }
+            }
             val outcome = repository.fetch_contacts()
             list_in_flight = false
             outcome.fold(
@@ -168,8 +191,10 @@ class ContactsViewModel @Inject constructor(
                     _state.value = with_contacts(_state.value, kept).copy(
                         is_loading = false,
                         contacts_loaded = true,
+                        contacts_settled = true,
                     )
                     if (expired_ids.isNotEmpty()) {
+                        remember_deleted(expired)
                         launch { repository.bulk_delete_contacts(expired_ids.toList()) }
                     }
                 },
@@ -177,8 +202,11 @@ class ContactsViewModel @Inject constructor(
                     if (!quiet) {
                         _state.value = _state.value.copy(
                             is_loading = false,
+                            contacts_settled = true,
                             error = friendly_error(t),
                         )
+                    } else {
+                        _state.value = _state.value.copy(contacts_settled = true)
                     }
                 },
             )
@@ -189,7 +217,11 @@ class ContactsViewModel @Inject constructor(
 
     fun load_contact(contact_id: String) {
         latest_contact_request = contact_id
-        _state.value = _state.value.copy(is_loading = true, error = null, selected_contact = null)
+        _state.value = _state.value.copy(
+            contact_loading = true,
+            error = null,
+            selected_contact = _state.value.selected_contact?.takeIf { it.id == contact_id },
+        )
         viewModelScope.launch {
             val result = repository.fetch_contact(contact_id)
             if (latest_contact_request != contact_id) return@launch
@@ -197,12 +229,12 @@ class ContactsViewModel @Inject constructor(
                 onSuccess = { contact ->
                     _state.value = _state.value.copy(
                         selected_contact = contact,
-                        is_loading = false,
+                        contact_loading = false,
                     )
                 },
                 onFailure = { t ->
                     _state.value = _state.value.copy(
-                        is_loading = false,
+                        contact_loading = false,
                         error = friendly_error(t),
                     )
                 },
@@ -220,19 +252,29 @@ class ContactsViewModel @Inject constructor(
         _state.value = _state.value.copy(is_loading = true, error = null, save_success = false)
         viewModelScope.launch {
             val result = if (existing_id != null) {
-                repository.update_contact(existing_id, contact).map { }
+                repository.update_contact(existing_id, contact).map { existing_id }
             } else {
-                repository.create_contact(contact).map { }
+                repository.create_contact(contact).map { it.id.orEmpty() }
             }
             mutation_in_flight = false
             result.fold(
-                onSuccess = {
-                    _state.value = _state.value.copy(
+                onSuccess = { saved_id ->
+                    val current = _state.value
+                    val next = if (saved_id.isNotBlank()) {
+                        val saved = contact.copy(id = saved_id)
+                        val merged = current.contacts.filter { it.id != saved_id } + saved
+                        with_contacts(current, merged + current.trashed_contacts).let { updated ->
+                            if (updated.selected_contact?.id == saved_id) updated.copy(selected_contact = saved) else updated
+                        }
+                    } else {
+                        current
+                    }
+                    _state.value = next.copy(
                         is_loading = false,
                         save_success = true,
                     )
                     on_complete?.invoke(true)
-                    load_contacts()
+                    load_contacts(quiet = true)
                 },
                 onFailure = { t ->
                     _state.value = _state.value.copy(
@@ -261,6 +303,7 @@ class ContactsViewModel @Inject constructor(
             mutation_in_flight = false
             outcome.fold(
                 onSuccess = {
+                    remember_deleted(listOfNotNull(target))
                     val remaining = _state.value.contacts.filter { it.id != contact_id }
                     val trashed = _state.value.trashed_contacts +
                         listOfNotNull(target?.copy(deleted_at = trashed_at))
@@ -312,11 +355,16 @@ class ContactsViewModel @Inject constructor(
                 }
                 val account_id = repository.current_account()
                 val baseline = DeviceImportBaseline(context)
+                remember_deleted(existing.filter { it.deleted_at.isNotBlank() })
                 val plan = plan_contact_import(
                     incoming = device_contacts,
                     existing = existing,
                     previously_seen = account_id?.let(baseline::load),
                     refresh_details = true,
+                    tombstones = account_id
+                        ?.let { runCatching { DeletedContactTombstones(context).load(it) }.getOrNull() }
+                        .orEmpty(),
+                    known_identities = account_id?.let(baseline::load_identities).orEmpty(),
                 )
                 val in_trash = plan.in_trash
                 val new_contacts = plan.new_contacts
@@ -337,8 +385,12 @@ class ContactsViewModel @Inject constructor(
                 for (update in pending_updates) {
                     if (repository.update_contact(update.id, update).isSuccess) merged++
                 }
-                if (account_id != null && merged == pending_updates.size) {
-                    baseline.save(account_id, device_entry_keys(device_contacts))
+                if (account_id != null) {
+                    val unsent = upload.unsent.toSet()
+                    baseline.save_identities(account_id, device_identity_keys(device_contacts.filterNot { it in unsent }))
+                    if (merged == pending_updates.size) {
+                        baseline.save(account_id, device_entry_keys(device_contacts))
+                    }
                 }
                 val imported = upload.imported
                 val failed = upload.failed
@@ -1096,6 +1148,52 @@ class ContactsViewModel @Inject constructor(
         }
     }
 
+    fun set_selection_favorite(on_complete: ((Boolean) -> Unit)? = null) {
+        val selected = _state.value.selected_contacts
+        val target = favorite_target(selected)
+        if (target == null || mutation_in_flight) {
+            on_complete?.invoke(false)
+            return
+        }
+        val changes = contacts_needing_favorite(selected, target)
+        if (changes.isEmpty()) {
+            _state.value = _state.value.copy(selected_ids = emptySet())
+            on_complete?.invoke(true)
+            return
+        }
+        mutation_in_flight = true
+        val change_ids = changes.map { it.id }.toSet()
+        _state.value = _state.value.copy(
+            contacts = apply_favorite(_state.value.contacts, change_ids, target),
+            error = null,
+        )
+        viewModelScope.launch {
+            val failed = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+            val gate = kotlinx.coroutines.sync.Semaphore(bulk_delete_concurrency)
+            kotlinx.coroutines.coroutineScope {
+                changes.map { contact ->
+                    async {
+                        val outcome = gate.withPermit {
+                            repository.update_contact(contact.id, contact.copy(is_favorite = target))
+                        }
+                        if (outcome.isFailure) failed.add(contact.id)
+                    }
+                }.awaitAll()
+            }
+            mutation_in_flight = false
+            val failed_ids = failed.toSet()
+            if (failed_ids.isEmpty()) {
+                _state.value = _state.value.copy(selected_ids = emptySet())
+                on_complete?.invoke(true)
+            } else {
+                _state.value = _state.value.copy(
+                    contacts = apply_favorite(_state.value.contacts, failed_ids, !target),
+                )
+                on_complete?.invoke(false)
+            }
+        }
+    }
+
     fun delete_selection(on_complete: ((Boolean) -> Unit)? = null) {
         val ids = _state.value.selected_ids.toList()
         if (ids.isEmpty() || mutation_in_flight) {
@@ -1134,6 +1232,7 @@ class ContactsViewModel @Inject constructor(
             mutation_in_flight = false
             outcome.fold(
                 onSuccess = {
+                    remember_deleted(targets)
                     val remaining = _state.value.contacts.filterNot { it.id in ids }
                     val trashed = _state.value.trashed_contacts +
                         targets.map { it.copy(deleted_at = trashed_at) }
@@ -1167,6 +1266,7 @@ class ContactsViewModel @Inject constructor(
             mutation_in_flight = false
             outcome.fold(
                 onSuccess = {
+                    forget_deleted(contact)
                     val restored = contact.copy(deleted_at = "")
                     val trashed = _state.value.trashed_contacts.filterNot { it.id == contact.id }
                     _state.value = with_contacts(
@@ -1195,6 +1295,7 @@ class ContactsViewModel @Inject constructor(
             mutation_in_flight = false
             outcome.fold(
                 onSuccess = {
+                    remember_deleted(_state.value.trashed_contacts.filter { it.id == contact_id })
                     val trashed = _state.value.trashed_contacts.filterNot { it.id == contact_id }
                     _state.value = with_contacts(
                         _state.value,
@@ -1214,7 +1315,8 @@ class ContactsViewModel @Inject constructor(
     }
 
     fun empty_trash(on_complete: ((Boolean) -> Unit)? = null) {
-        val ids = _state.value.trashed_contacts.map { it.id }
+        val emptied = _state.value.trashed_contacts
+        val ids = emptied.map { it.id }
         if (ids.isEmpty() || mutation_in_flight) {
             on_complete?.invoke(false)
             return
@@ -1226,6 +1328,7 @@ class ContactsViewModel @Inject constructor(
             mutation_in_flight = false
             outcome.fold(
                 onSuccess = {
+                    remember_deleted(emptied)
                     _state.value = with_contacts(_state.value, _state.value.contacts).copy(
                         is_bulk_working = false,
                     )

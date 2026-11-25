@@ -17,4 +17,22 @@
     <string name="alias_import_change_file">파일 변경</string>
     <string name="alias_import_remove_file">파일 제거</string>
     <string name="alias_note_placeholder_short">사용하는 곳</string>
+    <string name="alias_status_section">상태</string>
+    <string name="alias_receive_mail">메일 받기</string>
+    <string name="alias_receive_mail_on">이 주소로 보낸 메일이 전달됩니다.</string>
+    <string name="alias_receive_mail_off">일시 중지됨. 이 주소로 오는 새 메일은 전달되지 않습니다.</string>
+    <string name="alias_pin_subtitle">이 별칭을 목록 맨 위에 고정합니다.</string>
+    <string name="alias_danger_zone">위험 구역</string>
+    <string name="alias_delete_row_subtitle">이 주소를 영구적으로 삭제합니다.</string>
+    <string name="alias_protection_section">보호</string>
+    <string name="alias_automation_section">자동화</string>
+    <string name="alias_pin_mode_title">모드</string>
+    <string name="alias_remove_entry_a11y">%1$s 삭제</string>
+    <string name="alias_create_action">별칭 만들기</string>
+    <string name="alias_usage_near">별칭 한도에 거의 도달했습니다.</string>
+    <string name="alias_usage_full">별칭 한도에 도달했습니다.</string>
+    <string name="alias_offline_banner">오프라인 상태입니다. 다시 연결되면 변경 사항이 동기화됩니다.</string>
+    <string name="alias_menu_pause">일시 중지</string>
+    <string name="alias_menu_resume">재개</string>
+    <string name="alias_directory_auto_create_a11y">%1$s에 대한 별칭 자동 생성</string>
 </resources>

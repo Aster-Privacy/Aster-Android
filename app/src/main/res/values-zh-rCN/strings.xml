@@ -278,7 +278,7 @@
     <string name="unsubscribed">已取消订阅</string>
     <string name="scanning">扫描中...</string>
     <string name="no_mailing_lists">还没有邮件列表</string>
-    <string name="scan_inbox_hint">点击“扫描收件箱”即可查找新闻通讯和营销发件人。</string>
+    <string name="scan_inbox_hint">下拉即可扫描收件箱，查找新闻通讯和营销发件人。</string>
     <string name="active_tab">活跃</string>
     <string name="unsubscribed_tab">已取消订阅</string>
     <string name="reactivate">重新激活</string>
@@ -802,6 +802,7 @@
     <string name="unblock">取消屏蔽</string>
     <string name="block_a_sender">屏蔽发件人</string>
     <string name="block_sender_hint">输入邮箱地址或域名。之后来自对方的新邮件将直接进入垃圾邮件。</string>
+    <string name="block_sender_invalid">请输入电子邮件地址或域名，例如 example.com。</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">屏蔽</string>
     <string name="blocked_domain">整个域名</string>
@@ -1249,6 +1250,16 @@
     <string name="unsubscribe_failed">退订失败</string>
     <string name="unsubscribe_manual_required">此发件人不支持自动退订。您可以通过邮件中的链接自行退订。</string>
     <string name="bulk_unsubscribe_failed">批量退订失败</string>
+    <string name="unsubscribe_in_progress">正在退订</string>
+    <string name="subscription_hero_summary">%1$s 个活跃发件人，%2$s 个已退订，%3$s 封邮件</string>
+    <string name="unsubscribe_rate_limited">你发送的退订请求过多。请在一分钟后重试。</string>
+    <string name="unsubscribe_opened_in_browser">此发件人只允许你在其网站上退订。请在浏览器中打开的页面上完成退订。</string>
+    <plurals name="unsubscribe_failed_count">
+        <item quantity="other">无法退订 %d 个发件人</item>
+    </plurals>
+    <plurals name="unsubscribe_needs_manual_count">
+        <item quantity="other">%d 个发件人需要你在其网站上退订</item>
+    </plurals>
     <plurals name="unsubscribed_count">
         <item quantity="other">已退订 %d 个发件人</item>
     </plurals>
@@ -1578,10 +1589,15 @@
     <string name="reaction_remove_failed">无法移除回应</string>
     <string name="copy_address">复制地址</string>
     <string name="sender_on_aster">Aster 账户</string>
+    <string name="sender_on_aster_logo">%1$s 账户</string>
     <string name="messages_from_sender">查找该发件人的邮件</string>
     <string name="send_email_to_sender">写信给该发件人</string>
     <string name="add_to_contacts">保存到联系人</string>
     <string name="remove_from_contacts">从联系人中移除</string>
+    <string name="sender_action_new_message">新邮件</string>
+    <string name="sender_action_add_contact">添加联系人</string>
+    <string name="sender_action_view_contact">查看联系人</string>
+    <string name="sender_action_in_contacts">已在联系人中</string>
     <string name="contact_added_named">已将 %1$s 保存到联系人</string>
     <string name="contact_removed_named">已将 %1$s 从联系人中移除</string>
     <string name="blocked_content_details_title">已拦截的内容</string>
@@ -2355,6 +2371,9 @@
     <plurals name="subscriptions_found_count">
         <item quantity="other">找到 %d 个新订阅</item>
     </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="other">已扫描 %2$s 封邮件中的 %1$s 封，找到 %3$s 个发件人</item>
+    </plurals>
     <string name="reaction_info_title">回应</string>
     <string name="reaction_badge_label">新回应</string>
     <string name="notification_new_reaction">您有一条新回应</string>
@@ -2845,6 +2864,8 @@
     <string name="contact_add_failed">无法将 %1$s 保存到联系人</string>
     <string name="contact_remove_failed">无法从联系人中移除 %1$s</string>
     <string name="copy_failed">无法复制。请重试。</string>
+    <string name="copy_subject">复制主题</string>
+    <string name="subject_copied">已复制主题</string>
     <string name="create_label_subtitle">用您选择的颜色标记邮件</string>
     <string name="delete_signature_message">要删除“%1$s”吗？此操作无法撤销。</string>
     <string name="delete_vacation_reply_confirm">您的外出回复及其日期将被删除，且无法撤销。</string>
@@ -3009,6 +3030,9 @@
     <string name="translation_storage_remove_all">全部删除</string>
     <string name="translation_storage_removed">语言包已删除</string>
     <string name="translation_offer_download">此邮件为%1$s。翻译时会下载语言包。</string>
+    <string name="translation_bar_translate_to">翻译为%1$s</string>
+    <string name="translation_bar_translated_from">已从%1$s翻译</string>
+    <string name="translation_bar_downloading">正在下载%1$s语言包</string>
     <string name="contact_support">联系支持团队</string>
     <string name="domain_purchase_manage">管理</string>
     <string name="domain_purchase_cancel_payment_title">取消此付款？</string>
@@ -3128,6 +3152,10 @@
     <string name="remove_photo">移除照片</string>
     <string name="add_photo">添加照片</string>
     <string name="photo_too_large">请选择较小的图片</string>
+    <string name="contact_photo_unreadable">Aster 无法打开此图片。请尝试其他照片。</string>
+    <string name="contact_discard_changes_title">要舍弃更改吗？</string>
+    <string name="contact_discard_changes_message">你对此联系人的更改尚未保存。</string>
+    <string name="contact_keep_editing">继续编辑</string>
     <string name="no_contacts_yet">暂无联系人</string>
     <string name="no_contacts_match">没有匹配 \"%1$s\" 的联系人</string>
     <string name="no_contacts_in_trash">废纸篓是空的</string>
@@ -3685,6 +3713,13 @@
         <item quantity="other">已添加 %d 个联系人</item>
     </plurals>
     <string name="body_index_status">正在为搜索索引邮件正文：%1$d / %2$d</string>
+    <string name="search_status_indexing_mail">正在为邮件编制索引</string>
+    <string name="search_status_indexing_text">正在为邮件正文编制索引</string>
+    <string name="search_status_waiting_wifi">连接 Wi-Fi 后将继续为正文编制索引</string>
+    <string name="search_status_paused">索引已暂停</string>
+    <string name="search_status_partial">结果可能不完整</string>
+    <string name="search_status_count">%1$s / %2$s</string>
+    <string name="search_refine_placeholder">在结果中搜索</string>
     <string name="mail_key_upgrade_title">正在更新已保存的邮件</string>
     <string name="mail_key_upgrade_running">Aster Mail 正在使用你当前的密钥重新加密已保存的邮件。请在完成前保持此窗口打开。</string>
     <string name="mail_key_upgrade_failed">Aster Mail 未能完成已保存邮件的更新。你的邮件没有任何改动。请检查网络连接，然后重试。</string>
@@ -3706,10 +3741,21 @@
     <string name="attachment_unverified">未验证的附件</string>
     <string name="confirm_back_exit">退出前确认</string>
     <string name="confirm_back_exit_subtitle">在收件箱中按两次返回键退出应用</string>
+    <string name="toast_position_title">应用内提示位置</string>
+    <string name="toast_position_subtitle">使用应用时提示显示的位置</string>
+    <string name="toast_position_top">顶部</string>
+    <string name="toast_position_bottom">底部</string>
     <string name="mail_priority">优先级</string>
     <string name="mail_priority_high">高</string>
     <string name="mail_priority_normal">普通</string>
     <string name="mail_priority_low">低</string>
     <string name="mail_high_priority">高优先级</string>
     <string name="mail_low_priority">低优先级</string>
+    <string name="official_sender">Aster 官方地址</string>
+    <string name="official_sender_desc">此邮件来自 Aster 官方地址。Aster 绝不会通过电子邮件向您索要密码或恢复短语。</string>
+    <string name="search_match_position">第 %1$d 个，共 %2$d 个</string>
+    <string name="search_match_position_description">第 %1$d 处匹配，共 %2$d 处</string>
+    <string name="search_match_previous">上一处匹配</string>
+    <string name="search_match_next">下一处匹配</string>
+    <string name="search_match_clear">清除高亮</string>
 </resources>

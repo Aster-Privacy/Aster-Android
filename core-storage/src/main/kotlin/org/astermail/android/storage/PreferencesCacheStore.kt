@@ -238,9 +238,42 @@ class PreferencesCacheStore(context: Context? = null, backing: SharedPreferences
         runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
     }
 
+    fun read_subscription(account_key: String?): String? {
+        val key = subscription_entry_key(account_key) ?: return null
+        return runCatching { prefs?.getString(key, null) }.getOrNull()
+    }
+
+    fun write_subscription(account_key: String?, payload: String) {
+        val key = subscription_entry_key(account_key) ?: return
+        runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
+    }
+
+    fun read_referral(account_key: String?): String? {
+        val key = referral_entry_key(account_key) ?: return null
+        return runCatching { prefs?.getString(key, null) }.getOrNull()
+    }
+
+    fun write_referral(account_key: String?, payload: String) {
+        val key = referral_entry_key(account_key) ?: return
+        runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
+    }
+
+    fun read_domain_health(account_key: String?): String? {
+        val key = domain_health_entry_key(account_key) ?: return null
+        return runCatching { prefs?.getString(key, null) }.getOrNull()
+    }
+
+    fun write_domain_health(account_key: String?, payload: String) {
+        val key = domain_health_entry_key(account_key) ?: return
+        runCatching { prefs?.edit()?.putString(key, payload)?.apply() }
+    }
+
     fun clear(account_key: String?) {
         val key = entry_key(account_key) ?: return
+        val referral_key = referral_entry_key(account_key)
+        val domain_health_key = domain_health_entry_key(account_key)
         val limits_key = limits_entry_key(account_key)
+        val subscription_key = subscription_entry_key(account_key)
         val badge_key = badge_entry_key(account_key)
         val badge_prefs_key = badge_prefs_entry_key(account_key)
         val signature_key = signature_entry_key(account_key)
@@ -261,6 +294,9 @@ class PreferencesCacheStore(context: Context? = null, backing: SharedPreferences
                 if (twin_key != null) remove(twin_key)
                 if (storage_key != null) remove(storage_key)
                 if (limits_key != null) remove(limits_key)
+                if (subscription_key != null) remove(subscription_key)
+                if (referral_key != null) remove(referral_key)
+                if (domain_health_key != null) remove(domain_health_key)
             }?.commit()
         }
     }
@@ -336,6 +372,24 @@ class PreferencesCacheStore(context: Context? = null, backing: SharedPreferences
         return "$storage_key_prefix$id"
     }
 
+    private fun referral_entry_key(account_key: String?): String? {
+        val id = account_key?.trim().orEmpty()
+        if (id.isEmpty()) return null
+        return "$referral_key_prefix$id"
+    }
+
+    private fun domain_health_entry_key(account_key: String?): String? {
+        val id = account_key?.trim().orEmpty()
+        if (id.isEmpty()) return null
+        return "$domain_health_key_prefix$id"
+    }
+
+    private fun subscription_entry_key(account_key: String?): String? {
+        val id = account_key?.trim().orEmpty()
+        if (id.isEmpty()) return null
+        return "$subscription_key_prefix$id"
+    }
+
     private companion object {
         const val prefs_name = "aster_preferences_cache"
         const val key_prefix = "prefs_json_"
@@ -359,5 +413,8 @@ class PreferencesCacheStore(context: Context? = null, backing: SharedPreferences
         const val twin_key_prefix = "twin_address_json_"
         const val storage_key_prefix = "storage_json_"
         const val limits_key_prefix = "plan_limits_json_"
+        const val subscription_key_prefix = "subscription_json_"
+        const val referral_key_prefix = "referral_json_"
+        const val domain_health_key_prefix = "domain_health_json_"
     }
 }

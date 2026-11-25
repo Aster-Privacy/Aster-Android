@@ -24,8 +24,6 @@ package org.astermail.android.design.components
 import org.astermail.android.design.AsterShapes
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -40,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterSpring
 import androidx.compose.ui.graphics.Color
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.island_surface_color
@@ -62,8 +61,8 @@ fun AsterCard(
         val interaction = remember { MutableInteractionSource() }
         val pressed by interaction.collectIsPressedAsState()
         val scale by animateFloatAsState(
-            targetValue = if (pressed) 0.98f else 1f,
-            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessHigh),
+            targetValue = if (pressed) 0.97f else 1f,
+            animationSpec = AsterSpring.fast_effects(),
             label = "card_scale",
         )
         Card(

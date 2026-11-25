@@ -40,4 +40,10 @@
     <plurals name="trackers_blocked_count">
         <item quantity="other">추적기 %1$d개 차단됨</item>
     </plurals>
+    <plurals name="trash_emptied_count">
+        <item quantity="other">휴지통에서 메시지 %d개를 삭제했습니다</item>
+    </plurals>
+    <plurals name="spam_emptied_count">
+        <item quantity="other">스팸에서 메시지 %d개를 삭제했습니다</item>
+    </plurals>
 </resources>

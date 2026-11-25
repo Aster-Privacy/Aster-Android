@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.astermail.android.ui.search.search_subject_text
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -112,7 +113,22 @@ import org.astermail.android.folders.is_folder_protected
 import org.astermail.android.labels.readable_label_name
 import org.astermail.android.labels.readable_tag_icon
 import org.astermail.android.mail.InboxItem
-import org.astermail.android.ui.common.page_surface
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import android.content.ClipData
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import org.astermail.android.ui.common.app_toast
+import org.astermail.android.ui.common.system_confirms_copy
+import org.astermail.android.ui.common.write_to_clipboard
+import org.astermail.android.ui.theme.local_accessibility
 
 internal val detail_chip_text_size = 10.sp
 internal val detail_chip_line_height = 14.sp
@@ -297,7 +313,6 @@ internal fun detail_subject_line(
     tags: List<TagItem>,
     max_lines: Int,
     on_overflow: (Boolean) -> Unit,
-    selection_state: subject_selection_state,
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
@@ -362,7 +377,6 @@ internal fun detail_subject_line(
     val chip_gap_px = remember(subject_style, density.density, density.fontScale) {
         measurer.measure(detail_chip_placeholder_gap, subject_style).size.width.toFloat()
     }
-    val selection_line_px = with(density) { detail_subject_line_height.toPx() }
     var chip_slots by remember { mutableStateOf<List<Rect?>>(emptyList()) }
     BoxWithConstraints(modifier = modifier) {
         val has_bounded_width = constraints.hasBoundedWidth
@@ -396,8 +410,9 @@ internal fun detail_subject_line(
                 ).lineCount
             }
         }
+        val search_subject = search_subject_text(subject)
         val text = buildAnnotatedString {
-            append(subject)
+            if (search_subject != null) append(search_subject) else append(subject)
             if (!chips_below) {
                 chips.forEach { chip ->
                     append(detail_chip_placeholder_gap)
@@ -407,42 +422,21 @@ internal fun detail_subject_line(
         }
         Column {
             Box {
-                selectable_subject(state = selection_state) {
-                    Text(
-                        text = text,
-                        inlineContent = inline_content,
-                        color = colors.text_primary,
-                        fontSize = detail_subject_text_size,
-                        lineHeight = detail_subject_line_height,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = max_lines,
-                        overflow = TextOverflow.Ellipsis,
-                        onTextLayout = { layout ->
-                            on_overflow(chips_below || layout.hasVisualOverflow)
-                            chip_slots = layout.placeholderRects
-                        },
-                        modifier = Modifier.testTag("detail_subject_line"),
-                    )
-                }
-                if (selection_state.has_selection && !chips_below) {
-                    chips.indices.forEach { index ->
-                        val slot = chip_slots.getOrNull(index) ?: return@forEach
-                        Box(
-                            modifier = Modifier
-                                .offset {
-                                    IntOffset(
-                                        (slot.left - chip_gap_px).roundToInt(),
-                                        (slot.center.y - selection_line_px / 2f).roundToInt(),
-                                    )
-                                }
-                                .size(
-                                    width = with(density) { (slot.width + chip_gap_px).toDp() },
-                                    height = with(density) { selection_line_px.toDp() },
-                                )
-                                .page_surface(colors),
-                        )
-                    }
-                }
+                Text(
+                    text = text,
+                    inlineContent = inline_content,
+                    color = colors.text_primary,
+                    fontSize = detail_subject_text_size,
+                    lineHeight = detail_subject_line_height,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = max_lines,
+                    overflow = TextOverflow.Ellipsis,
+                    onTextLayout = { layout ->
+                        on_overflow(chips_below || layout.hasVisualOverflow)
+                        chip_slots = layout.placeholderRects
+                    },
+                    modifier = Modifier.testTag("detail_subject_line"),
+                )
                 if (!chips_below) {
                     chips.forEachIndexed { index, chip ->
                         val slot = chip_slots.getOrNull(index) ?: return@forEachIndexed
@@ -500,6 +494,61 @@ internal fun strip_subject_chip_placeholders(copied: String): String =
         .replace(detail_chip_placeholder_gap + detail_chip_placeholder_text, "")
         .replace(detail_chip_placeholder_text, "")
         .trimEnd()
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+internal fun Modifier.subject_press_actions(
+    expandable: Boolean,
+    on_toggle_expand: () -> Unit,
+    copy_value: String?,
+): Modifier {
+    if (!expandable && copy_value == null) return this
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+    val haptic_enabled = local_accessibility.current.haptic_enabled
+    val copy_label = stringResource(R.string.copy_subject)
+    val copied_message = stringResource(R.string.subject_copied)
+    val failed_message = stringResource(R.string.copy_failed)
+    val pressed_tint = AsterMaterial.colors.text_primary.copy(alpha = subject_pressed_alpha)
+    val interaction_source = remember { MutableInteractionSource() }
+    val pressed by interaction_source.collectIsPressedAsState()
+    val pressed_fill by animateColorAsState(
+        targetValue = if (pressed) pressed_tint else pressed_tint.copy(alpha = 0f),
+        animationSpec = tween(durationMillis = subject_pressed_fade_ms),
+        label = "subject_pressed",
+    )
+    val on_long_click: (() -> Unit)? = copy_value?.let { value ->
+        {
+            if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            val copied = write_to_clipboard(context, ClipData.newPlainText("subject", value))
+            when {
+                !copied -> app_toast.show(failed_message)
+                !system_confirms_copy() -> app_toast.show(copied_message)
+            }
+        }
+    }
+    return this
+        .drawBehind {
+            if (pressed_fill.alpha > 0f) {
+                drawRoundRect(
+                    color = pressed_fill,
+                    cornerRadius = CornerRadius(subject_pressed_radius.toPx()),
+                )
+            }
+        }
+        .combinedClickable(
+            interactionSource = interaction_source,
+            indication = null,
+            onClick = { if (expandable) on_toggle_expand() },
+            onLongClick = on_long_click,
+            onLongClickLabel = if (copy_value != null) copy_label else null,
+            hapticFeedbackEnabled = false,
+        )
+}
+
+internal const val subject_pressed_alpha = 0.06f
+internal const val subject_pressed_fade_ms = 120
+internal val subject_pressed_radius = 8.dp
 
 @Stable
 internal class subject_selection_state {

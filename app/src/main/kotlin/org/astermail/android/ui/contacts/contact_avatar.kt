@@ -53,6 +53,7 @@ import coil.request.ImageRequest
 import org.astermail.android.ui.mail.avatar_colors_for
 import org.astermail.android.ui.mail.avatar_key_for
 import org.astermail.android.ui.mail.avatar_initial_style
+import org.astermail.android.ui.mail.SenderAvatar
 import org.astermail.android.ui.mail.initial_for
 
 @Composable
@@ -78,6 +79,18 @@ fun ContactAvatar(
         modifier.semantics { contentDescription = label }
     } else {
         modifier
+    }
+
+    if (bitmap == null && remote_url == null && !is_inline_contact_photo(avatar_url)) {
+        SenderAvatar(
+            email = email,
+            name = name,
+            size = size,
+            modifier = label_modifier,
+            profile_color = profile_color.takeIf { it.isNotBlank() },
+            use_contact_photo = false,
+        )
+        return
     }
 
     Box(

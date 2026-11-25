@@ -22,8 +22,6 @@
 package org.astermail.android.ui.settings.detail
 
 import compose.icons.TablerIcons
-import android.widget.Toast
-import org.astermail.android.design.acrylic
 import org.astermail.android.ui.common.show_copy_failed_toast
 import org.astermail.android.ui.common.write_to_clipboard
 import compose.icons.tablericons.*
@@ -32,9 +30,9 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -72,6 +70,8 @@ import org.astermail.android.R
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
+import org.astermail.android.design.aster_reduce_motion
+import org.astermail.android.design.aster_shared_axis_slide_px
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDestructiveButton
@@ -83,6 +83,7 @@ import org.astermail.android.twofactor.TwoFactorViewModel
 import org.astermail.android.twofactor.render_qr_code
 import org.astermail.android.settings.host_activity
 import org.astermail.android.auth.request_passkey_json
+import org.astermail.android.ui.settings.join_launched
 
 @Composable
 fun TwoFactorScreen(
@@ -96,9 +97,14 @@ fun TwoFactorScreen(
 
     LaunchedEffect(Unit) { vm.load_status() }
 
-    detail_scaffold(title = stringResource(R.string.two_factor_authentication), on_back = on_back) {
+    detail_scaffold(
+        title = stringResource(R.string.two_factor_authentication),
+        on_back = on_back,
+        on_refresh = { vm.join_launched { vm.load_status(quiet = true) } },
+        refresh_enabled = !state.is_loading && !state.is_busy && state.mode == TwoFactorMode.Idle,
+    ) {
         if (state.is_loading) {
-            settings_pending_spinner()
+            settings_hero_skeleton(rows = 2)
             return@detail_scaffold
         }
 
@@ -111,7 +117,22 @@ fun TwoFactorScreen(
             v_gap(AsterSpacing.md)
         }
 
-        when (state.mode) {
+        val reduce_motion = aster_reduce_motion()
+        val slide_px = aster_shared_axis_slide_px()
+        AnimatedContent(
+            targetState = state.mode,
+            modifier = Modifier.fillMaxWidth(),
+            transitionSpec = {
+                settings_sub_screen_axis_x(
+                    forward = targetState.ordinal > initialState.ordinal,
+                    slide_px = slide_px,
+                    reduce_motion = reduce_motion,
+                )
+            },
+            label = "two_factor_step",
+        ) { mode ->
+        Column(modifier = Modifier.fillMaxWidth()) {
+        when (mode) {
             TwoFactorMode.Idle -> idle_panel(state, vm)
             TwoFactorMode.SetupReauth -> setup_reauth_panel(state, vm)
             TwoFactorMode.Setup -> setup_panel(state, vm)
@@ -130,6 +151,8 @@ fun TwoFactorScreen(
                 codes = state.backup_codes,
                 on_done = { vm.acknowledge_backup_codes() },
             )
+        }
+        }
         }
         v_gap(AsterSpacing.xxl)
     }
@@ -198,20 +221,10 @@ private fun idle_panel(state: org.astermail.android.twofactor.TwoFactorUiState, 
 @Composable
 private fun two_factor_status_pill(enabled: Boolean) {
     val colors = AsterMaterial.colors
-    val shape = SquircleShape(8.dp)
-    Box(
-        modifier = Modifier
-            .acrylic(colors, shape, colors.bg_secondary)
-            .border(1.dp, colors.border_primary, shape)
-            .padding(horizontal = AsterSpacing.sm, vertical = 3.dp),
-    ) {
-        Text(
-            text = if (enabled) stringResource(R.string.enabled) else stringResource(R.string.disabled),
-            color = colors.text_secondary,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-    }
+    org.astermail.android.ui.settings.device_badge(
+        label = if (enabled) stringResource(R.string.enabled) else stringResource(R.string.disabled),
+        color = if (enabled) org.astermail.android.design.AsterColors.success else colors.text_tertiary,
+    )
 }
 
 @Composable
@@ -467,5 +480,5 @@ private fun copy_to_clipboard(context: Context, label: String, value: String) {
         return
     }
     org.astermail.android.util.schedule_sensitive_clipboard_clear(context)
-    Toast.makeText(context, context.getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show()
+    org.astermail.android.ui.common.app_toast.show(context.getString(R.string.copied_to_clipboard).toString())
 }

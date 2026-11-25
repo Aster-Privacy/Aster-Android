@@ -77,8 +77,12 @@ fun apply_signed_prekey_rotation(vault: JSONObject, fresh: FreshSignedPrekey): J
     retain_vault_key_set(next, identity, fresh.signed_prekey_jwk)
     next.optJSONArray("ratchet_previous_keys")?.let { retained ->
         if (retained.length() > SIGNED_PREKEY_RETAINED_LIMIT) {
+            val entries = (0 until retained.length()).mapNotNull { retained.optJSONObject(it) }
             val capped = JSONArray()
-            for (index in 0 until SIGNED_PREKEY_RETAINED_LIMIT) capped.put(retained.get(index))
+            keep_dropped_pq_secrets(
+                entries.take(SIGNED_PREKEY_RETAINED_LIMIT),
+                entries.drop(SIGNED_PREKEY_RETAINED_LIMIT),
+            ).forEach { capped.put(it) }
             next.put("ratchet_previous_keys", capped)
         }
     }

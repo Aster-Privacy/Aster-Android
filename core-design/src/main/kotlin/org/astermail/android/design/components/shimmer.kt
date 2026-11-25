@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
@@ -62,11 +63,16 @@ import kotlinx.coroutines.sync.withLock
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.aster_reduce_motion
 
-private const val shimmer_period_ms = 1600L
-private const val shimmer_band_fraction = 0.6f
+internal const val shimmer_sweep_ms = 1350L
+internal const val shimmer_rest_ms = 450L
+internal const val shimmer_period_ms = shimmer_sweep_ms + shimmer_rest_ms
+internal const val shimmer_band_fraction = 0.55f
+internal const val shimmer_tilt = 0.364f
 
-private const val shimmer_base_alpha = 0.12f
-private const val shimmer_peak_alpha = 0.17f
+private const val shimmer_light_base_alpha = 0.10f
+private const val shimmer_dark_base_alpha = 0.13f
+private const val shimmer_light_peak_alpha = 0.62f
+private const val shimmer_dark_peak_alpha = 0.2f
 
 private val shared_shimmer_phase = mutableFloatStateOf(0f)
 
@@ -82,7 +88,7 @@ private fun shimmer_frame_driver(clock: MonotonicFrameClock?): Mutex =
     }
 
 internal fun shimmer_phase_at(frame_ms: Long): Float =
-    (frame_ms % shimmer_period_ms) / shimmer_period_ms.toFloat()
+    (frame_ms % shimmer_period_ms).coerceAtMost(shimmer_sweep_ms) / shimmer_sweep_ms.toFloat()
 
 @Composable
 private fun shimmer_phase(animated: Boolean): State<Float> {
@@ -103,10 +109,19 @@ private fun shimmer_phase(animated: Boolean): State<Float> {
 class shimmer_appearance internal constructor(
     internal val base: Color,
     internal val highlight: Color,
-    internal val band_edge: Color,
     internal val phase: State<Float>,
     internal val animated: Boolean,
 )
+
+internal fun shimmer_base_color(ink: Color, is_dark: Boolean): Color =
+    ink.copy(alpha = ink.alpha * if (is_dark) shimmer_dark_base_alpha else shimmer_light_base_alpha)
+
+internal fun shimmer_highlight_color(ink: Color, surface: Color, is_dark: Boolean): Color =
+    if (is_dark) {
+        ink.copy(alpha = ink.alpha * shimmer_dark_peak_alpha)
+    } else {
+        surface.copy(alpha = shimmer_light_peak_alpha)
+    }
 
 @Composable
 fun shimmer_state(
@@ -115,23 +130,24 @@ fun shimmer_state(
     val colors = AsterMaterial.colors
     val is_animated = animated && !aster_reduce_motion()
     val phase = shimmer_phase(is_animated)
-    val ink = colors.text_muted
-    return remember(ink, is_animated, phase) {
-        val peak = ink.copy(alpha = ink.alpha * shimmer_peak_alpha)
+    val ink = colors.text_secondary
+    val surface = colors.bg_card
+    val is_dark = colors.is_dark
+    return remember(ink, surface, is_dark, is_animated, phase) {
         shimmer_appearance(
-            base = ink.copy(alpha = ink.alpha * shimmer_base_alpha),
-            highlight = peak,
-            band_edge = peak.copy(alpha = 0f),
+            base = shimmer_base_color(ink, is_dark),
+            highlight = shimmer_highlight_color(ink, surface, is_dark),
             phase = phase,
             animated = is_animated,
         )
     }
 }
 
-internal fun shimmer_band_left(phase: Float, phase_shift: Float, sweep_width: Float, origin_x: Float): Float {
+internal fun shimmer_sweep_span(width: Float, height: Float): Float = width + height * shimmer_tilt
+
+internal fun shimmer_band_left(phase: Float, sweep_width: Float, origin_u: Float): Float {
     val band = sweep_width * shimmer_band_fraction
-    val local_phase = ((phase - phase_shift) % 1f + 1f) % 1f
-    return local_phase * (sweep_width + band) - band - origin_x
+    return phase.coerceIn(0f, 1f) * (sweep_width + band) - band - origin_u
 }
 
 internal fun shimmer_band_hits(band_left: Float, band: Float, left: Float, right: Float): Boolean =
@@ -154,16 +170,15 @@ private data class shimmer_bar_shape(val fraction: Float, val corner: Dp) : Shap
     }
 }
 
-private fun shimmer_modifier(state: shimmer_appearance, shape: Shape, phase_shift: Float): Modifier =
+private fun shimmer_modifier(state: shimmer_appearance, shape: Shape): Modifier =
     Modifier
         .graphicsLayer(shape = shape, clip = true)
-        .then(shimmer_element(state, phase_shift))
+        .then(shimmer_element(state))
 
 fun Modifier.shimmer(
     state: shimmer_appearance,
     shape: Shape = RectangleShape,
-    phase_shift: Float = 0f,
-): Modifier = this.then(shimmer_modifier(state, shape, phase_shift))
+): Modifier = this.then(shimmer_modifier(state, shape))
 
 @Composable
 fun Modifier.shimmer(
@@ -176,17 +191,16 @@ fun Modifier.shimmer_line(
     height_fraction: Float = 0.6f,
     corner: Dp = 4.dp,
 ): Modifier = this.then(
-    shimmer_modifier(state, shimmer_bar_shape(height_fraction.coerceIn(0f, 1f), corner), 0f),
+    shimmer_modifier(state, shimmer_bar_shape(height_fraction.coerceIn(0f, 1f), corner)),
 )
 
 private data class shimmer_element(
     val state: shimmer_appearance,
-    val phase_shift: Float,
 ) : ModifierNodeElement<shimmer_node>() {
-    override fun create(): shimmer_node = shimmer_node(state, phase_shift)
+    override fun create(): shimmer_node = shimmer_node(state)
 
     override fun update(node: shimmer_node) {
-        node.update(state, phase_shift)
+        node.update(state)
     }
 
     override fun InspectorInfo.inspectableProperties() {
@@ -194,29 +208,47 @@ private data class shimmer_element(
     }
 }
 
+internal fun shimmer_band_stops(highlight: Color): Array<Pair<Float, Color>> = arrayOf(
+    0f to highlight.copy(alpha = 0f),
+    0.2f to highlight.copy(alpha = highlight.alpha * 0.16f),
+    0.36f to highlight.copy(alpha = highlight.alpha * 0.62f),
+    0.5f to highlight,
+    0.64f to highlight.copy(alpha = highlight.alpha * 0.62f),
+    0.8f to highlight.copy(alpha = highlight.alpha * 0.16f),
+    1f to highlight.copy(alpha = 0f),
+)
+
+internal fun shimmer_band_end(band: Float): Offset {
+    val norm = 1f + shimmer_tilt * shimmer_tilt
+    return Offset(band / norm, band * shimmer_tilt / norm)
+}
+
 private class shimmer_node(
     var state: shimmer_appearance,
-    var phase_shift: Float,
 ) : Modifier.Node(), DrawModifierNode, GlobalPositionAwareModifierNode, CompositionLocalConsumerModifierNode {
 
     override val shouldAutoInvalidate: Boolean = false
 
-    private var origin_x = 0f
+    private var origin_u = 0f
     private var cached_sweep = -1f
     private var band = 0f
     private var band_brush: Brush? = null
 
-    fun update(next_state: shimmer_appearance, next_phase_shift: Float) {
-        if (next_state === state && next_phase_shift == phase_shift) return
+    fun update(next_state: shimmer_appearance) {
+        if (next_state === state) return
         state = next_state
-        phase_shift = next_phase_shift
         cached_sweep = -1f
         invalidateDraw()
     }
 
     override fun onGloballyPositioned(coordinates: LayoutCoordinates) {
         if (!isAttached || !coordinates.isAttached) return
-        origin_x = coordinates.positionInWindow().x
+        val position = coordinates.positionInWindow()
+        val next_origin = position.x + position.y * shimmer_tilt
+        if (next_origin != origin_u) {
+            origin_u = next_origin
+            if (state.animated) invalidateDraw()
+        }
     }
 
     private fun prepare(sweep_width: Float) {
@@ -225,9 +257,10 @@ private class shimmer_node(
         band = sweep_width * shimmer_band_fraction
         band_brush = if (band > 0f) {
             Brush.linearGradient(
-                colors = listOf(state.band_edge, state.highlight, state.band_edge),
+                colorStops = *shimmer_band_stops(state.highlight),
                 start = Offset.Zero,
-                end = Offset(band, 0f),
+                end = shimmer_band_end(band),
+                tileMode = TileMode.Clamp,
             )
         } else {
             null
@@ -238,18 +271,21 @@ private class shimmer_node(
         val current = state
         drawRect(current.base)
         if (current.animated) {
-            val sweep_width = currentValueOf(LocalConfiguration).screenWidthDp.dp.toPx()
+            val configuration = currentValueOf(LocalConfiguration)
+            val sweep_width = shimmer_sweep_span(
+                configuration.screenWidthDp.dp.toPx(),
+                configuration.screenHeightDp.dp.toPx(),
+            )
             prepare(sweep_width)
             val brush = band_brush
-            val band_left = shimmer_band_left(current.phase.value, phase_shift, sweep_width, origin_x)
-            if (brush != null && shimmer_band_hits(band_left, band, 0f, size.width)) {
-                val left = maxOf(0f, band_left)
-                val right = minOf(size.width, band_left + band)
+            val band_left = shimmer_band_left(current.phase.value, sweep_width, origin_u)
+            val local_right = shimmer_sweep_span(size.width, size.height)
+            if (brush != null && shimmer_band_hits(band_left, band, 0f, local_right)) {
                 translate(left = band_left) {
                     drawRect(
                         brush = brush,
-                        topLeft = Offset(left - band_left, 0f),
-                        size = Size(right - left, size.height),
+                        topLeft = Offset(-band_left, 0f),
+                        size = size,
                     )
                 }
             }
