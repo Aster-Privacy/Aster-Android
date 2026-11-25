@@ -932,6 +932,8 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("notifications", R.string.notifications, R.string.notif_battery_opt_title, false),
     settings_index_entry("notifications", R.string.notifications, R.string.notif_battery_opt_subtitle, false),
     settings_index_entry("notifications", R.string.notifications, R.string.notif_delivery_section, false),
+    settings_index_entry("notifications", R.string.notifications, R.string.notif_actions_section, false),
+    settings_index_entry("notifications", R.string.notifications, R.string.notif_actions_description, false),
     settings_index_entry("notifications", R.string.notifications, R.string.persistent_push_title, false),
     settings_index_entry("notifications", R.string.notifications, R.string.persistent_push_autostart_title, false),
     settings_index_entry("notifications", R.string.notifications, R.string.persistent_push_autostart_subtitle, false),
