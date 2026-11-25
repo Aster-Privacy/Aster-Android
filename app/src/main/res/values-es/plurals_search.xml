@@ -10,4 +10,9 @@
         <item quantity="many">hace %d días</item>
         <item quantity="other">hace %d días</item>
     </plurals>
+    <plurals name="search_match_count">
+        <item quantity="one">%d coincidencia</item>
+        <item quantity="many">%d coincidencias</item>
+        <item quantity="other">%d coincidencias</item>
+    </plurals>
 </resources>

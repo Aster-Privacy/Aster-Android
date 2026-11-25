@@ -3700,4 +3700,9 @@
     <string name="mail_priority_low">낮음</string>
     <string name="mail_high_priority">높은 중요도</string>
     <string name="mail_low_priority">낮은 중요도</string>
+    <string name="search_match_position">%1$d/%2$d</string>
+    <string name="search_match_position_description">일치 항목 %2$d개 중 %1$d번째</string>
+    <string name="search_match_previous">이전 일치 항목</string>
+    <string name="search_match_next">다음 일치 항목</string>
+    <string name="search_match_clear">강조 표시 지우기</string>
 </resources>

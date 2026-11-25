@@ -3729,4 +3729,9 @@
     <string name="mail_priority_low">Laag</string>
     <string name="mail_high_priority">Hoge prioriteit</string>
     <string name="mail_low_priority">Lage prioriteit</string>
+    <string name="search_match_position">%1$d van %2$d</string>
+    <string name="search_match_position_description">Overeenkomst %1$d van %2$d</string>
+    <string name="search_match_previous">Vorige overeenkomst</string>
+    <string name="search_match_next">Volgende overeenkomst</string>
+    <string name="search_match_clear">Markeringen wissen</string>
 </resources>

@@ -3700,4 +3700,9 @@
     <string name="mail_priority_low">低</string>
     <string name="mail_high_priority">高优先级</string>
     <string name="mail_low_priority">低优先级</string>
+    <string name="search_match_position">第 %1$d 个，共 %2$d 个</string>
+    <string name="search_match_position_description">第 %1$d 处匹配，共 %2$d 处</string>
+    <string name="search_match_previous">上一处匹配</string>
+    <string name="search_match_next">下一处匹配</string>
+    <string name="search_match_clear">清除高亮</string>
 </resources>

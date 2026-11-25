@@ -20,6 +20,8 @@
 //
 package org.astermail.android.ui.mail
 
+import androidx.compose.ui.text.AnnotatedString
+import org.astermail.android.ui.search.search_preview_text
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -104,8 +106,9 @@ internal fun inbox_preview_or_order_line(
         cached_inbox_order_hint(email.id, email.subject, email.preview)
     }
     if (hint == null) {
+        val highlighted = search_preview_text(preview_text)
         Text(
-            text = preview_text,
+            text = highlighted ?: AnnotatedString(preview_text),
             style = inbox_preview_text_style(),
             color = preview_color,
             fontWeight = FontWeight.Normal,

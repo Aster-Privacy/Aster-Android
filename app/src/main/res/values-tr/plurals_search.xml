@@ -8,4 +8,8 @@
         <item quantity="one">%d gün önce</item>
         <item quantity="other">%d gün önce</item>
     </plurals>
+    <plurals name="search_match_count">
+        <item quantity="one">%d eşleşme</item>
+        <item quantity="other">%d eşleşme</item>
+    </plurals>
 </resources>

@@ -3852,4 +3852,9 @@
     <string name="mail_priority_low">منخفضة</string>
     <string name="mail_high_priority">أولوية عالية</string>
     <string name="mail_low_priority">أولوية منخفضة</string>
+    <string name="search_match_position">%1$d من %2$d</string>
+    <string name="search_match_position_description">التطابق %1$d من %2$d</string>
+    <string name="search_match_previous">التطابق السابق</string>
+    <string name="search_match_next">التطابق التالي</string>
+    <string name="search_match_clear">مسح التمييز</string>
 </resources>

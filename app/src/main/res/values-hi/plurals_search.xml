@@ -8,4 +8,8 @@
         <item quantity="one">%d दिन पहले</item>
         <item quantity="other">%d दिन पहले</item>
     </plurals>
+    <plurals name="search_match_count">
+        <item quantity="one">%d मिलान</item>
+        <item quantity="other">%d मिलान</item>
+    </plurals>
 </resources>

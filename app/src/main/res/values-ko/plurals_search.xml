@@ -6,4 +6,7 @@
     <plurals name="search_days_ago">
         <item quantity="other">%d일 전</item>
     </plurals>
+    <plurals name="search_match_count">
+        <item quantity="other">일치 항목 %d개</item>
+    </plurals>
 </resources>

@@ -3621,4 +3621,9 @@
     <string name="mail_priority_low">निम्न</string>
     <string name="mail_high_priority">उच्च प्राथमिकता</string>
     <string name="mail_low_priority">निम्न प्राथमिकता</string>
+    <string name="search_match_position">%2$d में से %1$d</string>
+    <string name="search_match_position_description">%2$d में से मिलान %1$d</string>
+    <string name="search_match_previous">पिछला मिलान</string>
+    <string name="search_match_next">अगला मिलान</string>
+    <string name="search_match_clear">हाइलाइट हटाएं</string>
 </resources>

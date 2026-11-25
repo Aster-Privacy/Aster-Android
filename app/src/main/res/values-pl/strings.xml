@@ -3791,4 +3791,9 @@
     <string name="mail_priority_low">Niski</string>
     <string name="mail_high_priority">Wysoki priorytet</string>
     <string name="mail_low_priority">Niski priorytet</string>
+    <string name="search_match_position">%1$d z %2$d</string>
+    <string name="search_match_position_description">Dopasowanie %1$d z %2$d</string>
+    <string name="search_match_previous">Poprzednie dopasowanie</string>
+    <string name="search_match_next">Następne dopasowanie</string>
+    <string name="search_match_clear">Wyczyść wyróżnienia</string>
 </resources>

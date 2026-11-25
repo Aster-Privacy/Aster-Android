@@ -965,33 +965,37 @@ fun SearchScreen(
                 fontSize = 12.sp,
                 modifier = Modifier.padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
             )
-            search_results_list(
-                threads = result_threads,
-                select_mode = select_mode,
-                selected_ids = selected_ids,
-                on_open_email = { id ->
-                    if (visible_corpus.firstOrNull { it.id == id }?.raw_item?.item_type == "draft") {
-                        on_open_draft(id)
-                    } else {
-                        on_open_email(id)
-                    }
-                },
-                on_toggle_selection = { toggle_selection(it) },
-                on_enter_select_mode = { id ->
-                    dismiss_keyboard()
-                    select_mode = true
-                    selected_ids.clear()
-                    selected_ids.add(id)
-                },
-                on_toggle_star = { mail_vm.toggle_star(it) },
-                on_set_selection = { ids ->
-                    dismiss_keyboard()
-                    select_mode = true
-                    selected_ids.clear()
-                    selected_ids.addAll(ids)
-                },
-                modifier = Modifier.weight(1f),
-            )
+            val row_highlight_terms = remember(parsed) { search_highlight_terms_for(parsed) }
+            androidx.compose.runtime.CompositionLocalProvider(local_search_row_terms provides row_highlight_terms) {
+                search_results_list(
+                    threads = result_threads,
+                    select_mode = select_mode,
+                    selected_ids = selected_ids,
+                    on_open_email = { id ->
+                        if (visible_corpus.firstOrNull { it.id == id }?.raw_item?.item_type == "draft") {
+                            on_open_draft(id)
+                        } else {
+                            search_highlight_handoff.offer(id, row_highlight_terms)
+                            on_open_email(id)
+                        }
+                    },
+                    on_toggle_selection = { toggle_selection(it) },
+                    on_enter_select_mode = { id ->
+                        dismiss_keyboard()
+                        select_mode = true
+                        selected_ids.clear()
+                        selected_ids.add(id)
+                    },
+                    on_toggle_star = { mail_vm.toggle_star(it) },
+                    on_set_selection = { ids ->
+                        dismiss_keyboard()
+                        select_mode = true
+                        selected_ids.clear()
+                        selected_ids.addAll(ids)
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+            }
             if (select_mode) {
                 search_select_bottom_bar(
                     selected_count = selected_ids.size,

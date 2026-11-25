@@ -1186,6 +1186,7 @@ fun MailDetailScreen(
         initial_scroll_done = true
         if (target != null) list_state.scrollToItem(target)
     }
+    val search_controller = remember_detail_search_controller(email_id)
 
     val pending_anchor = remember { mutableStateOf<Pair<String, Int>?>(null) }
     val toggle_tick = remember { mutableStateOf(0) }
@@ -1530,6 +1531,18 @@ fun MailDetailScreen(
             val subject_thread_count = if (thread_settled) messages.size else expected_message_count
             val subject_count_format = stringResource(R.string.inbox_subject_with_count, subject_base, subject_thread_count)
             val subject_text = if (subject_thread_count > 1) subject_count_format else subject_base
+            if (search_controller != null) detail_search_effects(
+                controller = search_controller,
+                messages = display_messages,
+                subject = subject_text,
+                layout_ready = open_layout != null,
+                thread_revealed = thread_revealed,
+                hidden_ids = hidden_id_set,
+                expanded_ids = current_expanded_ids,
+                list_state = list_state,
+                on_expand = { user_expanded_ids.value = it },
+                on_reveal_hidden = { hidden_group_revealed = true },
+            )
 
             if (email == null && !thread_state.is_loading) {
                 Box(
@@ -1565,7 +1578,10 @@ fun MailDetailScreen(
                     .detail_swipe_navigation(detail_swipe, on_next, on_previous),
             ) {
             Box(modifier = Modifier.fillMaxSize().detail_swipe_offset(detail_swipe)) {
-            CompositionLocalProvider(local_horizontal_pan_signal provides pan_signal) {
+            CompositionLocalProvider(
+                local_horizontal_pan_signal provides pan_signal,
+                org.astermail.android.ui.search.local_search_highlight provides search_controller?.session,
+            ) {
             if (email != null) LazyColumn(
                 state = list_state,
                 modifier = Modifier
@@ -1926,6 +1942,9 @@ fun MailDetailScreen(
                 phase = detail_phase,
                 message_count = expected_message_count,
             )
+            if (search_controller != null && email != null) {
+                detail_search_overlay(search_controller, bottom_bar_height)
+            }
             }
 
             }
@@ -3208,6 +3227,7 @@ internal fun expanded_message(
                     phishing_snapshot?.level == org.astermail.android.security.PhishingLevel.safe,
                 subject = translation_subject,
                 on_subject_translated = on_subject_translated,
+                search_key = msg.id,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
@@ -3360,6 +3380,7 @@ internal fun expanded_message(
                     phishing_snapshot?.level == org.astermail.android.security.PhishingLevel.safe,
                 subject = translation_subject,
                 on_subject_translated = on_subject_translated,
+                search_key = msg.id,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = AsterSpacing.xs, bottom = if (is_last) 0.dp else AsterSpacing.sm)
@@ -6721,6 +6742,27 @@ private fun translation_banner(
     }
 }
 
+private fun reveal_search_hit(
+    web_ref: Array<android.webkit.WebView?>,
+    fraction: Float,
+): Float? {
+    val web = web_ref[0] ?: return null
+    if (web.height <= 0) return null
+    @Suppress("DEPRECATION")
+    val px_per_css = web.scale.takeIf { it > 0f } ?: web.resources.displayMetrics.density
+    val content_px = (web.contentHeight * px_per_css).coerceAtLeast(web.height.toFloat())
+    val top_px = fraction.coerceIn(0f, 1f) * content_px
+    val inner_top = web.scrollY.toFloat()
+    if (content_px > web.height + 1 && (top_px < inner_top || top_px > inner_top + web.height * 0.8f)) {
+        val max_inner = (content_px - web.height).coerceAtLeast(0f)
+        val target = (top_px - web.height * 0.3f).coerceIn(0f, max_inner)
+        web.scrollTo(web.scrollX, target.toInt())
+    }
+    val location = IntArray(2)
+    web.getLocationInWindow(location)
+    return location[1] + top_px - web.scrollY
+}
+
 @Composable
 internal fun email_html_view(
     html: String,
@@ -6736,6 +6778,7 @@ internal fun email_html_view(
     allow_auto_translate: Boolean = true,
     subject: String? = null,
     on_subject_translated: (String?) -> Unit = {},
+    search_key: String? = null,
 ) {
     val webview_usable = org.astermail.android.ui.common.remember_webview_usable()
     LaunchedEffect(webview_usable) {
@@ -7103,6 +7146,33 @@ internal fun email_html_view(
     val white_page_ref = remember { booleanArrayOf(false) }
     var long_pressed_link by remember { mutableStateOf<String?>(null) }
 
+    val search_session = if (search_key != null) org.astermail.android.ui.search.local_search_highlight.current else null
+    val search_terms = search_session?.terms?.body.orEmpty()
+    val search_reduce_motion = org.astermail.android.design.aster_reduce_motion()
+    val search_accent = colors.accent_blue.toArgb()
+    var search_marked by remember { mutableStateOf<Pair<String, org.astermail.android.ui.search.marked_search_body>?>(null) }
+    LaunchedEffect(prebuilt_html, search_terms, is_dark, search_accent, search_reduce_motion) {
+        val base = prebuilt_html
+        if (base == null || search_terms.isEmpty() || search_session?.dismissed == true) {
+            search_marked = null
+            if (base != null && search_key != null) search_session?.report_count(search_key, 0)
+            return@LaunchedEffect
+        }
+        val marked = withContext(Dispatchers.Default) {
+            runCatching {
+                org.astermail.android.ui.search.mark_search_hits(base, search_terms, search_accent, is_dark, search_reduce_motion)
+            }.getOrNull()
+        } ?: org.astermail.android.ui.search.marked_search_body(base, 0)
+        search_marked = base to marked
+        if (search_key != null) search_session?.report_count(search_key, marked.hits)
+    }
+    val search_current_marked = search_marked?.takeIf { it.first == prebuilt_html }?.second
+    val shown_html: String? = when {
+        search_terms.isEmpty() || search_session?.dismissed == true -> prebuilt_html
+        search_current_marked != null -> search_current_marked.html
+        else -> null
+    }
+
     val on_height_report by rememberUpdatedState<(Int, Boolean, Boolean) -> Unit> { h, exact, forced ->
         if (h > 0) {
             val natural_scale = if (is_nl_ref[0]) nl_scale_ref[0] else 1f
@@ -7266,7 +7336,7 @@ internal fun email_html_view(
             if (content <= 0) continue
             @Suppress("DEPRECATION")
             if (!zoom_active) adopt_natural_scale(web, web.scale)
-            if (!overflow_checked && !zoom_active && loaded_built == prebuilt_html && overflow_fit_attempts[0] < max_overflow_fit_attempts) {
+            if (!overflow_checked && !zoom_active && (loaded_built == prebuilt_html || loaded_built == search_marked?.second?.html) && overflow_fit_attempts[0] < max_overflow_fit_attempts) {
                 val body = web as? mail_body_web_view
                 @Suppress("DEPRECATION")
                 val scale = web.scale
@@ -7531,6 +7601,20 @@ internal fun email_html_view(
             visual_ready.value = false
             loaded_built = ""
             web_generation++
+        }
+    }
+
+    if (search_key != null && search_session != null) {
+        val search_reveal_body = search_current_marked
+        val search_ready = body_shown && height_settled && (search_reveal_body?.hits ?: 0) > 0 &&
+            loaded_built == search_reveal_body?.html
+        DisposableEffect(search_key, search_session, search_ready, search_reveal_body) {
+            if (search_ready && search_reveal_body != null) {
+                search_session.register(search_key) { local ->
+                    reveal_search_hit(web_ref, search_reveal_body.fraction_of(local))
+                }
+            }
+            onDispose { search_session.unregister(search_key) }
         }
     }
 
@@ -7972,7 +8056,7 @@ internal fun email_html_view(
             },
             update = { web_view ->
                 web_ref[0] = web_view
-                val built = prebuilt_html ?: return@AndroidView
+                val built = shown_html ?: return@AndroidView
                 val is_newsletter = built.contains("data-nl=\"1\"")
                 val wants_white_page = built.contains("data-white=\"1\"")
                 web_view.settings.textZoom = text_zoom

@@ -3755,4 +3755,9 @@
     <string name="mail_priority_low">Baja</string>
     <string name="mail_high_priority">Prioridad alta</string>
     <string name="mail_low_priority">Prioridad baja</string>
+    <string name="search_match_position">%1$d de %2$d</string>
+    <string name="search_match_position_description">Coincidencia %1$d de %2$d</string>
+    <string name="search_match_previous">Coincidencia anterior</string>
+    <string name="search_match_next">Coincidencia siguiente</string>
+    <string name="search_match_clear">Quitar resaltado</string>
 </resources>

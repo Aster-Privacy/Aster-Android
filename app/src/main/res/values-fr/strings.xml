@@ -3783,4 +3783,9 @@
     <string name="mail_priority_low">Basse</string>
     <string name="mail_high_priority">Priorité haute</string>
     <string name="mail_low_priority">Priorité basse</string>
+    <string name="search_match_position">%1$d sur %2$d</string>
+    <string name="search_match_position_description">Occurrence %1$d sur %2$d</string>
+    <string name="search_match_previous">Occurrence précédente</string>
+    <string name="search_match_next">Occurrence suivante</string>
+    <string name="search_match_clear">Effacer le surlignage</string>
 </resources>

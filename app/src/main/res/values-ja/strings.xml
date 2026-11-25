@@ -3707,4 +3707,9 @@
     <string name="mail_priority_low">低</string>
     <string name="mail_high_priority">優先度: 高</string>
     <string name="mail_low_priority">優先度: 低</string>
+    <string name="search_match_position">%1$d / %2$d</string>
+    <string name="search_match_position_description">%2$d 件中 %1$d 件目の一致</string>
+    <string name="search_match_previous">前の一致</string>
+    <string name="search_match_next">次の一致</string>
+    <string name="search_match_clear">ハイライトを消去</string>
 </resources>

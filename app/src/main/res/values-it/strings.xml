@@ -3754,4 +3754,9 @@
     <string name="mail_priority_low">Bassa</string>
     <string name="mail_high_priority">Priorità alta</string>
     <string name="mail_low_priority">Priorità bassa</string>
+    <string name="search_match_position">%1$d di %2$d</string>
+    <string name="search_match_position_description">Corrispondenza %1$d di %2$d</string>
+    <string name="search_match_previous">Corrispondenza precedente</string>
+    <string name="search_match_next">Corrispondenza successiva</string>
+    <string name="search_match_clear">Rimuovi evidenziazione</string>
 </resources>

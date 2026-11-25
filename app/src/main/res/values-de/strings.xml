@@ -3730,4 +3730,9 @@
     <string name="mail_priority_low">Niedrig</string>
     <string name="mail_high_priority">Hohe Priorität</string>
     <string name="mail_low_priority">Niedrige Priorität</string>
+    <string name="search_match_position">%1$d von %2$d</string>
+    <string name="search_match_position_description">Treffer %1$d von %2$d</string>
+    <string name="search_match_previous">Vorheriger Treffer</string>
+    <string name="search_match_next">Nächster Treffer</string>
+    <string name="search_match_clear">Markierungen entfernen</string>
 </resources>

@@ -21,6 +21,7 @@
 
 package org.astermail.android.ui.mail
 
+import org.astermail.android.ui.search.search_row_text
 import androidx.compose.animation.core.snap
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.indication
@@ -685,7 +686,7 @@ fun ThreadInboxRow(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = sender_text,
+                    text = search_row_text(sender_text) { it.sender },
                     style = inbox_sender_text_style(),
                     color = sender_color,
                     fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
@@ -770,7 +771,7 @@ fun ThreadInboxRow(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = subject_text,
+                        text = search_row_text(subject_text) { it.subject },
                         style = inbox_subject_text_style(),
                         color = subject_color,
                         fontWeight = if (is_unread) FontWeight.SemiBold else FontWeight.Normal,
