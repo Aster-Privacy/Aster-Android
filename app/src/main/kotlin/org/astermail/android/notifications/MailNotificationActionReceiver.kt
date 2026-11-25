@@ -52,6 +52,7 @@ class MailNotificationActionReceiver : BroadcastReceiver() {
             ACTION_ARCHIVE -> MailNotificationActionWorker.ACTION_ARCHIVE
             ACTION_TRASH -> MailNotificationActionWorker.ACTION_TRASH
             ACTION_MARK_READ -> MailNotificationActionWorker.ACTION_MARK_READ
+            ACTION_SPAM -> MailNotificationActionWorker.ACTION_SPAM
             else -> return
         }
         val notification_id = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
@@ -102,6 +103,7 @@ class MailNotificationActionReceiver : BroadcastReceiver() {
         const val ACTION_ARCHIVE = "org.astermail.android.MAIL_NOTIFICATION_ARCHIVE"
         const val ACTION_TRASH = "org.astermail.android.MAIL_NOTIFICATION_TRASH"
         const val ACTION_MARK_READ = "org.astermail.android.MAIL_NOTIFICATION_MARK_READ"
+        const val ACTION_SPAM = "org.astermail.android.MAIL_NOTIFICATION_SPAM"
         const val ACTION_DISMISSED = "org.astermail.android.MAIL_NOTIFICATION_DISMISSED"
         const val ACTION_COPY_CODE = "org.astermail.android.MAIL_NOTIFICATION_COPY_CODE"
         const val EXTRA_CODE = "mail_notification_code"

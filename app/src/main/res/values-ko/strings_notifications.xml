@@ -33,4 +33,6 @@
     <string name="persistent_push_autostart_subtitle">일부 휴대전화는 백그라운드 연결을 종료합니다. 시스템 설정에서 Aster Mail의 자동 시작을 허용하고 배터리 제한을 끄세요.</string>
     <string name="notif_delivery_section">전송</string>
     <string name="notif_action_unlock_required">기기의 잠금을 해제한 후 다시 시도하세요.</string>
+    <string name="notif_actions_section">알림 작업</string>
+    <string name="notif_actions_description">메일 알림에 표시할 작업을 최대 3개까지 선택하세요. 메시지에 코드가 있으면 코드 복사가 한 자리를 차지합니다.</string>
 </resources>

@@ -33,4 +33,6 @@
     <string name="persistent_push_autostart_subtitle">Некоторые телефоны закрывают фоновые подключения. В настройках системы разрешите Aster Mail запускаться автоматически и отключите ограничения батареи.</string>
     <string name="notif_delivery_section">Доставка</string>
     <string name="notif_action_unlock_required">Разблокируйте устройство и повторите попытку.</string>
+    <string name="notif_actions_section">Действия в уведомлениях</string>
+    <string name="notif_actions_description">Выберите до 3 действий для уведомлений о почте. Если в письме есть код, кнопка «Копировать код» занимает одно место.</string>
 </resources>

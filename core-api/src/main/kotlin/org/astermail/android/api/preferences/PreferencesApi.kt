@@ -168,6 +168,7 @@ data class UserPreferences(
     val translate_never_languages: List<String> = emptyList(),
     val muted_folder_tokens: List<String> = emptyList(),
     val muted_notification_categories: List<String> = emptyList(),
+    val notification_actions_android: List<String> = listOf("archive", "trash", "mark_read"),
     val inbox_page_size: Int = 50,
     val reactions_enabled: Boolean = true,
     val email_font_choice: String = "match_app",

@@ -658,6 +658,7 @@ class MailPollingWorker(
         private const val KEY_VIBRATE_ENABLED = "notification_vibrate_enabled"
         private const val KEY_MUTED_FOLDER_TOKENS = "muted_folder_tokens"
         private const val KEY_MUTED_NOTIFICATION_CATEGORIES = "muted_notification_categories"
+        private const val KEY_NOTIFICATION_ACTIONS = "notification_actions"
         private const val KEY_ACTIVE_CATEGORY_TABS = "active_category_tabs"
         private const val KEY_PROTECTED_FOLDER_TOKENS = "protected_folder_tokens"
         private const val KEY_PROTECTED_FOLDER_TOKENS_KNOWN = "protected_folder_tokens_known"
@@ -852,6 +853,19 @@ class MailPollingWorker(
                 )
                 .apply()
             MutedFolderSync.push(context, tokens)
+        }
+
+        fun notification_actions(context: Context): List<String> {
+            val stored = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getString(KEY_NOTIFICATION_ACTIONS, null)
+            return NotificationActionChoices.sanitize(stored?.split(","))
+        }
+
+        fun set_notification_actions(context: Context, actions: List<String>) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_NOTIFICATION_ACTIONS, NotificationActionChoices.sanitize(actions).joinToString(","))
+                .apply()
         }
 
         fun muted_notification_categories(context: Context): Set<String> =
@@ -1404,24 +1418,30 @@ class MailPollingWorker(
             actions_auth: Boolean,
         ) {
             if (code != null) add_copy_code_action(context, builder, code, message_id)
-            val actions = listOf(
-                Triple(
-                    MailNotificationActionReceiver.ACTION_ARCHIVE,
-                    R.drawable.ic_action_archive,
-                    R.string.archive,
-                ),
-                Triple(
-                    MailNotificationActionReceiver.ACTION_TRASH,
-                    R.drawable.ic_action_trash,
-                    R.string.delete,
-                ),
-                Triple(
-                    MailNotificationActionReceiver.ACTION_MARK_READ,
-                    R.drawable.ic_action_mark_read,
-                    R.string.mark_read_action,
-                ),
-            ).take(if (code != null) MAX_VISIBLE_ACTIONS - 1 else MAX_VISIBLE_ACTIONS)
-            actions.forEachIndexed { index, (action, icon, label) ->
+            val chosen = NotificationActionChoices.visible(notification_actions(context), has_code = code != null)
+            chosen.forEach { choice ->
+                val (action, icon, label) = when (choice) {
+                    NotificationActionChoices.ARCHIVE -> Triple(
+                        MailNotificationActionReceiver.ACTION_ARCHIVE,
+                        R.drawable.ic_action_archive,
+                        R.string.archive,
+                    )
+                    NotificationActionChoices.TRASH -> Triple(
+                        MailNotificationActionReceiver.ACTION_TRASH,
+                        R.drawable.ic_action_trash,
+                        R.string.delete,
+                    )
+                    NotificationActionChoices.MARK_READ -> Triple(
+                        MailNotificationActionReceiver.ACTION_MARK_READ,
+                        R.drawable.ic_action_mark_read,
+                        R.string.mark_read_action,
+                    )
+                    else -> Triple(
+                        MailNotificationActionReceiver.ACTION_SPAM,
+                        R.drawable.ic_action_spam,
+                        R.string.report_spam,
+                    )
+                }
                 val intent = Intent(context, MailNotificationActionReceiver::class.java).apply {
                     this.action = action
                     putExtra(MailNotificationActionReceiver.EXTRA_ITEM_ID, item_id)
@@ -1429,7 +1449,7 @@ class MailPollingWorker(
                 }
                 val pending = PendingIntent.getBroadcast(
                     context,
-                    message_id * ACTION_REQUEST_STRIDE + index,
+                    message_id * ACTION_REQUEST_STRIDE + NotificationActionChoices.request_offset(choice),
                     intent,
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
@@ -1747,6 +1767,7 @@ class MailPollingWorker(
             MailNotificationActionWorker.ACTION_ARCHIVE -> R.string.failed_to_archive
             MailNotificationActionWorker.ACTION_TRASH -> R.string.failed_to_trash
             MailNotificationActionWorker.ACTION_MARK_READ -> R.string.failed_mark_read
+            MailNotificationActionWorker.ACTION_SPAM -> R.string.failed_report_spam
             else -> null
         }
 
