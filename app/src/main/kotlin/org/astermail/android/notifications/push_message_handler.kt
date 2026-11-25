@@ -267,6 +267,7 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
             preview = repo.notification_preview(envelope),
             message_id = notification_id,
             item_id = item_id,
+            sender_email = envelope.from_email,
             large_icon = push_large_icon(
                 context = context,
                 repo = repo,

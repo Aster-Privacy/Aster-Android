@@ -463,6 +463,7 @@ class MailPollingWorker(
                 silent = silent,
                 large_icon = sender_large_icon(fresh, resolved_sender, avatar_settings, avatar_budget, content_hidden),
                 arrived_at_ms = item_arrived_ms(fresh),
+                sender_email = fresh.sender_email,
             )
             if (posted) post_also_arrived(also_arrived, ::resolve_sender, avatar_settings, avatar_budget, content_hidden)
             return posted
@@ -508,6 +509,7 @@ class MailPollingWorker(
                     silent = true,
                     large_icon = sender_large_icon(item, item_sender, avatar_settings, avatar_budget, content_hidden),
                     arrived_at_ms = item_arrived_ms(item),
+                    sender_email = item.sender_email,
                 )
             }
         }
@@ -556,6 +558,7 @@ class MailPollingWorker(
             silent: Boolean = false,
             large_icon: android.graphics.Bitmap? = null,
             arrived_at_ms: Long? = null,
+            sender_email: String? = null,
         ): Boolean {
             return notify_lock.withLock {
                 val posted = runCatching {
@@ -569,6 +572,7 @@ class MailPollingWorker(
                         silent = silent,
                         large_icon = large_icon,
                         arrived_at_ms = arrived_at_ms,
+                        sender_email = sender_email,
                     )
                 }.isSuccess
                 if (!posted) release_item_notification(context, item_id)
@@ -1297,6 +1301,7 @@ class MailPollingWorker(
             silent: Boolean = false,
             large_icon: android.graphics.Bitmap? = null,
             arrived_at_ms: Long? = null,
+            sender_email: String? = null,
         ) {
             if (!can_post(context)) return
             val quiet = message_post_quiet(context, silent, arrived_at_ms)
@@ -1310,7 +1315,7 @@ class MailPollingWorker(
             val one_line_subject = org.astermail.android.mail.safe_display_text(subject, SUBJECT_MAX_LENGTH)
                 .ifBlank { localized(context).getString(R.string.notif_new_message) }
             val one_line_preview = org.astermail.android.mail.safe_display_text(preview)
-            val code = org.astermail.android.mail.detect_verification_code(one_line_subject, one_line_preview)
+            val code = org.astermail.android.mail.detect_verification_code(one_line_subject, one_line_preview, sender_email)
                 ?.takeIf { org.astermail.android.security.AppLockNotificationPolicy.offers_copy_code(app_lock_on, true) }
             val builder = base_builder(context, quiet)
                 .setWhen(System.currentTimeMillis())
