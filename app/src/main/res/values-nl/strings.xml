@@ -1916,6 +1916,8 @@
     <string name="publish_to_wkd_sub">Publiceert de sleutel van je primaire adres in de Web Key Directory. Aliassen en adressen van een eigen domein worden niet gepubliceerd.</string>
     <string name="publish_to_keyservers">Publiceren naar sleutelservers</string>
     <string name="publish_to_keyservers_sub">Publiceert je sleutel op openbare keyservers</string>
+    <string name="alias_pgp_title">PGP gebruiken met aliassen</string>
+    <string name="alias_pgp_sub">Als dit uit staat, bevat mail die je vanaf een alias verstuurt geen PGP-handtekening of sleutelgegevens die hem aan je account koppelen.</string>
     <string name="keyserver_publish_failed">Je openbare sleutel is niet gepubliceerd op de keyserver. Een nieuwe poging zou moeten werken.</string>
     <string name="public_key_copied">Publieke sleutel gekopieerd</string>
     <string name="created_at_format">Aangemaakt op %1$s</string>

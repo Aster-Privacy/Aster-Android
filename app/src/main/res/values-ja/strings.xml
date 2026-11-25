@@ -1910,6 +1910,8 @@
     <string name="publish_to_wkd_sub">プライマリアドレスの鍵を Web Key Directory に公開します。エイリアスとカスタムドメインのアドレスは公開されません。</string>
     <string name="publish_to_keyservers">キーサーバーに公開</string>
     <string name="publish_to_keyservers_sub">公開鍵サーバーに鍵を公開します</string>
+    <string name="alias_pgp_title">エイリアスでPGPを使用</string>
+    <string name="alias_pgp_sub">オフにすると、エイリアスから送信するメールには、アカウントとの関連を示すPGP署名や鍵の情報が含まれません。</string>
     <string name="keyserver_publish_failed">公開鍵は鍵サーバーに公開されませんでした。もう一度試すと通ることが多いです。</string>
     <string name="public_key_copied">公開鍵をコピーしました</string>
     <string name="created_at_format">作成日 %1$s</string>

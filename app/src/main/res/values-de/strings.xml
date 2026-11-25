@@ -1917,6 +1917,8 @@
     <string name="publish_to_wkd_sub">Den Schlüssel Ihrer primären Adresse im Web Key Directory veröffentlichen. Aliase und Adressen eigener Domains werden nicht veröffentlicht.</string>
     <string name="publish_to_keyservers">Auf Schlüsselservern veröffentlichen</string>
     <string name="publish_to_keyservers_sub">Ihren Schlüssel auf öffentlichen Keyservern veröffentlichen</string>
+    <string name="alias_pgp_title">PGP mit Aliassen verwenden</string>
+    <string name="alias_pgp_sub">Wenn diese Option deaktiviert ist, enthalten E-Mails, die Sie von einem Alias senden, keine PGP-Signatur und keine Schlüsseldetails, die sie mit Ihrem Konto verknüpfen.</string>
     <string name="keyserver_publish_failed">Ihr öffentlicher Schlüssel wurde nicht auf dem Keyserver veröffentlicht. Ein erneuter Versuch genügt meist.</string>
     <string name="public_key_copied">Öffentlicher Schlüssel kopiert</string>
     <string name="created_at_format">Erstellt am %1$s</string>

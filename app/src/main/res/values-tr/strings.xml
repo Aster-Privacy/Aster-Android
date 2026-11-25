@@ -1916,6 +1916,8 @@
     <string name="publish_to_wkd_sub">Birincil adresinizin anahtarını Web Key Directory\'de yayımlar. Takma adlar ve özel alan adı adresleri yayımlanmaz.</string>
     <string name="publish_to_keyservers">Anahtar sunucularına yayınla</string>
     <string name="publish_to_keyservers_sub">Anahtarınızı herkese açık anahtar sunucularında yayımlar</string>
+    <string name="alias_pgp_title">Takma adlarla PGP kullan</string>
+    <string name="alias_pgp_sub">Bu seçenek kapalıyken, bir takma addan gönderdiğiniz e-postalar onu hesabınıza bağlayan bir PGP imzası veya anahtar bilgisi içermez.</string>
     <string name="keyserver_publish_failed">Genel anahtarınız anahtar sunucusuna yayımlanmadı. Bir kez daha denemek genellikle yeterli olur.</string>
     <string name="public_key_copied">Açık anahtar kopyalandı</string>
     <string name="created_at_format">%1$s tarihinde oluşturuldu</string>

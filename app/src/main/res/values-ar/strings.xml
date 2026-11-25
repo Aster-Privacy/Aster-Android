@@ -1940,6 +1940,8 @@
     <string name="publish_to_wkd_sub">نشر مفتاح عنوانك الأساسي في دليل مفاتيح الويب. لا تُنشر مفاتيح الأسماء المستعارة أو عناوين النطاق المخصص.</string>
     <string name="publish_to_keyservers">النشر إلى خوادم المفاتيح</string>
     <string name="publish_to_keyservers_sub">نشر مفتاحك على خوادم المفاتيح العامة</string>
+    <string name="alias_pgp_title">استخدام PGP مع الأسماء المستعارة</string>
+    <string name="alias_pgp_sub">عند إيقاف هذا الخيار، لا يحمل البريد الذي ترسله من اسم مستعار أي توقيع PGP أو تفاصيل مفتاح تربطه بحسابك.</string>
     <string name="keyserver_publish_failed">لم يُنشر مفتاحك العام على خادم المفاتيح. من المرجّح أن تنجح المحاولة التالية.</string>
     <string name="public_key_copied">تم نسخ المفتاح العام</string>
     <string name="created_at_format">أُنشئ في %1$s</string>
