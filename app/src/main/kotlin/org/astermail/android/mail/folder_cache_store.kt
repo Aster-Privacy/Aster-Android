@@ -24,6 +24,7 @@ package org.astermail.android.mail
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import org.astermail.android.storage.search.AsterDatabase
 import org.astermail.android.storage.search.FolderRowDao
@@ -53,6 +54,16 @@ class FolderCacheStore @Inject constructor(
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
 ) {
     private val dao: FolderRowDao by lazy { db_provider.get().folder_row_dao() }
+
+    private val prefetched = StartupPrefetch<String, List<InboxItem>>(
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob()),
+        Dispatchers.IO,
+        ready = { org.astermail.android.storage.SecurePrefs.warm_complete.first { it } },
+    )
+
+    fun prefetch(folder: String) {
+        prefetched.start(folder) { read_rows(folder, folder_cache_row_limit) }
+    }
 
     private val meta: android.content.SharedPreferences? by lazy {
         runCatching { context.getSharedPreferences(folder_cache_meta_prefs, android.content.Context.MODE_PRIVATE) }
@@ -96,12 +107,16 @@ class FolderCacheStore @Inject constructor(
         }
     }
 
-    suspend fun rows(folder: String, limit: Int = folder_cache_row_limit): List<InboxItem> =
-        withContext(Dispatchers.IO) {
-            runCatching { dao.rows_for_folder(folder, limit).map { it.to_inbox_item() } }.getOrDefault(emptyList())
-        }
+    suspend fun rows(folder: String, limit: Int = folder_cache_row_limit): List<InboxItem> {
+        if (limit == folder_cache_row_limit) prefetched.take(folder)?.let { return it }
+        return withContext(Dispatchers.IO) { read_rows(folder, limit) }
+    }
+
+    private suspend fun read_rows(folder: String, limit: Int): List<InboxItem> =
+        runCatching { dao.rows_for_folder(folder, limit).map { it.to_inbox_item() } }.getOrDefault(emptyList())
 
     suspend fun save(folder: String, items: List<InboxItem>, cached_at: Long) {
+        prefetched.invalidate(folder)
         withContext(Dispatchers.IO) {
             runCatching {
                 val rows = folder_cache_rows(folder, items, cached_at)
@@ -112,10 +127,12 @@ class FolderCacheStore @Inject constructor(
     }
 
     suspend fun clear_folder(folder: String) {
+        prefetched.invalidate(folder)
         withContext(Dispatchers.IO) { runCatching { dao.clear_folder(folder) } }
     }
 
     suspend fun clear_all() {
+        prefetched.clear()
         withContext(Dispatchers.IO) { runCatching { dao.clear_all() } }
     }
 }

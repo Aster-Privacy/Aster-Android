@@ -2275,6 +2275,10 @@ fun InboxScreen(
                     rows_imminent = rows_imminent,
                 )
                 skeleton_showing[0] = skeleton_phase == SkeletonPhase.skeleton
+                androidx.activity.compose.ReportDrawnWhen {
+                    !skeleton_now && !rows_deriving && skeleton_phase == SkeletonPhase.content &&
+                        state_matches_folder && (threads.isNotEmpty() || !inbox_state.is_loading)
+                }
                 val handoff = Modifier.skeleton_handoff(skeleton_phase)
                 val row_geometry = remember_row_geometry(skeleton_geometry_of(settings_state.preferences))
                 val record_row_height = remember_row_height_recorder()
