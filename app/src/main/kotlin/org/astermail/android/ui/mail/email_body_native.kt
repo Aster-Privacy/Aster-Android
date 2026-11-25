@@ -200,9 +200,7 @@ private val ZERO_FONT_SIZE =
 
 private val FONT_SIZE_DECLARATION = Regex("""(?<![a-z-])font-size\s*:""", RegexOption.IGNORE_CASE)
 
-private val CSS_COMMENT = Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL)
-
-private val CSS_RULE = Regex("""([^{}@]+)\{([^{}]*)\}""")
+private val CSS_RULE = Regex("""(?<![^{}@])([^{}@]+)\{([^{}]*)\}""")
 
 private const val STYLE_REVEAL =
     "display:revert !important;visibility:visible !important;opacity:1 !important;" +
@@ -236,27 +234,31 @@ private fun strip_nested_blocks(css: String): String {
     return out.toString()
 }
 
-private fun stylesheet_hidden_elements(root: Element): List<Element> {
+private fun stylesheet_hidden_elements(root: Element): Set<Element> {
+    val hidden: MutableSet<Element> = java.util.Collections.newSetFromMap(java.util.IdentityHashMap())
     val css = root.select("style").joinToString(" ") { it.data() }
-    if (css.isBlank()) return emptyList()
-    val flat = strip_nested_blocks(CSS_COMMENT.replace(css, ""))
-    return CSS_RULE.findAll(flat)
-        .filter { HIDING_DECLARATION.containsMatchIn(it.groupValues[2]) }
-        .flatMap { rule ->
-            rule.groupValues[1].split(',').map { it.trim() }.filter { it.isNotEmpty() }.asSequence()
+    if (css.isBlank()) return hidden
+    val flat = strip_nested_blocks(strip_css_block_comments(css))
+    val selectors = mail_selectors(
+        CSS_RULE.findAll(flat)
+            .filter { HIDING_DECLARATION.containsMatchIn(it.groupValues[2]) }
+            .map { it.groupValues[1] },
+    )
+    for (selector in selectors) {
+        val matches = runCatching { root.select(selector).toList() }.getOrDefault(emptyList())
+        for (element in matches) {
+            if (element.tagName().lowercase() != "style") hidden.add(element)
         }
-        .flatMap { selector -> runCatching { root.select(selector).toList() }.getOrDefault(emptyList()).asSequence() }
-        .filter { it.tagName().lowercase() != "style" }
-        .distinct()
-        .toList()
+    }
+    return hidden
 }
 
-private fun is_hidden(node: Node, sheet_hidden: List<Element>, is_text: Boolean): Boolean {
+private fun is_hidden(node: Node, sheet_hidden: Set<Element>, is_text: Boolean): Boolean {
     var sized = false
     var current: Node? = node
     while (current != null) {
         if (current is Element) {
-            if (sheet_hidden.any { it === current }) return true
+            if (current in sheet_hidden) return true
             val style = current.attr("style")
             if (SUBTREE_HIDING_DECLARATION.containsMatchIn(style)) return true
             if (ZERO_FONT_SIZE.containsMatchIn(style)) {
