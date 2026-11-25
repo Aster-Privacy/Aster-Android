@@ -121,7 +121,7 @@ class MailCssSelectorTest {
 
     @Test(timeout = 2_000)
     fun an_unterminated_comment_run_finishes_quickly() {
-        val css = "/*".repeat(100_000)
+        val css = "/* ".repeat(100_000)
         assertEquals(css, strip_css_block_comments(css))
     }
 
