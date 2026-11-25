@@ -439,4 +439,104 @@ class device_contact_upload_test {
         )
         assertTrue(plan.updates.isEmpty())
     }
+    @Test
+    fun a_contact_deleted_in_aster_is_not_uploaded_again_after_trash_is_emptied() {
+        val deleted = person("Ana", "ana@example.com")
+        val phone = listOf(person("Ana", "ana@example.com"), person("Dee", "dee@example.com"))
+        val plan = plan_contact_import(
+            phone,
+            existing = emptyList(),
+            tombstones = deletion_tombstone_keys(listOf(deleted)).toSet(),
+        )
+        assertEquals(listOf("Dee"), plan.new_contacts.map { it.name })
+        assertEquals(1, plan.deleted_in_aster)
+    }
+
+    @Test
+    fun a_name_only_tombstone_blocks_an_emailless_device_copy() {
+        val tombstones = deletion_tombstone_keys(listOf(person("Ben"))).toSet()
+        val plan = plan_contact_import(listOf(person("ben ")), emptyList(), tombstones = tombstones)
+        assertTrue(plan.new_contacts.isEmpty())
+    }
+
+    @Test
+    fun a_shared_name_with_a_new_email_is_still_imported() {
+        val tombstones = deletion_tombstone_keys(listOf(person("Ana", "ana@example.com"))).toSet()
+        val plan = plan_contact_import(listOf(person("Ana", "ana.new@example.com")), emptyList(), tombstones = tombstones)
+        assertEquals(1, plan.new_contacts.size)
+    }
+
+    @Test
+    fun a_device_contact_seen_last_sync_and_gone_from_aster_is_not_uploaded() {
+        val previous = listOf(person("Ana", "ana@example.com"), person("Ben"))
+        val phone = previous + person("Cy", "cy@example.com")
+        val plan = plan_contact_import(
+            phone,
+            existing = emptyList(),
+            known_identities = device_identity_keys(previous),
+        )
+        assertEquals(listOf("Cy"), plan.new_contacts.map { it.name })
+        assertEquals(2, plan.deleted_in_aster)
+    }
+
+    @Test
+    fun first_sync_without_history_imports_everything() {
+        val phone = listOf(person("Ana", "ana@example.com"), person("Ben"))
+        val plan = plan_contact_import(phone, emptyList(), previously_seen = null)
+        assertEquals(2, plan.new_contacts.size)
+        assertEquals(0, plan.deleted_in_aster)
+    }
+
+    @Test
+    fun an_active_match_still_merges_new_details_despite_a_tombstone() {
+        val tombstones = deletion_tombstone_keys(listOf(person("Ana", "ana@example.com"))).toSet()
+        val phone = listOf(
+            person("Ana", "ana@example.com").with_typed_fields(
+                emails = listOf(ContactEntry("ana@example.com", ContactEntry.TYPE_HOME)),
+                phones = listOf(ContactEntry("+1 555 0100", ContactEntry.TYPE_MOBILE)),
+                addresses = emptyList(),
+            ),
+        )
+        val plan = plan_contact_import(
+            phone,
+            listOf(stored("c1", "Ana", email = "ana@example.com")),
+            tombstones = tombstones,
+        )
+        assertTrue(plan.new_contacts.isEmpty())
+        assertEquals(0, plan.deleted_in_aster)
+        assertEquals(listOf("+1 555 0100"), plan.updates.single().phone_entries().map { it.value })
+    }
+
+    @Test
+    fun a_failed_upload_is_retried_on_the_next_sync() = runTest {
+        val phone = listOf(person("Ana", "ana@example.com"), person("Ben", "ben@example.com"))
+        val result = upload_device_contacts(
+            phone,
+            create = { contact ->
+                if (contact.name == "Ben") Result.failure(IllegalStateException("offline")) else Result.success(Unit)
+            },
+        )
+        val reconciled = phone.filterNot { it in result.unsent.toSet() }
+        val next = plan_contact_import(phone, emptyList(), known_identities = device_identity_keys(reconciled))
+        assertEquals(listOf("Ben"), next.new_contacts.map { it.name })
+    }
+
+    @Test
+    fun contacts_cut_off_by_the_plan_limit_stay_pending() = runTest {
+        val phone = listOf(person("A", "a@example.com"), person("B", "b@example.com"), person("C", "c@example.com"))
+        val result = upload_device_contacts(
+            phone,
+            create = { contact ->
+                if (contact.name == "A") Result.success(Unit) else Result.failure(ApiError.PlanLimitExceeded("limit", null))
+            },
+        )
+        assertTrue(result.limit_reached)
+        assertEquals(listOf("B", "C"), result.unsent.map { (it as Contact).name })
+    }
+
+    @Test
+    fun tombstones_keep_the_newest_entries_and_drop_restored_ones() {
+        val merged = merge_tombstones(listOf("a", "b", "c"), listOf("d", "a"), removed = setOf("b"), cap = 3)
+        assertEquals(listOf("c", "d", "a"), merged)
+    }
 }
