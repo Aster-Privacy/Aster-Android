@@ -1584,6 +1584,7 @@
     <string name="reaction_remove_failed">リアクションを削除できませんでした</string>
     <string name="copy_address">アドレスをコピー</string>
     <string name="sender_on_aster">Asterアカウント</string>
+    <string name="sender_on_aster_logo">%1$sアカウント</string>
     <string name="messages_from_sender">この送信者のメールを検索</string>
     <string name="send_email_to_sender">この送信者にメールを書く</string>
     <string name="add_to_contacts">連絡先に保存</string>
@@ -3740,4 +3741,6 @@
     <string name="mail_priority_low">低</string>
     <string name="mail_high_priority">優先度: 高</string>
     <string name="mail_low_priority">優先度: 低</string>
+    <string name="official_sender">Aster公式アドレス</string>
+    <string name="official_sender_desc">このメッセージはAsterの公式アドレスから送信されています。Asterがメールでパスワードやリカバリーフレーズを尋ねることはありません。</string>
 </resources>

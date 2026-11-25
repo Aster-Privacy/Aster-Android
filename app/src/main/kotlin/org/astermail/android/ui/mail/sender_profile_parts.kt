@@ -57,7 +57,11 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -66,6 +70,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import compose.icons.TablerIcons
+import org.astermail.android.R
 import compose.icons.tablericons.ChevronRight
 import org.astermail.android.design.AsterDuration
 import org.astermail.android.design.AsterMaterial
@@ -316,3 +321,41 @@ internal fun sender_identity_badge(
         )
     }
 }
+
+@Composable
+internal fun aster_account_badge() {
+    val colors = AsterMaterial.colors
+    val tint = colors.text_primary
+    val template = stringResource(R.string.sender_on_aster_logo, LOGO_SLOT)
+    val label = stringResource(R.string.sender_on_aster)
+    val split = template.indexOf(LOGO_SLOT)
+    val before = if (split >= 0) template.substring(0, split).trim() else ""
+    val after = if (split >= 0) template.substring(split + LOGO_SLOT.length).trim() else template
+    val joins_before = split > 0 && !template.substring(0, split).endsWith(" ")
+    val joins_after = split >= 0 && !template.substring(split + LOGO_SLOT.length).startsWith(" ")
+    Row(
+        modifier = Modifier
+            .clip(AsterShapes.pill)
+            .background(tonal_surface_color(colors, colors.accent_blue))
+            .padding(horizontal = 10.dp, vertical = 5.dp)
+            .clearAndSetSemantics { contentDescription = label },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (before.isNotEmpty()) {
+            Text(text = before, color = tint, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+            Spacer(Modifier.width(if (joins_before) 2.dp else 5.dp))
+        }
+        Image(
+            painter = painterResource(R.drawable.aster_wordmark),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.height(11.dp),
+        )
+        if (after.isNotEmpty()) {
+            Spacer(Modifier.width(if (joins_after) 2.dp else 5.dp))
+            Text(text = after, color = tint, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+        }
+    }
+}
+
+private const val LOGO_SLOT = ""

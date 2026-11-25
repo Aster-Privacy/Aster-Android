@@ -1589,6 +1589,7 @@
     <string name="reaction_remove_failed">Tepki kaldırılamadı</string>
     <string name="copy_address">Adresi kopyala</string>
     <string name="sender_on_aster">Aster hesabı</string>
+    <string name="sender_on_aster_logo">%1$s hesabı</string>
     <string name="messages_from_sender">Bu gönderenin postalarını bul</string>
     <string name="send_email_to_sender">Bu gönderene yaz</string>
     <string name="add_to_contacts">Kişilere kaydet</string>
@@ -3764,4 +3765,6 @@
     <string name="mail_priority_low">Düşük</string>
     <string name="mail_high_priority">Yüksek öncelik</string>
     <string name="mail_low_priority">Düşük öncelik</string>
+    <string name="official_sender">Resmi Aster adresi</string>
+    <string name="official_sender_desc">Bu mesaj resmi bir Aster adresinden gönderildi. Aster parolanızı veya kurtarma ifadenizi asla e-posta ile istemez.</string>
 </resources>

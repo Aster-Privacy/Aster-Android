@@ -2151,6 +2151,7 @@
     <string name="reaction_remove_failed">Impossible de retirer la réaction</string>
     <string name="copy_address">Copier l\'adresse</string>
     <string name="sender_on_aster">Compte Aster</string>
+    <string name="sender_on_aster_logo">Compte %1$s</string>
     <string name="messages_from_sender">Trouver les messages de cet expéditeur</string>
     <string name="send_email_to_sender">Écrire à cet expéditeur</string>
     <string name="add_to_contacts">Enregistrer dans les contacts</string>
@@ -3819,4 +3820,6 @@
     <string name="mail_priority_low">Basse</string>
     <string name="mail_high_priority">Priorité haute</string>
     <string name="mail_low_priority">Priorité basse</string>
+    <string name="official_sender">Adresse officielle Aster</string>
+    <string name="official_sender_desc">Ce message provient d\'une adresse officielle Aster. Aster ne vous demandera jamais votre mot de passe ni votre phrase de récupération par e-mail.</string>
 </resources>

@@ -1584,6 +1584,7 @@
     <string name="reaction_remove_failed">无法移除回应</string>
     <string name="copy_address">复制地址</string>
     <string name="sender_on_aster">Aster 账户</string>
+    <string name="sender_on_aster_logo">%1$s 账户</string>
     <string name="messages_from_sender">查找该发件人的邮件</string>
     <string name="send_email_to_sender">写信给该发件人</string>
     <string name="add_to_contacts">保存到联系人</string>
@@ -3733,4 +3734,6 @@
     <string name="mail_priority_low">低</string>
     <string name="mail_high_priority">高优先级</string>
     <string name="mail_low_priority">低优先级</string>
+    <string name="official_sender">Aster 官方地址</string>
+    <string name="official_sender_desc">此邮件来自 Aster 官方地址。Aster 绝不会通过电子邮件向您索要密码或恢复短语。</string>
 </resources>

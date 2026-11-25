@@ -155,7 +155,8 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     val colors = AsterMaterial.colors
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val config = remember { store.get_config() }
+    var state_loaded by remember { mutableStateOf(false) }
+    var config by remember { mutableStateOf<org.astermail.android.security.AppLockConfig?>(null) }
     val pin_type = config?.pin_type ?: "numeric"
     val digits = config?.digits ?: 6
     val device_mode = config?.mode == AppLockMode.DEVICE
@@ -164,25 +165,27 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     var verifying by remember { mutableStateOf(false) }
     var error_msg by remember { mutableStateOf<String?>(null) }
     var shake_trigger by remember { mutableIntStateOf(0) }
-    var locked_out by remember { mutableStateOf(store.is_locked_out()) }
-    var lockout_secs by remember { mutableLongStateOf(store.lockout_remaining_seconds()) }
-    var attempt_notice by remember { mutableStateOf(store.attempt_notice()) }
+    var locked_out by remember { mutableStateOf(false) }
+    var lockout_secs by remember { mutableLongStateOf(0L) }
+    var attempt_notice by remember { mutableStateOf<org.astermail.android.security.PinAttemptNotice>(org.astermail.android.security.PinAttemptNotice.None) }
     var show_passphrase by remember { mutableStateOf(false) }
-    var biometric_available by remember {
-        mutableStateOf(BiometricManager.from(context).canAuthenticate(BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS)
-    }
+    var biometric_available by remember { mutableStateOf(false) }
     var auto_prompt_armed by remember { mutableStateOf(true) }
     var device_prompt_in_flight by remember { mutableStateOf(false) }
     val host_activity = remember(context) { context.find_host_activity() as? FragmentActivity }
     val lifecycle_owner = host_activity ?: LocalLifecycleOwner.current
     val lifecycle_state by lifecycle_owner.lifecycle.currentStateAsState()
-    var biometric_enrolled by remember {
-        mutableStateOf(
-            run {
-                BiometricUnlockGate.reconcile(context)
-                BiometricUnlockGate.is_enrolled(context)
-            },
-        )
+    var biometric_enrolled by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        val loaded = withContext(Dispatchers.IO) { load_lock_screen_state(store, context) }
+        config = loaded.config
+        locked_out = loaded.locked_out
+        lockout_secs = loaded.lockout_secs
+        attempt_notice = loaded.attempt_notice
+        biometric_available = loaded.biometric_available
+        biometric_enrolled = loaded.biometric_enrolled
+        state_loaded = true
     }
 
     val reduce_motion = aster_reduce_motion()
@@ -355,7 +358,8 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
         if (should_rearm_auto_prompt(lifecycle_state.isAtLeast(Lifecycle.State.STARTED))) auto_prompt_armed = true
     }
 
-    LaunchedEffect(auto_prompt_armed, lifecycle_state, biometric_available, biometric_enrolled) {
+    LaunchedEffect(state_loaded, auto_prompt_armed, lifecycle_state, biometric_available, biometric_enrolled) {
+        if (!state_loaded) return@LaunchedEffect
         val resumed = lifecycle_state.isAtLeast(Lifecycle.State.RESUMED)
         if (should_auto_prompt_biometric(auto_prompt_armed, resumed, biometric_available, biometric_enrolled)) {
             auto_prompt_armed = false
@@ -367,7 +371,7 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
     }
 
     fun attempt_verify(value: String) {
-        if (verifying || locked_out) return
+        if (!state_loaded || verifying || locked_out) return
         scope.launch {
             verifying = true
             val ok = try {
@@ -444,7 +448,8 @@ private fun app_lock_content(store: AppLockStore, on_sign_out: () -> Unit) {
                 }
             }
 
-            if (device_mode) {
+            if (!state_loaded) {
+            } else if (device_mode) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -718,4 +723,29 @@ fun ShakeBox(trigger: Int, content: @Composable () -> Unit) {
     Box(modifier = Modifier.aster_error_shake(trigger)) {
         content()
     }
+}
+
+private class LockScreenState(
+    val config: org.astermail.android.security.AppLockConfig?,
+    val locked_out: Boolean,
+    val lockout_secs: Long,
+    val attempt_notice: org.astermail.android.security.PinAttemptNotice,
+    val biometric_available: Boolean,
+    val biometric_enrolled: Boolean,
+)
+
+private fun load_lock_screen_state(store: AppLockStore, context: android.content.Context): LockScreenState {
+    val config = runCatching { store.get_config() }.getOrNull()
+    val locked_out = runCatching { store.is_locked_out() }.getOrDefault(false)
+    val lockout_secs = runCatching { store.lockout_remaining_seconds() }.getOrDefault(0L)
+    val attempt_notice = runCatching { store.attempt_notice() }
+        .getOrDefault(org.astermail.android.security.PinAttemptNotice.None)
+    val biometric_available = runCatching {
+        BiometricManager.from(context).canAuthenticate(BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
+    }.getOrDefault(false)
+    val biometric_enrolled = runCatching {
+        BiometricUnlockGate.reconcile(context)
+        BiometricUnlockGate.is_enrolled(context)
+    }.getOrDefault(false)
+    return LockScreenState(config, locked_out, lockout_secs, attempt_notice, biometric_available, biometric_enrolled)
 }

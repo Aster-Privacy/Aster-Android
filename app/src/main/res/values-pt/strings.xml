@@ -1593,6 +1593,7 @@
     <string name="reaction_remove_failed">Não foi possível remover a reação</string>
     <string name="copy_address">Copiar endereço</string>
     <string name="sender_on_aster">Conta do Aster</string>
+    <string name="sender_on_aster_logo">Conta do %1$s</string>
     <string name="messages_from_sender">Procurar correio deste remetente</string>
     <string name="send_email_to_sender">Escrever para este remetente</string>
     <string name="add_to_contacts">Guardar nos contactos</string>
@@ -3790,4 +3791,6 @@
     <string name="mail_priority_low">Baixa</string>
     <string name="mail_high_priority">Prioridade alta</string>
     <string name="mail_low_priority">Prioridade baixa</string>
+    <string name="official_sender">Endereço oficial da Aster</string>
+    <string name="official_sender_desc">Esta mensagem é de um endereço oficial da Aster. A Aster nunca solicitará sua senha ou frase de recuperação por e-mail.</string>
 </resources>

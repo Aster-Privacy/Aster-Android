@@ -218,7 +218,12 @@ object app_language {
         return language_context(context, context.createConfigurationContext(configuration))
     }
 
+    fun platform_applies_locale(context: Context): Boolean =
+        platform_managed && prefs(context).getBoolean(KEY_PLATFORM_MIGRATED, false)
+
     fun apply(context: Context): Context {
+        if (platform_applies_locale(context)) return context
+
         val code = stored_code(context) ?: return context
 
         if (!is_supported(code)) return context

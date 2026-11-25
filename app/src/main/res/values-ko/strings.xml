@@ -1584,6 +1584,7 @@
     <string name="reaction_remove_failed">반응을 삭제하지 못했습니다</string>
     <string name="copy_address">주소 복사</string>
     <string name="sender_on_aster">Aster 계정</string>
+    <string name="sender_on_aster_logo">%1$s 계정</string>
     <string name="messages_from_sender">이 발신자의 메일 찾기</string>
     <string name="send_email_to_sender">이 발신자에게 메일 쓰기</string>
     <string name="add_to_contacts">연락처에 저장</string>
@@ -3733,4 +3734,6 @@
     <string name="mail_priority_low">낮음</string>
     <string name="mail_high_priority">높은 중요도</string>
     <string name="mail_low_priority">낮은 중요도</string>
+    <string name="official_sender">Aster 공식 주소</string>
+    <string name="official_sender_desc">이 메시지는 Aster 공식 주소에서 발송되었습니다. Aster는 이메일로 비밀번호나 복구 문구를 요청하지 않습니다.</string>
 </resources>

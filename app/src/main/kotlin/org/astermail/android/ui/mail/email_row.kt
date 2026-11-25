@@ -271,6 +271,7 @@ fun EmailRow(
         stringResource(R.string.unknown),
     )
     val marks_hidden = trust?.show_identity_marks == false
+    val shows_official_badge = remember(email) { is_official_sender(email) }
     val read_fade_scale = local_read_fade_scale.current
     val sender_color = inbox_sender_color(colors, is_unread, read_fade_scale)
     val subject_color = inbox_subject_color(colors, is_unread, read_fade_scale)
@@ -359,16 +360,25 @@ fun EmailRow(
                 with_via_suffix(shown_sender_name, via_label, via_color)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = sender_text,
-                    style = MaterialTheme.typography.bodyLarge.merge(inbox_bidi_line_style()),
-                    color = sender_color,
-                    fontSize = 16.sp,
-                    fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
+                Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = sender_text,
+                        style = MaterialTheme.typography.bodyLarge.merge(inbox_bidi_line_style()),
+                        color = sender_color,
+                        fontSize = 16.sp,
+                        fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (shows_official_badge) {
+                        official_badge(
+                            modifier = Modifier.padding(start = 4.dp),
+                            size = 15.dp,
+                            interactive = false,
+                        )
+                    }
+                }
                 if (is_pinned) {
                     Icon(
                         imageVector = pin_icon_filled,
@@ -610,6 +620,7 @@ fun ThreadInboxRow(
     )
     val newest_sender_email = displayed_sender_email(email.display_sender_email, email.sender_email)
     val single_plain_sender = trust != null && (!trust.show_identity_marks || trust.warning != null)
+    val shows_official_badge = remember(email) { is_official_sender(email) }
     val shown_participants = remember(
         thread.thread_id,
         thread.participants,
@@ -752,15 +763,24 @@ fun ThreadInboxRow(
                 with_via_suffix(participants_text, via_label, via_color)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = sender_text,
-                    style = inbox_sender_text_style(),
-                    color = sender_color,
-                    fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
+                Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = sender_text,
+                        style = inbox_sender_text_style(),
+                        color = sender_color,
+                        fontWeight = if (is_unread) FontWeight.Bold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (shows_official_badge) {
+                        official_badge(
+                            modifier = Modifier.padding(start = 4.dp),
+                            size = 15.dp,
+                            interactive = false,
+                        )
+                    }
+                }
                 if (is_pinned) {
                     Icon(
                         imageVector = pin_icon_filled,

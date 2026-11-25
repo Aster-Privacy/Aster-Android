@@ -299,6 +299,7 @@
     <string name="block_sender">प्रेषक को ब्लॉक करें</string>
     <string name="copy_address">पता कॉपी करें</string>
     <string name="sender_on_aster">Aster खाता</string>
+    <string name="sender_on_aster_logo">%1$s खाता</string>
     <string name="messages_from_sender">इस प्रेषक की मेल ढूंढें</string>
     <string name="send_email_to_sender">इस प्रेषक को लिखें</string>
     <string name="add_to_contacts">संपर्कों में सहेजें</string>
@@ -3656,4 +3657,6 @@
     <string name="mail_priority_low">निम्न</string>
     <string name="mail_high_priority">उच्च प्राथमिकता</string>
     <string name="mail_low_priority">निम्न प्राथमिकता</string>
+    <string name="official_sender">आधिकारिक Aster पता</string>
+    <string name="official_sender_desc">यह संदेश एक आधिकारिक Aster पते से है। Aster कभी भी ईमेल से आपका पासवर्ड या रिकवरी वाक्यांश नहीं मांगेगा।</string>
 </resources>

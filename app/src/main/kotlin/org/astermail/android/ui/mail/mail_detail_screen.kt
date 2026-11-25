@@ -3181,7 +3181,8 @@ internal fun expanded_message(
         !msg.is_external
     val trust = remember_sender_trust(if (is_own_message) null else msg.trust_message)
     val marks_hidden = trust?.show_identity_marks == false
-    val shows_verified_check = trust?.show_verified_badge == true && msg.sender_verified_domain != null
+    val shows_official_badge = !is_own_message && is_official_sender(msg)
+    val shows_verified_check = !shows_official_badge && trust?.show_verified_badge == true && msg.sender_verified_domain != null
     var show_details by remember { mutableStateOf(false) }
     var addresses_expanded by remember(msg.id) { mutableStateOf(false) }
     var sender_name_truncated by remember(msg.id) { mutableStateOf(false) }
@@ -3232,18 +3233,39 @@ internal fun expanded_message(
         summarize_email_authentication(msg)
     }
 
-    val unsub_info = remember(msg.body_html, msg.body, msg.raw_headers, msg.dkim_result) {
-        detect_unsubscribe_info(
-            html_content = msg.body_html,
-            text_content = msg.body,
-            list_unsubscribe = msg.raw_headers.firstOrNull {
-                it.first.equals("list-unsubscribe", ignoreCase = true)
-            }?.second,
-            list_unsubscribe_post = msg.raw_headers.firstOrNull {
-                it.first.equals("list-unsubscribe-post", ignoreCase = true)
-            }?.second,
+    val unsub_header = remember(msg.raw_headers) {
+        msg.raw_headers.firstOrNull { it.first.equals("list-unsubscribe", ignoreCase = true) }?.second
+    }
+    val unsub_post_header = remember(msg.raw_headers) {
+        msg.raw_headers.firstOrNull { it.first.equals("list-unsubscribe-post", ignoreCase = true) }?.second
+    }
+    val unsub_key = remember(msg.id, msg.body_html, msg.body, unsub_header, unsub_post_header, msg.dkim_result) {
+        unsub_info_memo.key_of(msg.id, msg.body_html, msg.body, unsub_header, unsub_post_header, msg.dkim_result)
+    }
+    val unsub_info by androidx.compose.runtime.produceState(
+        initialValue = unsub_info_memo.get(unsub_key) ?: detect_unsubscribe_info(
+            list_unsubscribe = unsub_header,
+            list_unsubscribe_post = unsub_post_header,
             dkim_result = msg.dkim_result,
-        )
+        ),
+        unsub_key,
+    ) {
+        val cached = unsub_info_memo.get(unsub_key)
+        if (cached != null) {
+            value = cached
+            return@produceState
+        }
+        val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            detect_unsubscribe_info(
+                html_content = msg.body_html,
+                text_content = msg.body,
+                list_unsubscribe = unsub_header,
+                list_unsubscribe_post = unsub_post_header,
+                dkim_result = msg.dkim_result,
+            )
+        }
+        unsub_info_memo.put(unsub_key, result)
+        value = result
     }
     val show_unsub_link = unsubscribe_link_visible(show_unsub, unsub_info)
 
@@ -3330,6 +3352,10 @@ internal fun expanded_message(
                                         onLongClick = { copy_email(shown_sender_email) },
                                     ),
                             )
+                            if (shows_official_badge) {
+                                Spacer(Modifier.width(4.dp))
+                                official_badge()
+                            }
                             if (shows_verified_check) {
                                 Spacer(Modifier.width(4.dp))
                                 Icon(
@@ -3683,7 +3709,32 @@ internal fun expanded_message(
             html_rendering_mode = body_settings_state.preferences?.html_rendering_mode,
             low_network = org.astermail.android.network.low_network_active(),
         )
-        val html_part = remember(msg.body_html, msg.body) { renderable_html_part(msg.body_html, msg.body) }
+        val html_part_key = remember(msg.id, msg.body_html, msg.body) {
+            unsub_info_memo.key_of(msg.id, msg.body_html, msg.body, null, null, null)
+        }
+        val html_part_quick = remember(html_part_key) {
+            val html = msg.body_html
+            when {
+                html.isNullOrBlank() -> renderable_part_memo.Resolved(null)
+                msg.body.isBlank() || msg.body == html -> renderable_part_memo.Resolved(html)
+                else -> renderable_part_memo.get(html_part_key)
+            }
+        }
+        val html_part_state = androidx.compose.runtime.produceState(
+            initialValue = html_part_quick?.html ?: msg.body_html,
+            html_part_key,
+        ) {
+            if (html_part_quick != null) {
+                value = html_part_quick.html
+                return@produceState
+            }
+            val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                renderable_html_part(msg.body_html, msg.body)
+            }
+            renderable_part_memo.put(html_part_key, renderable_part_memo.Resolved(result))
+            value = result
+        }
+        val html_part = html_part_state.value
         val text_part_lazy = remember(msg.body_html, msg.body) {
             lazy(LazyThreadSafetyMode.NONE) {
                 msg.body.ifBlank { org.astermail.android.mail.html_to_plain_text(msg.body_html.orEmpty()) }
@@ -6693,6 +6744,25 @@ internal object web_view_support {
     }
 }
 
+private object contain_body_bring_into_view : androidx.compose.ui.node.ModifierNodeElement<contained_bring_into_view_node>() {
+    override fun create(): contained_bring_into_view_node = contained_bring_into_view_node()
+
+    override fun update(node: contained_bring_into_view_node) = Unit
+
+    override fun hashCode(): Int = 0x6272
+
+    override fun equals(other: Any?): Boolean = other === this
+}
+
+private class contained_bring_into_view_node :
+    Modifier.Node(),
+    androidx.compose.ui.relocation.BringIntoViewModifierNode {
+    override suspend fun bringIntoView(
+        childCoordinates: androidx.compose.ui.layout.LayoutCoordinates,
+        boundsProvider: () -> androidx.compose.ui.geometry.Rect?,
+    ) = Unit
+}
+
 internal class mail_body_web_view(
     ctx: android.content.Context,
 ) : android.webkit.WebView(ctx) {
@@ -6950,6 +7020,48 @@ private object card_analysis_memo {
     @Synchronized
     fun phishing_put(key: Long, value: org.astermail.android.security.PhishingResult) {
         phishing[key] = value
+    }
+}
+
+private object unsub_info_memo {
+    private const val capacity = 96
+    private val store = object : LinkedHashMap<Long, UnsubscribeInfo>(32, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, UnsubscribeInfo>?): Boolean =
+            size > capacity
+    }
+
+    fun key_of(id: String, html: String?, text: String?, header: String?, post: String?, dkim: String?): Long {
+        var h = id.hashCode().toLong()
+        for (part in arrayOf(html, text, header, post, dkim)) {
+            h = h * 1_000_003L + (part?.length ?: -1).toLong()
+            h = h * 31L + (part?.hashCode() ?: 0).toLong()
+        }
+        return h
+    }
+
+    @Synchronized
+    fun get(key: Long): UnsubscribeInfo? = store[key]
+
+    @Synchronized
+    fun put(key: Long, value: UnsubscribeInfo) {
+        store[key] = value
+    }
+}
+
+private object renderable_part_memo {
+    class Resolved(val html: String?)
+
+    private const val capacity = 96
+    private val store = object : LinkedHashMap<Long, Resolved>(32, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, Resolved>?): Boolean = size > capacity
+    }
+
+    @Synchronized
+    fun get(key: Long): Resolved? = store[key]
+
+    @Synchronized
+    fun put(key: Long, value: Resolved) {
+        store[key] = value
     }
 }
 
@@ -8408,6 +8520,7 @@ internal fun email_html_view(
                 .wrapContentHeight(align = Alignment.Top, unbounded = true)
                 .height(web_height)
                 .clipToBounds()
+                .then(contain_body_bring_into_view)
                 .onGloballyPositioned { coords ->
                     if (!coords.isAttached) return@onGloballyPositioned
                     val window_y = coords.positionInWindow().y

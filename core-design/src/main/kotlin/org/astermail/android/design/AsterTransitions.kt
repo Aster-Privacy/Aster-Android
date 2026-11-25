@@ -68,8 +68,8 @@ object AsterMotionSpec {
     const val fade_exit_ms = 150
     const val fade_enter_threshold = 0.3f
     const val fade_from = 0.8f
-    const val expand_ms = 400
-    const val collapse_ms = 250
+    const val expand_ms = 280
+    const val collapse_ms = 200
     const val reduced_fade_ms = 0
     const val reduced_fade_out_ms = 0
     const val icon_from = 0.8f
@@ -105,31 +105,31 @@ fun aster_fade_out(reduce_motion: Boolean = false): ExitTransition =
 fun aster_expand_in(reduce_motion: Boolean = false, expand_from: Alignment.Vertical = Alignment.Top): EnterTransition {
     if (reduce_motion) return aster_fade_in(true)
     return expandVertically(
-        animationSpec = tween(AsterMotionSpec.expand_ms, easing = AsterEasing.emphasized),
+        animationSpec = tween(AsterMotionSpec.expand_ms, easing = AsterEasing.emphasized_decelerate),
         expandFrom = expand_from,
-    ) + fadeIn(tween(AsterMotionSpec.expand_ms, easing = fade_through_in_easing))
+    ) + fadeIn(tween(AsterMotionSpec.fade_exit_ms + 30, easing = AsterEasing.standard_decelerate))
 }
 
 fun aster_collapse_out(reduce_motion: Boolean = false, shrink_towards: Alignment.Vertical = Alignment.Top): ExitTransition {
     if (reduce_motion) return aster_fade_out(true)
     return shrinkVertically(
-        animationSpec = tween(AsterMotionSpec.collapse_ms, easing = AsterEasing.emphasized_accelerate),
+        animationSpec = tween(AsterMotionSpec.collapse_ms, easing = AsterEasing.standard),
         shrinkTowards = shrink_towards,
-    ) + fadeOut(tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.emphasized_accelerate))
+    ) + fadeOut(tween(AsterMotionSpec.fade_exit_ms - 30, easing = AsterEasing.standard))
 }
 
 fun aster_expand_horizontal_in(reduce_motion: Boolean = false): EnterTransition {
     if (reduce_motion) return aster_fade_in(true)
     return expandHorizontally(
-        animationSpec = tween(AsterMotionSpec.expand_ms, easing = AsterEasing.emphasized),
-    ) + fadeIn(tween(AsterMotionSpec.expand_ms, easing = fade_through_in_easing))
+        animationSpec = tween(AsterMotionSpec.expand_ms, easing = AsterEasing.emphasized_decelerate),
+    ) + fadeIn(tween(AsterMotionSpec.fade_exit_ms + 30, easing = AsterEasing.standard_decelerate))
 }
 
 fun aster_collapse_horizontal_out(reduce_motion: Boolean = false): ExitTransition {
     if (reduce_motion) return aster_fade_out(true)
     return shrinkHorizontally(
-        animationSpec = tween(AsterMotionSpec.collapse_ms, easing = AsterEasing.emphasized_accelerate),
-    ) + fadeOut(tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.emphasized_accelerate))
+        animationSpec = tween(AsterMotionSpec.collapse_ms, easing = AsterEasing.standard),
+    ) + fadeOut(tween(AsterMotionSpec.fade_exit_ms, easing = AsterEasing.standard))
 }
 
 fun aster_pop_in(reduce_motion: Boolean = false, from: Float = AsterMotionSpec.fade_from): EnterTransition {

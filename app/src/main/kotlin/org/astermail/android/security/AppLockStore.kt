@@ -118,10 +118,15 @@ class AppLockStore @Inject constructor(
             session_key_store.get().has_sealed_values() || session_snapshot_store.get().has_sealed_values()
         }.getOrDefault(true)
 
-    private fun open_lock_key(pin: String) {
+    private fun open_lock_key(pin: String, prepared: PreparedUnwrap? = null) {
         synchronized(lock_key_guard) {
             val wrapped = prefs.getString(KEY_LOCK_KEY_WRAP, null)
-            val unwrapped = LockKeyWrap.unwrap(pin, wrapped, PBKDF2_ITERATIONS)
+            val unwrapped = if (prepared != null && prepared.wrapped == wrapped) {
+                prepared.unwrapped
+            } else {
+                prepared?.unwrapped?.fill(0)
+                LockKeyWrap.unwrap(pin, wrapped, PBKDF2_ITERATIONS)
+            }
             if (unwrapped == null && (wrapped != null || stores_hold_sealed_values()) && !LockKeyHolder.is_open()) return
             val lock_key = unwrapped ?: LockKeyHolder.current() ?: LockSeal.new_lock_key()
             try {
@@ -404,9 +409,11 @@ class AppLockStore @Inject constructor(
     fun setup_pin(pin: String, pin_type: String, digits: Int?) {
         if (!can_setup()) return
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
-        val hash = hash_pin(pin, salt)
         val lock_key = LockKeyHolder.current() ?: LockSeal.new_lock_key()
-        val wrapped = LockKeyWrap.wrap(pin, lock_key, PBKDF2_ITERATIONS)
+        val (hash, wrapped) = derive_in_parallel(
+            { hash_pin(pin, salt) },
+            { LockKeyWrap.wrap(pin, lock_key, PBKDF2_ITERATIONS) },
+        )
         val stored = prefs.edit().apply {
             putString(KEY_LOCK_KEY_WRAP, wrapped)
             putString(KEY_PIN_HASH, Base64.encodeToString(hash, Base64.NO_WRAP))
@@ -433,16 +440,35 @@ class AppLockStore @Inject constructor(
         val raw_salt = prefs.getString(KEY_PIN_SALT, null) ?: return false
         val stored = Base64.decode(raw_hash, Base64.NO_WRAP)
         val salt = Base64.decode(raw_salt, Base64.NO_WRAP)
-        val candidate = hash_pin(pin, salt)
+        val wrapped = runCatching { prefs.getString(KEY_LOCK_KEY_WRAP, null) }.getOrNull()
+        val (candidate, unwrapped) = derive_in_parallel(
+            { hash_pin(pin, salt) },
+            { LockKeyWrap.unwrap(pin, wrapped, PBKDF2_ITERATIONS) },
+        )
         val ok = constant_time_equals(stored, candidate)
         if (ok) {
             clear_lockout(prefs.edit()).commit()
-            runCatching { open_lock_key(pin) }
+            runCatching { open_lock_key(pin, PreparedUnwrap(wrapped, unwrapped)) }
             if (unlock_session) mark_session_unlocked()
         } else {
+            unwrapped?.fill(0)
             record_failed_attempt()
         }
         return ok
+    }
+
+    private class PreparedUnwrap(val wrapped: String?, val unwrapped: ByteArray?)
+
+    private fun <A, B> derive_in_parallel(first: () -> A, second: () -> B): Pair<A, B> {
+        val task = java.util.concurrent.FutureTask(java.util.concurrent.Callable { second() })
+        Thread(task, "aster-lock-kdf").start()
+        val a = first()
+        val b = try {
+            task.get()
+        } catch (e: java.util.concurrent.ExecutionException) {
+            throw e.cause ?: e
+        }
+        return a to b
     }
 
     fun disable(): Boolean {

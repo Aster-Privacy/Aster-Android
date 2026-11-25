@@ -24,10 +24,6 @@ package org.astermail.android.ui.common
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -79,7 +75,6 @@ const val tutorial_list_panel_tag = "tutorial_list_panel"
 const val tutorial_list_toggle_tag = "tutorial_list_toggle"
 const val tutorial_list_progress_tag = "tutorial_list_progress"
 
-private const val tutorial_list_motion_ms = 160
 
 private val tutorial_list_item_shape = RoundedCornerShape(8.dp)
 private val tutorial_list_check_shape = RoundedCornerShape(6.dp)
@@ -120,10 +115,8 @@ fun onboarding_checklist_card(
         )
         AnimatedVisibility(
             visible = is_open,
-            enter = expandVertically(tween(tutorial_list_motion_ms, easing = AsterEasing.emphasized)) +
-                fadeIn(tween(tutorial_list_motion_ms, easing = AsterEasing.emphasized_decelerate)),
-            exit = shrinkVertically(tween(tutorial_list_motion_ms, easing = AsterEasing.emphasized_accelerate)) +
-                fadeOut(tween(tutorial_list_motion_ms, easing = AsterEasing.emphasized_accelerate)),
+            enter = org.astermail.android.design.aster_expand_in(),
+            exit = org.astermail.android.design.aster_collapse_out(),
         ) {
             tutorial_list_panel(
                 rows = rows,

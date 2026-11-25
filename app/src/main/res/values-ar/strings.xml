@@ -1609,6 +1609,7 @@
     <string name="reaction_remove_failed">تعذّرت إزالة التفاعل</string>
     <string name="copy_address">نسخ العنوان</string>
     <string name="sender_on_aster">حساب Aster</string>
+    <string name="sender_on_aster_logo">حساب %1$s</string>
     <string name="messages_from_sender">البحث عن بريد من هذا المرسل</string>
     <string name="send_email_to_sender">مراسلة هذا المرسل</string>
     <string name="add_to_contacts">حفظ في جهات الاتصال</string>
@@ -3895,4 +3896,6 @@
     <string name="mail_priority_low">منخفضة</string>
     <string name="mail_high_priority">أولوية عالية</string>
     <string name="mail_low_priority">أولوية منخفضة</string>
+    <string name="official_sender">عنوان Aster الرسمي</string>
+    <string name="official_sender_desc">هذه الرسالة من عنوان Aster رسمي. لن يطلب منك Aster كلمة المرور أو عبارة الاسترداد عبر البريد الإلكتروني أبدًا.</string>
 </resources>

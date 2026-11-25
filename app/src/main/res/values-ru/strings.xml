@@ -1599,6 +1599,7 @@
     <string name="reaction_remove_failed">Не удалось удалить реакцию</string>
     <string name="copy_address">Копировать адрес</string>
     <string name="sender_on_aster">Аккаунт Aster</string>
+    <string name="sender_on_aster_logo">Аккаунт %1$s</string>
     <string name="messages_from_sender">Найти письма от этого отправителя</string>
     <string name="send_email_to_sender">Написать этому отправителю</string>
     <string name="add_to_contacts">Сохранить в контакты</string>
@@ -3830,4 +3831,6 @@
     <string name="mail_priority_low">Низкий</string>
     <string name="mail_high_priority">Высокий приоритет</string>
     <string name="mail_low_priority">Низкий приоритет</string>
+    <string name="official_sender">Официальный адрес Aster</string>
+    <string name="official_sender_desc">Это сообщение отправлено с официального адреса Aster. Aster никогда не запрашивает пароль или фразу восстановления по электронной почте.</string>
 </resources>

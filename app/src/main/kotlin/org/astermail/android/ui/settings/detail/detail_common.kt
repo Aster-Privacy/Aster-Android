@@ -159,8 +159,8 @@ internal fun settings_sub_screen_axis_x(forward: Boolean, slide_px: Int, reduce_
 internal fun settings_expand_in(reduce_motion: Boolean): EnterTransition {
     if (reduce_motion) return aster_fade_in(true)
     return expandVertically(
-        animationSpec = tween(AsterDuration.medium_2, easing = AsterEasing.emphasized),
-    ) + fadeIn(tween(AsterDuration.medium_2, easing = settings_motion_in_easing))
+        animationSpec = tween(org.astermail.android.design.AsterMotionSpec.expand_ms, easing = AsterEasing.emphasized_decelerate),
+    ) + fadeIn(tween(180, easing = AsterEasing.standard_decelerate))
 }
 
 @Composable

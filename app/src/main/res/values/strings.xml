@@ -371,6 +371,7 @@
     <string name="block_sender">Block sender</string>
     <string name="copy_address">Copy address</string>
     <string name="sender_on_aster">Aster account</string>
+    <string name="sender_on_aster_logo">%1$s account</string>
     <string name="messages_from_sender">Find mail from this sender</string>
     <string name="send_email_to_sender">Write to this sender</string>
     <string name="add_to_contacts">Save to contacts</string>
@@ -3817,4 +3818,6 @@
     <string name="mail_priority_low">Low</string>
     <string name="mail_high_priority">High priority</string>
     <string name="mail_low_priority">Low priority</string>
+    <string name="official_sender">Official Aster address</string>
+    <string name="official_sender_desc">This message is from an official Aster address. Aster will never ask for your password or recovery phrase by email.</string>
 </resources>

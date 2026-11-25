@@ -763,116 +763,147 @@ fun ContactsScreen(
                         )
                     }
                 } else {
-                    LazyColumn(
-                        state = contacts_list_state,
-                        modifier = Modifier
-                            .weight(1f)
-                            .lazy_top_fade(contacts_list_state)
-                            .pointerInput(Unit) {
-                                val press_slop = viewConfiguration.touchSlop
-                                val long_press_ms = viewConfiguration.longPressTimeoutMillis
-                                val drag_start_slop = 24.dp.toPx()
-                                awaitEachGesture {
-                                    val down = awaitFirstDown(
-                                        requireUnconsumed = false,
-                                        pass = PointerEventPass.Initial,
-                                    )
-                                    val anchor_index = contact_index_at_offset(down.position.y)
-                                    if (anchor_index == null) return@awaitEachGesture
-                                    var long_pressed = false
-                                    var aborted = false
-                                    try {
-                                        withTimeout(long_press_ms) {
+                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        LazyColumn(
+                            state = contacts_list_state,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .lazy_top_fade(contacts_list_state)
+                                .pointerInput(Unit) {
+                                    val press_slop = viewConfiguration.touchSlop
+                                    val long_press_ms = viewConfiguration.longPressTimeoutMillis
+                                    val drag_start_slop = 24.dp.toPx()
+                                    awaitEachGesture {
+                                        val down = awaitFirstDown(
+                                            requireUnconsumed = false,
+                                            pass = PointerEventPass.Initial,
+                                        )
+                                        val anchor_index = contact_index_at_offset(down.position.y)
+                                        if (anchor_index == null) return@awaitEachGesture
+                                        var long_pressed = false
+                                        var aborted = false
+                                        try {
+                                            withTimeout(long_press_ms) {
+                                                while (true) {
+                                                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                                                    val change = event.changes.firstOrNull()
+                                                    if (change == null || !change.pressed) {
+                                                        aborted = true
+                                                        break
+                                                    }
+                                                    if ((change.position - down.position).getDistance() > press_slop) {
+                                                        aborted = true
+                                                        break
+                                                    }
+                                                }
+                                            }
+                                        } catch (_: PointerEventTimeoutCancellationException) {
+                                            long_pressed = true
+                                        }
+                                        if (!long_pressed || aborted) return@awaitEachGesture
+                                        var drag_started = false
+                                        try {
                                             while (true) {
                                                 val event = awaitPointerEvent(PointerEventPass.Initial)
-                                                val change = event.changes.firstOrNull()
-                                                if (change == null || !change.pressed) {
-                                                    aborted = true
-                                                    break
+                                                val change = event.changes.firstOrNull() ?: break
+                                                val has_selection = latest_selected_ids.value.isNotEmpty()
+                                                if (drag_started || has_selection) change.consume()
+                                                if (!change.pressed) break
+                                                if (!has_selection) continue
+                                                if ((change.position - down.position).getDistance() < drag_start_slop) continue
+                                                if (!drag_started) {
+                                                    drag_anchor_index.intValue = anchor_index
+                                                    drag_last_index.intValue = anchor_index
+                                                    drag_pre_selected.clear()
+                                                    drag_pre_selected.addAll(latest_selected_ids.value)
+                                                    drag_viewport_height.floatValue = size.height.toFloat()
+                                                    drag_started = true
+                                                    drag_selecting = true
                                                 }
-                                                if ((change.position - down.position).getDistance() > press_slop) {
-                                                    aborted = true
-                                                    break
-                                                }
+                                                drag_pointer_y.floatValue = change.position.y
+                                                apply_contact_drag_selection(change.position.y)
                                             }
+                                        } finally {
+                                            drag_selecting = false
+                                            drag_pointer_y.floatValue = -1f
+                                            drag_anchor_index.intValue = -1
+                                            drag_last_index.intValue = -1
+                                            drag_pre_selected.clear()
                                         }
-                                    } catch (_: PointerEventTimeoutCancellationException) {
-                                        long_pressed = true
                                     }
-                                    if (!long_pressed || aborted) return@awaitEachGesture
-                                    var drag_started = false
-                                    try {
-                                        while (true) {
-                                            val event = awaitPointerEvent(PointerEventPass.Initial)
-                                            val change = event.changes.firstOrNull() ?: break
-                                            val has_selection = latest_selected_ids.value.isNotEmpty()
-                                            if (drag_started || has_selection) change.consume()
-                                            if (!change.pressed) break
-                                            if (!has_selection) continue
-                                            if ((change.position - down.position).getDistance() < drag_start_slop) continue
-                                            if (!drag_started) {
-                                                drag_anchor_index.intValue = anchor_index
-                                                drag_last_index.intValue = anchor_index
-                                                drag_pre_selected.clear()
-                                                drag_pre_selected.addAll(latest_selected_ids.value)
-                                                drag_viewport_height.floatValue = size.height.toFloat()
-                                                drag_started = true
-                                                drag_selecting = true
-                                            }
-                                            drag_pointer_y.floatValue = change.position.y
-                                            apply_contact_drag_selection(change.position.y)
+                                },
+                            contentPadding = PaddingValues(bottom = 96.dp + nav_bottom),
+                        ) {
+                            if (!filter_favorites && query.isBlank()) {
+                                val favorites = filtered.filter { it.is_favorite }
+                                if (favorites.isNotEmpty()) {
+                                    item(key = "favorites_strip") {
+                                        Box(modifier = if (query.isBlank()) Modifier.animateItem() else Modifier) {
+                                            favorites_strip(
+                                                favorites = favorites,
+                                                on_open_contact = on_open_contact,
+                                            )
                                         }
-                                    } finally {
-                                        drag_selecting = false
-                                        drag_pointer_y.floatValue = -1f
-                                        drag_anchor_index.intValue = -1
-                                        drag_last_index.intValue = -1
-                                        drag_pre_selected.clear()
                                     }
                                 }
-                            },
-                        contentPadding = PaddingValues(bottom = 96.dp + nav_bottom),
-                    ) {
-                        if (!filter_favorites && query.isBlank()) {
-                            val favorites = filtered.filter { it.is_favorite }
-                            if (favorites.isNotEmpty()) {
-                                item(key = "favorites_strip") {
+                            }
+                            grouped.entries.forEachIndexed { group_index, (letter, group) ->
+                                item(key = "letter_$letter", contentType = "letter_header") {
                                     Box(modifier = if (query.isBlank()) Modifier.animateItem() else Modifier) {
-                                        favorites_strip(
-                                            favorites = favorites,
-                                            on_open_contact = on_open_contact,
-                                        )
+                                        section_letter_header(letter = letter, is_first_group = group_index == 0)
+                                    }
+                                }
+                                itemsIndexed(group, key = { _, c -> c.id }) { index, c ->
+                                    Box(modifier = if (query.isBlank()) Modifier.animateItem() else Modifier) {
+                                    ContactRow(
+                                        contact = c,
+                                        is_selected = c.id in ui_state.selected_ids,
+                                        is_selecting = ui_state.is_selecting,
+                                        is_pending = c.id in ui_state.pending_ids,
+                                        is_first = index == 0,
+                                        is_last = index == group.size - 1,
+                                        on_click = {
+                                            if (ui_state.is_selecting) {
+                                                vm.toggle_selection(c.id)
+                                            } else {
+                                                on_open_contact(c.id)
+                                            }
+                                        },
+                                        on_toggle_selection = { vm.toggle_selection(c.id) },
+                                    )
                                     }
                                 }
                             }
                         }
-                        grouped.entries.forEachIndexed { group_index, (letter, group) ->
-                            item(key = "letter_$letter", contentType = "letter_header") {
-                                Box(modifier = if (query.isBlank()) Modifier.animateItem() else Modifier) {
-                                    section_letter_header(letter = letter, is_first_group = group_index == 0)
-                                }
-                            }
-                            itemsIndexed(group, key = { _, c -> c.id }) { index, c ->
-                                Box(modifier = if (query.isBlank()) Modifier.animateItem() else Modifier) {
-                                ContactRow(
-                                    contact = c,
-                                    is_selected = c.id in ui_state.selected_ids,
-                                    is_selecting = ui_state.is_selecting,
-                                    is_pending = c.id in ui_state.pending_ids,
-                                    is_first = index == 0,
-                                    is_last = index == group.size - 1,
-                                    on_click = {
-                                        if (ui_state.is_selecting) {
-                                            vm.toggle_selection(c.id)
-                                        } else {
-                                            on_open_contact(c.id)
-                                        }
-                                    },
-                                    on_toggle_selection = { vm.toggle_selection(c.id) },
-                                )
+                        val contacts_drag = remember { org.astermail.android.ui.common.fast_scroll_drag_signal() }
+                        val letter_by_key = remember(grouped) {
+                            buildMap<Any, String> {
+                                grouped.forEach { (letter, group) ->
+                                    put("letter_$letter", letter)
+                                    group.forEach { put(it.id, letter) }
                                 }
                             }
                         }
+                        val scrub_letter by remember(contacts_list_state, letter_by_key) {
+                            derivedStateOf {
+                                val first = contacts_list_state.layoutInfo.visibleItemsInfo
+                                    .firstOrNull { letter_by_key.containsKey(it.key) }
+                                first?.let { letter_by_key[it.key] }
+                            }
+                        }
+                        org.astermail.android.ui.common.vertical_scroll_bar(
+                            state = contacts_list_state,
+                            modifier = Modifier.align(Alignment.TopEnd),
+                            bottom_inset = 96.dp + nav_bottom,
+                            drag_signal = contacts_drag,
+                        )
+                        contacts_scrub_bubble(
+                            letter = scrub_letter,
+                            visible = contacts_drag.dragging,
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(end = 40.dp, bottom = 96.dp + nav_bottom),
+                        )
                     }
                 }
             }
@@ -2084,5 +2115,41 @@ private fun bulk_progress_banner(
                     .background(colors.accent_blue),
             )
         }
+    }
+}
+
+@Composable
+private fun contacts_scrub_bubble(letter: String?, visible: Boolean, modifier: Modifier = Modifier) {
+    val colors = AsterMaterial.colors
+    val reduce_motion = aster_reduce_motion()
+    val shown = visible && letter != null
+    val progress by animateFloatAsState(
+        targetValue = if (shown) 1f else 0f,
+        animationSpec = if (reduce_motion) snap() else tween(if (shown) 140 else 200),
+        label = "contacts_scrub_bubble",
+    )
+    if (progress <= 0f) return
+    var last_letter by remember { mutableStateOf(letter ?: "") }
+    if (letter != null) last_letter = letter
+    Box(
+        modifier = modifier
+            .graphicsLayer {
+                alpha = progress
+                val scale = 0.9f + 0.1f * progress
+                scaleX = scale
+                scaleY = scale
+            }
+            .size(64.dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
+            .background(colors.accent_blue)
+            .clearAndSetSemantics { },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = last_letter,
+            color = Color.White,
+            fontSize = 30.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }

@@ -1589,6 +1589,7 @@
     <string name="reaction_remove_failed">Reactie kon niet worden verwijderd</string>
     <string name="copy_address">Adres kopiëren</string>
     <string name="sender_on_aster">Aster-account</string>
+    <string name="sender_on_aster_logo">%1$s-account</string>
     <string name="messages_from_sender">Mail van deze afzender zoeken</string>
     <string name="send_email_to_sender">Schrijf naar deze afzender</string>
     <string name="add_to_contacts">Opslaan in contacten</string>
@@ -3764,4 +3765,6 @@
     <string name="mail_priority_low">Laag</string>
     <string name="mail_high_priority">Hoge prioriteit</string>
     <string name="mail_low_priority">Lage prioriteit</string>
+    <string name="official_sender">Officieel Aster-adres</string>
+    <string name="official_sender_desc">Dit bericht komt van een officieel Aster-adres. Aster vraagt je nooit per e-mail om je wachtwoord of herstelzin.</string>
 </resources>

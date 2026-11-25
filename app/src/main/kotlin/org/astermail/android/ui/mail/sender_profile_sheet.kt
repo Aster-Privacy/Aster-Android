@@ -130,7 +130,8 @@ fun sender_profile_sheet(
             trust.auth_state == SenderAuthState.internal && trust.warning == null && is_internal_sender(normalized)
         }
     }
-    val shows_verified = !is_internal && trust?.show_verified_badge == true
+    val shows_official = is_internal && is_official_address(normalized)
+    val shows_verified = !is_internal && !shows_official && trust?.show_verified_badge == true
     val existing_contact = remember(contacts_state.contacts, normalized) {
         contacts_state.contacts.firstOrNull { it.email.trim().lowercase() == normalized }
     }
@@ -231,15 +232,22 @@ fun sender_profile_sheet(
                 SenderAvatar(email = normalized, name = sender_name, size = 56.dp, plain = marks_hidden)
                 Spacer(Modifier.width(AsterSpacing.md))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = display_name ?: normalized,
-                        color = colors.text_primary,
-                        fontSize = 18.sp,
-                        lineHeight = 23.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = if (display_name == null) 1 else 2,
-                        overflow = if (display_name == null) TextOverflow.MiddleEllipsis else TextOverflow.Ellipsis,
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = display_name ?: normalized,
+                            color = colors.text_primary,
+                            fontSize = 18.sp,
+                            lineHeight = 23.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = if (display_name == null) 1 else 2,
+                            overflow = if (display_name == null) TextOverflow.MiddleEllipsis else TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        if (shows_official) {
+                            Spacer(Modifier.width(6.dp))
+                            official_badge(size = 18.dp)
+                        }
+                    }
                     if (display_name != null) {
                         Spacer(Modifier.height(2.dp))
                         Text(
@@ -255,11 +263,7 @@ fun sender_profile_sheet(
                     if (is_internal || shows_verified) {
                         Spacer(Modifier.height(AsterSpacing.sm))
                         if (is_internal) {
-                            sender_identity_badge(
-                                label = stringResource(R.string.sender_on_aster),
-                                logo = painterResource(R.drawable.aster_favicon),
-                                tint = colors.text_primary,
-                            )
+                            aster_account_badge()
                         } else {
                             sender_identity_badge(
                                 label = stringResource(R.string.sender_verified_badge),
