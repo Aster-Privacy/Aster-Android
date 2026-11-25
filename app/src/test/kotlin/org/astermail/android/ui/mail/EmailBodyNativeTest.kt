@@ -650,4 +650,21 @@ class EmailBodyNativeTest {
         assertTrue(visible_text(prepared).contains("Thanks."))
         assertFalse(visible_text(prepared).contains("earlier text"))
     }
+
+    @Test(timeout = 2_000)
+    fun long_address_like_runs_are_scanned_quickly() {
+        assertTrue(find_links("%".repeat(100_000) + " @").isEmpty())
+        assertTrue(find_links("+%".repeat(50_000) + " www").isEmpty())
+    }
+
+    @Test
+    fun links_and_addresses_are_still_found() {
+        val links = find_links("Write to +sales%eu@example.com or see https://example.com/a and www.example.org.")
+        assertEquals(
+            listOf("+sales%eu@example.com", "https://example.com/a", "www.example.org"),
+            links.map { it.text },
+        )
+        assertEquals("mailto:+sales%eu@example.com", links[0].href)
+        assertEquals("http://www.example.org", links[2].href)
+    }
 }

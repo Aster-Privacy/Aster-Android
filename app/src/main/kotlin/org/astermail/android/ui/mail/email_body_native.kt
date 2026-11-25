@@ -65,7 +65,7 @@ private const val SPACER_CONTENT = "img, hr, table, video, audio, iframe, object
 private val QUICK_LINK_HINT = Regex("://|www\\.|@", RegexOption.IGNORE_CASE)
 
 private val LINK_CANDIDATE = Regex(
-    "(?<![\\w@/.-])(?:(https?://|www\\.)[^\\s<>\"'`]+|([A-Za-z0-9._%+-]+@[A-Za-z0-9]" +
+    "(?<![\\w@/.%+-])(?:(https?://|www\\.)[^\\s<>\"'`]+|([A-Za-z0-9._%+-]+@[A-Za-z0-9]" +
         "(?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*\\.[A-Za-z]{2,}))",
     RegexOption.IGNORE_CASE,
 )
