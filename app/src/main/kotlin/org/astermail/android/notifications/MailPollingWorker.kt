@@ -854,15 +854,13 @@ class MailPollingWorker(
         fun notification_actions(context: Context): List<String> {
             val stored = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .getString(KEY_NOTIFICATION_ACTIONS, null)
-            return NotificationActionChoices.sanitize(stored?.split("
-"))
+            return NotificationActionChoices.sanitize(stored?.split(","))
         }
 
         fun set_notification_actions(context: Context, actions: List<String>) {
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .edit()
-                .putString(KEY_NOTIFICATION_ACTIONS, NotificationActionChoices.sanitize(actions).joinToString("
-"))
+                .putString(KEY_NOTIFICATION_ACTIONS, NotificationActionChoices.sanitize(actions).joinToString(","))
                 .apply()
         }
 
