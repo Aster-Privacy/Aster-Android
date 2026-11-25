@@ -84,6 +84,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -146,6 +147,7 @@ fun ContactsScreen(
     val context = LocalContext.current
     var query by rememberSaveable { mutableStateOf("") }
     var filter_favorites by rememberSaveable { mutableStateOf(false) }
+    var filter_recent by rememberSaveable { mutableStateOf(false) }
     var show_sync_confirm by remember { mutableStateOf(false) }
     var show_bulk_menu by remember { mutableStateOf(false) }
     var show_overflow_menu by remember { mutableStateOf(false) }
@@ -228,15 +230,47 @@ fun ContactsScreen(
     val relation_name: (org.astermail.android.contacts.ContactRelation) -> String = { relation ->
         relation_display_name(relation, relation_names)
     }
-    val filtered = remember(query, filter_favorites, ui_state.contacts, relation_names) {
-        ui_state.contacts
+    val show_recent_filter = remember(ui_state.contacts) {
+        org.astermail.android.contacts.has_recently_added(ui_state.contacts)
+    }
+    LaunchedEffect(show_recent_filter) {
+        if (!show_recent_filter) filter_recent = false
+    }
+    val recent_mode = filter_recent && show_recent_filter
+    val filtered = remember(query, filter_favorites, recent_mode, ui_state.contacts, relation_names) {
+        val matched = ui_state.contacts
             .filter { if (filter_favorites) it.is_favorite else true }
             .filter { contact_matches_query(it, query, relation_name) }
-            .sortedBy { it.name.uppercase() }
+        if (recent_mode) {
+            org.astermail.android.contacts.recently_added_sorted(matched)
+        } else {
+            matched.sortedBy { it.name.uppercase() }
+        }
     }
 
-    val grouped = remember(filtered) {
-        filtered.groupBy { letter_of(it.name) }.toSortedMap()
+    val today_label = stringResource(R.string.contacts_today)
+    val yesterday_label = stringResource(R.string.yesterday)
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+    val grouped = remember(filtered, recent_mode, today_label, yesterday_label, locale) {
+        if (recent_mode) {
+            val formatter = java.time.format.DateTimeFormatter
+                .ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)
+                .withLocale(locale)
+            org.astermail.android.contacts.group_recently_added(
+                filtered,
+                java.time.LocalDate.now(),
+                java.time.ZoneId.systemDefault(),
+            ).associate { group ->
+                val label = when (group.bucket) {
+                    org.astermail.android.contacts.RecentBucket.TODAY -> today_label
+                    org.astermail.android.contacts.RecentBucket.YESTERDAY -> yesterday_label
+                    org.astermail.android.contacts.RecentBucket.DATE -> group.date.format(formatter)
+                }
+                label to group.contacts
+            }
+        } else {
+            filtered.groupBy { letter_of(it.name) }.toSortedMap()
+        }
     }
 
     val filtered_groups = remember(query, ui_state.groups) {
@@ -552,9 +586,30 @@ fun ContactsScreen(
                         icon = if (filter_favorites) Icons.Filled.Star else TablerIcons.Star,
                         content_description = favorites_label,
                         tint = if (filter_favorites) colors.star else colors.text_secondary,
-                        onClick = { filter_favorites = !filter_favorites },
+                        onClick = {
+                            filter_favorites = !filter_favorites
+                            if (filter_favorites) filter_recent = false
+                        },
                         modifier = Modifier.semantics { contentDescription = favorites_label },
                     )
+                    if (show_recent_filter) {
+                        val recent_label = stringResource(R.string.contacts_recently_added)
+                        AsterIconButton(
+                            icon = TablerIcons.Clock,
+                            content_description = recent_label,
+                            tint = if (recent_mode) colors.accent_blue else colors.text_secondary,
+                            onClick = {
+                                filter_recent = !filter_recent
+                                if (filter_recent) filter_favorites = false
+                            },
+                            modifier = Modifier
+                                .testTag("contacts_recent_filter")
+                                .semantics {
+                                    contentDescription = recent_label
+                                    selected = recent_mode
+                                },
+                        )
+                    }
                 }
             }
 
@@ -664,7 +719,7 @@ fun ContactsScreen(
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(bottom = 96.dp),
                     ) {
-                        if (!filter_favorites && query.isBlank()) {
+                        if (!filter_favorites && !recent_mode && query.isBlank()) {
                             val favorites = filtered.filter { it.is_favorite }
                             if (favorites.isNotEmpty()) {
                                 item(key = "favorites_strip") {
@@ -676,7 +731,7 @@ fun ContactsScreen(
                             }
                         }
                         grouped.entries.forEachIndexed { group_index, (letter, group) ->
-                            item(key = "letter_$letter", contentType = "letter_header") {
+                            item(key = if (recent_mode) "recent_$letter" else "letter_$letter", contentType = "letter_header") {
                                 section_letter_header(letter = letter, is_first_group = group_index == 0)
                             }
                             itemsIndexed(group, key = { _, c -> c.id }) { index, c ->
