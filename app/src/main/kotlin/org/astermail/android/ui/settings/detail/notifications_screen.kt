@@ -125,7 +125,7 @@ fun NotificationsScreen(
     var new_email by remember(prefs_seeded) { mutableStateOf(prefs?.notify_new_email ?: true) }
     var replies by remember(prefs_seeded) { mutableStateOf(prefs?.notify_replies ?: true) }
     var actions by remember(prefs_seeded) {
-        mutableStateOf(NotificationActionChoices.sanitize(prefs?.notification_actions))
+        mutableStateOf(NotificationActionChoices.sanitize(prefs?.notification_actions_android))
     }
     var quiet_hours by remember(prefs_seeded) { mutableStateOf(prefs?.quiet_hours_enabled ?: false) }
     var quiet_hours_start by remember(prefs_seeded) { mutableStateOf(prefs?.quiet_hours_start?.takeIf { it.isNotBlank() } ?: "22:00") }
@@ -161,7 +161,7 @@ fun NotificationsScreen(
             vibrate = prefs.vibrate
             new_email = prefs.notify_new_email
             replies = prefs.notify_replies
-            actions = NotificationActionChoices.sanitize(prefs.notification_actions)
+            actions = NotificationActionChoices.sanitize(prefs.notification_actions_android)
             MailPollingWorker.set_notification_actions(context, actions)
             quiet_hours = prefs.quiet_hours_enabled
             quiet_hours_start = prefs.quiet_hours_start.takeIf { it.isNotBlank() } ?: "22:00"
@@ -181,7 +181,7 @@ fun NotificationsScreen(
         vibrate = base.vibrate
         new_email = base.notify_new_email
         replies = base.notify_replies
-        actions = NotificationActionChoices.sanitize(base.notification_actions)
+        actions = NotificationActionChoices.sanitize(base.notification_actions_android)
         MailPollingWorker.set_notification_actions(context, actions)
         quiet_hours = base.quiet_hours_enabled
         quiet_hours_start = base.quiet_hours_start.takeIf { it.isNotBlank() } ?: "22:00"
@@ -203,7 +203,7 @@ fun NotificationsScreen(
                 vibrate = vibrate,
                 notify_new_email = new_email,
                 notify_replies = replies,
-                notification_actions = actions,
+                notification_actions_android = actions,
                 quiet_hours_enabled = quiet_hours,
                 quiet_hours_start = quiet_hours_start,
                 quiet_hours_end = quiet_hours_end,

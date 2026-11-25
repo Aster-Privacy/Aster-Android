@@ -6390,7 +6390,7 @@ class SettingsViewModel @Inject constructor(
             org.astermail.android.notifications.MailPollingWorker
                 .set_muted_notification_categories(context, prefs.muted_notification_categories)
             org.astermail.android.notifications.MailPollingWorker
-                .set_notification_actions(context, prefs.notification_actions)
+                .set_notification_actions(context, prefs.notification_actions_android)
             org.astermail.android.notifications.MailPollingWorker.set_active_category_tabs(
                 context,
                 org.astermail.android.mail.active_category_tabs(
