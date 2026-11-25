@@ -1985,7 +1985,7 @@ private fun compose_screen_content(
         image_html_for.forEach { (idx, html) ->
             body_html = body_html.replace("[[ASTER_IMG_${idx}]]", html)
         }
-        body_html = body_html.replace(Regex(IMG_TOKEN_PATTERN), "")
+        body_html = strip_outgoing_markers(body_html.replace(Regex(IMG_TOKEN_PATTERN), ""))
 
         val embedded_image_payloads = inline_image_payloads.filter { body_html.contains(it.data) }
         return Triple(body_html, attachment_payloads + embedded_image_payloads, !branding_footer_kept)
