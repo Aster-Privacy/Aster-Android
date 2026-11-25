@@ -21,6 +21,9 @@
 
 package org.astermail.android.mail
 
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import org.astermail.android.crypto.ClientPgpCopies
 import org.astermail.android.crypto.PgpDecryptor
 import org.astermail.android.crypto.PgpKeyGenerator
@@ -34,9 +37,11 @@ import org.bouncycastle.openpgp.PGPPublicKeyRing
 import org.bouncycastle.openpgp.PGPUtil
 import org.bouncycastle.openpgp.jcajce.JcaPGPObjectFactory
 import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 class AliasPgpCopyTest {
@@ -47,6 +52,22 @@ class AliasPgpCopyTest {
     private val passphrase = "correct horse battery staple"
     private val sender = PgpKeyGenerator.generate("Owner", primary, passphrase.toCharArray())
     private val recipient = PgpKeyGenerator.generate("Pal", recipient_address, passphrase.toCharArray())
+
+    @Before
+    fun setup() {
+        mockkStatic(android.util.Base64::class)
+        every { android.util.Base64.encodeToString(any(), any()) } answers {
+            java.util.Base64.getEncoder().encodeToString(firstArg<ByteArray>())
+        }
+        every { android.util.Base64.decode(any<String>(), any()) } answers {
+            java.util.Base64.getMimeDecoder().decode(firstArg<String>())
+        }
+    }
+
+    @After
+    fun teardown() {
+        unmockkAll()
+    }
 
     private fun outbound_copy(from: String, alias_pgp_enabled: Boolean): String {
         val mime = ProtectedMimeBuilder.build(
