@@ -60,4 +60,18 @@ class quote_outgoing_images_test {
         val html = "<img src=\"https://example.com/logo.png\"><img data-src=\"cid:x\" src=\"data:image/png;base64,iVBORw0KGgo=\">"
         assertTrue(remove_unsendable_quote_images(html) == html)
     }
+
+    @Test
+    fun slash_separated_sources_are_dropped() {
+        val out = remove_unsendable_quote_images("<img/src=\"cid:a@x\">t")
+        assertFalse(out.contains("<img"))
+    }
+
+    @Test
+    fun unterminated_tags_finish_quickly() {
+        val html = "<img src=cid:" + "a".repeat(400_000) + "<img a".repeat(60_000)
+        val started = System.nanoTime()
+        remove_unsendable_quote_images(html)
+        assertTrue(System.nanoTime() - started < 2_000_000_000L)
+    }
 }

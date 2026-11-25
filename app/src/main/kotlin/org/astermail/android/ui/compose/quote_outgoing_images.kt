@@ -21,22 +21,30 @@
 
 package org.astermail.android.ui.compose
 
+import org.jsoup.Jsoup
+
 private const val PLACEHOLDER_PIXEL_DATA_URI =
     "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
 
-private const val UNSENDABLE_SOURCE =
-    """(?:cid:|blob:|data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==)"""
+private val UNSENDABLE_PREFIXES = listOf("cid:", "blob:", PLACEHOLDER_PIXEL_DATA_URI.lowercase())
 
-private const val TAG_ATTRIBUTES = """(?:[^>"']|"[^"]*"|'[^']*')"""
-
-private val UNSENDABLE_QUOTE_IMAGE = Regex(
-    "<img\\b$TAG_ATTRIBUTES*?\\ssrc\\s*=\\s*" +
-        "(?:\"\\s*$UNSENDABLE_SOURCE[^\"]*\"|'\\s*$UNSENDABLE_SOURCE[^']*'|$UNSENDABLE_SOURCE[^\\s>]*)" +
-        "$TAG_ATTRIBUTES*>",
-    RegexOption.IGNORE_CASE,
-)
+private fun is_unsendable_source(src: String): Boolean {
+    val value = src.trim().lowercase()
+    return UNSENDABLE_PREFIXES.any { value.startsWith(it) }
+}
 
 internal fun remove_unsendable_quote_images(html: String): String {
-    if (!html.contains("<img", ignoreCase = true) && !html.contains(PLACEHOLDER_PIXEL_DATA_URI)) return html
-    return UNSENDABLE_QUOTE_IMAGE.replace(html, "").replace(PLACEHOLDER_PIXEL_DATA_URI, "")
+    val has_image = html.contains("<img", ignoreCase = true)
+    if (!has_image && !html.contains(PLACEHOLDER_PIXEL_DATA_URI)) return html
+    var out = html
+    if (has_image) {
+        val doc = Jsoup.parseBodyFragment(html)
+        doc.outputSettings().prettyPrint(false)
+        val unsendable = doc.select("img").filter { is_unsendable_source(it.attr("src")) }
+        if (unsendable.isNotEmpty()) {
+            unsendable.forEach { it.remove() }
+            out = doc.body().html()
+        }
+    }
+    return out.replace(PLACEHOLDER_PIXEL_DATA_URI, "")
 }
