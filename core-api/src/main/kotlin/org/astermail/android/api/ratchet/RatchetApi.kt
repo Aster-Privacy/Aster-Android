@@ -250,6 +250,7 @@ interface RatchetApi {
     suspend fun post_state(conversation_id_b64: String, encrypted_state: String, state_nonce: String): PostStateOutcome
     suspend fun put_state(conversation_id_b64: String, encrypted_state: String, state_nonce: String, expected_version: Int): PutStateOutcome
     suspend fun fetch_pq_secret(key_id: Int): PqSecretResponse?
+    suspend fun delete_pq_secret(key_id: Int): Boolean = false
     suspend fun fetch_prekey_bundle(username: String, email: String): PrekeyBundleResponse?
     suspend fun fetch_address_prekey_bundle(username: String, email: String): PrekeyBundleResponse? =
         fetch_prekey_bundle(username, email)
@@ -311,6 +312,13 @@ class RatchetApiImpl(private val client: ApiClient) : RatchetApi {
         if (response.status.value == 404) return null
         if (response.status.value !in 200..299) return null
         return try { response.body() } catch (_: Throwable) { null }
+    }
+
+    override suspend fun delete_pq_secret(key_id: Int): Boolean {
+        val response = client.http.delete("${client.base_url}/api/crypto/v1/ratchet/pq-secret/$key_id") {
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+        }
+        return response.status.value in 200..299 || response.status.value == 404
     }
 
     override suspend fun store_pq_secret(request: StorePqSecretRequest): Boolean {

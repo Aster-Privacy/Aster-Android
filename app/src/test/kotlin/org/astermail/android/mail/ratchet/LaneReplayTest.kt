@@ -244,14 +244,67 @@ class LaneReplayTest {
     }
 
     @Test
-    fun session_start_records_older_than_a_year_are_dropped() {
+    fun session_start_records_are_kept_past_a_year() {
         val stored = LaneReplay.claim_bootstrap(LaneReplay.EMPTY, "k", "m", 10).record
-        val later = 11 + LaneReplay.BOOTSTRAP_RECORD_MAX_AGE_MS
+        val later = 11 + 2 * 365L * 24 * 60 * 60 * 1000
 
         val claim = LaneReplay.claim_bootstrap(stored, "k", "other", later)
 
-        assertEquals(BootstrapClaim.FIRST, claim.claim)
-        assertEquals(listOf(LaneReplayEntry("k", "other", later)), claim.record.e)
+        assertEquals(BootstrapClaim.REPLAYED, claim.claim)
+        assertEquals(listOf(LaneReplayEntry("k", "m", 10)), claim.record.e)
+    }
+
+    @Test
+    fun a_full_record_raises_its_floor_and_never_calls_an_unknown_start_first_again() {
+        var record: Any? = LaneReplay.EMPTY
+        for (index in 0 until LaneReplay.MAX_ENTRIES) {
+            val claim = LaneReplay.claim_bootstrap(record, "k$index", "m$index", 10L + index)
+            assertEquals(BootstrapClaim.FIRST, claim.claim)
+            record = claim.record
+        }
+        val overflow = LaneReplay.claim_bootstrap(record, "k-new", "m-new", 5_000)
+
+        assertEquals(BootstrapClaim.FIRST, overflow.claim)
+        assertEquals(10L, overflow.record.f)
+        assertFalse(overflow.record.e.any { it.k == "k0" })
+
+        val evicted = LaneReplay.claim_bootstrap(overflow.record.to_json().toString(), "k0", "m-again", 6_000)
+
+        assertEquals(BootstrapClaim.UNKNOWN, evicted.claim)
+
+        val replay_of_that = LaneReplay.claim_bootstrap(evicted.record, "k0", "m-third", 7_000)
+
+        assertEquals(BootstrapClaim.REPLAYED, replay_of_that.claim)
+    }
+
+    @Test
+    fun an_unconfirmed_start_does_not_push_out_recorded_ones() {
+        var record: Any? = LaneReplay.EMPTY
+        for (index in 0 until LaneReplay.MAX_ENTRIES) {
+            record = LaneReplay.claim_bootstrap(record, "k$index", "m$index", 10L + index).record
+        }
+        val unconfirmed = LaneReplay.claim_bootstrap(record, "k-new", "m-new", 5_000, may_evict = false)
+
+        assertEquals(BootstrapClaim.UNKNOWN, unconfirmed.claim)
+        assertFalse(unconfirmed.changed)
+        assertEquals(
+            BootstrapClaim.REPLAYED,
+            LaneReplay.claim_bootstrap(unconfirmed.record, "k0", "m-other", 6_000).claim,
+        )
+
+        val roomy = LaneReplay.claim_bootstrap(LaneReplay.EMPTY, "k", "m", 10, may_evict = false)
+
+        assertEquals(BootstrapClaim.FIRST, roomy.claim)
+        assertTrue(roomy.changed)
+    }
+
+    @Test
+    fun a_record_with_a_floor_still_recognizes_what_it_holds() {
+        val stored = LaneReplayRecord(50, listOf(LaneReplayEntry("k", "m", 60)))
+
+        assertEquals(BootstrapClaim.SAME_MESSAGE, LaneReplay.claim_bootstrap(stored, "k", "m", 70).claim)
+        assertEquals(BootstrapClaim.REPLAYED, LaneReplay.claim_bootstrap(stored, "k", "x", 70).claim)
+        assertEquals(BootstrapClaim.UNKNOWN, LaneReplay.claim_bootstrap(stored, "other", "x", 70).claim)
     }
 
     @Test

@@ -91,13 +91,84 @@ class RatchetStateMergeTest {
     }
 
     @Test
-    fun keeps_the_earliest_receive_chain() {
+    fun keeps_this_devices_receive_chain() {
         val local = state(chain_key_recv = "recv-chain-7", recv_message_number = 7)
         val remote = state(chain_key_recv = "recv-chain-3", recv_message_number = 3)
 
-        assertEquals("recv-chain-3", RatchetStateMerge.merge(local, remote).chain_key_recv)
+        assertEquals("recv-chain-7", RatchetStateMerge.merge(local, remote).chain_key_recv)
+        assertEquals(7, RatchetStateMerge.merge(local, remote).recv_message_number)
         assertEquals("recv-chain-3", RatchetStateMerge.merge(remote, local).chain_key_recv)
-        assertEquals(3, RatchetStateMerge.merge(local, remote).recv_message_number)
+        assertEquals(3, RatchetStateMerge.merge(remote, local).recv_message_number)
+    }
+
+    @Test
+    fun an_older_stored_copy_does_not_rewind_the_receive_chain() {
+        val local = state(
+            chain_key_recv = "recv-chain-2",
+            recv_message_number = 2,
+            skipped_message_keys = listOf(skipped("remote-dh-pub", 0, 10)),
+        )
+        val stale = state(
+            chain_key_recv = "recv-chain-1",
+            recv_message_number = 1,
+            skipped_message_keys = listOf(skipped("remote-dh-pub", 0, 10)),
+        )
+
+        val merged = RatchetStateMerge.merge(local, stale)
+
+        assertEquals("recv-chain-2", merged.chain_key_recv)
+        assertEquals(2, merged.recv_message_number)
+    }
+
+    @Test
+    fun does_not_bring_back_a_key_this_device_already_used() {
+        val local = state(chain_key_recv = "recv-chain-3", recv_message_number = 3)
+        val stale = state(
+            chain_key_recv = "recv-chain-0",
+            recv_message_number = 0,
+            skipped_message_keys = listOf(
+                skipped("remote-dh-pub", 1, 10),
+                skipped("remote-dh-pub", 5, 20),
+                skipped("older-dh-pub", 1, 30),
+            ),
+        )
+
+        val ids = RatchetStateMerge.merge(local, stale).skipped_message_keys
+            .map { "${it.dh_public}:${it.message_number}" }
+
+        assertEquals(listOf("remote-dh-pub:5", "older-dh-pub:1"), ids)
+    }
+
+    @Test
+    fun a_device_behind_keeps_its_own_chain_so_messages_read_elsewhere_stay_readable() {
+        val local = state(
+            chain_key_recv = "recv-chain-1",
+            recv_message_number = 1,
+            skipped_message_keys = listOf(skipped("remote-dh-pub", 0, 10)),
+        )
+        val remote = state(chain_key_recv = "recv-chain-3", recv_message_number = 3)
+
+        val merged = RatchetStateMerge.merge(local, remote)
+
+        assertEquals("recv-chain-1", merged.chain_key_recv)
+        assertEquals(1, merged.recv_message_number)
+        assertEquals(
+            listOf("remote-dh-pub:0"),
+            merged.skipped_message_keys.map { "${it.dh_public}:${it.message_number}" },
+        )
+    }
+
+    @Test
+    fun a_device_that_moved_ahead_drops_keys_it_already_used() {
+        val ahead = state(chain_key_recv = "recv-chain-3", recv_message_number = 3)
+        val lagging = state(
+            chain_key_recv = "recv-chain-3",
+            recv_message_number = 3,
+            skipped_message_keys = listOf(skipped("remote-dh-pub", 1, 10), skipped("remote-dh-pub", 2, 10)),
+        )
+
+        assertEquals(0, RatchetStateMerge.merge(ahead, lagging).skipped_message_keys.size)
+        assertEquals(2, RatchetStateMerge.merge(lagging, ahead).skipped_message_keys.size)
     }
 
     @Test

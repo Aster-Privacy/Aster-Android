@@ -1156,6 +1156,22 @@ class MailRepository @Inject constructor(
         }.getOrNull()
     }
 
+    internal var local_require_encryption_override: (() -> Boolean?)? = null
+
+    fun cached_require_encryption(): Boolean? {
+        local_require_encryption_override?.let { return it() }
+        val account_key = session_key_store.get_user_id()?.takeIf { it.isNotBlank() } ?: return null
+        val raw = runCatching {
+            PreferencesCacheStore(context).read(account_key)
+        }.getOrNull() ?: return null
+        return runCatching {
+            cached_custom_categories_json.decodeFromString(
+                UserPreferences.serializer(),
+                raw,
+            ).require_encryption
+        }.getOrNull()
+    }
+
     private val last_known_encrypt_by_default = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
 
     suspend fun encrypt_by_default_setting(): Boolean? {
@@ -7199,6 +7215,8 @@ class MailRepository @Inject constructor(
     }
 
     private suspend fun require_encryption_enabled(): Boolean {
+        val local = runCatching { cached_require_encryption() }.getOrNull()
+        if (local == true) return true
         val account = current_account_id()?.takeIf { it.isNotBlank() }
         val api = encryption_api_provider?.get()
         var failure: Throwable? = null
@@ -7216,7 +7234,7 @@ class MailRepository @Inject constructor(
         }
         if (fresh != null) {
             if (account != null && current_account_id() == account) last_known_require_encryption[account] = fresh
-            return fresh
+            return RequireEncryptionFloor.effective(local, fresh) ?: fresh
         }
         return account?.let { last_known_require_encryption[it] }
             ?: throw EncryptionSettingUnavailableException(

@@ -51,6 +51,17 @@ object RatchetStateMerge {
             .toMutableList()
     }
 
+    private fun consumed_locally(local: RatchetState, key: SkippedMessageKey, local_ids: Set<String>): Boolean =
+        local.chain_key_recv != null &&
+            key.dh_public == local.dh_remote_public &&
+            key.message_number < local.recv_message_number &&
+            skipped_key_id(key) !in local_ids
+
+    private fun remote_keys_still_pending(local: RatchetState, remote: RatchetState): List<SkippedMessageKey> {
+        val local_ids = local.skipped_message_keys.mapTo(HashSet()) { skipped_key_id(it) }
+        return remote.skipped_message_keys.filterNot { consumed_locally(local, it, local_ids) }
+    }
+
     fun shares_epoch(a: RatchetState, b: RatchetState): Boolean =
         a.conversation_id == b.conversation_id && same_epoch(a, b)
 
@@ -88,7 +99,7 @@ object RatchetStateMerge {
     fun merge(local: RatchetState, remote: RatchetState, remote_versioned: Boolean = true): RatchetState {
         if (local.conversation_id != remote.conversation_id) return local
 
-        val skipped = merge_skipped_keys(local.skipped_message_keys, remote.skipped_message_keys)
+        val skipped = merge_skipped_keys(local.skipped_message_keys, remote_keys_still_pending(local, remote))
         val local_skipped = merge_skipped_keys(local.skipped_message_keys, emptyList())
         val updated_at = maxOf(local.updated_at, remote.updated_at)
 
@@ -106,19 +117,17 @@ object RatchetStateMerge {
         val send_ahead =
             if (local.send_message_number >= remote.send_message_number) local else remote
 
-        val recv_behind = when {
+        val recv_source = when {
             local.chain_key_recv == null -> remote
-            remote.chain_key_recv == null || !remote_versioned -> local
-            local.recv_message_number <= remote.recv_message_number -> local
-            else -> remote
+            else -> local
         }
         val merged_skipped = if (remote_versioned || local.chain_key_recv == null) skipped else local_skipped
 
         return local.copy(
             chain_key_send = send_ahead.chain_key_send,
             send_message_number = send_ahead.send_message_number,
-            chain_key_recv = recv_behind.chain_key_recv,
-            recv_message_number = recv_behind.recv_message_number,
+            chain_key_recv = recv_source.chain_key_recv,
+            recv_message_number = recv_source.recv_message_number,
             previous_chain_length = maxOf(local.previous_chain_length, remote.previous_chain_length),
             epoch = maxOf(local.epoch, remote.epoch),
             bootstrap = local.bootstrap ?: remote.bootstrap,

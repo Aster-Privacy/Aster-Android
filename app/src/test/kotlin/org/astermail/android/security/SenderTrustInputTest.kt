@@ -47,7 +47,7 @@ class SenderTrustInputTest {
     }
 
     @Test
-    fun official_address_delivered_inside_aster_is_trusted_when_the_signature_check_fails() {
+    fun official_address_that_failed_verification_keeps_its_warning() {
         val delivered = SenderTrustMessage(
             sender_name = "Aster Mail",
             sender_email = "hello@astermail.org",
@@ -55,7 +55,11 @@ class SenderTrustInputTest {
             sender_verification = "invalid",
         )
 
-        assertNull(evaluate_sender_trust(sender_trust_input(delivered, context)).warning)
+        assertFalse(sender_trust_input(delivered, context).internal_route)
+        assertEquals(
+            SenderWarningKind.home_brand_name,
+            evaluate_sender_trust(sender_trust_input(delivered, context)).warning?.kind,
+        )
         assertEquals(
             SenderWarningKind.home_brand_name,
             evaluate_sender_trust(sender_trust_input(delivered.copy(is_external = true), context)).warning?.kind,
@@ -65,6 +69,23 @@ class SenderTrustInputTest {
             evaluate_sender_trust(
                 sender_trust_input(delivered.copy(sender_email = "aster-help@astermail.org"), context),
             ).warning?.kind,
+        )
+    }
+
+    @Test
+    fun official_address_delivered_inside_aster_is_trusted_when_not_marked_invalid() {
+        val delivered = SenderTrustMessage(
+            sender_name = "Aster Mail",
+            sender_email = "hello@astermail.org",
+            is_external = false,
+        )
+
+        assertTrue(sender_trust_input(delivered, context).internal_route)
+        assertNull(evaluate_sender_trust(sender_trust_input(delivered, context)).warning)
+        assertNull(
+            evaluate_sender_trust(
+                sender_trust_input(delivered.copy(sender_verification = "verified"), context),
+            ).warning,
         )
     }
 
