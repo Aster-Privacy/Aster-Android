@@ -101,6 +101,27 @@ internal fun replace_tags(text: String, replacement: String): String {
     return out.toString()
 }
 
+internal fun replace_short_tags(text: String, replacement: String, max_inner_length: Int): String {
+    var lt = text.indexOf('<')
+    if (lt < 0) return text
+    val out = StringBuilder(text.length)
+    var copied = 0
+    var gt = -1
+    while (lt >= 0) {
+        if (gt < lt) gt = text.indexOf('>', lt + 1)
+        if (gt < 0) break
+        if (gt - lt - 1 <= max_inner_length) {
+            out.append(text, copied, lt).append(replacement)
+            copied = gt + 1
+            lt = text.indexOf('<', copied)
+        } else {
+            lt = text.indexOf('<', lt + 1)
+        }
+    }
+    out.append(text, copied, text.length)
+    return out.toString()
+}
+
 fun strip_body_html(html: String): String {
     var text = strip_non_rendered_blocks(strip_html_comments(html))
     text = replace_tags(text, " ")

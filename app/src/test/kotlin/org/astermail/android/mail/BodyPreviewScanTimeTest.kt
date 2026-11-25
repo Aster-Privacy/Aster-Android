@@ -155,4 +155,20 @@ class BodyPreviewScanTimeTest {
     fun leading_css_groups_are_still_stripped() {
         assertEquals("Hello", strip_leading_css("@media screen{p{color:red}}Hello"))
     }
+
+    @Test(timeout = 2_000)
+    fun runs_of_open_brackets_before_a_far_close_finish_quickly() {
+        val text = "<".repeat(40_000) + "x".repeat(5_000) + ">"
+        assertEquals(text, replace_short_tags(text, " ", 4000))
+        assertEquals("<".repeat(35_999) + " ", replace_short_tags("<".repeat(40_000) + ">", " ", 4000))
+    }
+
+    @Test
+    fun short_tags_are_still_replaced() {
+        assertEquals(" Hi  there ", replace_short_tags("<p>Hi<br/> there</p>", " ", 4000))
+        assertEquals(" ", replace_short_tags("<>", " ", 4000))
+        assertEquals("a<" + "b".repeat(10) + "> c", replace_short_tags("a<" + "b".repeat(10) + "> c", " ", 5))
+        assertEquals("a  c", replace_short_tags("a<<b> c", " ", 5))
+        assertEquals("a < b", replace_short_tags("a < b", " ", 5))
+    }
 }
