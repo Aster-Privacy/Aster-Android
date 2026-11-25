@@ -109,6 +109,29 @@ class SealedMessageDetailsTest {
         )
     }
 
+    @Test(timeout = 2_000)
+    fun long_recipient_entries_finish_quickly() {
+        val spaced = "a" + " ".repeat(100_000) + "b"
+        val details = build_sealed_details(
+            from_name = null,
+            to = listOf(spaced, " ".repeat(100_000) + "x", "<".repeat(100_000) + "a@b.c"),
+            cc = emptyList(),
+        )
+        assertEquals(listOf(SealedAddress("", "x")), details.to)
+    }
+
+    @Test
+    fun named_recipients_are_still_split() {
+        fun split(entry: String) = build_sealed_details(null, listOf(entry), emptyList()).to.single()
+        assertEquals(SealedAddress("Cy Lee", "cy@aster.cx"), split("  Cy Lee   <cy@aster.cx>  "))
+        assertEquals(SealedAddress("", "cy@aster.cx"), split("<cy@aster.cx>"))
+        assertEquals(SealedAddress("A <b>", "cy@aster.cx"), split("A <b> <cy@aster.cx>"))
+        assertEquals(SealedAddress("Cy", "cy@aster.cx"), split("\n Cy\t<cy@aster.cx>\r\n"))
+        assertEquals(SealedAddress("", "A\nB <cy@aster.cx>"), split("A\nB <cy@aster.cx>"))
+        assertEquals(SealedAddress("", "A <>"), split("A <>"))
+        assertEquals(SealedAddress("", "A <x> y"), split("A <x> y"))
+    }
+
     @Test
     fun scheduled_time_is_used_as_the_sent_time() {
         val details = build_sealed_details(null, emptyList(), emptyList(), "2026-12-01T08:30:00+02:00")
