@@ -74,8 +74,6 @@ private val TRAILING_PUNCTUATION = setOf('.', ',', ':', ';', '!', '?', '\'', '"'
 
 private val BRACKET_OPENERS = mapOf(')' to '(', ']' to '[', '}' to '{')
 
-private val HTML_ENTITY_TAIL = Regex("&#?[A-Za-z0-9]+;$")
-
 private val WATERMARK_MARKER = Regex("(^|[\\s> ])(Secured by Aster Mail)", RegexOption.IGNORE_CASE)
 
 private val QUOTE_SIGNATURE = Regex(
@@ -297,27 +295,41 @@ internal data class detected_link(val start: Int, val end: Int, val text: String
 
 private fun count_char(value: String, needle: Char): Int = value.count { it == needle }
 
+private fun is_entity_char(c: Char): Boolean = c in 'A'..'Z' || c in 'a'..'z' || c in '0'..'9'
+
+private fun entity_tail_start(url: String, end: Int): Int? {
+    var i = end - 1
+    while (i > 0 && is_entity_char(url[i - 1])) i--
+    if (i == end - 1) return null
+    if (i >= 1 && url[i - 1] == '&') return i - 1
+    if (i >= 2 && url[i - 1] == '#' && url[i - 2] == '&') return i - 2
+    return null
+}
+
 private fun trim_url_tail(raw: String): String {
-    var url = raw
-    while (url.isNotEmpty()) {
-        val last = url[url.length - 1]
+    var end = raw.length
+    val closer_counts = BRACKET_OPENERS.keys.associateWith { count_char(raw, it) }.toMutableMap()
+    val opener_counts = BRACKET_OPENERS.values.associateWith { count_char(raw, it) }
+    while (end > 0) {
+        val last = raw[end - 1]
         if (last == ';') {
-            val entity = HTML_ENTITY_TAIL.find(url)
-            url = if (entity != null) url.substring(0, entity.range.first) else url.dropLast(1)
+            end = entity_tail_start(raw, end) ?: (end - 1)
             continue
         }
         if (last in TRAILING_PUNCTUATION) {
-            url = url.dropLast(1)
+            end--
             continue
         }
         val opener = BRACKET_OPENERS[last]
-        if (opener != null && count_char(url, last) > count_char(url, opener)) {
-            url = url.dropLast(1)
+        val closers = closer_counts[last]
+        if (opener != null && closers != null && closers > opener_counts.getValue(opener)) {
+            closer_counts[last] = closers - 1
+            end--
             continue
         }
         break
     }
-    return url
+    return raw.substring(0, end)
 }
 
 private fun has_host(url: String, offset: Int): Boolean {

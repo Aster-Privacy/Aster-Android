@@ -654,7 +654,26 @@ class EmailBodyNativeTest {
     @Test(timeout = 2_000)
     fun long_address_like_runs_are_scanned_quickly() {
         assertTrue(find_links("%".repeat(100_000) + " @").isEmpty())
-        assertTrue(find_links("+%".repeat(50_000) + " www").isEmpty())
+        assertTrue(find_links("+%".repeat(50_000) + "@").isEmpty())
+    }
+
+    @Test(timeout = 2_000)
+    fun long_link_tails_are_trimmed_quickly() {
+        assertEquals("https://example.com/a", find_links("https://example.com/a" + ";".repeat(100_000)).single().text)
+        assertEquals("https://example.com/a", find_links("https://example.com/a" + ".,".repeat(50_000)).single().text)
+        assertEquals("https://example.com/a", find_links("https://example.com/a" + ")".repeat(100_000)).single().text)
+    }
+
+    @Test
+    fun link_tails_are_still_trimmed() {
+        assertEquals("https://example.com/a", find_links("https://example.com/a&amp;").single().text)
+        assertEquals("https://example.com/a", find_links("https://example.com/a&#39;.").single().text)
+        assertEquals("https://example.com/a;b", find_links("https://example.com/a;b;").single().text)
+        assertEquals(
+            "https://example.org/wiki/A_(b)",
+            find_links("(see https://example.org/wiki/A_(b))").single().text,
+        )
+        assertEquals("https://example.com/[x]", find_links("https://example.com/[x]]},").single().text)
     }
 
     @Test
