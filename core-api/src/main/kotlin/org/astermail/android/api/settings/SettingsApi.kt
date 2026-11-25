@@ -242,6 +242,7 @@ data class AliasPinResponse(
 data class CustomDomainAddressInfo(
     val id: String,
     val domain_name: String,
+    val domain_id: String = "",
     val encrypted_local_part: String = "",
     val local_part_nonce: String = "",
     val local_part_hash: String = "",
@@ -253,6 +254,10 @@ data class CustomDomainAddressInfo(
     val created_at: String = "",
     val sidebar_order: Int? = null,
     val sidebar_hidden: Boolean = false,
+    val encrypted_websites: String? = null,
+    val websites_nonce: String? = null,
+    val websites: List<String> = emptyList(),
+    val websites_loaded: Boolean = false,
 ) {
     val address: String get() = when {
         decryption_failed -> if (domain_name.isNotBlank()) "@$domain_name" else id
@@ -270,6 +275,30 @@ data class DeleteDomainAddressRequest(
 data class AllDomainAddressesResponse(
     val addresses: List<CustomDomainAddressInfo> = emptyList(),
 )
+
+@Serializable
+data class DomainAddressWebsitesRow(
+    val id: String,
+    val encrypted_websites: String? = null,
+    val websites_nonce: String? = null,
+)
+
+@Serializable
+data class DomainAddressListResponse(
+    val addresses: List<DomainAddressWebsitesRow> = emptyList(),
+)
+
+fun domain_address_websites_patch_body(encrypted_websites: String?, websites_nonce: String?): JsonObject {
+    require((encrypted_websites == null) == (websites_nonce == null)) {
+        "encrypted_websites and websites_nonce must be set together"
+    }
+    return JsonObject(
+        mapOf(
+            "encrypted_websites" to (encrypted_websites?.let { JsonPrimitive(it) } ?: JsonNull),
+            "websites_nonce" to (websites_nonce?.let { JsonPrimitive(it) } ?: JsonNull),
+        ),
+    )
+}
 
 @Serializable
 data class DeletedAliasInfo(
@@ -478,6 +507,7 @@ data class UpdateAliasPreferencesRequest(
 
 @Serializable
 data class SendingBlocksResponse(
+    val primary: Boolean = false,
     val alias_ids: List<String> = emptyList(),
     val domain_address_ids: List<String> = emptyList(),
 )
@@ -485,7 +515,7 @@ data class SendingBlocksResponse(
 @Serializable
 data class SendingBlockChange(
     val kind: String,
-    val id: String,
+    val id: String? = null,
     val sending_disabled: Boolean,
 )
 
@@ -494,6 +524,7 @@ data class UpdateSendingBlocksRequest(
     val changes: List<SendingBlockChange>,
 )
 
+const val sending_block_kind_primary = "primary"
 const val sending_block_kind_alias = "alias"
 const val sending_block_kind_domain_address = "domain_address"
 
@@ -834,6 +865,13 @@ interface SettingsApi {
     suspend fun update_alias_profile_picture(alias_id: String, profile_picture: String?): Boolean
     suspend fun update_domain_address_profile_picture(domain_id: String, address_id: String, profile_picture: String?): Boolean
     suspend fun list_all_domain_addresses(): AllDomainAddressesResponse
+    suspend fun list_domain_addresses(domain_id: String): DomainAddressListResponse
+    suspend fun update_domain_address_websites(
+        domain_id: String,
+        address_id: String,
+        encrypted_websites: String?,
+        websites_nonce: String?,
+    ): Boolean
     suspend fun create_domain_address(domain_id: String, request: CreateDomainAddressRequest): CreateDomainAddressResponse
     suspend fun update_domain_address(domain_id: String, address_id: String, request: UpdateDomainAddressRequest)
     suspend fun delete_domain_address(domain_id: String, address_id: String, address: String?)
@@ -1211,6 +1249,29 @@ class SettingsApiImpl(private val client: ApiClient) : SettingsApi {
     override suspend fun list_all_domain_addresses(): AllDomainAddressesResponse {
         val response = client.http.get("${client.base_url}/api/addresses/v1/domains/addresses")
         return decode_or_throw(response)
+    }
+
+    override suspend fun list_domain_addresses(domain_id: String): DomainAddressListResponse {
+        val response = client.http.get("${client.base_url}/api/addresses/v1/domains/$domain_id/addresses")
+        return decode_or_throw(response)
+    }
+
+    override suspend fun update_domain_address_websites(
+        domain_id: String,
+        address_id: String,
+        encrypted_websites: String?,
+        websites_nonce: String?,
+    ): Boolean {
+        val body = domain_address_websites_patch_body(encrypted_websites, websites_nonce)
+        val response = client.http.patch("${client.base_url}/api/addresses/v1/domains/$domain_id/addresses/$address_id") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(body)
+        }
+        if (response.status.value !in 200..299) {
+            throw client.map_http_status(response.status.value, "")
+        }
+        return true
     }
 
     override suspend fun create_domain_address(domain_id: String, request: CreateDomainAddressRequest): CreateDomainAddressResponse {

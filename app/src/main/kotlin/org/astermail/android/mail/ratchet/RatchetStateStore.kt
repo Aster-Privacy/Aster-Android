@@ -148,7 +148,7 @@ class RatchetStateStore @Inject constructor(
         }
         offer(StorageWriteKey.write_key(session_key_store))
         StorageWriteKey.read_keys(session_key_store).forEach { offer(it) }
-        return candidates
+        return StorageWriteKey.without_login_proof(session_key_store, candidates)
     }
 
     fun note_master_key_use(master: ByteArray) {

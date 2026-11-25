@@ -18,212 +18,607 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 //
-
 package org.astermail.android.mail
 
+private const val MAX_SCAN_LENGTH = 2000
+private const val LONG_BODY_LENGTH = 400
 private const val MIN_CODE_LENGTH = 4
-private const val MAX_CODE_LENGTH = 10
+private const val MAX_CODE_LENGTH = 8
 private const val MIN_GROUP_LENGTH = 3
-private const val MAX_GROUP_LENGTH = 5
-private const val KEYWORD_WINDOW = 48
-private const val MAX_SCAN_LENGTH = 4000
+private const val MAX_GROUP_LENGTH = 4
+private const val STRONG_DISTANCE = 32
+private const val WEAK_DISTANCE = 20
+private const val DIRECT_DISTANCE = 8
+private const val MAX_GAP_WORDS = 3
+private const val BLOCKING_DISTANCE = 24
+private const val TECHNICAL_MARKER_LIMIT = 2
 
-private val CODE_WORD_PATTERN = Regex(
-    "(?<![\\p{L}\\p{N}])(\\p{L}*)codes?(?!\\p{L})",
-    RegexOption.IGNORE_CASE,
+private const val BOUNDED_START = "(?<![\\p{L}\\p{N}])"
+private const val BOUNDED_END = "(?![\\p{L}\\p{N}])"
+
+private val BOUNDARY_SCRIPTS = setOf(
+    Character.UnicodeScript.LATIN,
+    Character.UnicodeScript.CYRILLIC,
+    Character.UnicodeScript.GREEK,
+    Character.UnicodeScript.ARABIC,
+    Character.UnicodeScript.HEBREW,
+    Character.UnicodeScript.DEVANAGARI,
 )
 
-private val KEYWORD_PATTERN = Regex(
-    "(?<![\\p{L}\\p{N}])(?:v[eé]rif\\p{L}*|otp|one[- ]?time|pin|2fa|log[- ]?in|sign[- ]?in|c[oó]digos?|codice|код\\p{L}{0,3})(?![\\p{L}\\p{N}])",
-    RegexOption.IGNORE_CASE,
+private val CODE_TOKEN = Regex("[A-Za-z0-9]+")
+private val WORD = Regex("[\\p{L}\\p{N}]+")
+private val SENTENCE_BREAK = Regex("(?U)[.!?。！？](?:\\s|$)")
+private val UNIT_SUFFIX = Regex("^[0-9]+(?:ST|ND|RD|TH|AM|PM|K|M|P|GB|MB|KB|TB|PX|MP|HZ|FPS)$")
+private val SENDER_BRACKET = Regex("(?U)<([^<>]+)>\\s*$")
+private val INTENT_PREFIX = Regex("^(?:PIN|OTP|CODE|TAN|KOD)$", RegexOption.IGNORE_CASE)
+private val HYPHEN_INTENT = Regex("^(?:pin|otp|code|tan|kod|код)$", RegexOption.IGNORE_CASE)
+
+private val REPLY_PREFIX = Regex("(?U)^\\s*(?:(?:re|fwd?|aw|wg|tr|rv|sv|vs|antw|odp|enc|r|ynt|ilt|ответ|отв|пересл|回复|答复|转发|回覆|轉寄)\\s*(?:\\[\\d+\\]|\\(\\d+\\))?\\s*[:：]\\s*)+", RegexOption.IGNORE_CASE)
+
+private val AUTOMATED_LOCAL_PART = Regex("(?U)^(?:no[-_.]?reply|do[-_.]?not[-_.]?reply|notifications?|notify|alerts?|security|verify|verification|accounts?|auth|login|signin|otp|codes?|mailer(?:-daemon)?|system|automated|robot|bot)(?:[-_.+][a-z0-9._+-]*)?\$", RegexOption.IGNORE_CASE)
+
+private val PROMOTION_PATTERN = Regex("(?U)(?<![\\p{L}\\p{N}])(?:gift ?cards?|promo\\p{L}*|coupons?|discount\\p{L}*|vouchers?|rabatt\\p{L}*|gutschein\\p{L}*|descuento\\p{L}*|cup[oó]n\\p{L}*|réduction\\p{L}*|sconto|скидк\\p{L}*)|[0-9]{1,3} ?% off|优惠|折扣|割引", RegexOption.IGNORE_CASE)
+
+private val QUOTE_MARKERS = listOf(
+    Regex("(?U)(?:^|\\s)On\\s[^\\n]{1,200}?\\swrote:", RegexOption.IGNORE_CASE),
+    Regex("(?U)(?:^|\\s)(?:Am|Le|El|Il|Op|Em|W dniu)\\s[^\\n]{1,200}?\\s(?:schrieb|a écrit|escribió|ha scritto|schreef|napisał\\p{L}*|escreveu)\\s?\\p{L}*:", RegexOption.IGNORE_CASE),
+    Regex("(?U)-{2,}\\s*(?:original message|forwarded message|weitergeleitete nachricht|ursprüngliche nachricht|message transféré|message d'origine|mensaje reenviado|mensaje original|messaggio inoltrato|messaggio originale|doorgestuurd bericht|oorspronkelijk bericht|wiadomość przekazana|oryginalna wiadomość|mensagem encaminhada|mensagem original|пересылаемое сообщение|исходное сообщение)", RegexOption.IGNORE_CASE),
+    Regex("(?U)(?:^|\\n)[ \\t]*>"),
+    Regex("(?U)(?:^|\\n)\\s*(?:From|Von|De|Da|Van|Od|От|Kimden):[^\\n]*\\n\\s*(?:Sent|Date|Gesendet|Datum|Envoyé|Enviado|Fecha|Inviato|Data|Verzonden|Wysłano|Отправлено|Tarih):", RegexOption.IGNORE_CASE),
 )
 
-private val CJK_KEYWORD_PATTERN = Regex("验证码|校验码|动态码|認証コード|確認コード|ワンタイム")
+private val STRIPPED_SEGMENTS = listOf(
+    Regex("(?U)```[\\s\\S]*?(?:```|\$)"),
+    Regex("(?U)`[^`\\n]*`"),
+    Regex("(?U)^(?: {4}|\\t).*\$", RegexOption.MULTILINE),
+    Regex("(?U)(?:https?:\\/\\/|www\\.)\\S+", RegexOption.IGNORE_CASE),
+    Regex("(?U)[\\p{L}\\p{N}_-]+(?:\\.[\\p{L}\\p{N}_-]+)+\\/\\S*"),
+    Regex("(?U)\\S+@\\S+"),
+)
+
+private val TECHNICAL_MARKERS = listOf(
+    Regex("(?U)(?<![\\p{L}\\p{N}])(?=[0-9a-f]*[a-f])(?=[0-9a-f]*[0-9])[0-9a-f]{7,40}(?![\\p{L}\\p{N}])"),
+    Regex("(?U)[\\p{L}\\p{N}_/.-]+\\.(?:rs|ts|tsx|js|jsx|mjs|kt|kts|swift|py|go|java|rb|php|c|cc|cpp|h|hpp|cs|sql|sh|yml|yaml|toml|gradle)(?![\\p{L}\\p{N}])", RegexOption.IGNORE_CASE),
+    Regex("(?U)(?<![\\p{L}\\p{N}])v[0-9]+\\.[0-9]+(?:\\.[0-9]+)*(?![\\p{L}\\p{N}])", RegexOption.IGNORE_CASE),
+    Regex("(?U)(?<![\\p{L}\\p{N}])(?:commits?|branch|pull request|merge request|stack ?trace|regression|segfault|null pointer|exception|cve-[0-9]{4}-[0-9]+|ghsa-[\\p{L}\\p{N}-]+|line [0-9]+)(?![\\p{L}\\p{N}])", RegexOption.IGNORE_CASE),
+)
+
+private val BEFORE_REJECT = listOf(
+    Regex("(?U)[\$€£¥₹₽₩#+/\\\\@=_&?%~^*|]\$"),
+    Regex("(?U)[\$€£¥₹₽₩]\\s\$"),
+    Regex("(?U)[0-9][ \\-./:,]\$"),
+    Regex("(?U)\\)\\s?\$"),
+    Regex("(?U)(?:^|[^\\p{L}])(?:usd|eur|gbp|chf|jpy|inr|cad|aud|rs\\.?|r\\\$)\\s?\$", RegexOption.IGNORE_CASE),
+)
+
+private val AFTER_REJECT = listOf(
+    Regex("(?U)^[.,:/][\\p{L}\\p{N}]"),
+    Regex("(?U)^[ -][0-9]"),
+    Regex("(?U)^-[\\p{L}\\p{N}]"),
+    Regex("(?U)^[@%\$€£¥₹₽₩_=/&]"),
+    Regex("(?U)^\\s?(?:%|[\$€£¥₹₽₩]|[ap]\\.?m\\.?(?!\\p{L})|utc|gmt|cet|cest|est|edt|pst|pdt|mins?(?!\\p{L})|minutes|hours?|hrs?|secs?(?!\\p{L})|seconds|days?(?!\\p{L})|weeks?|months?|years?|[kmgt]b(?!\\p{L})|kg(?!\\p{L})|km(?!\\p{L})|px(?!\\p{L})|points?|coins?|credits?|users?|people|times|items?|messages|emails)(?!\\p{L})", RegexOption.IGNORE_CASE),
+    Regex("(?U)^\\s?(?:usd|eur|gbp|chf|jpy|inr|cad|aud|dollars?|euros?)(?!\\p{L})", RegexOption.IGNORE_CASE),
+)
+
+private val STRONG_BOUNDED = listOf(
+    "(?:verification|verify|confirmation|security|sign[- ]?in|log[- ]?in|login|logon|access|authentication|authenticator|auth|authorization|one[- ]?time|single[- ]?use|2fa|two[- ]?factor|2[- ]?step|mfa|otp|temporary|activation|reset|recovery|device|pairing|approval)\\s+(?:pass)?codes?",
+    "one[- ]?time\\s+(?:password|passcode|pin)",
+    "passcodes?",
+    "otp",
+    "your(?:\\s+[\\p{L}\\p{N}-]+){0,2}?\\s+(?:codes?|pin|passcode)",
+    "(?:enter|use)\\s+(?:this|the\\s+following|the)\\s+code",
+    "(?:best[äa]tigungs|verifizierungs|sicherheits|anmelde|einmal|zugangs|freigabe|login)code",
+    "einmal(?:passwort|kennwort)",
+    "(?:ihr|dein|deinen|ihren)\\s+code",
+    "c[oó]digo\\s+de\\s+(?:verificaci[oó]n|verifica[cç][aã]o|seguridad|seguran[cç]a|acceso|acesso|confirmaci[oó]n|confirma[cç][aã]o|inicio\\s+de\\s+sesi[oó]n|login|un\\s+solo\\s+uso)",
+    "(?:tu|su|seu|teu)\\s+c[oó]digo",
+    "code\\s+de\\s+(?:v[eé]rification|s[eé]curit[eé]|connexion|confirmation|validation)",
+    "(?:votre|ton)\\s+code",
+    "codice\\s+(?:di\\s+(?:verifica|sicurezza|accesso|conferma)|otp)",
+    "(?:il\\s+)?(?:tuo|suo)\\s+codice",
+    "(?:verificatie|beveiligings|inlog|bevestigings|toegangs)code",
+    "(?:je|jouw|uw)\\s+code",
+    "kod\\s+(?:weryfikacyjny|bezpiecze[nń]stwa|potwierdzaj[aą]cy|logowania|jednorazowy|dost[eę]pu|sms)",
+    "(?:tw[oó]j|pa[nń]ski)\\s+kod",
+    "(?:do[gğ]rulama|g[uü]venlik|giri[sş]|onay)\\s+kod\\p{L}*",
+    "kodunuz",
+    "код\\s+(?:подтверждения|проверки|безопасности|доступа|для\\s+входа|верификации)",
+    "(?:ваш|твой)\\s+код",
+    "одноразов\\p{L}*\\s+(?:код|пароль)",
+    "(?:رمز|كود)\\s+(?:التحقق|التأكيد|الأمان|الدخول|التفعيل)",
+    "(?:सत्यापन|ओटीपी)\\s*कोड",
+    "ओटीपी",
+)
+
+private val STRONG_BARE = listOf(
+    "验证码",
+    "驗證碼",
+    "校验码",
+    "校驗碼",
+    "动态码",
+    "确认码",
+    "確認碼",
+    "安全码",
+    "登录码",
+    "認証コード",
+    "確認コード",
+    "ワンタイムパスワード",
+    "セキュリティコード",
+    "ログインコード",
+    "認証番号",
+    "確認番号",
+    "인증\\s?번호",
+    "인증\\s?코드",
+    "확인\\s?코드",
+    "보안\\s?코드",
+    "일회용\\s?비밀번호",
+)
+
+private val WEAK_BOUNDED = listOf(
+    "codes?",
+    "v[eé]rif\\p{L}*",
+    "sign(?:ing)?[- ]?in",
+    "log(?:ging)?[- ]?in",
+    "logon",
+    "auth\\p{L}*",
+    "confirm\\p{L}*",
+    "pin",
+    "kod\\p{L}*",
+    "c[oó]digo",
+    "codice",
+    "код\\p{L}{0,3}",
+    "best[äa]tig\\p{L}*",
+    "anmeld\\p{L}*",
+    "connexion",
+    "acceso",
+    "accesso",
+    "weryfik\\p{L}*",
+    "do[gğ]rula\\p{L}*",
+    "подтвер\\p{L}*",
+)
+
+private val WEAK_BARE = listOf(
+    "コード",
+    "코드",
+    "رمز",
+    "कोड",
+)
+
+private val BLOCKING_WORDS = listOf(
+    "orders?",
+    "tracking",
+    "track",
+    "invoice",
+    "receipt",
+    "shipment",
+    "parcel",
+    "package",
+    "ref",
+    "reference",
+    "case",
+    "ticket",
+    "booking",
+    "reservation",
+    "flight",
+    "tel",
+    "phone",
+    "telephone",
+    "mobile",
+    "fax",
+    "call",
+    "ring",
+    "id",
+    "ip",
+    "version",
+    "build",
+    "release",
+    "patch",
+    "zip",
+    "postal",
+    "postcode",
+    "error",
+    "status",
+    "line",
+    "lines",
+    "commit",
+    "pr",
+    "issue",
+    "port",
+    "pid",
+    "job",
+    "pipeline",
+    "room",
+    "step",
+    "page",
+    "section",
+    "chapter",
+    "account",
+    "customer",
+    "member",
+    "membership",
+    "transaction",
+    "box",
+    "store",
+    "item",
+    "sku",
+    "model",
+    "serial",
+    "fingerprint",
+    "hash",
+    "key",
+    "number",
+    "no",
+    "nr",
+    "num",
+    "nummer",
+    "número",
+    "numéro",
+    "numero",
+    "pedido",
+    "commande",
+    "ordine",
+    "bestellung",
+    "sendung",
+    "rechnung",
+    "factura",
+    "facture",
+    "fattura",
+    "заказа?",
+    "номер",
+)
+
+private val BLOCKING_BARE = listOf(
+    "订单",
+    "注文",
+    "快递",
+)
 
 private val CODE_QUALIFIERS = setOf(
-    "promo", "promotional", "promocional", "promozionale", "promotionnel",
-    "discount", "coupon", "voucher", "referral", "gift", "invite", "invitation",
-    "postal", "zip", "area", "post", "bar", "qr", "source", "country", "error", "status",
-    "rabatt", "gutschein", "aktions", "réduction", "descuento", "sconto", "regalo",
+    "promo",
+    "promotional",
+    "discount",
+    "coupon",
+    "voucher",
+    "referral",
+    "gift",
+    "invite",
+    "invitation",
+    "postal",
+    "zip",
+    "area",
+    "country",
+    "post",
+    "bar",
+    "qr",
+    "source",
+    "error",
+    "status",
+    "exit",
+    "http",
+    "dress",
+    "tracking",
+    "product",
+    "color",
+    "colour",
+    "region",
+    "airport",
+    "swift",
+    "sort",
+    "booking",
+    "order",
+    "reservation",
+    "flight",
+    "ticket",
+    "rabatt",
+    "gutschein",
+    "aktions",
+    "fehler",
+    "réduction",
+    "descuento",
+    "sconto",
+    "regalo",
+    "pedido",
+    "commande",
+    "ordine",
+    "postleitzahl",
 )
 
-private val REFERENCE_WORDS = setOf(
-    "order", "tracking", "invoice", "ref", "reference", "booking", "ticket", "case",
-    "shipment", "parcel", "package", "account", "customer", "member", "membership",
-    "phone", "tel", "telephone", "fax", "call", "mobile", "transaction", "receipt",
-    "confirmation", "bestellung", "bestellnummer", "rechnung", "pedido", "factura",
-    "commande", "facture", "ordine", "fattura", "заказ", "заказа",
+private val CODE_FOLLOWERS = setOf(
+    "review",
+    "reviews",
+    "block",
+    "blocks",
+    "base",
+    "snippet",
+    "path",
+    "paths",
+    "change",
+    "changes",
+    "quality",
+    "owner",
+    "owners",
+    "of",
+    "editor",
+    "sample",
+    "samples",
+    "coverage",
+    "style",
+    "freeze",
+    "smell",
 )
 
-private val NUMBER_WORDS = setOf("number", "no", "nr", "num", "id", "nummer", "número", "numéro", "numero", "номер")
+private val STRONG_PATTERN = bounded_pattern(STRONG_BOUNDED, STRONG_BARE)
+private val WEAK_PATTERN = bounded_pattern(WEAK_BOUNDED, WEAK_BARE)
+private val BLOCKING_PATTERN = bounded_pattern(BLOCKING_WORDS, BLOCKING_BARE)
 
-private val CURRENCY_WORDS = setOf(
-    "usd", "eur", "gbp", "jpy", "cad", "aud", "chf", "inr", "cny", "rub", "brl", "mxn",
-    "sek", "nok", "dkk", "pln", "dollar", "dollars", "euro", "euros", "pound", "pounds", "yen",
-)
+private class code_span(val start: Int, val end: Int, val value: String = "")
 
-private const val CURRENCY_SIGNS = "$€£¥₹₽₩"
-private const val REJECT_BEFORE = "$€£¥₹₽₩#+/@"
-private const val REJECT_AFTER = "%/$€£¥₹₽₩"
-private const val NUMBER_PUNCTUATION = ".,:/"
-private const val WORD_SKIP = " \t:.#-"
+private class code_link(val distance: Int, val words: Int)
 
-private class code_token(val start: Int, val end: Int, val value: String) {
-    val has_digit: Boolean = value.any { it in '0'..'9' }
+private fun bounded_pattern(words: List<String>, bare: List<String>): Regex {
+    val parts = mutableListOf("$BOUNDED_START(?:${words.joinToString("|")})$BOUNDED_END")
+    if (bare.isNotEmpty()) parts.add("(?:${bare.joinToString("|")})")
+    return Regex("(?U)" + parts.joinToString("|"), RegexOption.IGNORE_CASE)
 }
 
-private class code_span(val start: Int, val end: Int, val value: String)
+private fun find_spans(text: String, pattern: Regex): MutableList<code_span> =
+    pattern.findAll(text).map { code_span(it.range.first, it.range.last + 1) }.toMutableList()
 
-fun detect_verification_code(vararg parts: String?): String? =
-    keyword_near_candidates(parts).minByOrNull { it.second }?.first
-
-fun detect_unambiguous_verification_code(vararg parts: String?): String? {
-    val distinct = keyword_near_candidates(parts).map { it.first }.distinct()
-    return distinct.singleOrNull()
-}
-
-private fun keyword_near_candidates(parts: Array<out String?>): List<Pair<String, Int>> {
-    val text = parts.filterNot { it.isNullOrBlank() }.joinToString("\n").take(MAX_SCAN_LENGTH)
-    if (text.isEmpty()) return emptyList()
-    val keywords = keyword_spans(text)
-    if (keywords.isEmpty()) return emptyList()
-    val found = mutableListOf<Pair<String, Int>>()
-    for (candidate in code_candidates(text)) {
-        if (keywords.any { candidate.start < it.last + 1 && it.first < candidate.end }) continue
-        val gap = keywords.minOf { keyword ->
-            if (keyword.first >= candidate.end) keyword.first - candidate.end else candidate.start - (keyword.last + 1)
-        }
-        if (gap <= KEYWORD_WINDOW) found.add(candidate.value to gap)
+private fun word_before(text: String, index: Int): String {
+    var cursor = index - 1
+    while (cursor >= 0 && !text[cursor].isLetter()) {
+        if (text[cursor] == '\n') return ""
+        cursor--
     }
-    return found
+    val end = cursor + 1
+    while (cursor >= 0 && text[cursor].isLetter()) cursor--
+    return text.substring(cursor + 1, end).lowercase()
 }
 
-private fun keyword_spans(text: String): List<IntRange> {
-    val spans = mutableListOf<IntRange>()
-    CODE_WORD_PATTERN.findAll(text).forEach { match ->
-        val prefix = match.groupValues[1].lowercase()
-        if (prefix !in CODE_QUALIFIERS && !qualified(text, match.range)) spans.add(match.range)
+private fun word_after(text: String, index: Int): String {
+    var cursor = index
+    while (cursor < text.length && !text[cursor].isLetter()) {
+        if (text[cursor] == '\n') return ""
+        cursor++
     }
-    KEYWORD_PATTERN.findAll(text).forEach { match ->
-        if (!qualified(text, match.range)) spans.add(match.range)
+    val start = cursor
+    while (cursor < text.length && text[cursor].isLetter()) cursor++
+    return text.substring(start, cursor).lowercase()
+}
+
+private fun is_qualified(text: String, span: code_span): Boolean {
+    if (word_before(text, span.start) in CODE_QUALIFIERS) return true
+    val inner = WORD.findAll(text.substring(span.start, span.end).lowercase()).map { it.value }
+    if (inner.any { it in CODE_QUALIFIERS }) return true
+    return word_after(text, span.end) in CODE_FOLLOWERS
+}
+
+private fun overlaps(a: code_span, b: code_span): Boolean = a.start < b.end && b.start < a.end
+
+private fun cut_quoted(body: String): String {
+    var cut = body.length
+    for (marker in QUOTE_MARKERS) {
+        val match = marker.find(body)
+        if (match != null && match.range.first < cut) cut = match.range.first
     }
-    CJK_KEYWORD_PATTERN.findAll(text).forEach { spans.add(it.range) }
-    return spans
+    return body.substring(0, cut)
 }
 
-private fun qualified(text: String, range: IntRange): Boolean {
-    val before = previous_word(text, range.first).lowercase()
-    val after = next_word(text, range.last + 1).lowercase()
-    return before in CODE_QUALIFIERS || after in CODE_QUALIFIERS
+private fun strip_segments(text: String): String =
+    STRIPPED_SEGMENTS.fold(text) { result, pattern -> pattern.replace(result, " ") }
+
+private fun sender_is_automated(sender: String?): Boolean {
+    if (sender.isNullOrEmpty()) return false
+    val bracket = SENDER_BRACKET.find(sender)
+    val address = (bracket?.groupValues?.get(1) ?: sender).trim()
+    val at = address.lastIndexOf('@')
+    if (at <= 0) return false
+    return AUTOMATED_LOCAL_PART.containsMatchIn(address.substring(0, at))
 }
 
-private fun code_candidates(text: String): List<code_span> {
-    val tokens = tokenize(text)
+private fun is_technical(text: String): Boolean {
+    var total = 0
+    for (pattern in TECHNICAL_MARKERS) {
+        total += pattern.findAll(text).count()
+        if (total >= TECHNICAL_MARKER_LIMIT) return true
+    }
+    return false
+}
+
+private fun is_boundary_char(char: Char?): Boolean {
+    if (char == null) return false
+    if (char.isDigit() || char == '_') return true
+    if (!char.isLetter()) return false
+    return Character.UnicodeScript.of(char.code) in BOUNDARY_SCRIPTS
+}
+
+private fun is_bounded(text: String, start: Int, end: Int): Boolean =
+    !is_boundary_char(text.getOrNull(start - 1)) && !is_boundary_char(text.getOrNull(end))
+
+private fun is_digits(value: String): Boolean = value.isNotEmpty() && value.all { it in '0'..'9' }
+
+private fun is_code_chars(value: String): Boolean =
+    value.isNotEmpty() && value.all { it in 'A'..'Z' || it in '0'..'9' }
+
+private fun has_digit(value: String): Boolean = value.any { it in '0'..'9' }
+
+private fun is_time_pair(first: String, second: String): Boolean {
+    if (first.length != 4 || second.length != 4) return false
+    if (!is_digits(first) || !is_digits(second)) return false
+    return listOf(first, second).all {
+        it.substring(0, 2).toInt() <= 23 && it.substring(2, 4).toInt() <= 59
+    }
+}
+
+private fun is_plausible_code(value: String): Boolean {
+    if (value.length !in MIN_CODE_LENGTH..MAX_CODE_LENGTH) return false
+    if (!is_code_chars(value) || !has_digit(value)) return false
+    if (UNIT_SUFFIX.matches(value)) return false
+    val has_letter = value.any { it in 'A'..'Z' }
+    if (has_letter && value.length >= 7 && value.all { it in '0'..'9' || it in 'A'..'F' }) return false
+    if (is_digits(value) && value.length == 4 && value.toInt() in 1900..2099) return false
+    return true
+}
+
+private fun hyphen_prefix_allowed(text: String, hyphen: Int): Boolean {
+    var cursor = hyphen - 1
+    while (cursor >= 0 && text[cursor].isLetter()) cursor--
+    val word = text.substring(cursor + 1, hyphen)
+    if (cursor >= 0 && is_boundary_char(text[cursor])) return false
+    if (word.length == 1 && word[0] in 'A'..'Z') return true
+    return HYPHEN_INTENT.matches(word)
+}
+
+private fun colon_prefix_allowed(text: String, colon: Int): Boolean {
+    var cursor = colon - 1
+    while (cursor >= 0 && !text[cursor].isWhitespace()) cursor--
+    return text.substring(cursor + 1, colon).none { it == '.' || it == '/' || it == '\\' || it.isDigit() }
+}
+
+private fun has_clean_context(text: String, span: code_span): Boolean {
+    val previous = text.getOrNull(span.start - 1)
+    if (previous == '-' && !hyphen_prefix_allowed(text, span.start - 1)) return false
+    if (previous == '.') return false
+    if ((previous == ':' || previous == '：') && !colon_prefix_allowed(text, span.start - 1)) return false
+    val before = text.substring(maxOf(0, span.start - 8), span.start)
+    val after = text.substring(span.end, minOf(text.length, span.end + 12))
+    if (previous != '-' && BEFORE_REJECT.any { it.containsMatchIn(before) }) return false
+    if (AFTER_REJECT.any { it.containsMatchIn(after) }) return false
+    return true
+}
+
+private fun can_join(first: String, second: String, separator: Char): Boolean {
+    if (separator != ' ' && separator != '-') return false
+    if (first.length < MIN_GROUP_LENGTH || second.length < MIN_GROUP_LENGTH) return false
+    if (first.length > MAX_GROUP_LENGTH || second.length > MAX_GROUP_LENGTH) return false
+    if (kotlin.math.abs(first.length - second.length) > 1) return false
+    if (!is_code_chars(first) || !is_code_chars(second)) return false
+    if (INTENT_PREFIX.matches(first)) return false
+    if (separator == ' ' && (!has_digit(first) || !has_digit(second))) return false
+    if (is_time_pair(first, second)) return false
+    return has_digit(first) || has_digit(second)
+}
+
+private fun collect_candidates(text: String): List<code_span> {
+    val tokens = CODE_TOKEN.findAll(text)
+        .map { code_span(it.range.first, it.range.last + 1) }
+        .filter { is_bounded(text, it.start, it.end) }
+        .toList()
     val candidates = mutableListOf<code_span>()
     var index = 0
     while (index < tokens.size) {
-        var run_end = index
-        while (run_end + 1 < tokens.size && linked(text, tokens[run_end], tokens[run_end + 1])) run_end++
-        val run = tokens.subList(index, run_end + 1)
-        val span = when (run.size) {
-            1 -> code_span(run[0].start, run[0].end, run[0].value)
-            2 -> grouped_span(run[0], run[1])
-            else -> null
+        val token = tokens[index]
+        val value = text.substring(token.start, token.end)
+        val next = tokens.getOrNull(index + 1)
+        if (next != null && next.start == token.end + 1) {
+            val next_value = text.substring(next.start, next.end)
+            val joined = code_span(token.start, next.end, value + next_value)
+            if (can_join(value, next_value, text[token.end]) &&
+                is_plausible_code(joined.value) &&
+                has_clean_context(text, joined)
+            ) {
+                candidates.add(joined)
+                index += 2
+                continue
+            }
         }
-        if (span != null && valid_code(span.value) && plausible_context(text, span)) candidates.add(span)
-        index = run_end + 1
+        if (is_plausible_code(value) && has_clean_context(text, token)) {
+            candidates.add(code_span(token.start, token.end, value))
+        }
+        index++
     }
     return candidates
 }
 
-private fun grouped_span(first: code_token, second: code_token): code_span? {
-    if (first.value.length != second.value.length) return null
-    if (first.value.length !in MIN_GROUP_LENGTH..MAX_GROUP_LENGTH) return null
-    return code_span(first.start, second.end, first.value + second.value)
-}
-
-private fun tokenize(text: String): List<code_token> {
-    val tokens = mutableListOf<code_token>()
-    var index = 0
-    while (index < text.length) {
-        if (!is_word_char(text[index])) {
-            index++
-            continue
+private fun link_to(text: String, candidate: code_span, spans: List<code_span>): code_link? {
+    var best: code_link? = null
+    for (span in spans) {
+        if (overlaps(span, candidate)) continue
+        val gap = if (span.end <= candidate.start) {
+            text.substring(span.end, candidate.start)
+        } else {
+            text.substring(candidate.end, span.start)
         }
-        val start = index
-        while (index < text.length && is_word_char(text[index])) index++
-        val value = text.substring(start, index)
-        if (value.all { it in 'A'..'Z' || it in '0'..'9' }) tokens.add(code_token(start, index, value))
-        else tokens.add(code_token(start, index, ""))
+        if (has_digit(gap) || SENTENCE_BREAK.containsMatchIn(gap)) continue
+        val words = WORD.findAll(gap).count()
+        if (words > MAX_GAP_WORDS) continue
+        if (best == null || gap.length < best.distance) best = code_link(gap.length, words)
     }
-    return tokens
+    return best
 }
 
-private fun is_word_char(char: Char): Boolean {
-    if (!char.isLetterOrDigit()) return false
-    return when (Character.UnicodeScript.of(char.code)) {
-        Character.UnicodeScript.HAN,
-        Character.UnicodeScript.HIRAGANA,
-        Character.UnicodeScript.KATAKANA,
-        Character.UnicodeScript.HANGUL -> false
-        else -> true
+private fun opens_later_sentence(text: String, body_start: Int, position: Int): Boolean {
+    if (position < body_start) return false
+    return SENTENCE_BREAK.containsMatchIn(text.substring(body_start, position))
+}
+
+private fun nearest_blocking(candidate: code_span, spans: List<code_span>): Int {
+    var nearest = Int.MAX_VALUE
+    for (span in spans) {
+        if (overlaps(span, candidate)) return -1
+        val distance = if (span.end <= candidate.start) candidate.start - span.end else span.start - candidate.end
+        if (distance < nearest) nearest = distance
     }
+    return nearest
 }
 
-private fun linked(text: String, left: code_token, right: code_token): Boolean {
-    if (right.start - left.end != 1) return false
-    if (!left.has_digit || !right.has_digit) return false
-    val separator = text[left.end]
-    return separator == ' ' || separator == '-'
-}
+fun detect_verification_code(subject: String?, body: String? = null, sender: String? = null): String? {
+    val raw_subject = (subject ?: "").take(MAX_SCAN_LENGTH)
+    val raw_body = (body ?: "").take(MAX_SCAN_LENGTH)
+    val is_reply = REPLY_PREFIX.containsMatchIn(raw_subject)
+    val clean_subject = strip_segments(REPLY_PREFIX.replaceFirst(raw_subject, "")).trim()
+    val clean_body = strip_segments(cut_quoted(raw_body)).trim()
+    val text = listOf(clean_subject, clean_body).filter { it.isNotEmpty() }.joinToString("\n")
+    if (text.isEmpty()) return null
+    if (PROMOTION_PATTERN.containsMatchIn(text)) return null
+    if (is_technical("$raw_subject\n$raw_body")) return null
 
-private fun valid_code(value: String): Boolean {
-    if (value.length !in MIN_CODE_LENGTH..MAX_CODE_LENGTH) return false
-    if (value.none { it in '0'..'9' }) return false
-    if (value.length == 4 && value.all { it in '0'..'9' } && value.toInt() in 1900..2099) return false
-    return true
-}
-
-private fun plausible_context(text: String, span: code_span): Boolean {
-    val previous = text.getOrNull(span.start - 1)
-    val before_previous = text.getOrNull(span.start - 2)
-    val next = text.getOrNull(span.end)
-    val after_next = text.getOrNull(span.end + 1)
-    if (previous != null && previous in REJECT_BEFORE) return false
-    if (previous != null && previous in NUMBER_PUNCTUATION && before_previous?.isDigit() == true) return false
-    if (next != null && next in REJECT_AFTER) return false
-    if (next != null && next in NUMBER_PUNCTUATION && after_next?.isDigit() == true) return false
-    if (previous == ' ' && before_previous != null && before_previous in CURRENCY_SIGNS) return false
-    if (next == ' ' && after_next != null && after_next in CURRENCY_SIGNS) return false
-    val before_word = previous_word(text, span.start).lowercase()
-    if (before_word in CURRENCY_WORDS || next_word(text, span.end).lowercase() in CURRENCY_WORDS) return false
-    if (before_word in REFERENCE_WORDS) return false
-    if (before_word in NUMBER_WORDS) {
-        val word_start = previous_word_start(text, span.start)
-        if (previous_word(text, word_start).lowercase() in REFERENCE_WORDS) return false
+    val human_reply = is_reply && !sender_is_automated(sender)
+    val long_body = clean_body.length > LONG_BODY_LENGTH
+    val blocking = find_spans(text, BLOCKING_PATTERN)
+    val strong = mutableListOf<code_span>()
+    val weak = mutableListOf<code_span>()
+    for (span in find_spans(text, STRONG_PATTERN)) {
+        if (is_qualified(text, span)) blocking.add(span) else strong.add(span)
     }
-    return true
-}
+    for (span in find_spans(text, WEAK_PATTERN)) {
+        if (is_qualified(text, span)) blocking.add(span)
+        else if (blocking.none { overlaps(it, span) }) weak.add(span)
+    }
+    if (strong.isEmpty() && weak.isEmpty()) return null
 
-private fun previous_word_start(text: String, index: Int): Int {
-    var cursor = index - 1
-    while (cursor >= 0 && text[cursor] in WORD_SKIP) cursor--
-    while (cursor >= 0 && text[cursor].isLetter()) cursor--
-    return cursor + 1
-}
+    val body_start = if (clean_subject.isNotEmpty()) clean_subject.length + 1 else 0
 
-private fun previous_word(text: String, index: Int): String {
-    var cursor = index - 1
-    while (cursor >= 0 && text[cursor] in WORD_SKIP) cursor--
-    val end = cursor + 1
-    while (cursor >= 0 && text[cursor].isLetter()) cursor--
-    return text.substring(cursor + 1, end)
-}
-
-private fun next_word(text: String, index: Int): String {
-    var cursor = index
-    while (cursor < text.length && text[cursor] in WORD_SKIP) cursor++
-    val start = cursor
-    while (cursor < text.length && text[cursor].isLetter()) cursor++
-    return text.substring(start, cursor)
+    var best_value: String? = null
+    var best_score = Int.MAX_VALUE
+    for (candidate in collect_candidates(text)) {
+        val strong_link = link_to(text, candidate, strong)
+        val weak_link = link_to(text, candidate, weak)
+        var distance: Int? = null
+        var score = 0
+        if (human_reply) {
+            if (!long_body && !opens_later_sentence(text, body_start, candidate.start) &&
+                strong_link != null &&
+                strong_link.distance <= DIRECT_DISTANCE && strong_link.words <= 1
+            ) {
+                distance = strong_link.distance
+                score = distance
+            }
+        } else if (strong_link != null && strong_link.distance <= STRONG_DISTANCE) {
+            distance = strong_link.distance
+            score = distance
+        } else if (!long_body && weak_link != null && weak_link.distance <= WEAK_DISTANCE) {
+            distance = weak_link.distance
+            score = STRONG_DISTANCE + distance
+        }
+        if (distance == null) continue
+        val blocking_distance = nearest_blocking(candidate, blocking)
+        if (blocking_distance < 0) continue
+        if (blocking_distance <= distance && blocking_distance <= BLOCKING_DISTANCE) continue
+        if (score < best_score) {
+            best_value = candidate.value
+            best_score = score
+        }
+    }
+    return best_value
 }

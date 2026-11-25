@@ -38,6 +38,7 @@ import org.astermail.android.api.keys.ConversionProgressRequest
 import org.astermail.android.api.keys.ConversionWriteResult
 import org.astermail.android.api.keys.ConvertSentEnvelopeRequest
 import org.astermail.android.api.keys.KeysApi
+import org.astermail.android.api.mail.ImportedPasswordMetaPage
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.mail.MailItem
 import org.astermail.android.api.mail.MailItemsListResponse
@@ -130,6 +131,7 @@ class AccountDataConversionPasswordChangeTest {
         }
 
         mail_api = mockk(relaxed = true)
+        coEvery { mail_api.list_imported_password_meta(any(), any()) } returns ImportedPasswordMetaPage()
         coEvery { mail_api.list_encrypted_items(any(), any(), any()) } coAnswers {
             listing_cursors.add(secondArg())
             listing_hook()

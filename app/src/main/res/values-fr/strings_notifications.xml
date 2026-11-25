@@ -32,4 +32,7 @@
     <string name="persistent_push_autostart_title">Autoriser le démarrage automatique</string>
     <string name="persistent_push_autostart_subtitle">Certains téléphones ferment les connexions en arrière-plan. Dans les paramètres système, autorisez Aster Mail à démarrer automatiquement et désactivez les restrictions de batterie.</string>
     <string name="notif_delivery_section">Distribution</string>
+    <string name="notif_action_unlock_required">Déverrouillez votre appareil, puis réessayez.</string>
+    <string name="notif_actions_section">Actions des notifications</string>
+    <string name="notif_actions_description">Choisissez jusqu’à 3 actions à afficher dans les notifications d’e-mail. Si un message contient un code, Copier le code occupe un emplacement.</string>
 </resources>

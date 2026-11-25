@@ -61,17 +61,65 @@ object EmailHtmlSanitizer {
         Regex("/o\\.gif", RegexOption.IGNORE_CASE),
         Regex("/t\\.gif", RegexOption.IGNORE_CASE),
         Regex("/e\\.gif", RegexOption.IGNORE_CASE),
-        Regex("(?:^|[./])mailchimp\\.com.*/track", RegexOption.IGNORE_CASE),
-        Regex("(?:^|[./])list-manage\\.com.*/track", RegexOption.IGNORE_CASE),
-        Regex("(?:^|[./])sendgrid\\.net.*/wf/", RegexOption.IGNORE_CASE),
-        Regex("(?:^|[./])amazonses\\.com/(?:[^?#]*/)?(?:open|track)(?:[/?.]|$)", RegexOption.IGNORE_CASE),
         Regex("(?:^|[./])doubleclick\\.net(?:/|$)", RegexOption.IGNORE_CASE),
-        Regex("(?:^|[./])mailgun\\.org.*/o/", RegexOption.IGNORE_CASE),
         Regex("(?:^|[./])sparkpostmail(?:/|$)", RegexOption.IGNORE_CASE),
         Regex("(?:^|[./])returnpath\\.net(?:/|$)", RegexOption.IGNORE_CASE),
         Regex("emltrk\\.", RegexOption.IGNORE_CASE),
         Regex("bsn\\.sendgrid", RegexOption.IGNORE_CASE),
     )
+
+    private class TrackerUrlPattern(val host: Regex, val pattern: Regex, val segment_stops: CharArray?)
+
+    private val tracker_line_stops = charArrayOf('\n', '\r', '\u0085', '\u2028', '\u2029')
+
+    private val tracking_pixel_host_patterns = listOf(
+        TrackerUrlPattern(
+            Regex("(?:^|[./])mailchimp\\.com", RegexOption.IGNORE_CASE),
+            Regex("(?:^|[./])mailchimp\\.com.*/track", RegexOption.IGNORE_CASE),
+            null,
+        ),
+        TrackerUrlPattern(
+            Regex("(?:^|[./])list-manage\\.com", RegexOption.IGNORE_CASE),
+            Regex("(?:^|[./])list-manage\\.com.*/track", RegexOption.IGNORE_CASE),
+            null,
+        ),
+        TrackerUrlPattern(
+            Regex("(?:^|[./])sendgrid\\.net", RegexOption.IGNORE_CASE),
+            Regex("(?:^|[./])sendgrid\\.net.*/wf/", RegexOption.IGNORE_CASE),
+            null,
+        ),
+        TrackerUrlPattern(
+            Regex("(?:^|[./])amazonses\\.com/", RegexOption.IGNORE_CASE),
+            Regex("(?:^|[./])amazonses\\.com/(?:[^?#]*/)?(?:open|track)(?:[/?.]|$)", RegexOption.IGNORE_CASE),
+            charArrayOf('?', '#'),
+        ),
+        TrackerUrlPattern(
+            Regex("(?:^|[./])mailgun\\.org", RegexOption.IGNORE_CASE),
+            Regex("(?:^|[./])mailgun\\.org.*/o/", RegexOption.IGNORE_CASE),
+            null,
+        ),
+    )
+
+    private fun matches_tracker_host_pattern(src: String, tracker: TrackerUrlPattern): Boolean {
+        val matcher = tracker.pattern.toPattern().matcher(src)
+        var from = 0
+        while (from < src.length) {
+            val host = tracker.host.find(src, from) ?: return false
+            val stop = if (tracker.segment_stops == null) {
+                src.indexOfAny(tracker_line_stops, host.range.last + 1).let { if (it < 0) src.length else it }
+            } else {
+                src.indexOfAny(tracker.segment_stops, host.range.last + 1).let { if (it < 0) src.length else it + 1 }
+            }
+            matcher.region(host.range.first, stop).useTransparentBounds(true).useAnchoringBounds(false)
+            if (matcher.lookingAt()) return true
+            from = maxOf(stop, host.range.first + 1)
+        }
+        return false
+    }
+
+    private fun is_tracking_pixel_url(src: String): Boolean =
+        tracking_pixel_url_patterns.any { it.containsMatchIn(src) } ||
+            tracking_pixel_host_patterns.any { matches_tracker_host_pattern(src, it) }
 
     private val tracking_pixel_style_patterns = listOf(
         Regex("(?:^|[;{\\s])width\\s*[:=]\\s*[\"']?[01](?!\\d)\\s*(?:px)?\\s*(?:;|$|[\"'])", RegexOption.IGNORE_CASE),
@@ -276,6 +324,11 @@ object EmailHtmlSanitizer {
         return style_dimension_is_big(style, style_width_regex) || style_dimension_is_big(style, style_height_regex)
     }
 
+    fun is_tracker_url(url: String): Boolean {
+        val trimmed = url.trim()
+        return trimmed.isNotEmpty() && tracking_pixel_url_patterns.any { it.containsMatchIn(trimmed) }
+    }
+
     fun is_tracking_pixel(img: Element): Boolean {
         val src = img.attr("src").ifBlank { img.attr("srcset").trim().substringBefore(' ') }
         if (src.isNotBlank() && is_local_image_source(src)) return false
@@ -288,7 +341,7 @@ object EmailHtmlSanitizer {
         if ((width in tiny || height in tiny) && alt_empty) return true
         if (tracking_pixel_style_patterns.all { it.containsMatchIn(style) }) return true
         if (tracking_pixel_style_patterns.any { it.containsMatchIn(style) } && alt_empty) return true
-        if (src.isNotBlank() && tracking_pixel_url_patterns.any { it.containsMatchIn(src) }) {
+        if (src.isNotBlank() && is_tracking_pixel_url(src)) {
             return !looks_like_content_image(img)
         }
         return false
@@ -339,8 +392,41 @@ object EmailHtmlSanitizer {
     private val css_hex_escape = Regex("""\\([0-9a-fA-F]{1,6})(\r\n|[ \t\r\n\u000C])?""")
     private val css_char_escape = Regex("""\\([g-zG-Z\-])""")
     private val css_bare_import = Regex("""@import\b[^;]*;?""", RegexOption.IGNORE_CASE)
-    private val css_any_image_set = Regex("""(?:-webkit-)?image-set\s*\([^)]*\)""", RegexOption.IGNORE_CASE)
-    private val css_any_cross_fade = Regex("""(?:-webkit-)?cross-fade\s*\([^)]*\)""", RegexOption.IGNORE_CASE)
+    private val css_any_image_set = Regex("""(?:-webkit-)?image-set\s*\(""", RegexOption.IGNORE_CASE)
+    private val css_any_cross_fade = Regex("""(?:-webkit-)?cross-fade\s*\(""", RegexOption.IGNORE_CASE)
+
+    private fun closed_ranges(css: String, opener: Regex, close: Char): List<IntRange> {
+        val ranges = mutableListOf<IntRange>()
+        var from = 0
+        while (true) {
+            val open = opener.find(css, from) ?: break
+            val end = css.indexOf(close, open.range.last + 1)
+            if (end < 0) break
+            ranges.add(open.range.first..end)
+            from = end + 1
+        }
+        return ranges
+    }
+
+    private fun replace_ranges(css: String, ranges: List<IntRange>, replacement: (String) -> String): String {
+        if (ranges.isEmpty()) return css
+        val out = StringBuilder(css.length)
+        var cursor = 0
+        for (range in ranges) {
+            out.append(css, cursor, range.first).append(replacement(css.substring(range.first, range.last + 1)))
+            cursor = range.last + 1
+        }
+        out.append(css, cursor, css.length)
+        return out.toString()
+    }
+
+    private fun replace_css_calls(css: String, opener: Regex): String =
+        replace_ranges(css, closed_ranges(css, opener, ')')) { "none" }
+
+    private fun has_css_call(css: String, opener: Regex): Boolean {
+        val open = opener.find(css) ?: return false
+        return css.indexOf(')', open.range.last + 1) >= 0
+    }
 
     private fun is_plain_css_letter(code: Int): Boolean =
         (code in 'a'.code..'z'.code) || (code in 'A'.code..'Z'.code) || code == '-'.code
@@ -394,8 +480,8 @@ object EmailHtmlSanitizer {
     fun has_remote_css_url(css: String): Boolean {
         val decoded = decode_css_escapes(strip_css_comments(css))
         if (css_bare_import.containsMatchIn(decoded)) return true
-        if (css_any_image_set.containsMatchIn(decoded)) return true
-        if (css_any_cross_fade.containsMatchIn(decoded)) return true
+        if (has_css_call(decoded, css_any_image_set)) return true
+        if (has_css_call(decoded, css_any_cross_fade)) return true
         return css_url_spans(decoded).any { !css_local_target.containsMatchIn(it.target) }
     }
 
@@ -414,10 +500,8 @@ object EmailHtmlSanitizer {
             cursor = span.end
         }
         out.append(decoded, cursor, decoded.length)
-        return out.toString()
-            .replace(css_any_image_set, "none")
-            .replace(css_any_cross_fade, "none")
-            .replace(css_bare_import, "")
+        val without_image_sets = replace_css_calls(out.toString(), css_any_image_set)
+        return replace_css_calls(without_image_sets, css_any_cross_fade).replace(css_bare_import, "")
     }
 
     fun strip_css_comments(css: String): String {
@@ -455,10 +539,26 @@ object EmailHtmlSanitizer {
         return out.toString()
     }
 
-    private val solid_bg_color = Regex(
-        """background(?:-color)?\s*:\s*[^;]*(#[0-9a-f]{3,8}|rgb|hsl|\b(?:black|white|red|green|blue|gray|grey|silver|navy|teal|maroon|purple|orange|yellow)\b)""",
+    private val background_color_property = Regex("""background(?:-color)?\s*:\s*""", RegexOption.IGNORE_CASE)
+
+    private val solid_bg_color_value = Regex(
+        """#[0-9a-f]{3,8}|rgb|hsl|\b(?:black|white|red|green|blue|gray|grey|silver|navy|teal|maroon|purple|orange|yellow)\b""",
         RegexOption.IGNORE_CASE,
     )
+
+    private fun has_solid_background_color(style: String): Boolean {
+        val matcher = solid_bg_color_value.toPattern().matcher(style)
+        var from = 0
+        while (from < style.length) {
+            val property = background_color_property.find(style, from) ?: return false
+            val value_start = property.range.last + 1
+            val value_end = style.indexOf(';', value_start).let { if (it < 0) style.length else it }
+            matcher.region(value_start, value_end).useTransparentBounds(true)
+            if (matcher.find()) return true
+            from = maxOf(value_end, property.range.first + 1)
+        }
+        return false
+    }
 
     fun neutralize_blocked_backgrounds(html: String): String {
         if (html.isBlank()) return html
@@ -486,7 +586,7 @@ object EmailHtmlSanitizer {
     private fun apply_bg_placeholder(el: Element) {
         if (el.attr("bgcolor").isNotBlank()) return
         val style = el.attr("style")
-        if (solid_bg_color.containsMatchIn(style)) return
+        if (has_solid_background_color(style)) return
         val sep = if (style.isBlank() || style.trimEnd().endsWith(";")) "" else ";"
         el.attr("style", style + sep + "background-color:#6b7280")
     }
@@ -543,36 +643,137 @@ object EmailHtmlSanitizer {
 
     private class DocumentParts(val body: String, val styles: List<String>)
 
+    private class BlockKind(
+        val opener: Regex,
+        val closer: Regex,
+        val opens_tag: Boolean = false,
+        val required: Regex? = null,
+    )
+
+    private class BlockSpan(val kind: BlockKind, val start: Int, val content_start: Int, val content_end: Int, val end: Int)
+
+    private fun block_spans(html: String, kinds: List<BlockKind>): List<BlockSpan> {
+        val spans = mutableListOf<BlockSpan>()
+        val next = arrayOfNulls<MatchResult>(kinds.size)
+        val search_from = IntArray(kinds.size)
+        val live = BooleanArray(kinds.size) { true }
+        var from = 0
+        while (true) {
+            var best = -1
+            for (k in kinds.indices) {
+                if (!live[k]) continue
+                val start_at = maxOf(from, search_from[k])
+                val cached = next[k]
+                val found = if (cached != null && cached.range.first >= start_at) {
+                    cached
+                } else {
+                    kinds[k].opener.find(html, minOf(start_at, html.length))
+                }
+                next[k] = found
+                if (found == null) {
+                    live[k] = false
+                    continue
+                }
+                if (best < 0 || found.range.first < next[best]!!.range.first) best = k
+            }
+            if (best < 0) break
+            val kind = kinds[best]
+            val open = next[best]!!
+            var content_start = open.range.last + 1
+            if (kind.opens_tag) {
+                val tag_end = html.indexOf('>', content_start)
+                if (tag_end < 0) {
+                    live[best] = false
+                    continue
+                }
+                val required = kind.required
+                if (required != null && !required.toPattern().matcher(html).region(content_start, tag_end).find()) {
+                    search_from[best] = tag_end + 1
+                    continue
+                }
+                content_start = tag_end + 1
+            }
+            val close = kind.closer.find(html, content_start)
+            if (close == null) {
+                live[best] = false
+                continue
+            }
+            spans.add(BlockSpan(kind, open.range.first, content_start, close.range.first, close.range.last + 1))
+            from = close.range.last + 1
+        }
+        return spans
+    }
+
+    private fun remove_spans(html: String, ranges: List<IntRange>): String {
+        if (ranges.isEmpty()) return html
+        val out = StringBuilder(html.length)
+        var cursor = 0
+        for (range in ranges) {
+            out.append(html, cursor, range.first)
+            cursor = range.last + 1
+        }
+        out.append(html, cursor, html.length)
+        return out.toString()
+    }
+
+    private fun remove_blocks(html: String, vararg kinds: BlockKind): String =
+        remove_spans(html, block_spans(html, kinds.toList()).map { it.start until it.end })
+
+    private fun tag_ranges(html: String, opener: Regex, required: Regex? = null): List<IntRange> {
+        val ranges = mutableListOf<IntRange>()
+        var from = 0
+        while (from < html.length) {
+            val open = opener.find(html, from) ?: break
+            val tag_end = if (open.value.endsWith('>')) open.range.last else html.indexOf('>', open.range.last + 1)
+            if (tag_end < 0) break
+            if (required == null || required.toPattern().matcher(html).region(open.range.last + 1, tag_end).find()) {
+                ranges.add(open.range.first..tag_end)
+            }
+            from = tag_end + 1
+        }
+        return ranges
+    }
+
+    private fun remove_tags(html: String, opener: Regex, required: Regex? = null): String =
+        remove_spans(html, tag_ranges(html, opener, required))
+
+    private fun find_tag(html: String, opener: Regex): IntRange? {
+        val open = opener.find(html) ?: return null
+        val tag_end = html.indexOf('>', open.range.last + 1)
+        return if (tag_end < 0) null else open.range.first..tag_end
+    }
+
     private fun style_blocks(html: String): List<String> =
-        style_or_comment_regex.findAll(html).mapNotNull { it.groups[1]?.value }.toList()
+        block_spans(html, listOf(style_block, comment_block))
+            .filter { it.kind === style_block }
+            .map { html.substring(it.content_start, it.content_end) }
 
     private fun extract_head_styles(html: String): List<String> =
-        head_block_regex.findAll(html).flatMap { style_blocks(it.value) }.toList()
+        block_spans(html, listOf(head_block)).flatMap { style_blocks(html.substring(it.start, it.end)) }
 
     private fun split_document(html: String): DocumentParts {
         val unsplit = DocumentParts(html, extract_head_styles(html))
-        val open = body_open_regex.find(html) ?: return unsplit
-        val preamble = html.substring(0, open.range.first)
+        val open = find_tag(html, body_open_tag) ?: return unsplit
+        val preamble = html.substring(0, open.first)
         if (!is_document_preamble(preamble)) return unsplit
         val close = body_close_regex.findAll(html).lastOrNull()
-            ?: return DocumentParts(html.substring(open.range.last + 1), style_blocks(preamble))
-        if (close.range.first < open.range.last) return unsplit
+            ?: return DocumentParts(html.substring(open.last + 1), style_blocks(preamble))
+        if (close.range.first < open.last) return unsplit
         val trailer = html.substring(close.range.last + 1)
         return DocumentParts(
-            html.substring(open.range.last + 1, close.range.first),
+            html.substring(open.last + 1, close.range.first),
             style_blocks(preamble) + style_blocks(trailer),
         )
     }
 
     private fun is_document_preamble(prefix: String): Boolean {
-        val stripped = prefix
-            .replace(html_comment_regex, "")
-            .replace(processing_instruction_regex, "")
-            .replace(doctype_regex, "")
-            .replace(html_open_regex, "")
-            .replace(head_block_regex, "")
-            .replace(style_or_title_block_regex, "")
-            .replace(document_shell_tag_regex, "")
+        var stripped = remove_blocks(prefix, comment_block)
+        stripped = remove_blocks(stripped, processing_instruction_block)
+        stripped = remove_tags(stripped, doctype_open)
+        stripped = remove_tags(stripped, html_open_tag)
+        stripped = remove_blocks(stripped, head_block)
+        stripped = remove_blocks(stripped, style_block, title_block)
+        stripped = remove_tags(stripped, document_shell_tag_open)
         return stripped.isBlank()
     }
 
@@ -614,7 +815,7 @@ object EmailHtmlSanitizer {
 
     private fun strip_mso_conditionals(html: String): String {
         var out = html
-        out = out.replace(mso_conditional_regex, "")
+        out = remove_blocks(out, mso_conditional_block)
         out = out.replace(mso_downlevel_open_regex, "")
         out = out.replace(mso_downlevel_close_regex, "")
         out = out.replace(mso_downlevel_empty_regex, "")
@@ -625,8 +826,8 @@ object EmailHtmlSanitizer {
     fun neutralize_amp_markup(html: String): String {
         if (!html.contains("amp", ignoreCase = true)) return html
         var result = html
-        while (true) {
-            val next = result.replace(amp_boilerplate_style_regex, "")
+        for (pass in 0 until max_css_sanitize_passes) {
+            val next = remove_blocks(result, amp_boilerplate_block)
             if (next == result) break
             result = next
         }
@@ -643,47 +844,53 @@ object EmailHtmlSanitizer {
         var out = neutralize_amp_markup(html)
         out = strip_mso_conditionals(out)
         out = strip_script_like_blocks(out)
-        out = out.replace(embed_tag_regex, "")
-        out = out.replace(base_tag_regex, "")
-        out = out.replace(meta_refresh_regex, "")
-        out = out.replace(link_preload_regex, "")
-        out = out.replace(form_tag_regex, "")
+        out = remove_tags(out, embed_tag_open)
+        out = remove_tags(out, base_tag_open)
+        out = remove_tags(out, meta_tag_open, meta_refresh_attribute)
+        out = remove_tags(out, link_tag_open, link_preload_attribute)
+        out = remove_tags(out, form_tag_open)
         return neutralize_unterminated_comments(out)
     }
 
     private val comment_end_regex = Regex("--!?>")
 
-    private val meta_refresh_regex =
-        Regex("<meta\\b[^>]*http-equiv\\s*=\\s*[\"']?refresh[\"']?[^>]*/?>", RegexOption.IGNORE_CASE)
+    private val meta_tag_open = Regex("<meta\\b", RegexOption.IGNORE_CASE)
+    private val meta_refresh_attribute = Regex("http-equiv\\s*=\\s*[\"']?refresh", RegexOption.IGNORE_CASE)
+    private val link_tag_open = Regex("<link\\b", RegexOption.IGNORE_CASE)
+    private val link_preload_attribute = Regex("rel\\s*=\\s*[\"']?(?:import|prefetch|preload)", RegexOption.IGNORE_CASE)
 
-    private val link_preload_regex =
-        Regex("<link\\b[^>]*rel\\s*=\\s*[\"']?(?:import|prefetch|preload)[\"']?[^>]*/?>", RegexOption.IGNORE_CASE)
-
-    private val head_block_regex =Regex("<head\\b[\\s>][\\s\\S]*?</head\\s*>", RegexOption.IGNORE_CASE)
-    private val style_or_comment_regex =
-        Regex("<style\\b[^>]*>([\\s\\S]*?)</style\\s*>|<!--[\\s\\S]*?-->", RegexOption.IGNORE_CASE)
-    private val body_open_regex = Regex("<body\\b[^>]*>", RegexOption.IGNORE_CASE)
+    private val style_close_regex = Regex("</style\\s*>", RegexOption.IGNORE_CASE)
+    private val style_block = BlockKind(Regex("<style\\b", RegexOption.IGNORE_CASE), style_close_regex, opens_tag = true)
+    private val title_block =
+        BlockKind(Regex("<title\\b", RegexOption.IGNORE_CASE), Regex("</title\\s*>", RegexOption.IGNORE_CASE), opens_tag = true)
+    private val head_block =
+        BlockKind(Regex("<head\\b[\\s>]", RegexOption.IGNORE_CASE), Regex("</head\\s*>", RegexOption.IGNORE_CASE))
+    private val comment_block = BlockKind(Regex("<!--"), Regex("-->"))
+    private val processing_instruction_block = BlockKind(Regex("<\\?"), Regex("\\?>"))
+    private val amp_boilerplate_block = BlockKind(
+        Regex("<style\\b", RegexOption.IGNORE_CASE),
+        style_close_regex,
+        opens_tag = true,
+        required = Regex("\\samp(?:4email|4ads)?-boilerplate\\b", RegexOption.IGNORE_CASE),
+    )
+    private val mso_conditional_block = BlockKind(
+        Regex("<!--\\[if\\s(?>[^\\]!]{0,200}?mso)[^\\]]{0,200}+\\]>", RegexOption.IGNORE_CASE),
+        Regex("--!?>"),
+    )
+    private val body_open_tag = Regex("<body\\b", RegexOption.IGNORE_CASE)
     private val body_close_regex = Regex("</body\\s*>", RegexOption.IGNORE_CASE)
-    private val html_comment_regex = Regex("<!--[\\s\\S]*?-->")
-    private val processing_instruction_regex = Regex("<\\?[\\s\\S]*?\\?>")
-    private val doctype_regex = Regex("<!doctype\\b[^>]*>", RegexOption.IGNORE_CASE)
-    private val html_open_regex = Regex("<html\\b[^>]*>", RegexOption.IGNORE_CASE)
-    private val style_or_title_block_regex = Regex("<(style|title)\\b[^>]*>[\\s\\S]*?</\\1\\s*>", RegexOption.IGNORE_CASE)
-    private val document_shell_tag_regex = Regex("</?(head|meta|link|title|base|style)\\b[^>]*>", RegexOption.IGNORE_CASE)
-    private val mso_conditional_regex = Regex("<!--\\[if\\s[^\\]!]*?mso[^\\]]*?\\]>[\\s\\S]*?--!?>", RegexOption.IGNORE_CASE)
+    private val doctype_open = Regex("<!doctype\\b", RegexOption.IGNORE_CASE)
+    private val html_open_tag = Regex("<html\\b", RegexOption.IGNORE_CASE)
+    private val document_shell_tag_open = Regex("</?(?:head|meta|link|title|base|style)\\b", RegexOption.IGNORE_CASE)
     private val mso_downlevel_open_regex = Regex("<!--\\[if\\s!mso\\]><!-->\\s*", RegexOption.IGNORE_CASE)
-    private val mso_downlevel_close_regex = Regex("\\s*<!--<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE)
+    private val mso_downlevel_close_regex = Regex("(?<!\\s)\\s*<!--<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE)
     private val mso_downlevel_empty_regex = Regex("<!--\\[if\\s!mso\\]>\\s*<!--\\s*--\\s*>", RegexOption.IGNORE_CASE)
     private val mso_endif_regex = Regex("<!--\\s*<!\\[endif\\]\\s*--\\s*>", RegexOption.IGNORE_CASE)
-    private val amp_boilerplate_style_regex = Regex(
-        "<style\\b[^>]*?\\samp(?:4email|4ads)?-boilerplate\\b[^>]*>[\\s\\S]*?</style\\s*>",
-        RegexOption.IGNORE_CASE,
-    )
     private val amp_img_open_regex = Regex("<amp-img\\b", RegexOption.IGNORE_CASE)
     private val amp_img_close_regex = Regex("</amp-img\\s*>", RegexOption.IGNORE_CASE)
-    private val embed_tag_regex = Regex("<embed\\b[^>]*/?>", RegexOption.IGNORE_CASE)
-    private val base_tag_regex = Regex("<base\\b[^>]*/?>", RegexOption.IGNORE_CASE)
-    private val form_tag_regex = Regex("<form\\b[^>]*>|</form\\s*>", RegexOption.IGNORE_CASE)
+    private val embed_tag_open = Regex("<embed\\b", RegexOption.IGNORE_CASE)
+    private val base_tag_open = Regex("<base\\b", RegexOption.IGNORE_CASE)
+    private val form_tag_open = Regex("</form\\s*>|<form\\b", RegexOption.IGNORE_CASE)
     private val javascript_uri_regex = Regex("^\\s*javascript\\s*:", RegexOption.IGNORE_CASE)
     private val data_html_uri_regex = Regex("^\\s*data\\s*:\\s*text/html", RegexOption.IGNORE_CASE)
     private val vbscript_uri_regex = Regex("^\\s*vbscript\\s*:", RegexOption.IGNORE_CASE)
@@ -701,10 +908,30 @@ object EmailHtmlSanitizer {
     private val css_charset_regex = Regex("@charset\\b[^;]*;?", RegexOption.IGNORE_CASE)
     private val css_namespace_regex = Regex("@namespace\\b[^;]*;?", RegexOption.IGNORE_CASE)
     private val css_document_regex = Regex("@document\\b[^;]*;?", RegexOption.IGNORE_CASE)
-    private val css_moz_document_regex = Regex("-moz-document[^;{]*\\{[^}]*\\}", RegexOption.IGNORE_CASE)
-    private val css_image_set_regex = Regex("image-set\\s*\\([^)]*\\)", RegexOption.IGNORE_CASE)
-    private val css_webkit_image_set_regex = Regex("-webkit-image-set\\s*\\([^)]*\\)", RegexOption.IGNORE_CASE)
-    private val css_cross_fade_regex = Regex("cross-fade\\s*\\([^)]*\\)", RegexOption.IGNORE_CASE)
+    private val css_moz_document_open = Regex("-moz-document", RegexOption.IGNORE_CASE)
+    private val css_image_set_open = Regex("image-set\\s*\\(", RegexOption.IGNORE_CASE)
+    private val css_webkit_image_set_open = Regex("-webkit-image-set\\s*\\(", RegexOption.IGNORE_CASE)
+    private val css_cross_fade_open = Regex("cross-fade\\s*\\(", RegexOption.IGNORE_CASE)
+
+    private fun moz_document_ranges(css: String): List<IntRange> {
+        val ranges = mutableListOf<IntRange>()
+        var from = 0
+        while (true) {
+            val open = css_moz_document_open.find(css, from) ?: break
+            var i = open.range.last + 1
+            while (i < css.length && css[i] != ';' && css[i] != '{') i++
+            if (i >= css.length) break
+            if (css[i] == ';') {
+                from = i + 1
+                continue
+            }
+            val end = css.indexOf('}', i + 1)
+            if (end < 0) break
+            ranges.add(open.range.first..end)
+            from = end + 1
+        }
+        return ranges
+    }
     private val css_closing_tag_regex = Regex("</(style|script)", RegexOption.IGNORE_CASE)
     private const val media_keyword = "@media"
     private const val max_css_sanitize_passes = 8
@@ -868,8 +1095,8 @@ object EmailHtmlSanitizer {
 
     private fun sanitize_style_value_pass(css: String): String {
         var out = decode_css_escapes(strip_css_comments(css))
-        out = out.replace(css_any_image_set, "none")
-        out = out.replace(css_any_cross_fade, "none")
+        out = replace_css_calls(out, css_any_image_set)
+        out = replace_css_calls(out, css_any_cross_fade)
         out = out.replace("<", "")
         out = out.replace(css_expression_regex, "blocked(")
         out = out.replace(css_javascript_regex, "blocked:")
@@ -881,7 +1108,7 @@ object EmailHtmlSanitizer {
         return out
     }
 
-    private val font_face_block = Regex("@font-face\\s*\\{[^}]*\\}", RegexOption.IGNORE_CASE)
+    private val font_face_open = Regex("@font-face\\s*\\{", RegexOption.IGNORE_CASE)
 
     private fun sanitize_css_block(css: String, options: SanitizeOptions = SanitizeOptions()): String =
         sanitize_until_stable(css) { sanitize_css_block_pass(it, options) }
@@ -892,22 +1119,22 @@ object EmailHtmlSanitizer {
             out = out.replace(css_import_regex, "")
         }
         if (options.block_remote_fonts) {
-            out = font_face_block.replace(out) { m ->
-                if (css_url_spans(m.value).any { !css_local_target.containsMatchIn(it.target) }) "" else m.value
+            out = replace_ranges(out, closed_ranges(out, font_face_open, '}')) { block ->
+                if (css_url_spans(block).any { !css_local_target.containsMatchIn(it.target) }) "" else block
             }
         }
         out = out.replace(css_charset_regex, "")
         out = out.replace(css_namespace_regex, "")
         out = out.replace(css_document_regex, "")
-        out = out.replace(css_moz_document_regex, "")
+        out = remove_spans(out, moz_document_ranges(out))
         out = out.replace(css_expression_regex, "blocked(")
         out = out.replace(css_javascript_regex, "blocked:")
         out = out.replace(css_vbscript_regex, "blocked:")
         out = out.replace(css_behavior_regex, "")
         out = out.replace(css_moz_binding_regex, "")
-        out = out.replace(css_image_set_regex, "none")
-        out = out.replace(css_webkit_image_set_regex, "none")
-        out = out.replace(css_cross_fade_regex, "none")
+        out = replace_css_calls(out, css_image_set_open)
+        out = replace_css_calls(out, css_webkit_image_set_open)
+        out = replace_css_calls(out, css_cross_fade_open)
         out = strip_dark_mode_media(out)
         out = out.replace(css_out_of_flow_position_regex, "position: static")
         out = out.replace(css_closing_tag_regex, """<\\/$1""")

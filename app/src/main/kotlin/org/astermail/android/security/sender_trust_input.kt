@@ -72,6 +72,9 @@ fun sender_trust_input(
     val carrier_trusted = aligned == true ||
         (aligned == null && (unrecorded || dmarc == "pass"))
     val drop_auth = is_rewritten && carrier_trusted
+    val internal_route = !is_rewritten &&
+        message.is_external == false &&
+        message.sender_verification != "invalid"
     return SenderTrustInput(
         name = name,
         email = email,
@@ -86,10 +89,8 @@ fun sender_trust_input(
             message.sender_verified ?: !message.sender_verified_domain.isNullOrEmpty()
         },
         sender_verified_domain = if (is_rewritten) null else message.sender_verified_domain,
-        is_internal = !is_rewritten &&
-            message.is_external == false &&
-            message.sender_verification != "invalid",
-        internal_route = !is_rewritten && message.is_external == false,
+        is_internal = internal_route,
+        internal_route = internal_route,
         own_addresses = context.own_addresses,
         contacts = context.contacts,
     )

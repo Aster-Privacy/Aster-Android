@@ -463,6 +463,7 @@ class MailPollingWorker(
                 silent = silent,
                 large_icon = sender_large_icon(fresh, resolved_sender, avatar_settings, avatar_budget, content_hidden),
                 arrived_at_ms = item_arrived_ms(fresh),
+                sender_email = fresh.sender_email,
             )
             if (posted) post_also_arrived(also_arrived, ::resolve_sender, avatar_settings, avatar_budget, content_hidden)
             return posted
@@ -508,6 +509,7 @@ class MailPollingWorker(
                     silent = true,
                     large_icon = sender_large_icon(item, item_sender, avatar_settings, avatar_budget, content_hidden),
                     arrived_at_ms = item_arrived_ms(item),
+                    sender_email = item.sender_email,
                 )
             }
         }
@@ -556,6 +558,7 @@ class MailPollingWorker(
             silent: Boolean = false,
             large_icon: android.graphics.Bitmap? = null,
             arrived_at_ms: Long? = null,
+            sender_email: String? = null,
         ): Boolean {
             return notify_lock.withLock {
                 val posted = runCatching {
@@ -569,6 +572,7 @@ class MailPollingWorker(
                         silent = silent,
                         large_icon = large_icon,
                         arrived_at_ms = arrived_at_ms,
+                        sender_email = sender_email,
                     )
                 }.isSuccess
                 if (!posted) release_item_notification(context, item_id)
@@ -654,6 +658,7 @@ class MailPollingWorker(
         private const val KEY_VIBRATE_ENABLED = "notification_vibrate_enabled"
         private const val KEY_MUTED_FOLDER_TOKENS = "muted_folder_tokens"
         private const val KEY_MUTED_NOTIFICATION_CATEGORIES = "muted_notification_categories"
+        private const val KEY_NOTIFICATION_ACTIONS = "notification_actions"
         private const val KEY_ACTIVE_CATEGORY_TABS = "active_category_tabs"
         private const val KEY_PROTECTED_FOLDER_TOKENS = "protected_folder_tokens"
         private const val KEY_PROTECTED_FOLDER_TOKENS_KNOWN = "protected_folder_tokens_known"
@@ -848,6 +853,19 @@ class MailPollingWorker(
                 )
                 .apply()
             MutedFolderSync.push(context, tokens)
+        }
+
+        fun notification_actions(context: Context): List<String> {
+            val stored = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getString(KEY_NOTIFICATION_ACTIONS, null)
+            return NotificationActionChoices.sanitize(stored?.split(","))
+        }
+
+        fun set_notification_actions(context: Context, actions: List<String>) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_NOTIFICATION_ACTIONS, NotificationActionChoices.sanitize(actions).joinToString(","))
+                .apply()
         }
 
         fun muted_notification_categories(context: Context): Set<String> =
@@ -1297,6 +1315,7 @@ class MailPollingWorker(
             silent: Boolean = false,
             large_icon: android.graphics.Bitmap? = null,
             arrived_at_ms: Long? = null,
+            sender_email: String? = null,
         ) {
             if (!can_post(context)) return
             val quiet = message_post_quiet(context, silent, arrived_at_ms)
@@ -1310,7 +1329,7 @@ class MailPollingWorker(
             val one_line_subject = org.astermail.android.mail.safe_display_text(subject, SUBJECT_MAX_LENGTH)
                 .ifBlank { localized(context).getString(R.string.notif_new_message) }
             val one_line_preview = org.astermail.android.mail.safe_display_text(preview)
-            val code = org.astermail.android.mail.detect_verification_code(one_line_subject, one_line_preview)
+            val code = org.astermail.android.mail.detect_verification_code(one_line_subject, one_line_preview, sender_email)
                 ?.takeIf { org.astermail.android.security.AppLockNotificationPolicy.offers_copy_code(app_lock_on, true) }
             val builder = base_builder(context, quiet)
                 .setWhen(System.currentTimeMillis())
@@ -1334,7 +1353,12 @@ class MailPollingWorker(
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                     ),
                 )
-                add_message_actions(context, builder, item_id, message_id, code)
+                val actions_auth = NotificationActionAuthPolicy.requires_auth(
+                    active_mail_notification_count(context, message_id),
+                )
+                add_message_actions(context, builder, item_id, message_id, code, actions_auth)
+                builder.extras.putBoolean(EXTRA_ACTIONS_AUTH, actions_auth)
+                builder.extras.putBoolean(EXTRA_HAS_COPY_CODE, code != null)
                 if (is_valid_notified_item_id(item_id)) {
                     builder.extras.putString(EXTRA_NOTIFIED_ITEM_ID, item_id)
                     builder.extras.putString(EXTRA_NOTIFIED_ACCOUNT, current_account_tag(context))
@@ -1391,26 +1415,33 @@ class MailPollingWorker(
             item_id: String,
             message_id: Int,
             code: String?,
+            actions_auth: Boolean,
         ) {
             if (code != null) add_copy_code_action(context, builder, code, message_id)
-            val actions = listOf(
-                Triple(
-                    MailNotificationActionReceiver.ACTION_ARCHIVE,
-                    R.drawable.ic_action_archive,
-                    R.string.archive,
-                ),
-                Triple(
-                    MailNotificationActionReceiver.ACTION_TRASH,
-                    R.drawable.ic_action_trash,
-                    R.string.delete,
-                ),
-                Triple(
-                    MailNotificationActionReceiver.ACTION_MARK_READ,
-                    R.drawable.ic_action_mark_read,
-                    R.string.mark_read_action,
-                ),
-            ).take(if (code != null) MAX_VISIBLE_ACTIONS - 1 else MAX_VISIBLE_ACTIONS)
-            actions.forEachIndexed { index, (action, icon, label) ->
+            val chosen = NotificationActionChoices.visible(notification_actions(context), has_code = code != null)
+            chosen.forEach { choice ->
+                val (action, icon, label) = when (choice) {
+                    NotificationActionChoices.ARCHIVE -> Triple(
+                        MailNotificationActionReceiver.ACTION_ARCHIVE,
+                        R.drawable.ic_action_archive,
+                        R.string.archive,
+                    )
+                    NotificationActionChoices.TRASH -> Triple(
+                        MailNotificationActionReceiver.ACTION_TRASH,
+                        R.drawable.ic_action_trash,
+                        R.string.delete,
+                    )
+                    NotificationActionChoices.MARK_READ -> Triple(
+                        MailNotificationActionReceiver.ACTION_MARK_READ,
+                        R.drawable.ic_action_mark_read,
+                        R.string.mark_read_action,
+                    )
+                    else -> Triple(
+                        MailNotificationActionReceiver.ACTION_SPAM,
+                        R.drawable.ic_action_spam,
+                        R.string.report_spam,
+                    )
+                }
                 val intent = Intent(context, MailNotificationActionReceiver::class.java).apply {
                     this.action = action
                     putExtra(MailNotificationActionReceiver.EXTRA_ITEM_ID, item_id)
@@ -1418,14 +1449,14 @@ class MailPollingWorker(
                 }
                 val pending = PendingIntent.getBroadcast(
                     context,
-                    message_id * ACTION_REQUEST_STRIDE + index,
+                    message_id * ACTION_REQUEST_STRIDE + NotificationActionChoices.request_offset(choice),
                     intent,
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
                 builder.addAction(
                     NotificationCompat.Action.Builder(icon, localized(context).getString(label), pending)
                         .setShowsUserInterface(false)
-                        .setAuthenticationRequired(true)
+                        .setAuthenticationRequired(actions_auth)
                         .build(),
                 )
             }
@@ -1460,6 +1491,74 @@ class MailPollingWorker(
         }
 
         private const val MAX_VISIBLE_ACTIONS = 3
+        private const val EXTRA_ACTIONS_AUTH = "org.astermail.android.actions_auth"
+        private const val EXTRA_HAS_COPY_CODE = "org.astermail.android.has_copy_code"
+
+        fun actions_posted_with_auth(context: Context, notification_id: Int): Boolean {
+            if (notification_id == 0) return false
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                ?: return false
+            return runCatching {
+                manager.activeNotifications
+                    .firstOrNull { it.id == notification_id }
+                    ?.notification
+                    ?.extras
+                    ?.getBoolean(EXTRA_ACTIONS_AUTH, true)
+                    ?: false
+            }.getOrDefault(false)
+        }
+
+        fun require_unlock_for_actions(context: Context, tapped_id: Int) {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+            refresh_action_auth(manager, after_locked_tap = true, first = tapped_id)
+        }
+
+        private fun is_mail_notification_id(id: Int): Boolean = id >= MESSAGE_ID_BASE || id == NOTIFICATION_ID
+
+        private fun refresh_action_auth(
+            manager: NotificationManager,
+            excluded: Set<Int> = emptySet(),
+            just_posted: Int = 0,
+            after_locked_tap: Boolean = false,
+            first: Int = 0,
+        ) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+            runCatching {
+                val active = manager.activeNotifications
+                    .filter { is_mail_notification_id(it.id) && it.id !in excluded }
+                val ids = active.map { it.id }.toMutableSet()
+                if (just_posted != 0) ids.add(just_posted)
+                val carrying = active
+                    .filter { it.id != just_posted && it.notification.extras.containsKey(EXTRA_ACTIONS_AUTH) }
+                    .associateBy { it.id }
+                val plan = NotificationActionAuthPolicy.reposts(
+                    carrying.mapValues { it.value.notification.extras.getBoolean(EXTRA_ACTIONS_AUTH) },
+                    ids.size,
+                    after_locked_tap,
+                )
+                NotificationActionAuthPolicy.repost_order(plan.keys.toList(), first).forEach { id ->
+                    val sbn = carrying[id] ?: return@forEach
+                    val auth = plan.getValue(id)
+                    runCatching {
+                        manager.notify(sbn.tag, sbn.id, with_action_auth(sbn.notification, auth))
+                    }
+                }
+            }
+        }
+
+        @androidx.annotation.RequiresApi(Build.VERSION_CODES.S)
+        private fun with_action_auth(source: android.app.Notification, auth: Boolean): android.app.Notification {
+            val copy = source.clone()
+            val keeps_auth_first = source.extras.getBoolean(EXTRA_HAS_COPY_CODE, false)
+            copy.actions = source.actions?.mapIndexed { index, action ->
+                android.app.Notification.Action.Builder(action)
+                    .setAuthenticationRequired(auth || (keeps_auth_first && index == 0))
+                    .build()
+            }?.toTypedArray()
+            copy.extras.putBoolean(EXTRA_ACTIONS_AUTH, auth)
+            copy.flags = copy.flags or android.app.Notification.FLAG_ONLY_ALERT_ONCE
+            return copy
+        }
         private const val ACTION_REQUEST_STRIDE = 8
         private const val COPY_CODE_REQUEST_OFFSET = 3
         private const val DISMISS_REQUEST_OFFSET = 7
@@ -1496,6 +1595,8 @@ class MailPollingWorker(
         }
 
         private fun post_group_summary(context: Context, manager: NotificationManagerCompat, just_posted_id: Int) {
+            (context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager)
+                ?.let { refresh_action_auth(it, just_posted = just_posted_id) }
             if (!should_post_group_summary(active_mail_notification_count(context, just_posted_id))) {
                 manager.cancel(SUMMARY_NOTIFICATION_ID)
                 return
@@ -1666,6 +1767,7 @@ class MailPollingWorker(
             MailNotificationActionWorker.ACTION_ARCHIVE -> R.string.failed_to_archive
             MailNotificationActionWorker.ACTION_TRASH -> R.string.failed_to_trash
             MailNotificationActionWorker.ACTION_MARK_READ -> R.string.failed_mark_read
+            MailNotificationActionWorker.ACTION_SPAM -> R.string.failed_report_spam
             else -> null
         }
 
@@ -1905,7 +2007,9 @@ class MailPollingWorker(
             if (!has_remaining_message) {
                 manager.cancel(SUMMARY_NOTIFICATION_ID)
                 manager.cancel(NOTIFICATION_ID)
+                return
             }
+            refresh_action_auth(manager, excluded = just_cancelled)
         }
 
         private fun can_post(context: Context): Boolean {

@@ -107,6 +107,7 @@ import org.astermail.android.imports.ExternalAccountHealthState
 import org.astermail.android.imports.ExternalAccountsError
 import org.astermail.android.imports.external_account_state
 import org.astermail.android.imports.ExternalAccountsViewModel
+import org.astermail.android.imports.is_expected_authorize_url
 import org.astermail.android.ui.common.app_toast
 import org.astermail.android.ui.common.show_copied_toast
 import org.astermail.android.ui.common.start_external_intent
@@ -136,7 +137,10 @@ fun ExternalAccountsScreen(
 
     LaunchedEffect(state.authorize_url) {
         val url = state.authorize_url
-        if (!url.isNullOrBlank()) {
+        val provider = state.connecting_provider
+        if (!url.isNullOrBlank() && (provider == null || !is_expected_authorize_url(provider, url))) {
+            vm.cancel_oauth()
+        } else if (!url.isNullOrBlank()) {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
 
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

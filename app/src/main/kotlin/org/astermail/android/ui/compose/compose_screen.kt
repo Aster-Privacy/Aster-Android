@@ -113,6 +113,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -1070,6 +1071,7 @@ private fun compose_screen_content(
     }
     var show_discard_dialog by remember { mutableStateOf(false) }
     var mismatch_acknowledged by rememberSaveable { mutableStateOf(false) }
+    var show_mismatch_confirm by remember { mutableStateOf(false) }
     var send_queued_at by remember { mutableStateOf<Long?>(null) }
     var post_quantum_missing by remember { mutableStateOf<List<String>>(emptyList()) }
     var post_quantum_downgraded by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -1133,24 +1135,33 @@ private fun compose_screen_content(
         subject = stringResource(R.string.compose_quote_header_subject),
         to = stringResource(R.string.compose_quote_header_to),
     )
-    val forward_seed_html = remember(is_forward_quote, quoted_html, quoted_meta, quoted_to, forward_labels) {
-        if (!is_forward_quote || quoted_html == null) {
-            null
-        } else {
-            val (forward_from, forward_ts, forward_subject) = quoted_meta ?: Triple("", "", "")
-            build_forward_inner_html(
-                build_forward_header_html(
-                    forward_labels,
-                    forward_header_values(
-                        from = forward_from,
-                        date = format_quote_timestamp(forward_ts),
-                        subject = forward_subject,
-                        to = quoted_to,
-                    ),
+    val quoted_original_cache by produceState<Pair<String, String>?>(initialValue = null, quoted_html) {
+        val raw = quoted_html
+        value = if (raw == null) null else raw to withContext(Dispatchers.Default) { sanitize_quoted_original(raw) }
+    }
+    val ready_quoted_html = quoted_original_cache?.takeIf { it.first == quoted_html }?.second
+
+    fun displayed_quoted_html(): String? =
+        ready_quoted_html ?: quoted_html?.let { sanitize_quoted_original(it) }
+
+    fun forward_seed_for(original_html: String): String {
+        val (forward_from, forward_ts, forward_subject) = quoted_meta ?: Triple("", "", "")
+        return build_forward_inner_html(
+            build_forward_header_html(
+                forward_labels,
+                forward_header_values(
+                    from = forward_from,
+                    date = format_quote_timestamp(forward_ts),
+                    subject = forward_subject,
+                    to = quoted_to,
                 ),
-                quoted_html,
-            )
-        }
+            ),
+            original_html,
+        )
+    }
+
+    val forward_seed_html = remember(is_forward_quote, ready_quoted_html, quoted_meta, quoted_to, forward_labels) {
+        if (!is_forward_quote) null else ready_quoted_html?.let { forward_seed_for(it) }
     }
 
     val frozen_forward_seed = remember(effective_mode, quoted_html) { mutableStateOf<String?>(null) }
@@ -1164,31 +1175,33 @@ private fun compose_screen_content(
     }
 
     fun forward_block_for_send(): String? {
-        val seed = forward_seed_html ?: return null
-        return wrap_forward_block(forward_edited_html ?: seed)
+        if (!is_forward_quote) return null
+        val inner = forward_edited_html
+            ?: forward_seed_html
+            ?: displayed_quoted_html()?.let { forward_seed_for(it) }
+            ?: return null
+        return wrap_forward_block(inner)
     }
 
-    val quote_header_from = stringResource(R.string.compose_quote_header_from)
-    val quote_header_date = stringResource(R.string.compose_quote_header_date)
-    val quote_header_subject = stringResource(R.string.compose_quote_header_subject)
+    val reply_labels = reply_quote_labels(
+        from = stringResource(R.string.compose_quote_header_from),
+        date = stringResource(R.string.compose_quote_header_date),
+        subject = stringResource(R.string.compose_quote_header_subject),
+    )
 
-    val reply_seed_html = remember(is_forward_quote, quoted_html, quoted_meta, quote_header_from, quote_header_date, quote_header_subject) {
-        if (is_forward_quote) return@remember null
-        val qh = quoted_html ?: return@remember null
+    fun reply_seed_for(original_html: String): String {
         val (from_addr, ts, subj) = quoted_meta ?: Triple("", "", "")
-        "<div class=\"aster_quote_attr gmail_attr\" style=\"color:#555;font-size:13px\">" +
-            "<div><b>${escape_html(quote_header_from)}</b> ${escape_html(from_addr)}</div>" +
-            "<div><b>${escape_html(quote_header_date)}</b> ${escape_html(format_quote_timestamp(ts))}</div>" +
-            "<div><b>${escape_html(quote_header_subject)}</b> ${escape_html(subj)}</div>" +
-            "</div>" +
-            "<blockquote class=\"gmail_quote\" style=\"margin:8px 0 0;padding-left:12px;border-left:2px solid #ccc;color:#555;font-size:13px\">" +
-            qh +
-            "</blockquote>"
+        return build_reply_quote_html(reply_labels, from_addr, format_quote_timestamp(ts), subj, remove_unsendable_quote_images(original_html))
+    }
+
+    val reply_seed_html = remember(is_forward_quote, ready_quoted_html, quoted_meta, reply_labels) {
+        if (is_forward_quote) null else ready_quoted_html?.let { reply_seed_for(it) }
     }
     var reply_edited_html by remember(effective_mode, quoted_html) { mutableStateOf<String?>(null) }
 
     fun reply_quote_block(): String? {
-        val seed = reply_seed_html ?: return null
+        if (is_forward_quote) return null
+        val seed = reply_seed_html ?: displayed_quoted_html()?.let { reply_seed_for(it) } ?: return null
         val inner = reply_edited_html ?: seed
         if (html_to_plain_text(inner).isBlank()) return null
         return wrap_forward_block(inner)
@@ -1543,16 +1556,22 @@ private fun compose_screen_content(
     }
     val can_send = has_recipient && !is_sending
     val sending_disabled_keys = remember(
+        user_email,
+        settings_state.sending_blocked_primary,
         settings_state.aliases,
+        settings_state.ghost_aliases,
         settings_state.custom_domain_addresses,
         settings_state.sending_blocked_alias_ids,
         settings_state.sending_blocked_domain_address_ids,
     ) {
         sending_disabled_addresses(
-            settings_state.aliases,
-            settings_state.custom_domain_addresses,
-            settings_state.sending_blocked_alias_ids,
-            settings_state.sending_blocked_domain_address_ids,
+            primary_address = user_email,
+            primary_blocked = settings_state.sending_blocked_primary,
+            aliases = settings_state.aliases,
+            ghost_aliases = settings_state.ghost_aliases,
+            domain_addresses = settings_state.custom_domain_addresses,
+            blocked_alias_ids = settings_state.sending_blocked_alias_ids,
+            blocked_domain_address_ids = settings_state.sending_blocked_domain_address_ids,
         )
     }
     val thread_compose = is_thread_compose(reply_to, mode)
@@ -2014,7 +2033,7 @@ private fun compose_screen_content(
         image_html_for.forEach { (idx, html) ->
             body_html = body_html.replace("[[ASTER_IMG_${idx}]]", html)
         }
-        body_html = body_html.replace(Regex(IMG_TOKEN_PATTERN), "")
+        body_html = strip_outgoing_markers(body_html.replace(Regex(IMG_TOKEN_PATTERN), ""))
 
         val embedded_image_payloads = inline_image_payloads.filter { body_html.contains(it.data) }
         return Triple(body_html, attachment_payloads + embedded_image_payloads, !branding_footer_kept)
@@ -2150,13 +2169,28 @@ private fun compose_screen_content(
         allow_non_post_quantum: Boolean = false,
         allow_key_change: Boolean = false,
     ) {
-        if (!skip_from_guard && sender_pending) {
-            if (send_queued_at == null) send_queued_at = android.os.SystemClock.elapsedRealtime()
-            return
-        }
-        if (is_sending_disabled_sender(from_alias, sending_disabled_keys)) {
-            send_error = context.getString(R.string.error_alias_sending_disabled)
-            return
+        when (
+            send_gate(
+                sender_pending = sender_pending,
+                skip_from_guard = skip_from_guard,
+                from_blocked = is_sending_disabled_sender(from_alias, sending_disabled_keys),
+                mismatch_unacknowledged = !mismatch_acknowledged &&
+                    sender_mismatch(thread_compose, !sender_pending, received_on_alias, from_alias),
+            )
+        ) {
+            send_gate_action.queue -> {
+                if (send_queued_at == null) send_queued_at = android.os.SystemClock.elapsedRealtime()
+                return
+            }
+            send_gate_action.blocked -> {
+                send_error = context.getString(R.string.error_alias_sending_disabled)
+                return
+            }
+            send_gate_action.confirm_mismatch -> {
+                show_mismatch_confirm = true
+                return
+            }
+            send_gate_action.proceed -> Unit
         }
         if (!send_lock.compareAndSet(false, true)) return
         to_input.trim().let { if (it.isNotEmpty() && is_valid_email_chip(it)) { to_chips = to_chips + extract_chip_address(it); to_input = "" } }
@@ -2559,6 +2593,7 @@ private fun compose_screen_content(
                 }
                 queued_send_action.drop -> {
                     send_queued_at = null
+                    send_error = context.getString(R.string.compose_sender_unresolved)
                     return@LaunchedEffect
                 }
                 queued_send_action.idle -> return@LaunchedEffect
@@ -2968,49 +3003,12 @@ private fun compose_screen_content(
                 enter = aster_expand_in(compose_reduce_motion),
                 exit = aster_collapse_out(compose_reduce_motion),
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(tonal_surface_color(colors, colors.danger))
-                        .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = send_error ?: last_send_error[0].orEmpty(),
-                            color = colors.danger,
-                            fontSize = 13.sp,
-                        )
-                        if (send_error_upgrade) {
-                            Text(
-                                text = stringResource(R.string.upgrade_view_plans),
-                                color = colors.accent_blue,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier
-                                    .heightIn(min = 48.dp)
-                                    .clickable(role = Role.Button) {
-                                        org.astermail.android.billing.open_billing_in_app(context)
-                                    }
-                                    .padding(top = 2.dp),
-                            )
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .clickable(role = Role.Button) { send_error = null },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = TablerIcons.X,
-                            contentDescription = stringResource(R.string.dismiss),
-                            tint = colors.danger,
-                            modifier = Modifier.size(14.dp),
-                        )
-                    }
-                }
+                compose_send_error_bar(
+                    message = send_error ?: last_send_error[0].orEmpty(),
+                    show_upgrade = send_error_upgrade,
+                    on_upgrade = { org.astermail.android.billing.open_billing_in_app(context) },
+                    on_dismiss = { send_error = null },
+                )
             }
 
             Column(
@@ -3764,6 +3762,31 @@ private fun compose_screen_content(
                     allow_non_post_quantum = true,
                     allow_key_change = true,
                 )
+            },
+        )
+    }
+
+    if (show_mismatch_confirm) {
+        val received_address = received_on_alias.orEmpty()
+        val received_option = alias_options.firstOrNull { it.equals(received_address, ignoreCase = true) }
+            ?.takeIf { !is_sending_disabled_sender(it, sending_disabled_keys) }
+        sender_mismatch_confirm_dialog(
+            received = received_address,
+            from = from_alias,
+            can_use_received = received_option != null,
+            on_use_received = {
+                show_mismatch_confirm = false
+                if (received_option != null) {
+                    from_alias = received_option
+                    from_manually_selected = true
+                    mismatch_acknowledged = true
+                }
+            },
+            on_cancel = { show_mismatch_confirm = false },
+            on_send_anyway = {
+                show_mismatch_confirm = false
+                mismatch_acknowledged = true
+                do_send()
             },
         )
     }
@@ -4845,7 +4868,95 @@ private fun FromAliasSheet(
 }
 
 @Composable
-private fun sender_mismatch_banner(
+internal fun sender_mismatch_confirm_dialog(
+    received: String,
+    from: String,
+    can_use_received: Boolean,
+    on_use_received: () -> Unit,
+    on_cancel: () -> Unit,
+    on_send_anyway: () -> Unit,
+) {
+    org.astermail.android.design.components.AsterDialog(
+        on_dismiss = on_cancel,
+        title = stringResource(R.string.reply_from_mismatch_title),
+        message = stringResource(R.string.reply_from_mismatch_message, received, from),
+        footer = {
+            if (can_use_received) {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.reply_from_mismatch_use_received),
+                    onClick = on_use_received,
+                    modifier = Modifier.testTag("sender_mismatch_confirm_use_received"),
+                )
+            } else {
+                org.astermail.android.design.components.AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = on_cancel,
+                    modifier = Modifier.testTag("sender_mismatch_confirm_cancel"),
+                )
+            }
+            org.astermail.android.design.components.AsterDialogPrimaryButton(
+                label = stringResource(R.string.reply_from_mismatch_send_anyway),
+                onClick = on_send_anyway,
+                modifier = Modifier.testTag("sender_mismatch_confirm_send"),
+            )
+        },
+    )
+}
+
+@Composable
+internal fun compose_send_error_bar(
+    message: String,
+    show_upgrade: Boolean,
+    on_upgrade: () -> Unit,
+    on_dismiss: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(tonal_surface_color(colors, colors.danger))
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.sm)
+            .testTag("compose_send_error"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = message,
+                color = colors.danger,
+                fontSize = 13.sp,
+            )
+            if (show_upgrade) {
+                Text(
+                    text = stringResource(R.string.upgrade_view_plans),
+                    color = colors.accent_blue,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .clickable(role = Role.Button, onClick = on_upgrade)
+                        .padding(top = 2.dp),
+                )
+            }
+        }
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .clickable(role = Role.Button, onClick = on_dismiss),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = TablerIcons.X,
+                contentDescription = stringResource(R.string.dismiss),
+                tint = colors.danger,
+                modifier = Modifier.size(14.dp),
+            )
+        }
+    }
+}
+
+@Composable
+internal fun sender_mismatch_banner(
     received: String,
     from: String,
     can_switch: Boolean,

@@ -23,6 +23,7 @@ package org.astermail.android.auth
 
 import org.astermail.android.crypto.storage_rotation.LocalStorageKeys
 import org.astermail.android.crypto.storage_rotation.preserve_vault_fields
+import org.astermail.android.crypto.storage_rotation.generation_floor_source
 import org.astermail.android.crypto.storage_rotation.stamp_vault_generation
 import org.json.JSONArray
 import org.json.JSONObject
@@ -57,8 +58,9 @@ internal fun prepare_password_change_vault(
     vault_obj: JSONObject,
     local: LocalStorageKeys,
     now: String,
+    generation_floor: Long = 0L,
 ): JSONObject {
     preserve_vault_fields(JSONObject(vault_obj.toString()), vault_obj, local, false, now)
-    stamp_vault_generation(vault_obj)
+    stamp_vault_generation(vault_obj, generation_floor_source(generation_floor))
     return vault_obj
 }

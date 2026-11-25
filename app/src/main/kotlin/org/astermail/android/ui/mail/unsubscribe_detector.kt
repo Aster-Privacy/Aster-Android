@@ -31,21 +31,106 @@ data class UnsubscribeInfo(
     val list_unsubscribe_post: String? = null,
 )
 
-private val UNSUBSCRIBE_LINK_PATTERNS = listOf(
-    Regex("""href=["']([^"']*unsubscribe[^"']*)["']""", RegexOption.IGNORE_CASE),
-    Regex("""href=["']([^"']*opt-?out[^"']*)["']""", RegexOption.IGNORE_CASE),
-    Regex("""href=["']([^"']*remove[^"']*list[^"']*)["']""", RegexOption.IGNORE_CASE),
-    Regex("""href=["']([^"']*manage[^"']*preferences[^"']*)["']""", RegexOption.IGNORE_CASE),
-    Regex("""href=["']([^"']*email[^"']*preferences[^"']*)["']""", RegexOption.IGNORE_CASE),
-    Regex("""href=["']([^"']*subscription[^"']*settings[^"']*)["']""", RegexOption.IGNORE_CASE),
+private const val QUOTES = "\"'"
+private const val PATTERN_SPACE = " \t\n\u000B\u000C\r"
+
+private fun contains_in_order(value: String, parts: List<String>): Boolean {
+    var from = 0
+    for (part in parts) {
+        val at = value.indexOf(part, from, ignoreCase = true)
+        if (at < 0) return false
+        from = at + part.length
+    }
+    return true
+}
+
+private fun contains_opt_out(value: String, spaced: Boolean): Boolean {
+    var from = 0
+    while (true) {
+        val at = value.indexOf("opt", from, ignoreCase = true)
+        if (at < 0) return false
+        val next = at + 3
+        if (value.startsWith("out", next, ignoreCase = true)) return true
+        if (next < value.length) {
+            val gap = value[next]
+            if ((gap == '-' || (spaced && gap in PATTERN_SPACE)) &&
+                value.startsWith("out", next + 1, ignoreCase = true)
+            ) {
+                return true
+            }
+        }
+        from = at + 1
+    }
+}
+
+private val UNSUBSCRIBE_LINK_CHECKS: List<(String) -> Boolean> = listOf(
+    { it.contains("unsubscribe", ignoreCase = true) },
+    { contains_opt_out(it, spaced = false) },
+    { contains_in_order(it, listOf("remove", "list")) },
+    { contains_in_order(it, listOf("manage", "preferences")) },
+    { contains_in_order(it, listOf("email", "preferences")) },
+    { contains_in_order(it, listOf("subscription", "settings")) },
 )
 
-private val ANCHOR_UNSUBSCRIBE = Regex(
-    """<a[^>]*href=["']([^"']+)["'][^>]*>[^<]*(?:unsubscribe|opt[\s-]?out)[^<]*</a>""",
-    RegexOption.IGNORE_CASE,
-)
+private fun quoted_href_values(markup: String, from: Int, to: Int): Sequence<String> = sequence {
+    var cursor = from
+    while (true) {
+        val at = markup.indexOf("href=", cursor, ignoreCase = true)
+        if (at < 0 || at + 5 >= to) return@sequence
+        cursor = at + 1
+        if (markup[at + 5] !in QUOTES) continue
+        var end = at + 6
+        while (end < to && markup[end] !in QUOTES) end++
+        if (end >= to) continue
+        yield(markup.substring(at + 6, end))
+    }
+}
 
-private val HREF_EXTRACT = Regex("""href=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+private fun find_anchor_unsubscribe_href(markup: String): String? {
+    var from = 0
+    while (true) {
+        val open = markup.indexOf("<a", from, ignoreCase = true)
+        if (open < 0) return null
+        val tag_end = markup.indexOf('>', open + 2)
+        if (tag_end < 0) return null
+        from = tag_end + 1
+        val href = quoted_href_values(markup, open + 2, tag_end).firstOrNull { it.isNotEmpty() } ?: continue
+        val text_end = markup.indexOf('<', tag_end + 1)
+        if (text_end < 0 || !markup.startsWith("</a>", text_end, ignoreCase = true)) continue
+        val text = markup.substring(tag_end + 1, text_end)
+        if (text.contains("unsubscribe", ignoreCase = true) || contains_opt_out(text, spaced = true)) return href
+    }
+}
+
+private fun find_url_with_unsubscribe(text: String): String? {
+    var run_start = 0
+    while (run_start < text.length) {
+        while (run_start < text.length && text[run_start] in PATTERN_SPACE) run_start++
+        var run_end = run_start
+        while (run_end < text.length && text[run_end] !in PATTERN_SPACE) run_end++
+        val run = text.substring(run_start, run_end)
+        val last_keyword = maxOf(
+            run.lastIndexOf("unsubscribe", ignoreCase = true),
+            run.lastIndexOf("optout", ignoreCase = true),
+            run.lastIndexOf("opt-out", ignoreCase = true),
+        )
+        var cursor = 0
+        while (last_keyword > 0) {
+            val at = run.indexOf("http", cursor, ignoreCase = true)
+            if (at < 0) break
+            cursor = at + 1
+            val scheme_end = when {
+                run.startsWith("https://", at, ignoreCase = true) -> at + 8
+                run.startsWith("http://", at, ignoreCase = true) -> at + 7
+                else -> continue
+            }
+            if (scheme_end < last_keyword) return run.substring(at)
+            break
+        }
+        run_start = run_end
+    }
+    return null
+}
 
 private val HTML_ENTITIES = mapOf(
     "&amp;" to "&",
@@ -150,29 +235,26 @@ private fun find_body_unsubscribe_link(
     text_content: String?,
 ): String? {
     if (html_content != null) {
-        val anchor_match = ANCHOR_UNSUBSCRIBE.find(html_content)
-        if (anchor_match != null) {
-            val href_match = HREF_EXTRACT.find(anchor_match.value)
-            if (href_match != null) {
-                val url = decode_html_entities(href_match.groupValues[1])
-                if (is_valid_url(url)) return url
-            }
+        val anchor_href = find_anchor_unsubscribe_href(html_content)
+        if (anchor_href != null) {
+            val url = decode_html_entities(anchor_href)
+            if (is_valid_url(url)) return url
         }
 
-        for (pattern in UNSUBSCRIBE_LINK_PATTERNS) {
-            val match = pattern.find(html_content)
+        val hrefs = quoted_href_values(html_content, 0, html_content.length).toList()
+        for (check in UNSUBSCRIBE_LINK_CHECKS) {
+            val match = hrefs.firstOrNull(check)
             if (match != null) {
-                val url = decode_html_entities(match.groupValues[1])
+                val url = decode_html_entities(match)
                 if (is_valid_url(url)) return url
             }
         }
     }
 
     if (text_content != null) {
-        val url_pattern = Regex("""https?://\S+(?:unsubscribe|opt-?out)\S*""", RegexOption.IGNORE_CASE)
-        val match = url_pattern.find(text_content)
+        val match = find_url_with_unsubscribe(text_content)
         if (match != null) {
-            val url = decode_html_entities(match.value)
+            val url = decode_html_entities(match)
             if (is_valid_url(url)) return url
         }
     }

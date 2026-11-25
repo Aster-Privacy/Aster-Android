@@ -23,8 +23,10 @@ package org.astermail.android.ui.compose
 
 import org.astermail.android.api.settings.AliasInfo
 import org.astermail.android.api.settings.CustomDomainAddressInfo
+import org.astermail.android.api.ghost.GhostAlias
 import org.astermail.android.api.settings.sending_block_kind_alias
 import org.astermail.android.api.settings.sending_block_kind_domain_address
+import org.astermail.android.api.settings.sending_block_kind_primary
 
 private val aster_dotless_domains = setOf("astermail.org", "aster.cx")
 
@@ -132,6 +134,20 @@ fun queued_send_step(
     return queued_send_action.wait
 }
 
+enum class send_gate_action { queue, blocked, confirm_mismatch, proceed }
+
+fun send_gate(
+    sender_pending: Boolean,
+    skip_from_guard: Boolean,
+    from_blocked: Boolean,
+    mismatch_unacknowledged: Boolean,
+): send_gate_action = when {
+    sender_pending && !skip_from_guard -> send_gate_action.queue
+    from_blocked -> send_gate_action.blocked
+    mismatch_unacknowledged -> send_gate_action.confirm_mismatch
+    else -> send_gate_action.proceed
+}
+
 fun sender_mismatch(
     is_thread_compose: Boolean,
     resolved: Boolean,
@@ -144,6 +160,8 @@ fun sender_mismatch(
     return !same_sender_address(expected, from_address)
 }
 
+const val primary_sending_block_id = "primary"
+
 data class sending_block_row(
     val kind: String,
     val id: String,
@@ -152,15 +170,40 @@ data class sending_block_row(
     val sending_disabled: Boolean,
 )
 
+fun sending_block_key(address: String): String {
+    val bare = extract_bare_address(address).lowercase()
+    val at = bare.lastIndexOf('@')
+    if (at <= 0) return bare
+    val local = bare.substring(0, at).substringBefore('+').replace(".", "")
+    return "$local@${bare.substring(at + 1)}"
+}
+
+private fun is_listable_address(address: String): Boolean {
+    val at = address.lastIndexOf('@')
+    return at > 0 && at < address.length - 1
+}
+
 fun sending_block_rows(
+    primary_address: String?,
+    primary_blocked: Boolean,
     aliases: List<AliasInfo>,
+    ghost_aliases: List<GhostAlias>,
     domain_addresses: List<CustomDomainAddressInfo>,
     blocked_alias_ids: Set<String>,
     blocked_domain_address_ids: Set<String>,
     query: String = "",
 ): List<sending_block_row> {
-    val rows = aliases
-        .filter { !it.decryption_failed && it.address.isNotBlank() && '@' in it.address }
+    val primary_row = primary_address?.trim()?.takeIf { is_listable_address(it) }?.let {
+        sending_block_row(
+            kind = sending_block_kind_primary,
+            id = primary_sending_block_id,
+            address = it,
+            display_name = "",
+            sending_disabled = primary_blocked,
+        )
+    }
+    val alias_rows = aliases
+        .filter { !it.decryption_failed && is_listable_address(it.address) }
         .map {
             sending_block_row(
                 kind = sending_block_kind_alias,
@@ -169,8 +212,21 @@ fun sending_block_rows(
                 display_name = it.encrypted_display_name?.trim().orEmpty(),
                 sending_disabled = it.id in blocked_alias_ids,
             )
-        } + domain_addresses
-        .filter { !it.decryption_failed && it.address.isNotBlank() && '@' in it.address }
+        }
+    val alias_ids = alias_rows.mapTo(mutableSetOf()) { it.id }
+    val ghost_rows = ghost_aliases
+        .filter { !it.decryption_failed && it.id !in alias_ids && is_listable_address(it.decrypted_address) }
+        .map {
+            sending_block_row(
+                kind = sending_block_kind_alias,
+                id = it.id,
+                address = it.decrypted_address,
+                display_name = "",
+                sending_disabled = it.id in blocked_alias_ids,
+            )
+        }
+    val domain_rows = domain_addresses
+        .filter { !it.decryption_failed && is_listable_address(it.address) }
         .map {
             sending_block_row(
                 kind = sending_block_kind_domain_address,
@@ -180,28 +236,38 @@ fun sending_block_rows(
                 sending_disabled = it.id in blocked_domain_address_ids,
             )
         }
-    val needle = query.trim().lowercase()
-    val filtered = if (needle.isEmpty()) {
-        rows
-    } else {
-        rows.filter { it.address.lowercase().contains(needle) || it.display_name.lowercase().contains(needle) }
-    }
-    return filtered.sortedBy { it.address.lowercase() }
+    val others = (alias_rows + ghost_rows + domain_rows).sortedBy { it.address.lowercase() }
+    return filter_sending_block_rows(listOfNotNull(primary_row) + others, query)
 }
 
+fun filter_sending_block_rows(rows: List<sending_block_row>, query: String): List<sending_block_row> {
+    val needle = query.trim().lowercase()
+    if (needle.isEmpty()) return rows
+    return rows.filter { it.address.lowercase().contains(needle) || it.display_name.lowercase().contains(needle) }
+}
+
+fun every_sending_address_disabled(rows: List<sending_block_row>): Boolean =
+    rows.isNotEmpty() && rows.all { it.sending_disabled }
+
 fun sending_disabled_addresses(
+    primary_address: String?,
+    primary_blocked: Boolean,
     aliases: List<AliasInfo>,
+    ghost_aliases: List<GhostAlias>,
     domain_addresses: List<CustomDomainAddressInfo>,
     blocked_alias_ids: Set<String>,
     blocked_domain_address_ids: Set<String>,
 ): Set<String> {
     val keys = mutableSetOf<String>()
-    aliases.filter { it.id in blocked_alias_ids && it.address.isNotBlank() }
-        .forEach { keys.add(canonical_sender_key(it.address)) }
-    domain_addresses.filter { it.id in blocked_domain_address_ids && it.address.isNotBlank() }
-        .forEach { keys.add(canonical_sender_key(it.address)) }
+    if (primary_blocked && !primary_address.isNullOrBlank()) keys.add(sending_block_key(primary_address))
+    aliases.filter { it.id in blocked_alias_ids && !it.decryption_failed && is_listable_address(it.address) }
+        .forEach { keys.add(sending_block_key(it.address)) }
+    ghost_aliases.filter { it.id in blocked_alias_ids && !it.decryption_failed && is_listable_address(it.decrypted_address) }
+        .forEach { keys.add(sending_block_key(it.decrypted_address)) }
+    domain_addresses.filter { it.id in blocked_domain_address_ids && !it.decryption_failed && is_listable_address(it.address) }
+        .forEach { keys.add(sending_block_key(it.address)) }
     return keys
 }
 
 fun is_sending_disabled_sender(address: String, disabled_keys: Set<String>): Boolean =
-    address.isNotBlank() && canonical_sender_key(address) in disabled_keys
+    address.isNotBlank() && sending_block_key(address) in disabled_keys

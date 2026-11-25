@@ -85,6 +85,60 @@ fun signature_div_html(signature_id: String?, inner_html: String): String {
     return "<div data-aster-signature=\"1\"$id_attr dir=\"auto\" style=\"unicode-bidi:plaintext\">$inner_html</div>"
 }
 
+private const val SIGNATURE_ID_ATTRIBUTE = "data-aster-signature-id"
+
+private val SIGNATURE_ID_ATTRIBUTE_RE = Regex(
+    """\s+data-aster-signature-id\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'<>=`]+)""",
+    RegexOption.IGNORE_CASE,
+)
+
+private fun start_tag_end(html: String, from: Int): Int {
+    var quote: Char? = null
+    var i = from
+    while (i < html.length) {
+        val ch = html[i]
+        if (quote != null) {
+            if (ch == quote) quote = null
+        } else if (ch == '"' || ch == '\'') {
+            quote = ch
+        } else if (ch == '>') {
+            return i
+        }
+        i++
+    }
+    return -1
+}
+
+fun strip_outgoing_markers(html: String): String {
+    if (!html.contains(SIGNATURE_ID_ATTRIBUTE, ignoreCase = true)) return html
+    val out = StringBuilder(html.length)
+    var i = 0
+    while (i < html.length) {
+        val lt = html.indexOf('<', i)
+        if (lt < 0 || lt + 1 >= html.length) {
+            out.append(html, i, html.length)
+            break
+        }
+        out.append(html, i, lt)
+        if (!html[lt + 1].isLetter()) {
+            out.append('<')
+            i = lt + 1
+            continue
+        }
+        val gt = start_tag_end(html, lt + 1)
+        if (gt < 0) {
+            out.append(html, lt, html.length)
+            break
+        }
+        val tag = html.substring(lt, gt + 1)
+        out.append(
+            if (tag.contains(SIGNATURE_ID_ATTRIBUTE, ignoreCase = true)) SIGNATURE_ID_ATTRIBUTE_RE.replace(tag, "") else tag,
+        )
+        i = gt + 1
+    }
+    return out.toString()
+}
+
 fun trim_trailing_breaks(html: String): String {
     var out = html.trimEnd('\n', ' ')
     while (out.endsWith("<br>")) out = out.removeSuffix("<br>").trimEnd('\n', ' ')

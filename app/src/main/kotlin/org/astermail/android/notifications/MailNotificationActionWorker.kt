@@ -72,6 +72,7 @@ class MailNotificationActionWorker(
         val succeeded = repo != null && when (action) {
             ACTION_ARCHIVE -> repo.archive(listOf(item_id))
             ACTION_TRASH -> repo.trash(listOf(item_id))
+            ACTION_SPAM -> repo.mark_spam(listOf(item_id))
             else -> repo.mark_read(item_id, true)
         }.isSuccess
         val outcome = attempt_result(succeeded, runAttemptCount)
@@ -106,10 +107,11 @@ class MailNotificationActionWorker(
         const val ACTION_ARCHIVE = "archive"
         const val ACTION_TRASH = "trash"
         const val ACTION_MARK_READ = "mark_read"
+        const val ACTION_SPAM = "spam"
         private const val WORK_PREFIX = "mail_notification_action_"
         const val MAX_ATTEMPTS = 5
 
-        private val supported_actions = setOf(ACTION_ARCHIVE, ACTION_TRASH, ACTION_MARK_READ)
+        private val supported_actions = setOf(ACTION_ARCHIVE, ACTION_TRASH, ACTION_MARK_READ, ACTION_SPAM)
 
         fun attempt_result(succeeded: Boolean, attempt: Int): MailActionAttempt = when {
             succeeded -> MailActionAttempt.Done

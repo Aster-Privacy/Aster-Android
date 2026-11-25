@@ -208,9 +208,13 @@ class SearchIndexManager @Inject constructor(
         }
     }
 
-    private suspend fun fetch_thread_rows(thread_token: String, ids: List<String>): List<MessageBodyIndexEntity>? =
+    private suspend fun fetch_thread_rows(
+        thread_token: String,
+        ids: List<String>,
+        on_bodies: ((Map<String, String>) -> Unit)? = null,
+    ): List<MessageBodyIndexEntity>? =
         try {
-            withTimeoutOrNull(BODY_BACKFILL_FETCH_TIMEOUT_MS) { repository.thread_body_index_rows(thread_token, ids) }
+            withTimeoutOrNull(BODY_BACKFILL_FETCH_TIMEOUT_MS) { repository.thread_body_index_rows(thread_token, ids, on_bodies) }
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
         } catch (_: Throwable) {
@@ -399,6 +403,11 @@ class SearchIndexManager @Inject constructor(
 
     private val arrival_mutex = Mutex()
 
+    private fun arrival_image_prefetch_wanted(): Boolean {
+        val settings = org.astermail.android.ui.mail.remote_image_cache.current_settings(context)
+        return settings.keep_images && settings.prefetch_on_arrival
+    }
+
     private suspend fun index_arrivals(items: List<InboxItem>, my_epoch: Int) {
         if (_index_paused.value) return
         if (org.astermail.android.api.network.low_network_state.extend_timeouts()) return
@@ -412,6 +421,9 @@ class SearchIndexManager @Inject constructor(
             val indexed = runCatching { body_dao.indexed_among(candidates.map { it.id }).toHashSet() }
                 .getOrDefault(emptySet())
             val missing = candidates.filterNot { it.id in indexed || it.id in body_failed_ids }
+            val arrived_bodies = java.util.concurrent.ConcurrentHashMap<String, String>()
+            val collect_bodies: ((Map<String, String>) -> Unit)? =
+                if (arrival_image_prefetch_wanted()) { bodies -> arrived_bodies.putAll(bodies) } else null
             val threads = missing.groupBy { it.thread_token!! }.entries.take(BODY_ARRIVAL_THREADS)
             val gate = Semaphore(BODY_BACKFILL_PARALLEL_THREADS)
             val rows = coroutineScope {
@@ -420,7 +432,7 @@ class SearchIndexManager @Inject constructor(
                         gate.withPermit {
                             if (epoch.get() != my_epoch) return@withPermit emptyList()
                             val ids = members.map { it.id }
-                            fetch_thread_rows(thread_token, ids) ?: run {
+                            fetch_thread_rows(thread_token, ids, collect_bodies) ?: run {
                                 body_failed_ids.addAll(ids)
                                 emptyList()
                             }
@@ -429,6 +441,22 @@ class SearchIndexManager @Inject constructor(
                 }.awaitAll().flatten()
             }
             if (epoch.get() == my_epoch) repository.store_body_index_rows(rows)
+            if (arrived_bodies.isNotEmpty()) {
+                val ordered = missing.asSequence()
+                    .filterNot { it.is_spam || it.is_trashed }
+                    .mapNotNull { arrived_bodies[it.id] }
+                    .take(org.astermail.android.ui.mail.PREFETCH_MAX_MESSAGES)
+                    .toList()
+                scope.launch {
+                    runCatching {
+                        org.astermail.android.ui.mail.arrival_image_prefetch.on_bodies_arrived(
+                            context,
+                            { repository.cached_user_preferences() },
+                            ordered,
+                        )
+                    }
+                }
+            }
         } finally {
             arrival_mutex.unlock()
         }

@@ -52,8 +52,6 @@ object LaneReplay {
     private const val DIGEST_BYTES = 16
     private const val MAX_SAFE_INTEGER = 9_007_199_254_740_991L
 
-    const val BOOTSTRAP_RECORD_MAX_AGE_MS = 365L * 24 * 60 * 60 * 1000
-
     val EMPTY = LaneReplayRecord(0, emptyList())
 
     private val entry_order = compareBy<LaneReplayEntry>({ it.t }, { it.k }, { it.m })
@@ -84,21 +82,29 @@ object LaneReplay {
         ).joinToString("\n"),
     )
 
-    fun claim_bootstrap(stored: Any?, key: String, message: String, now: Long): BootstrapRecordClaim {
+    fun claim_bootstrap(
+        stored: Any?,
+        key: String,
+        message: String,
+        now: Long,
+        may_evict: Boolean = true,
+    ): BootstrapRecordClaim {
         val record = normalize(stored)
-        val live = record.e.filter { now - it.t <= BOOTSTRAP_RECORD_MAX_AGE_MS }
-        val pruned = live.size != record.e.size
-        val prior = live.firstOrNull { it.k == key }
+        val prior = record.e.firstOrNull { it.k == key }
         if (prior != null) {
             return BootstrapRecordClaim(
                 if (prior.m == message) BootstrapClaim.SAME_MESSAGE else BootstrapClaim.REPLAYED,
-                LaneReplayRecord(record.f, live),
-                changed = pruned,
+                record,
+                changed = false,
             )
         }
+        if (!may_evict && record.e.size >= MAX_ENTRIES) {
+            return BootstrapRecordClaim(BootstrapClaim.UNKNOWN, record, changed = false)
+        }
+        val claim = if (record.f > 0) BootstrapClaim.UNKNOWN else BootstrapClaim.FIRST
         return BootstrapRecordClaim(
-            BootstrapClaim.FIRST,
-            cap(LaneReplayRecord(record.f, live + LaneReplayEntry(key, message, now))),
+            claim,
+            cap(LaneReplayRecord(record.f, record.e + LaneReplayEntry(key, message, maxOf(now, 1)))),
             changed = true,
         )
     }

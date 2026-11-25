@@ -1032,13 +1032,26 @@ class MailRepository @Inject constructor(
         runCatching { dao.replace_all(rows + placeholders) }
     }
 
-    suspend fun index_thread_bodies(thread_token: String, expected_ids: Collection<String>): Result<Int> = runCatching {
+    suspend fun index_thread_bodies(
+        thread_token: String,
+        expected_ids: Collection<String>,
+        on_bodies: ((Map<String, String>) -> Unit)? = null,
+    ): Result<Int> = runCatching {
         val response = mail_api.get_thread_messages(thread_token)
         withContext(Dispatchers.IO) {
             val decrypted = response.messages.distinctBy { it.id }.map { msg ->
                 async { decrypt_thread_message(msg) }
             }.awaitAll()
             store_body_index(decrypted, expected_ids)
+            if (on_bodies != null) {
+                val expected = expected_ids.toHashSet()
+                val bodies = decrypted.asSequence()
+                    .filter { it.id in expected }
+                    .filterNot { it.is_undecryptable || it.is_body_pending || it.is_pgp_placeholder }
+                    .mapNotNull { message -> message.body_html?.takeIf { it.isNotBlank() }?.let { message.id to it } }
+                    .toMap()
+                if (bodies.isNotEmpty()) runCatching { on_bodies(bodies) }
+            }
             decrypted.size
         }
     }
@@ -1046,6 +1059,7 @@ class MailRepository @Inject constructor(
     suspend fun thread_body_index_rows(
         thread_token: String,
         expected_ids: Collection<String>,
+        on_bodies: ((Map<String, String>) -> Unit)? = null,
     ): List<org.astermail.android.storage.search.MessageBodyIndexEntity> {
         val cached = cached_thread_messages(thread_token)
         val ready_ids = cached.orEmpty()
@@ -1062,6 +1076,15 @@ class MailRepository @Inject constructor(
             }
         }
         return withContext(Dispatchers.Default) {
+            if (on_bodies != null) {
+                val expected = expected_ids.toHashSet()
+                val bodies = messages.asSequence()
+                    .filter { it.id in expected }
+                    .filterNot { it.is_undecryptable || it.is_body_pending || it.is_pgp_placeholder }
+                    .mapNotNull { message -> message.body_html?.takeIf { it.isNotBlank() }?.let { message.id to it } }
+                    .toMap()
+                if (bodies.isNotEmpty()) runCatching { on_bodies(bodies) }
+            }
             body_index_thread_rows(messages, expected_ids, InboundAttachmentKeyStore::filenames, System.currentTimeMillis())
         }
     }
@@ -1070,6 +1093,16 @@ class MailRepository @Inject constructor(
         if (rows.isEmpty()) return
         val dao = body_index_dao_provider?.get() ?: return
         withContext(Dispatchers.IO) { dao.replace_all(rows) }
+    }
+
+    fun cached_user_preferences(): UserPreferences? {
+        val account_key = session_key_store.get_user_id()?.takeIf { it.isNotBlank() } ?: return null
+        val raw = runCatching {
+            PreferencesCacheStore(context).read(account_key)
+        }.getOrNull() ?: return null
+        return runCatching {
+            cached_custom_categories_json.decodeFromString(UserPreferences.serializer(), raw)
+        }.getOrNull()
     }
 
     private suspend fun store_message_bodies(messages: List<ThreadMessageDecrypted>) {
@@ -1185,6 +1218,22 @@ class MailRepository @Inject constructor(
                 UserPreferences.serializer(),
                 raw,
             ).encrypt_emails
+        }.getOrNull()
+    }
+
+    internal var local_require_encryption_override: (() -> Boolean?)? = null
+
+    fun cached_require_encryption(): Boolean? {
+        local_require_encryption_override?.let { return it() }
+        val account_key = session_key_store.get_user_id()?.takeIf { it.isNotBlank() } ?: return null
+        val raw = runCatching {
+            PreferencesCacheStore(context).read(account_key)
+        }.getOrNull() ?: return null
+        return runCatching {
+            cached_custom_categories_json.decodeFromString(
+                UserPreferences.serializer(),
+                raw,
+            ).require_encryption
         }.getOrNull()
     }
 
@@ -3031,6 +3080,7 @@ class MailRepository @Inject constructor(
             item_type = "scheduled",
             scheduled_at = summary.scheduled_at,
             send_status = summary.status,
+            send_error = summary.failure_reason,
             created_at = summary.created_at,
             message_ts = summary.scheduled_at,
             is_external = summary.is_external,
@@ -3086,6 +3136,7 @@ class MailRepository @Inject constructor(
                 thread_token = detail.thread_token,
                 scheduled_at = detail.scheduled_at,
                 send_status = detail.status,
+                send_error = detail.failure_reason ?: summary.failure_reason,
                 created_at = detail.created_at,
                 message_ts = detail.scheduled_at,
                 is_external = detail.is_external,
@@ -5624,7 +5675,7 @@ class MailRepository @Inject constructor(
         data_kek?.fill(0)
         return encoded + "|" + session_key_store.get_storage_kdf_version() + "|" +
             StorageWriteKey.with_public_fallback(session_key_store.get_decrypt_keks()).joinToString(",") + "|" +
-            session_key_store.mail_legacy_retired()
+            session_key_store.mail_legacy_retired() + "|" + session_key_store.legacy_storage_keys_retired()
     }
 
     private fun metadata_key_set(): MetadataKeySet {
@@ -5637,12 +5688,14 @@ class MailRepository @Inject constructor(
         if (!session_key_store.mail_legacy_retired()) {
             masters.addAll(StorageWriteKey.read_keys(session_key_store))
             kek_candidates().filter { it.size == 32 }.forEach { masters.add(it.copyOf()) }
+            StorageWriteKey.unverified_login_proof_key(session_key_store)?.let { masters.add(it) }
         }
         val keys = ArrayList<ByteArray>()
         val public_indices = HashSet<Int>()
         for (master in masters) {
             val derived = derive_metadata_key(master)
-            val from_constant = StorageWriteKey.is_public_mail_kek(master)
+            val from_constant = StorageWriteKey.is_public_mail_kek(master) ||
+                StorageWriteKey.is_login_proof(session_key_store, master)
             master.fill(0)
             if (keys.none { it.contentEquals(derived) }) {
                 if (from_constant) public_indices.add(keys.size)
@@ -7350,6 +7403,8 @@ class MailRepository @Inject constructor(
     }
 
     private suspend fun require_encryption_enabled(): Boolean {
+        val local = runCatching { cached_require_encryption() }.getOrNull()
+        if (local == true) return true
         val account = current_account_id()?.takeIf { it.isNotBlank() }
         val api = encryption_api_provider?.get()
         var failure: Throwable? = null
@@ -7367,7 +7422,7 @@ class MailRepository @Inject constructor(
         }
         if (fresh != null) {
             if (account != null && current_account_id() == account) last_known_require_encryption[account] = fresh
-            return fresh
+            return RequireEncryptionFloor.effective(local, fresh) ?: fresh
         }
         return account?.let { last_known_require_encryption[it] }
             ?: throw EncryptionSettingUnavailableException(

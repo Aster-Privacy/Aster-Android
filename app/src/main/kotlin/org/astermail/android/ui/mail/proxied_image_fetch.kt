@@ -150,7 +150,7 @@ internal fun intercept_side_view_image(
     )
     if (action == MailBodyRequestAction.LOCAL) return null
     if (action == MailBodyRequestAction.BLOCK || context == null) return empty_image_response(403, "Forbidden")
-    return fetch_proxied_image_response(context, uri.toString())
+    return proxied_image_response(context, uri.toString())
 }
 
 internal fun forward_editor_proxy_target(url: String?, allow_external: Boolean): String? {
@@ -173,39 +173,13 @@ internal fun intercept_forward_editor_image(
     if (scheme == "data" || scheme == "about") return null
     val target = forward_editor_proxy_target(uri.toString(), allow_external)
     if (target == null || context == null) return empty_image_response(403, "Forbidden")
-    return fetch_proxied_image_response(context, target)
+    return proxied_image_response(context, target)
 }
 
-private fun fetch_proxied_image_response(context: Context, proxied_url: String): WebResourceResponse {
-    val token = current_access_token(context)
-    val client = side_view_image_client()
+private fun proxied_image_response(context: Context, requested: String): WebResourceResponse {
+    remote_image_cache.cached_response(context, requested)?.let { return it }
     return try {
-        fun fetch_once(target: String, bearer: String?): okhttp3.Response? =
-            proxied_image_request(target, bearer)?.let { client.newCall(it).execute() }
-        fun fetch(bearer: String?): okhttp3.Response? {
-            var target = proxied_url
-            var response = fetch_once(target, bearer) ?: return null
-            if (response.isRedirect) {
-                val next = proxy_redirect_target(target, response.header("Location"))
-                if (next != null) {
-                    response.close()
-                    target = next
-                    response = fetch_once(target, bearer) ?: return null
-                }
-            }
-            if (proxy_status_is_retryable(response.code)) {
-                response.close()
-                response = fetch_once(target, bearer) ?: return null
-            }
-            return response
-        }
-        val response = fetch_with_one_token_refresh(
-            token = token,
-            fetch = ::fetch,
-            status_of = { it.code },
-            close = { it.close() },
-            refresh = { failed -> refreshed_access_token(context, failed) },
-        ) ?: return empty_image_response(403, "Forbidden")
+        val response = fetch_proxied_image(context, requested) ?: return empty_image_response(403, "Forbidden")
         val body = response.body
         if (!response.isSuccessful || body == null) {
             response.close()
@@ -219,9 +193,40 @@ private fun fetch_proxied_image_response(context: Context, proxied_url: String):
             200,
             "OK",
             mapOf("Cache-Control" to "no-store"),
-            body.byteStream(),
+            remote_image_cache.caching_stream(context, requested, response.code, response.header("Content-Type"), body.byteStream()),
         )
     } catch (_: Throwable) {
         empty_image_response(404, "Not Found")
     }
+}
+
+internal fun fetch_proxied_image(context: Context, url: String): okhttp3.Response? {
+    val token = current_access_token(context)
+    val client = side_view_image_client()
+    fun fetch_once(target: String, bearer: String?): okhttp3.Response? =
+        proxied_image_request(target, bearer)?.let { client.newCall(it).execute() }
+    fun fetch(bearer: String?): okhttp3.Response? {
+        var target = url
+        var response = fetch_once(target, bearer) ?: return null
+        if (response.isRedirect) {
+            val next = proxy_redirect_target(target, response.header("Location"))
+            if (next != null) {
+                response.close()
+                target = next
+                response = fetch_once(target, bearer) ?: return null
+            }
+        }
+        if (proxy_status_is_retryable(response.code)) {
+            response.close()
+            response = fetch_once(target, bearer) ?: return null
+        }
+        return response
+    }
+    return fetch_with_one_token_refresh(
+        token = token,
+        fetch = ::fetch,
+        status_of = { it.code },
+        close = { it.close() },
+        refresh = { failed -> refreshed_access_token(context, failed) },
+    )
 }

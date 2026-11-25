@@ -152,6 +152,9 @@ interface MailApi {
 
     suspend fun update_attachment_meta(attachment_id: String, request: UpdateAttachmentMetaRequest)
 
+    suspend fun list_imported_password_meta(after: String?, limit: Int): ImportedPasswordMetaPage =
+        ImportedPasswordMetaPage()
+
     suspend fun create_attachment(
         mail_item_id: String,
         request: CreateAttachmentRequestBody,
@@ -626,6 +629,15 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             if (cursor != null) parameter("cursor", cursor)
             parameter("include_reactions", true)
         }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun list_imported_password_meta(after: String?, limit: Int): ImportedPasswordMetaPage {
+        val response = client.http.get("${client.base_url}$base/attachments/imported/password-meta") {
+            if (after != null) parameter("after", after)
+            parameter("limit", limit)
+        }
+        if (response.status.value == 404) return ImportedPasswordMetaPage()
         return decode_or_throw(response)
     }
 

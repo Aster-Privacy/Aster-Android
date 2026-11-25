@@ -240,6 +240,8 @@ fun AliasesScreen(
             2 -> vm.load_ghost_aliases()
             3 -> vm.load_alias_preferences()
             4 -> {
+                vm.load_profile()
+                vm.load_ghost_aliases()
                 vm.load_custom_domain_addresses()
                 vm.load_sending_blocks()
             }
@@ -430,9 +432,7 @@ fun AliasesScreen(
                         premium_domains_allowed = premium_domains_allowed,
                     )
                 }
-                4 -> tab_scroll {
-                    alias_sending_tab(vm = vm, state = state)
-                }
+                4 -> alias_sending_tab(vm = vm, state = state)
             }
         }
         }
@@ -993,6 +993,8 @@ private fun aliases_tab(
                         on_toggle = { vm.toggle_domain_address(addr.id, addr.domain_name) },
                         on_delete = { pending_domain_address_delete = Triple(addr.id, addr.domain_name, addr.address) },
                         on_change_avatar = { vm.update_domain_address_avatar(addr.id, addr.domain_name, it) },
+                        on_add_website = { vm.add_domain_address_website(addr.id, it) },
+                        on_remove_website = { vm.remove_domain_address_website(addr.id, it) },
                     )
                     }
                 }
@@ -1686,6 +1688,8 @@ private fun custom_domain_address_row(
     on_toggle: () -> Unit,
     on_delete: () -> Unit,
     on_change_avatar: (String?) -> Unit,
+    on_add_website: (String) -> Unit,
+    on_remove_website: (String) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     val haptics = LocalHapticFeedback.current
@@ -1778,6 +1782,14 @@ private fun custom_domain_address_row(
                     profile_picture = addr.profile_picture,
                     locked = avatars_locked,
                     on_change = on_change_avatar,
+                )
+            }
+            if (addr.websites_loaded) {
+                Spacer(Modifier.height(AsterSpacing.sm))
+                alias_websites_field(
+                    websites = addr.websites,
+                    on_add = on_add_website,
+                    on_remove = on_remove_website,
                 )
             }
         }

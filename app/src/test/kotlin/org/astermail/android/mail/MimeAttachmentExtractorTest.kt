@@ -185,6 +185,32 @@ class MimeAttachmentExtractorTest {
         )
     }
 
+    private fun quoted_printable_attachment(body: String): String =
+        "Content-Type: multipart/mixed; boundary=t\r\n\r\n" +
+            "--t\r\n" +
+            "Content-Type: text/plain; charset=utf-8\r\n" +
+            "Content-Transfer-Encoding: quoted-printable\r\n" +
+            "Content-Disposition: attachment; filename=\"notes.txt\"\r\n\r\n" +
+            body + "\r\n" +
+            "--t--\r\n"
+
+    @Test(timeout = 2_000)
+    fun a_long_space_run_in_a_quoted_printable_part_finishes_quickly() {
+        val spaces = " ".repeat(80_000)
+        val parts = MimeAttachmentExtractor.extract(quoted_printable_attachment("a" + spaces + "b"))
+        assertEquals("a" + spaces + "b", String(parts[0].data, Charsets.UTF_8))
+        val tabs = MimeAttachmentExtractor.extract(quoted_printable_attachment("a" + "\t ".repeat(40_000) + "\r\nb"))
+        assertEquals("a\r\nb", String(tabs[0].data, Charsets.UTF_8))
+    }
+
+    @Test
+    fun quoted_printable_trailing_space_is_removed_only_at_line_ends() {
+        val parts = MimeAttachmentExtractor.extract(
+            quoted_printable_attachment("one \t \r\ntwo  three\t\nfour \rfive"),
+        )
+        assertEquals("one\r\ntwo  three\r\nfour \rfive", String(parts[0].data, Charsets.UTF_8))
+    }
+
     @Test
     fun plain_bodies_without_attachments_yield_nothing() {
         assertTrue(MimeAttachmentExtractor.extract("Hello there").isEmpty())

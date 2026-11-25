@@ -49,7 +49,8 @@ private const val MAX_SEALED_ADDRESSES = 1000
 
 private val SEALED_CONTROL_CHARACTERS = Regex("[\u0000-\u001f\u007f]")
 private val SEALED_WRAPPING_QUOTES = Regex("^\"(.*)\"$")
-private val SEALED_ANGLE_ADDRESS = Regex("^\\s*(.*?)\\s*<([^<>]+)>\\s*$")
+private const val SEALED_PATTERN_SPACE = " \t\n\u000B\u000C\r"
+private const val SEALED_LINE_ENDS = "\n\r\u0085\u2028\u2029"
 
 private val SEALED_INSTANT_FORMAT: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).withZone(ZoneOffset.UTC)
@@ -61,11 +62,24 @@ private fun clean_sealed_name(value: String): String {
     return unquoted.take(MAX_SEALED_NAME_LENGTH)
 }
 
+private fun split_angle_address(entry: String): Pair<String, String>? {
+    val body = if (entry.isNotEmpty() && entry.last() in "\u0085\u2028\u2029") entry.dropLast(1) else entry
+    val close = body.indexOfLast { it !in SEALED_PATTERN_SPACE }
+    if (close < 0 || body[close] != '>') return null
+    val open = body.lastIndexOf('<', close - 1)
+    if (open < 0) return null
+    val address = body.substring(open + 1, close)
+    if (address.isEmpty() || address.indexOf('>') >= 0) return null
+    val name = body.substring(0, open).trim { it in SEALED_PATTERN_SPACE }
+    if (name.any { it in SEALED_LINE_ENDS }) return null
+    return name to address
+}
+
 private fun to_sealed_address(entry: String): SealedAddress? {
-    val angled = SEALED_ANGLE_ADDRESS.find(entry)
-    val email = (angled?.groupValues?.get(2) ?: entry).trim()
+    val angled = split_angle_address(entry)
+    val email = (angled?.second ?: entry).trim()
     if (email.isEmpty() || email.length > MAX_SEALED_EMAIL_LENGTH) return null
-    return SealedAddress(angled?.let { clean_sealed_name(it.groupValues[1]) }.orEmpty(), email)
+    return SealedAddress(angled?.let { clean_sealed_name(it.first) }.orEmpty(), email)
 }
 
 private fun to_sealed_addresses(entries: List<String>): List<SealedAddress> =

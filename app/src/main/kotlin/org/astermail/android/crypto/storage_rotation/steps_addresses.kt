@@ -204,6 +204,7 @@ private fun build_domain_address_entry(
         ?: return null
     val display = plan_optional_field(ctx, address.str("encrypted_display_name"), address.str("display_name_nonce"))
     val note = plan_optional_field(ctx, address.str("encrypted_note"), address.str("note_nonce"))
+    val websites = plan_optional_field(ctx, address.str("encrypted_websites"), address.str("websites_nonce"))
     val new_hash = sign_under_new(
         ctx.keys,
         DOMAIN_ADDRESS_HMAC_INFO,
@@ -212,7 +213,7 @@ private fun build_domain_address_entry(
     val old_hash = address.str("local_part_hash")
     val hash_changed = !same_hash(old_hash, new_hash)
 
-    if (!opened.changed && !display.changed && !note.changed && !hash_changed) {
+    if (!opened.changed && !display.changed && !note.changed && !websites.changed && !hash_changed) {
         ctx.counts.current += 1
         return null
     }
@@ -232,6 +233,11 @@ private fun build_domain_address_entry(
     if (note.changed && note_send != null) {
         pairs.add("encrypted_note" to note_send.ciphertext)
         pairs.add("note_nonce" to note_send.nonce)
+    }
+    val websites_send = websites.send
+    if (websites.changed && websites_send != null) {
+        pairs.add("encrypted_websites" to websites_send.ciphertext)
+        pairs.add("websites_nonce" to websites_send.nonce)
     }
 
     val move = if (hash_changed && !old_hash.isNullOrEmpty()) {

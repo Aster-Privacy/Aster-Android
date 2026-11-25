@@ -429,19 +429,21 @@ private fun is_proxyable_url(value: String): Boolean {
     return lower.startsWith("http://") || lower.startsWith("https://") || lower.startsWith("//")
 }
 
+internal fun proxied_image_target(raw_url: String, proxy_base: String): String {
+    val url = raw_url
+        .replace("&amp;", "&")
+        .replace("&#38;", "&")
+        .replace("&#x26;", "&")
+        .trim()
+    val absolute = secure_image_url(if (url.startsWith("//")) "https:$url" else url)
+    if (absolute.startsWith(proxy_base)) return absolute
+    if (absolute.startsWith(INLINE_IMAGE_URL_PREFIX)) return absolute
+    return proxy_base + java.net.URLEncoder.encode(absolute, "UTF-8")
+}
+
 internal fun proxy_external_urls(html: String, proxy_base: String): String {
     if (html.isBlank()) return html
-    fun to_proxied(raw_url: String): String {
-        val url = raw_url
-            .replace("&amp;", "&")
-            .replace("&#38;", "&")
-            .replace("&#x26;", "&")
-            .trim()
-        val absolute = secure_image_url(if (url.startsWith("//")) "https:$url" else url)
-        if (absolute.startsWith(proxy_base)) return absolute
-        if (absolute.startsWith(INLINE_IMAGE_URL_PREFIX)) return absolute
-        return proxy_base + java.net.URLEncoder.encode(absolute, "UTF-8")
-    }
+    fun to_proxied(raw_url: String): String = proxied_image_target(raw_url, proxy_base)
 
     fun proxied_css(css: String): String =
         if (css.contains("url(", ignoreCase = true)) {
@@ -8369,9 +8371,15 @@ internal fun email_html_view(
                         stream,
                     )
                 fun transparent_pixel(): android.webkit.WebResourceResponse = failed_image_response()
+                val cache_ctx = view?.context
+                if (cache_ctx != null) {
+                    remote_image_cache.lookup(cache_ctx, url)?.let { hit ->
+                        return image_response(hit.content_type, java.io.ByteArrayInputStream(hit.bytes))
+                    }
+                }
                 val current_token = settings_vm.get_access_token()
                 if (current_token.isNullOrBlank()) return transparent_pixel()
-                val ctx = view?.context ?: return transparent_pixel()
+                val ctx = cache_ctx ?: return transparent_pixel()
                 val client = email_image_client(ctx)
                 return try {
                     fun fetch_once(target: String, bearer: String): okhttp3.Response {
@@ -8415,7 +8423,14 @@ internal fun email_html_view(
                     if (body == null) { resp.close(); return transparent_pixel() }
                     val content_type = resp.header("Content-Type")?.substringBefore(';')?.trim()
                         ?.takeIf { it.isNotBlank() } ?: "image/jpeg"
-                    val stream = object : java.io.FilterInputStream(body.byteStream()) {
+                    val source = remote_image_cache.caching_stream(
+                        ctx,
+                        url,
+                        resp.code,
+                        resp.header("Content-Type"),
+                        body.byteStream(),
+                    )
+                    val stream = object : java.io.FilterInputStream(source) {
                         override fun read(): Int = as_io_failure { super.read() }
                         override fun read(b: ByteArray, off: Int, len: Int): Int = as_io_failure { super.read(b, off, len) }
                         override fun skip(n: Long): Long = as_io_failure { super.skip(n) }
@@ -9871,7 +9886,8 @@ private fun send_failure_banner(reason: String?) {
                 fontSize = 12.sp,
                 lineHeight = 17.sp,
             )
-            val detail = reason?.trim().orEmpty()
+            val detail = org.astermail.android.send_failure_detail_res(reason)?.let { stringResource(it) }
+                ?: reason?.trim().orEmpty()
             if (detail.isNotEmpty()) {
                 Spacer(Modifier.height(6.dp))
                 Text(

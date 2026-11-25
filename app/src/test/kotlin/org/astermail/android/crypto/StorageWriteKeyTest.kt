@@ -105,23 +105,59 @@ class StorageWriteKeyTest {
     }
 
     @Test
-    fun `before retirement old rows under the login proof and the unstretched key still open`() {
+    fun `before retirement old rows under the unstretched key still open but never under the login proof`() {
         val store = signed_in_store()
         val under_proof = seal("old contact".toByteArray(), login_proof)
         val under_v1 = seal("old template".toByteArray(), v1())
 
         val keys = StorageWriteKey.read_keys(store)
 
-        assertEquals("old contact", open_with_any(under_proof, keys)?.toString(Charsets.UTF_8))
+        assertNull(open_with_any(under_proof, keys))
+        assertNull(open_with_any(under_proof, StorageWriteKey.lookup_keys(store)))
         assertEquals("old template", open_with_any(under_v1, keys)?.toString(Charsets.UTF_8))
         assertFalse(store.legacy_storage_keys_retired())
     }
 
     @Test
-    fun `the legacy read keys are exactly the login proof and the unstretched key`() {
+    fun `the legacy read keys are exactly the unstretched key`() {
         val legacy = encoded(StorageWriteKey.legacy_read_keys(signed_in_store()))
 
-        assertEquals(setOf(StorageWriteKey.encode_key(login_proof), StorageWriteKey.encode_key(v1())), legacy)
+        assertEquals(setOf(StorageWriteKey.encode_key(v1())), legacy)
+    }
+
+    @Test
+    fun `the login proof never joins the sweep keys`() {
+        val swept = encoded(StorageWriteKey.sweep_keys(signed_in_store())!!)
+
+        assertEquals(setOf(StorageWriteKey.encode_key(v1())), swept)
+    }
+
+    @Test
+    fun `the login proof carried in the vault key list is not a read key`() {
+        val store = signed_in_store(listOf(StorageWriteKey.encode_key(login_proof)))
+
+        assertFalse(encoded(StorageWriteKey.read_keys(store)).contains(StorageWriteKey.encode_key(login_proof)))
+        assertFalse(encoded(StorageWriteKey.lookup_keys(store)).contains(StorageWriteKey.encode_key(login_proof)))
+    }
+
+    @Test
+    fun `the login proof is offered only as an unverified key before retirement`() {
+        val store = signed_in_store()
+
+        assertArrayEquals(login_proof, StorageWriteKey.unverified_login_proof_key(store))
+        assertTrue(StorageWriteKey.is_login_proof(store, login_proof.copyOf()))
+        assertFalse(StorageWriteKey.is_login_proof(store, data_kek.copyOf()))
+
+        assertTrue(retire(store))
+        assertNull(StorageWriteKey.unverified_login_proof_key(store))
+    }
+
+    @Test
+    fun `a public constant stored as the login proof is never offered`() {
+        val store = store()
+        store.put(StorageWriteKey.public_mail_kek_raws().first())
+
+        assertNull(StorageWriteKey.unverified_login_proof_key(store))
     }
 
     @Test
@@ -132,7 +168,8 @@ class StorageWriteKeyTest {
 
         assertEquals(StorageWriteKey.encode_key(data_kek), keys[0])
         assertEquals(StorageWriteKey.encode_key(earlier), keys[1])
-        assertEquals(setOf(StorageWriteKey.encode_key(login_proof), StorageWriteKey.encode_key(v1())), keys.drop(2).take(2).toSet())
+        assertEquals(StorageWriteKey.encode_key(v1()), keys[2])
+        assertFalse(keys.contains(StorageWriteKey.encode_key(login_proof)))
     }
 
     @Test
@@ -367,11 +404,47 @@ class StorageWriteKeyTest {
     }
 
     @Test
-    fun `signing out forgets the retirement`() {
+    fun `signing out without an account id forgets the retirement`() {
         val store = signed_in_store()
         assertTrue(retire(store))
 
         store.clear()
+
+        assertFalse(store.legacy_storage_keys_retired())
+        assertTrue(store.retired_storage_key_hashes().isEmpty())
+    }
+
+    @Test
+    fun `signing out and back in keeps the retirement for that account`() {
+        val store = signed_in_store()
+        store.put_user_id("account-a")
+        assertTrue(retire(store))
+        val hashes = store.retired_storage_key_hashes().toSet()
+
+        store.clear()
+        store.put_passphrase(passphrase.copyOf())
+        store.put_data_kek(data_kek.copyOf())
+        store.put(login_proof.copyOf())
+        store.put_user_id("account-a")
+
+        assertTrue(store.legacy_storage_keys_retired())
+        assertEquals(hashes, store.retired_storage_key_hashes().toSet())
+        assertTrue(StorageWriteKey.legacy_read_keys(store).isEmpty())
+        assertEquals(emptyList<ByteArray>(), StorageWriteKey.sweep_keys(store))
+        assertNull(StorageWriteKey.unverified_login_proof_key(store))
+        assertFalse(encoded(StorageWriteKey.read_keys(store)).contains(StorageWriteKey.encode_key(v1())))
+    }
+
+    @Test
+    fun `a retirement for one account does not retire another`() {
+        val store = signed_in_store()
+        store.put_user_id("account-a")
+        assertTrue(retire(store))
+
+        store.clear()
+        store.put_passphrase(passphrase.copyOf())
+        store.put(login_proof.copyOf())
+        store.put_user_id("account-b")
 
         assertFalse(store.legacy_storage_keys_retired())
         assertTrue(store.retired_storage_key_hashes().isEmpty())
@@ -632,6 +705,27 @@ class StorageWriteKeyTest {
         assertArrayEquals(data_kek, old.first())
         assertEquals(setOf(StorageWriteKey.encode_key(data_kek)), encoded_old.toSet())
         assertTrue(old.none { StorageWriteKey.is_public_mail_kek(it) })
+    }
+
+    @Test
+    fun `a row under the login proof is never resealed under the new key`() {
+        val new_key = ByteArray(32) { (it + 90).toByte() }
+        val view = VaultKeyView(
+            data_kek = Base64.getEncoder().encodeToString(new_key),
+            data_kek_random = true,
+            storage_rekey_state = null,
+            prior_keys = listOf(Base64.getEncoder().encodeToString(login_proof)),
+            legacy_keks = listOf(Base64.getEncoder().encodeToString(data_kek)),
+        )
+        val under_proof = gcm_seal(login_proof, "server row".toByteArray(Charsets.UTF_8))
+        val under_old = gcm_seal(data_kek, "own row".toByteArray(Charsets.UTF_8))
+
+        val old = collect_old_storage_raws(view, listOf(login_proof.copyOf()), listOf(login_proof.copyOf()))
+        assertEquals(setOf(StorageWriteKey.encode_key(data_kek)), old.map(StorageWriteKey::encode_key).toSet())
+
+        val reseal_keys = build_reseal_keys(view, listOf(login_proof.copyOf()), listOf(login_proof.copyOf()))!!
+        assertNull(open_under_old(reseal_keys, under_proof.ciphertext, under_proof.nonce))
+        assertNotNull(open_under_old(reseal_keys, under_old.ciphertext, under_old.nonce))
     }
 
     @Test

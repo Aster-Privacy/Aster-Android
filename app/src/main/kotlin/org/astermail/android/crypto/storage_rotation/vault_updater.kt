@@ -163,6 +163,8 @@ fun preserve_vault_fields(
 
 const val LANE_REPLAY_FIELD = "lane_replay"
 
+const val VAULT_ROLLED_BACK = "vault_rolled_back"
+
 class VaultUpdater(
     private val api: ResealApi,
     private val codec: StorageVaultCodec,
@@ -172,7 +174,13 @@ class VaultUpdater(
     private val now: () -> String = { Instant.now().toString() },
     private val local_keys: () -> LocalStorageKeys = { LocalStorageKeys.NONE },
     private val upgrade_on_rotation: Boolean = false,
+    private val generation_floor: () -> Long = { 0L },
 ) {
+
+    private fun rolled_back(vault: JSONObject): Boolean = is_rolled_back_vault(vault, generation_floor())
+
+    private fun stamp(next: JSONObject, server: JSONObject): JSONObject =
+        stamp_vault_generation(next, server, generation_floor_source(generation_floor()))
 
     suspend fun fetch_snapshot(): ServerVaultSnapshot? {
         val reply = api.get(VAULT_PATH)
@@ -198,6 +206,7 @@ class VaultUpdater(
     suspend fun latest(): VaultDraft? {
         val snapshot = fetch_snapshot() ?: return null
         val vault = decrypt_snapshot(snapshot) ?: return null
+        if (rolled_back(vault)) return null
         return VaultDraft(vault, snapshot)
     }
 
@@ -256,7 +265,8 @@ class VaultUpdater(
         val snapshot = fetch_snapshot() ?: return@withLock VaultWorkFactor.SKIPPED
         if (snapshot.vault_kdf_iterations == VaultKdf.LEVEL2_ITERATIONS) return@withLock VaultWorkFactor.CURRENT
         val server = decrypt_snapshot(snapshot) ?: return@withLock VaultWorkFactor.SKIPPED
-        val next = stamp_vault_generation(JSONObject(server.toString()), server)
+        if (rolled_back(server)) return@withLock VaultWorkFactor.SKIPPED
+        val next = stamp(JSONObject(server.toString()), server)
         val (result, sealed) = write_with_cas(next, snapshot, user, VaultKdf.LEVEL2_ITERATIONS)
         when (result) {
             CasWrite.WRITTEN -> {
@@ -290,6 +300,7 @@ class VaultUpdater(
         if (user_id() == null) return@withLock VaultUpdateOutcome.Failed("no_account")
         val snapshot = fetch_snapshot() ?: return@withLock VaultUpdateOutcome.Failed("vault_unavailable")
         val server = decrypt_snapshot(snapshot) ?: return@withLock VaultUpdateOutcome.Failed("vault_unreadable")
+        if (rolled_back(server)) return@withLock VaultUpdateOutcome.Failed(VAULT_ROLLED_BACK)
         val next = JSONObject(server.toString())
         when (edit(VaultDraft(next, snapshot))) {
             VaultEdit.ABORT -> return@withLock VaultUpdateOutcome.Aborted
@@ -297,7 +308,7 @@ class VaultUpdater(
             VaultEdit.CHANGED -> Unit
         }
         preserve_vault_fields(server, next, local_keys(), false, now())
-        stamp_vault_generation(next, server)
+        stamp(next, server)
         val sealed = seal_for_send(next, snapshot.vault_kdf_iterations)
             ?: return@withLock VaultUpdateOutcome.Failed("roundtrip_failed")
         if (!send(next, sealed, snapshot)) return@withLock VaultUpdateOutcome.Failed("write_failed")
@@ -313,6 +324,7 @@ class VaultUpdater(
         repeat(MAX_VAULT_CONFLICT_RETRIES + 1) {
             val snapshot = fetch_snapshot() ?: return VaultUpdateOutcome.Failed("vault_unavailable")
             val server = decrypt_snapshot(snapshot) ?: return VaultUpdateOutcome.Failed("vault_unreadable")
+            if (rolled_back(server)) return VaultUpdateOutcome.Failed(VAULT_ROLLED_BACK)
             val next = JSONObject(server.toString())
             when (edit(VaultDraft(next, snapshot))) {
                 VaultEdit.ABORT -> return VaultUpdateOutcome.Aborted
@@ -331,7 +343,7 @@ class VaultUpdater(
                 VaultEdit.CHANGED -> Unit
             }
             preserve_vault_fields(server, next, local_keys(), allow_storage_key_change, now())
-            stamp_vault_generation(next, server)
+            stamp(next, server)
             val iterations = target_iterations(snapshot, allow_storage_key_change)
             var (result, sealed) = write_with_cas(next, snapshot, user, iterations)
             if (

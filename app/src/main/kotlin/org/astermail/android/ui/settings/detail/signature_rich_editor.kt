@@ -111,9 +111,24 @@ internal fun sanitize_signature_html(html: String): String =
         EmailHtmlSanitizer.SanitizeOptions(
             clean_tracking_links = false,
             remove_tracking_pixels = false,
-            block_remote_fonts = false,
-            block_remote_css = false,
+            block_remote_fonts = true,
+            block_remote_css = true,
         ),
+    )
+
+internal fun signature_editor_request_allowed(scheme: String?): Boolean {
+    val normalized = scheme?.lowercase() ?: return false
+    return normalized == "data" || normalized == "about"
+}
+
+private fun blocked_signature_editor_response(): android.webkit.WebResourceResponse =
+    android.webkit.WebResourceResponse(
+        "text/plain",
+        null,
+        403,
+        "Forbidden",
+        mapOf("Cache-Control" to "no-store"),
+        java.io.ByteArrayInputStream(ByteArray(0)),
     )
 
 internal fun normalize_signature_link(raw: String): String? =
@@ -312,16 +327,19 @@ internal const val signature_editor_script = """
 })();
 """
 
-private fun build_signature_document(seed_html: String): String =
+internal fun build_signature_document(seed_html: String, nonce: String): String =
     "<!DOCTYPE html><html><head>" +
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">" +
+        "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; " +
+        "img-src data:; style-src 'unsafe-inline'; font-src data:; script-src 'nonce-$nonce'; " +
+        "connect-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'\">" +
         "<style>html,body{margin:0;padding:0;background:#ffffff;}" +
         "#aster_signature_editor{min-height:100%;padding:12px;outline:none;" +
         "font-family:sans-serif;font-size:14px;color:#222222;word-wrap:break-word;}" +
         "#aster_signature_editor img{max-width:100%;height:auto;}</style>" +
         "</head><body>" +
         "<div id=\"aster_signature_editor\" contenteditable=\"true\">" + seed_html + "</div>" +
-        "<script>" + signature_editor_script + "</script>" +
+        "<script nonce=\"$nonce\">" + signature_editor_script + "</script>" +
         "</body></html>"
 
 @Composable
@@ -335,7 +353,10 @@ fun signature_rich_editor(
         org.astermail.android.ui.common.webview_unavailable_notice(modifier)
         return
     }
-    val document = remember { build_signature_document(sanitize_signature_html(initial_html)) }
+    val document = remember {
+        val nonce = java.util.UUID.randomUUID().toString().replace("-", "")
+        build_signature_document(sanitize_signature_html(initial_html), nonce)
+    }
 
     DisposableEffect(Unit) {
         onDispose { controller.editor_view = null }
@@ -349,12 +370,24 @@ fun signature_rich_editor(
                 settings.allowFileAccess = false
                 settings.allowContentAccess = false
                 settings.domStorageEnabled = false
+                settings.blockNetworkImage = true
+                settings.blockNetworkLoads = true
                 settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
                 webViewClient = object : android.webkit.WebViewClient() {
                     override fun shouldOverrideUrlLoading(
                         view: android.webkit.WebView,
                         request: android.webkit.WebResourceRequest,
                     ): Boolean = true
+
+                    override fun shouldInterceptRequest(
+                        view: android.webkit.WebView?,
+                        request: android.webkit.WebResourceRequest?,
+                    ): android.webkit.WebResourceResponse? {
+                        val uri = request?.url ?: return null
+                        if (request.isForMainFrame) return null
+                        if (signature_editor_request_allowed(uri.scheme)) return null
+                        return blocked_signature_editor_response()
+                    }
 
                     override fun onRenderProcessGone(
                         view: android.webkit.WebView?,

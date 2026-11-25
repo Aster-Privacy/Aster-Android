@@ -32,4 +32,7 @@
     <string name="persistent_push_autostart_title">السماح بالتشغيل التلقائي</string>
     <string name="persistent_push_autostart_subtitle">تغلق بعض الهواتف الاتصالات في الخلفية. من إعدادات النظام، اسمح لـ Aster Mail بالتشغيل التلقائي وأوقف قيود البطارية.</string>
     <string name="notif_delivery_section">التسليم</string>
+    <string name="notif_action_unlock_required">افتح قفل جهازك، ثم حاول مرة أخرى.</string>
+    <string name="notif_actions_section">إجراءات الإشعارات</string>
+    <string name="notif_actions_description">اختر ما يصل إلى 3 إجراءات لعرضها في إشعارات البريد. إذا كانت الرسالة تتضمن رمزًا، فإن نسخ الرمز يشغل مكانًا واحدًا.</string>
 </resources>

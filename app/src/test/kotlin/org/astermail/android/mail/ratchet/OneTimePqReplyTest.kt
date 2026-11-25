@@ -24,6 +24,7 @@ package org.astermail.android.mail.ratchet
 import android.content.SharedPreferences
 import android.util.Base64
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -284,6 +285,32 @@ class OneTimePqReplyTest {
 
         pq_secrets[onetime_key_id] = secret
         assertEquals("thanks, see you then", open(reply, "ios-reply-3"))
+    }
+
+    @Test
+    fun `opening a reply on a one-time post-quantum prekey removes the secret from the server`() = runTest {
+        val reply = one_time_reply("thanks, see you then")
+        assertEquals("thanks, see you then", open(reply, "ios-reply-4"))
+
+        coVerify(exactly = 1) { ratchet_api.delete_pq_secret(onetime_key_id) }
+        assertNull(pq_secrets[onetime_key_id])
+    }
+
+    @Test
+    fun `a second opening message on a used one-time post-quantum prekey does not open`() = runTest {
+        val first = one_time_reply("thanks, see you then")
+        val secret = pq_secrets[onetime_key_id]!!.copyOf()
+        assertEquals("thanks, see you then", open(first, "ios-reply-5"))
+
+        val second = one_time_reply("a different body")
+        assertTrue(sealed_for_me(second).getString("ephemeral_key") != sealed_for_me(first).getString("ephemeral_key"))
+        assertEquals(onetime_key_id, sealed_for_me(second).getInt("pq_key_id"))
+        pq_secrets[onetime_key_id] = secret
+
+        val opened = runCatching { open(second, "ios-reply-6") }.getOrDefault(RATCHET_UNDECRYPTABLE_SENTINEL)
+
+        assertTrue(opened != "a different body")
+        assertNull(pq_secrets[onetime_key_id])
     }
 
     private val pgp_passphrase = "one-time-reply-fixture"

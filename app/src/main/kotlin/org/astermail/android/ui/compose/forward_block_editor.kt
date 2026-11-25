@@ -92,6 +92,30 @@ internal fun build_forward_header_html(
 internal fun build_forward_inner_html(header_html: String, original_html: String): String =
     header_html + "<div class=\"aster_forward_body\">" + original_html + "</div>"
 
+internal data class reply_quote_labels(
+    val from: String,
+    val date: String,
+    val subject: String,
+)
+
+internal fun build_reply_quote_html(
+    labels: reply_quote_labels,
+    from: String,
+    date: String,
+    subject: String,
+    original_html: String,
+): String =
+    "<div class=\"aster_quote_attr gmail_attr\" style=\"color:#555;font-size:13px\">" +
+        "<div><b>${escape_forward_text(labels.from)}</b> ${escape_forward_text(from)}</div>" +
+        "<div><b>${escape_forward_text(labels.date)}</b> ${escape_forward_text(date)}</div>" +
+        "<div><b>${escape_forward_text(labels.subject)}</b> ${escape_forward_text(subject)}</div>" +
+        "</div>" +
+        "<blockquote class=\"gmail_quote\" style=\"margin:8px 0 0;padding-left:12px;border-left:2px solid #ccc;color:#555;font-size:13px\">" +
+        original_html +
+        "</blockquote>"
+
+internal fun sanitize_quoted_original(html: String): String = sanitize_forward_seed(html)
+
 internal fun wrap_forward_block(inner_html: String): String =
     "<br><br><div class=\"aster_quote gmail_quote\">" + inner_html + "</div>"
 

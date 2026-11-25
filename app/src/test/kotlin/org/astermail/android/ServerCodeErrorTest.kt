@@ -103,4 +103,14 @@ class ServerCodeErrorTest {
         assertFalse(is_rejected_second_factor_code(ApiError.InvalidCredentials))
         assertFalse(is_rejected_second_factor_code(ApiError.ForbiddenError("nope", "INVALID_TWO_FACTOR_CODE")))
     }
+
+    @Test
+    fun scheduled_failure_names_a_disabled_sending_address() {
+        assertEquals(R.string.error_alias_sending_disabled, scheduled_failure_string_res("ALIAS_SENDING_DISABLED"))
+        assertEquals(R.string.scheduled_send_failed, scheduled_failure_string_res(null))
+        assertEquals(R.string.scheduled_send_failed, scheduled_failure_string_res("SMTP_TIMEOUT"))
+        assertEquals(R.string.error_alias_sending_disabled, send_failure_detail_res(" ALIAS_SENDING_DISABLED "))
+        assertNull(send_failure_detail_res("SMTP_TIMEOUT"))
+        assertNull(send_failure_detail_res(null))
+    }
 }

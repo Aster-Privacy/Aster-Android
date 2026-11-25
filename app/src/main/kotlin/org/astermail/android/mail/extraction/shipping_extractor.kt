@@ -116,7 +116,8 @@ private fun tracking_context_windows(body: String): List<String> {
 private class tracking_result(val number: String, val carrier: ShippingCarrier)
 
 private val generic_tracking_pattern = Regex(
-    "(?:tracking|sendungsnummer|suivi|seguimiento)\\s*(?:#|number|no\\.?|nummer)?\\s*[:\\s]\\s*([A-Z0-9]{8,35})",
+    "(?:tracking|sendungsnummer|suivi|seguimiento)\\s*+" +
+        "(?:(?:#|number|no\\.?+|nummer)(?:\\s*+:\\s*+|\\s++)|:\\s*+|(?<=\\s))([A-Z0-9]{8,35})",
     RegexOption.IGNORE_CASE,
 )
 
@@ -159,7 +160,7 @@ private fun extract_tracking_number(
 
 private val tracking_url_keywords = listOf("track", "shipment", "delivery")
 
-private val url_trailing_junk = Regex("['\">\\]]+$")
+private val url_trailing_junk = Regex("(?<!['\">\\]])['\">\\]]++$")
 
 internal fun extract_tracking_url(body: String, html: String?): String? {
     if (!html.isNullOrEmpty()) {
@@ -215,19 +216,21 @@ fun detect_shipping_status(subject: String, body: String): ShippingStatus {
     return ShippingStatus.unknown
 }
 
+private const val date_words = "(?:[A-Za-z]++,?+\\s*+[A-Za-z]++|[A-Za-z]{2,}+)"
+
 private val delivery_patterns = listOf(
-    Regex("(?:estimated|expected)\\s+delivery[:\\s]*([A-Za-z]+,?\\s*[A-Za-z]+\\s+\\d{1,2}(?:,?\\s+\\d{4})?)", RegexOption.IGNORE_CASE),
-    Regex("arriving\\s+(?:by\\s+)?([A-Za-z]+,?\\s*[A-Za-z]+\\s+\\d{1,2})", RegexOption.IGNORE_CASE),
-    Regex("deliver(?:ed|y)\\s+(?:by\\s+)?([A-Za-z]+,?\\s*[A-Za-z]+\\s+\\d{1,2})", RegexOption.IGNORE_CASE),
+    Regex("(?:estimated|expected)\\s+delivery[:\\s]*(" + date_words + "\\s+\\d{1,2}(?:,?\\s+\\d{4})?)", RegexOption.IGNORE_CASE),
+    Regex("arriving\\s+(?:by\\s+)?(" + date_words + "\\s+\\d{1,2})", RegexOption.IGNORE_CASE),
+    Regex("deliver(?:ed|y)\\s+(?:by\\s+)?(" + date_words + "\\s+\\d{1,2})", RegexOption.IGNORE_CASE),
 )
 
 private val shipped_patterns = listOf(
-    Regex("shipped\\s+(?:on\\s+)?([A-Za-z]+,?\\s*[A-Za-z]+\\s+\\d{1,2}(?:,?\\s+\\d{4})?)", RegexOption.IGNORE_CASE),
+    Regex("shipped\\s+(?:on\\s+)?(" + date_words + "\\s+\\d{1,2}(?:,?\\s+\\d{4})?)", RegexOption.IGNORE_CASE),
     Regex("ship\\s+date[:\\s]*([A-Za-z]+\\s+\\d{1,2},?\\s+\\d{4})", RegexOption.IGNORE_CASE),
 )
 
 private val delivered_patterns = listOf(
-    Regex("delivered\\s+(?:on\\s+)?([A-Za-z]+,?\\s*[A-Za-z]+\\s+\\d{1,2}(?:,?\\s+\\d{4})?)", RegexOption.IGNORE_CASE),
+    Regex("delivered\\s+(?:on\\s+)?(" + date_words + "\\s+\\d{1,2}(?:,?\\s+\\d{4})?)", RegexOption.IGNORE_CASE),
     Regex("delivery\\s+date[:\\s]*([A-Za-z]+\\s+\\d{1,2},?\\s+\\d{4})", RegexOption.IGNORE_CASE),
 )
 
