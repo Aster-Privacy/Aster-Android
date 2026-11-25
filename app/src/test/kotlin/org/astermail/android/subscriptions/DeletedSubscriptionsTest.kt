@@ -65,4 +65,11 @@ class DeletedSubscriptionsTest {
         assertEquals(merged, decode_deleted_subscriptions(encode_deleted_subscriptions(merged)))
         assertEquals(emptyMap<String, String>(), decode_deleted_subscriptions("garbage\nx@y notadate"))
     }
+
+    @Test
+    fun each_account_has_its_own_entry() {
+        val first = deleted_subscriptions_account_key("Me@Example.com ")
+        assertEquals(first, deleted_subscriptions_account_key("me@example.com"))
+        assertFalse(first == deleted_subscriptions_account_key("other@example.com"))
+    }
 }

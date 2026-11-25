@@ -85,6 +85,23 @@ internal fun decode_deleted_subscriptions(raw: String?): Map<String, String> {
     return result
 }
 
+internal fun deleted_subscriptions_account_key(account_email: String?): String {
+    val email = normalize_sender_email(account_email.orEmpty())
+    val digest = java.security.MessageDigest.getInstance("SHA-256")
+        .digest(email.toByteArray(Charsets.UTF_8))
+    return digest.joinToString("") { "%02x".format(it) }
+}
+
+private fun open_deleted_subscriptions(context: Context) = runCatching {
+    org.astermail.android.storage.SecurePrefs.open(context, DELETED_PREFS_NAME)
+}.getOrNull()
+
+fun forget_deleted_subscriptions(context: Context, account_email: String?) {
+    if (account_email.isNullOrBlank()) return
+    val store = open_deleted_subscriptions(context) ?: return
+    store.edit().remove(deleted_subscriptions_account_key(account_email)).commit()
+}
+
 @Singleton
 class DeletedSubscriptionsStore @Inject constructor(
     private val repository: MailRepository,
@@ -92,16 +109,9 @@ class DeletedSubscriptionsStore @Inject constructor(
 ) {
     private val lock = Any()
 
-    private fun account_key(): String {
-        val email = normalize_sender_email(repository.get_user_email().orEmpty())
-        val digest = java.security.MessageDigest.getInstance("SHA-256")
-            .digest(email.toByteArray(Charsets.UTF_8))
-        return digest.joinToString("") { "%02x".format(it) }
-    }
+    private fun account_key(): String = deleted_subscriptions_account_key(repository.get_user_email())
 
-    private fun prefs() = runCatching {
-        org.astermail.android.storage.SecurePrefs.open(context, DELETED_PREFS_NAME)
-    }.getOrNull()
+    private fun prefs() = open_deleted_subscriptions(context)
 
     fun tombstones(): Map<String, String> = synchronized(lock) {
         decode_deleted_subscriptions(prefs()?.getString(account_key(), null))

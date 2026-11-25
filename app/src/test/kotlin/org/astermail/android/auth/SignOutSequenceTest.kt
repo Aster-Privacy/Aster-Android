@@ -169,4 +169,11 @@ class SignOutSequenceTest {
         assertTrue(body.indexOf("session_key_store.clear()") > wipe_start)
         assertTrue(body.indexOf("auth_api.delete_account(") < wipe_start)
     }
+
+    @Test
+    fun sign_out_and_deletion_forget_deleted_subscriptions() {
+        val call = "forget_deleted_subscriptions(context, current_email)"
+        assertTrue(call in body_of("private suspend fun sign_out_internal("))
+        assertTrue(call in body_of("suspend fun delete_account("))
+    }
 }

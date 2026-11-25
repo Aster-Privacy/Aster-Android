@@ -2220,6 +2220,7 @@ class AuthRepository @Inject constructor(
         runCatching { org.astermail.android.notifications.MutedFolderSync.reset(context) }
         runCatching { org.astermail.android.notifications.QuietHoursSync.reset(context) }
         runCatching { org.astermail.android.imports.ExternalAccountHealthStore.reset(context) }
+        runCatching { org.astermail.android.subscriptions.forget_deleted_subscriptions(context, current_email) }
         cancel_all_notifications()
         runCatching {
             val loader = coil.Coil.imageLoader(context)
@@ -2984,6 +2985,7 @@ class AuthRepository @Inject constructor(
             runCatching { org.astermail.android.notifications.MutedFolderSync.reset(context) }
             runCatching { org.astermail.android.notifications.QuietHoursSync.reset(context) }
             runCatching { org.astermail.android.imports.ExternalAccountHealthStore.reset(context) }
+            runCatching { org.astermail.android.subscriptions.forget_deleted_subscriptions(context, current_email) }
             cancel_all_notifications()
             runCatching {
                 val loader = coil.Coil.imageLoader(context)
