@@ -2022,6 +2022,14 @@
     <string name="remote_images_never">永不</string>
     <string name="remote_images_ask">询问</string>
     <string name="remote_images_always">始终</string>
+    <string name="remote_image_keep_title">在此设备上保留已加载的图片</string>
+    <string name="remote_image_keep_subtitle">以加密方式保存你已加载的图片，再次打开邮件时不会向发件人发送任何内容。</string>
+    <string name="remote_image_prefetch_title">收到邮件时加载图片</string>
+    <string name="remote_image_prefetch_subtitle">收到邮件时通过 Aster 获取图片，发件人无法得知你何时打开邮件。仅在 Wi-Fi 下运行。</string>
+    <string name="remote_image_prefetch_needs_always">要使用此功能，请将远程图片加载设置为始终加载。</string>
+    <string name="remote_image_clear_title">清除已保存的图片</string>
+    <string name="remote_image_clear_subtitle">删除此设备上保存的图片。</string>
+    <string name="remote_image_cache_cleared">已清除保存的图片</string>
     <string name="block_remote_images_subtitle_security">阻止邮件加载托管在外部服务器上的图片</string>
     <string name="block_remote_images_info_title">屏蔽远程图片</string>
     <string name="block_remote_images_info_desc">邮件可能从外部服务器加载图片。一旦加载，发件人的服务器就能看到您的 IP，并知道您打开了邮件。此选项会阻止这些图片加载。</string>

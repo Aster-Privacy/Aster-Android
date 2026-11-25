@@ -2026,6 +2026,14 @@
     <string name="remote_images_never">Nooit laden</string>
     <string name="remote_images_ask">Vragen</string>
     <string name="remote_images_always">Altijd laden</string>
+    <string name="remote_image_keep_title">Geladen afbeeldingen op dit apparaat bewaren</string>
+    <string name="remote_image_keep_subtitle">Slaat afbeeldingen die je hebt geladen versleuteld op, zodat het opnieuw openen van het bericht niets naar de afzender stuurt.</string>
+    <string name="remote_image_prefetch_title">Afbeeldingen laden bij ontvangst van mail</string>
+    <string name="remote_image_prefetch_subtitle">Haalt afbeeldingen via Aster op zodra mail binnenkomt, zodat afzenders niet weten wanneer je die opent. Werkt alleen via wifi.</string>
+    <string name="remote_image_prefetch_needs_always">Stel het laden van externe afbeeldingen in op Altijd laden om dit te gebruiken.</string>
+    <string name="remote_image_clear_title">Opgeslagen afbeeldingen wissen</string>
+    <string name="remote_image_clear_subtitle">Verwijdert de afbeeldingen die op dit apparaat zijn opgeslagen.</string>
+    <string name="remote_image_cache_cleared">Opgeslagen afbeeldingen gewist</string>
     <string name="block_remote_images_subtitle_security">Voorkom dat e-mails afbeeldingen laden van externe servers</string>
     <string name="block_remote_images_info_title">Externe afbeeldingen blokkeren</string>
     <string name="block_remote_images_info_desc">E-mails kunnen afbeeldingen van externe servers laden. Bij het laden ziet de server van de afzender je IP-adres en weet die dat je het bericht hebt geopend. Dit blokkeert dat laden.</string>

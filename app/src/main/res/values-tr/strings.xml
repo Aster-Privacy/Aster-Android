@@ -2026,6 +2026,14 @@
     <string name="remote_images_never">Hiçbir zaman yükleme</string>
     <string name="remote_images_ask">Yüklemeden önce sor</string>
     <string name="remote_images_always">Her zaman yükle</string>
+    <string name="remote_image_keep_title">Yüklenen görselleri bu cihazda sakla</string>
+    <string name="remote_image_keep_subtitle">Yüklediğiniz görselleri şifrelenmiş olarak kaydeder, böylece iletiyi yeniden açmak gönderene hiçbir şey göndermez.</string>
+    <string name="remote_image_prefetch_title">Posta geldiğinde görselleri yükle</string>
+    <string name="remote_image_prefetch_subtitle">Posta geldiğinde görselleri Aster üzerinden getirir, böylece gönderenler iletiyi ne zaman açtığınızı bilemez. Yalnızca Wi-Fi üzerinde çalışır.</string>
+    <string name="remote_image_prefetch_needs_always">Bunu kullanmak için uzak görsel yüklemeyi Her zaman yükle olarak ayarlayın.</string>
+    <string name="remote_image_clear_title">Kaydedilen görselleri temizle</string>
+    <string name="remote_image_clear_subtitle">Bu cihazda kaydedilen görselleri siler.</string>
+    <string name="remote_image_cache_cleared">Kaydedilen görseller temizlendi</string>
     <string name="block_remote_images_subtitle_security">E-postaların harici sunucularda barındırılan görselleri yüklemesini engelle</string>
     <string name="block_remote_images_info_title">Uzak Görselleri Engelle</string>
     <string name="block_remote_images_info_desc">E-postalar dış sunuculardan görsel yükleyebilir. Görseller yüklendiğinde gönderenin sunucusu IP adresinizi görür ve iletiyi açtığınızı anlar. Bu ayar bu görsellerin yüklenmesini engeller.</string>

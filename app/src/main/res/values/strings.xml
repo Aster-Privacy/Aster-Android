@@ -2192,6 +2192,14 @@
     <string name="remote_images_never">Never load</string>
     <string name="remote_images_ask">Ask before loading</string>
     <string name="remote_images_always">Always load</string>
+    <string name="remote_image_keep_title">Keep loaded images on this device</string>
+    <string name="remote_image_keep_subtitle">Saves images you have loaded, encrypted, so opening the message again sends nothing to the sender.</string>
+    <string name="remote_image_prefetch_title">Load images when mail arrives</string>
+    <string name="remote_image_prefetch_subtitle">Fetches images through Aster when mail arrives, so senders cannot tell when you open it. Runs only on Wi-Fi.</string>
+    <string name="remote_image_prefetch_needs_always">To use this, set Remote Image Loading to Always load.</string>
+    <string name="remote_image_clear_title">Clear saved images</string>
+    <string name="remote_image_clear_subtitle">Deletes the images saved on this device.</string>
+    <string name="remote_image_cache_cleared">Saved images cleared</string>
     <string name="block_remote_images_subtitle_security">Prevent emails from loading images hosted on external servers</string>
     <string name="block_remote_images_info_title">Block Remote Images</string>
     <string name="block_remote_images_info_desc">Emails can load images from outside servers. When they load, the sender\'s server sees your IP and knows you opened the message. This blocks those images from loading.</string>

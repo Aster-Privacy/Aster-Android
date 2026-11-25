@@ -2034,6 +2034,14 @@
     <string name="remote_images_never">Nigdy nie ładuj</string>
     <string name="remote_images_ask">Pytaj przed załadowaniem</string>
     <string name="remote_images_always">Zawsze ładuj</string>
+    <string name="remote_image_keep_title">Zachowuj załadowane obrazy na tym urządzeniu</string>
+    <string name="remote_image_keep_subtitle">Zapisuje załadowane obrazy w postaci zaszyfrowanej, więc ponowne otwarcie wiadomości nie wysyła nic do nadawcy.</string>
+    <string name="remote_image_prefetch_title">Ładuj obrazy po nadejściu poczty</string>
+    <string name="remote_image_prefetch_subtitle">Pobiera obrazy przez Aster po nadejściu poczty, więc nadawcy nie wiedzą, kiedy ją otwierasz. Działa tylko przez Wi-Fi.</string>
+    <string name="remote_image_prefetch_needs_always">Aby z tego korzystać, ustaw ładowanie zdalnych obrazów na Zawsze ładuj.</string>
+    <string name="remote_image_clear_title">Wyczyść zapisane obrazy</string>
+    <string name="remote_image_clear_subtitle">Usuwa obrazy zapisane na tym urządzeniu.</string>
+    <string name="remote_image_cache_cleared">Zapisane obrazy zostały wyczyszczone</string>
     <string name="block_remote_images_subtitle_security">Zapobiegaj ładowaniu przez wiadomości e-mail obrazów przechowywanych na zewnętrznych serwerach</string>
     <string name="block_remote_images_info_title">Blokuj zdalne obrazy</string>
     <string name="block_remote_images_info_desc">Wiadomości mogą wczytywać obrazy z zewnętrznych serwerów. Wtedy serwer nadawcy widzi Twój adres IP i wie, że wiadomość została otwarta. Ta opcja blokuje wczytywanie takich obrazów.</string>

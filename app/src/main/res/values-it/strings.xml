@@ -2030,6 +2030,14 @@
     <string name="remote_images_never">Non caricare mai</string>
     <string name="remote_images_ask">Chiedi prima di caricare</string>
     <string name="remote_images_always">Carica sempre</string>
+    <string name="remote_image_keep_title">Conserva le immagini caricate su questo dispositivo</string>
+    <string name="remote_image_keep_subtitle">Salva in forma cifrata le immagini che hai caricato, così riaprire il messaggio non invia nulla al mittente.</string>
+    <string name="remote_image_prefetch_title">Carica le immagini all’arrivo della posta</string>
+    <string name="remote_image_prefetch_subtitle">Scarica le immagini tramite Aster all’arrivo della posta, così i mittenti non sanno quando la apri. Funziona solo in Wi-Fi.</string>
+    <string name="remote_image_prefetch_needs_always">Per usare questa opzione, imposta il caricamento delle immagini remote su Carica sempre.</string>
+    <string name="remote_image_clear_title">Cancella immagini salvate</string>
+    <string name="remote_image_clear_subtitle">Elimina le immagini salvate su questo dispositivo.</string>
+    <string name="remote_image_cache_cleared">Immagini salvate cancellate</string>
     <string name="block_remote_images_subtitle_security">Impedisci alle email di caricare immagini ospitate su server esterni</string>
     <string name="block_remote_images_info_title">Blocca immagini remote</string>
     <string name="block_remote_images_info_desc">Le email possono caricare immagini da server esterni. Al caricamento il server del mittente vede il tuo indirizzo IP e sa che hai aperto il messaggio. Questa opzione ne impedisce il caricamento.</string>

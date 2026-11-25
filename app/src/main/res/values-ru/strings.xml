@@ -2034,6 +2034,14 @@
     <string name="remote_images_never">Никогда не загружать</string>
     <string name="remote_images_ask">Спрашивать перед загрузкой</string>
     <string name="remote_images_always">Всегда загружать</string>
+    <string name="remote_image_keep_title">Сохранять загруженные изображения на этом устройстве</string>
+    <string name="remote_image_keep_subtitle">Сохраняет загруженные изображения в зашифрованном виде, поэтому при повторном открытии письма отправителю ничего не отправляется.</string>
+    <string name="remote_image_prefetch_title">Загружать изображения при получении почты</string>
+    <string name="remote_image_prefetch_subtitle">Получает изображения через Aster при поступлении почты, поэтому отправители не узнают, когда вы её открываете. Работает только по Wi-Fi.</string>
+    <string name="remote_image_prefetch_needs_always">Чтобы использовать эту функцию, выберите для загрузки удалённых изображений вариант «Всегда загружать».</string>
+    <string name="remote_image_clear_title">Очистить сохранённые изображения</string>
+    <string name="remote_image_clear_subtitle">Удаляет изображения, сохранённые на этом устройстве.</string>
+    <string name="remote_image_cache_cleared">Сохранённые изображения удалены</string>
     <string name="block_remote_images_subtitle_security">Запретить письмам загружать изображения с внешних серверов</string>
     <string name="block_remote_images_info_title">Блокировать внешние изображения</string>
     <string name="block_remote_images_info_desc">Письма могут загружать изображения с чужих серверов. При загрузке сервер отправителя видит ваш IP-адрес и узнаёт, что вы открыли письмо. Эта настройка не даёт им загрузиться.</string>

@@ -350,6 +350,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
     interface ImageLoaderEntryPoint {
         fun token_store(): TokenStore
         fun account_store(): org.astermail.android.storage.AccountStore
+        fun session_key_store(): org.astermail.android.storage.SessionKeyStore
         fun database(): dagger.Lazy<org.astermail.android.storage.search.AsterDatabase>
         fun aster_profile_resolver(): org.astermail.android.mail.AsterProfileResolver
         fun contacts_repository(): dagger.Lazy<org.astermail.android.contacts.ContactsRepository>
