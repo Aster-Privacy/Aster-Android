@@ -81,7 +81,7 @@ private fun ends_word(text: String, index: Int): Boolean =
 private fun starts_with_at(text: String, index: Int, prefix: String): Boolean =
     text.regionMatches(index, prefix, 0, prefix.length, ignoreCase = true)
 
-private fun replace_tags(text: String, replacement: String): String {
+internal fun replace_tags(text: String, replacement: String): String {
     var lt = text.indexOf('<')
     if (lt < 0) return text
     val out = StringBuilder(text.length)
