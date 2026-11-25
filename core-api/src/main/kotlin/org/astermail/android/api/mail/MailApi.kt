@@ -637,6 +637,7 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
             if (after != null) parameter("after", after)
             parameter("limit", limit)
         }
+        if (response.status.value == 404) return ImportedPasswordMetaPage()
         return decode_or_throw(response)
     }
 

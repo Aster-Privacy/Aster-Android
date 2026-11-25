@@ -380,6 +380,23 @@ class SentMailResealTest {
         coVerify(exactly = 3) { api.list_imported_password_meta("imp-a", any()) }
     }
 
+    @Test
+    fun stops_imported_paging_when_the_cursor_does_not_advance() = runTest {
+        val api = mail_api()
+        coEvery { api.list_messages(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) } returns
+            MailItemsListResponse(items = emptyList(), has_more = false)
+        val already_new = imported_row("imp-a", SentMailResealCrypto.seal("{}".toByteArray(), new_pass), "AQIDBAUGBwgJCgsM")
+        coEvery { api.list_imported_password_meta(null, any()) } returns
+            ImportedPasswordMetaPage(attachments = listOf(already_new), next_cursor = "imp-a")
+        coEvery { api.list_imported_password_meta("imp-a", any()) } returns
+            ImportedPasswordMetaPage(attachments = listOf(already_new), next_cursor = "imp-a")
+
+        val summary = SentMailResealer(api).run(old_pass, new_pass)
+
+        assertEquals(SentMailResealSummary(), summary)
+        coVerify(exactly = 1) { api.list_imported_password_meta("imp-a", any()) }
+    }
+
     private fun mail_api(): MailApi = mockk<MailApi>().also {
         coEvery { it.list_imported_password_meta(any(), any()) } returns ImportedPasswordMetaPage()
     }

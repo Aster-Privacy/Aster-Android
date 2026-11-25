@@ -178,8 +178,9 @@ class SentMailResealer @Inject constructor(
                 }
                 on_progress?.invoke(summary)
             }
-            after = page.next_cursor
-            if (after.isNullOrEmpty() || page.attachments.isEmpty()) break
+            val next = page.next_cursor
+            if (next.isNullOrEmpty() || next == after || page.attachments.isEmpty()) break
+            after = next
         }
         return summary
     }

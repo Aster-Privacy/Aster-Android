@@ -466,8 +466,9 @@ class AccountDataConversion internal constructor(
                 counts.tally(convert_attachment_row(imported_attachment(row), keys))
                 yield()
             }
-            after = page.next_cursor
-            if (after.isNullOrEmpty() || page.attachments.isEmpty()) return true
+            val next = page.next_cursor
+            if (next.isNullOrEmpty() || next == after || page.attachments.isEmpty()) return true
+            after = next
         }
     }
 
