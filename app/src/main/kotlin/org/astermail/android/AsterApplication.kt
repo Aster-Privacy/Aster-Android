@@ -179,6 +179,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         }
         runCatching { org.astermail.android.ui.common.apply_app_night_mode(this) }
         start_secure_prefs_warm()
+        start_category_patterns_warm()
         runCatching { start_inbox_prefetch() }
         org.astermail.android.ui.theme.custom_theme_image.init(this)
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
@@ -233,6 +234,13 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
                 org.astermail.android.storage.SecurePrefs.warm(this, secure_prefs_namespaces)
             }
         }.apply { name = "aster-prefs-warm" }.start()
+    }
+
+    private fun start_category_patterns_warm() {
+        Thread {
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND)
+            runCatching { org.astermail.android.mail.warm_category_patterns() }
+        }.apply { name = "aster-category-warm" }.start()
     }
 
     private fun start_inbox_prefetch() {
