@@ -428,11 +428,20 @@ class RatchetDecryptor @Inject constructor(
                     )
                 }
                 if (recovered != null) {
+                    val claim_identity = recovered.first.remote_identity_key ?: envelope.sender_identity_key
+                    val claim_continuity = sender_continuity(
+                        conversation_id,
+                        sender_email,
+                        claim_identity,
+                        session_bound = recovered.first.remote_identity_key != null,
+                        matched_address,
+                    )
                     val claim = identity_pins.claim_bootstrap(
                         sender_email,
                         envelope.sender_identity_key,
                         recipient,
                         message_id,
+                        sender_known = claim_continuity == SenderIdentityContinuity.KNOWN,
                     )
                     if (claim == BootstrapClaim.REPLAYED) throw ReplayedOpeningException()
                     bootstrap_claim = claim

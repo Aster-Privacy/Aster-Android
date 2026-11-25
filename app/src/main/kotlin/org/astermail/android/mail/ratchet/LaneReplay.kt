@@ -82,7 +82,13 @@ object LaneReplay {
         ).joinToString("\n"),
     )
 
-    fun claim_bootstrap(stored: Any?, key: String, message: String, now: Long): BootstrapRecordClaim {
+    fun claim_bootstrap(
+        stored: Any?,
+        key: String,
+        message: String,
+        now: Long,
+        may_evict: Boolean = true,
+    ): BootstrapRecordClaim {
         val record = normalize(stored)
         val prior = record.e.firstOrNull { it.k == key }
         if (prior != null) {
@@ -91,6 +97,9 @@ object LaneReplay {
                 record,
                 changed = false,
             )
+        }
+        if (!may_evict && record.e.size >= MAX_ENTRIES) {
+            return BootstrapRecordClaim(BootstrapClaim.UNKNOWN, record, changed = false)
         }
         val claim = if (record.f > 0) BootstrapClaim.UNKNOWN else BootstrapClaim.FIRST
         return BootstrapRecordClaim(

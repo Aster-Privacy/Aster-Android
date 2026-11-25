@@ -248,7 +248,7 @@ class RatchetDecryptorTest {
         val identity_pins = mockk<RatchetIdentityPinStore>(relaxed = true)
         every { identity_pins.sender_continuity(any(), any(), any()) } returns continuity
         coEvery { identity_pins.is_replayed_bootstrap(any(), any()) } returns replayed_bootstrap
-        coEvery { identity_pins.claim_bootstrap(any(), any(), any(), any()) } returns BootstrapClaim.FIRST
+        coEvery { identity_pins.claim_bootstrap(any(), any(), any(), any(), any()) } returns BootstrapClaim.FIRST
         coEvery { identity_pins.record(any(), any(), any(), any()) } returns IdentityPinOutcome.UNCHANGED
         every { identity_pins.lane_sender_pin(any()) } returns LaneSenderPin.UNPINNED
         coEvery { identity_pins.claim_lane_nonce(any(), any(), any(), any(), any(), any()) } returns

@@ -278,6 +278,27 @@ class LaneReplayTest {
     }
 
     @Test
+    fun an_unconfirmed_start_does_not_push_out_recorded_ones() {
+        var record: Any? = LaneReplay.EMPTY
+        for (index in 0 until LaneReplay.MAX_ENTRIES) {
+            record = LaneReplay.claim_bootstrap(record, "k$index", "m$index", 10L + index).record
+        }
+        val unconfirmed = LaneReplay.claim_bootstrap(record, "k-new", "m-new", 5_000, may_evict = false)
+
+        assertEquals(BootstrapClaim.UNKNOWN, unconfirmed.claim)
+        assertFalse(unconfirmed.changed)
+        assertEquals(
+            BootstrapClaim.REPLAYED,
+            LaneReplay.claim_bootstrap(unconfirmed.record, "k0", "m-other", 6_000).claim,
+        )
+
+        val roomy = LaneReplay.claim_bootstrap(LaneReplay.EMPTY, "k", "m", 10, may_evict = false)
+
+        assertEquals(BootstrapClaim.FIRST, roomy.claim)
+        assertTrue(roomy.changed)
+    }
+
+    @Test
     fun a_record_with_a_floor_still_recognizes_what_it_holds() {
         val stored = LaneReplayRecord(50, listOf(LaneReplayEntry("k", "m", 60)))
 
