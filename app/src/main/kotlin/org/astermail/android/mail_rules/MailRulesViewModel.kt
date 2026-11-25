@@ -168,12 +168,13 @@ class MailRulesViewModel @Inject constructor(
         }
     }
 
-    fun delete_rule(rule_id: String) {
+    fun delete_rule(rule_id: String, on_done: (Boolean) -> Unit = {}) {
         val original = _state.value.rules
         _state.value = _state.value.copy(rules = original.filter { it.id != rule_id })
         viewModelScope.launch {
             try {
                 api.delete(rule_id)
+                on_done(true)
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 val held = org.astermail.android.guard.guard_held_of(t)
@@ -182,6 +183,7 @@ class MailRulesViewModel @Inject constructor(
                 } else {
                     _state.value.copy(rules = original, error = R.string.rules_error_delete)
                 }
+                on_done(false)
             }
         }
     }

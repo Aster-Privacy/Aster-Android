@@ -89,6 +89,7 @@ data class ContactsUiState(
     val import_total: Int = 0,
     val pending_ids: Set<String> = emptySet(),
     val contacts_loaded: Boolean = false,
+    val contacts_settled: Boolean = false,
     val groups_loaded: Boolean = false,
     val groups_load_failed: Boolean = false,
     val group_memberships: Map<String, Set<String>>? = null,
@@ -179,6 +180,7 @@ class ContactsViewModel @Inject constructor(
                     _state.value = with_contacts(_state.value, kept).copy(
                         is_loading = false,
                         contacts_loaded = true,
+                        contacts_settled = true,
                     )
                     if (expired_ids.isNotEmpty()) {
                         launch { repository.bulk_delete_contacts(expired_ids.toList()) }
@@ -188,8 +190,11 @@ class ContactsViewModel @Inject constructor(
                     if (!quiet) {
                         _state.value = _state.value.copy(
                             is_loading = false,
+                            contacts_settled = true,
                             error = friendly_error(t),
                         )
+                    } else {
+                        _state.value = _state.value.copy(contacts_settled = true)
                     }
                 },
             )

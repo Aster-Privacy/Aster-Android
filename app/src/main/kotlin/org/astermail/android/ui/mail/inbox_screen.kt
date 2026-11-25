@@ -779,7 +779,6 @@ fun InboxScreen(
     }
     val prefetch_context = LocalContext.current
     val toast_context = LocalContext.current
-    warm_body_web_view()
 
     failed_send_dialog(mail_vm)
 
@@ -1309,6 +1308,11 @@ fun InboxScreen(
             threads.filter { thread_matches_inbox_filter(it, active_filter) }
         } else {
             threads
+        }
+    }
+    LaunchedEffect(visible_threads) {
+        withContext(Dispatchers.Default) {
+            precompute_inbox_order_hints(visible_threads.map { it.newest })
         }
     }
     val visible_has_unread = remember(visible_threads) { visible_threads.any { it.has_unread } }
@@ -2439,6 +2443,9 @@ fun InboxScreen(
                 )
                 val skeleton_phase by remember_skeleton_phase(wanted = skeleton_now)
                 skeleton_showing[0] = skeleton_phase == SkeletonPhase.skeleton
+                warm_body_web_view(ready = !skeleton_now && !rows_deriving && threads.isNotEmpty()) {
+                    list_state.isScrollInProgress
+                }
                 val first_frame_ready = org.astermail.android.ui.common.inbox_first_frame_ready(
                     state_matches_folder = state_matches_folder,
                     has_rows = threads.isNotEmpty(),
@@ -2451,7 +2458,7 @@ fun InboxScreen(
                 val handoff = Modifier.skeleton_handoff(skeleton_phase)
                 val row_geometry = remember_row_geometry(skeleton_geometry_of(settings_state.preferences))
                 val record_row_height = remember_row_height_recorder()
-                if (skeleton_now || rows_deriving || skeleton_phase != SkeletonPhase.content) {
+                if (skeleton_now || rows_deriving || skeleton_phase == SkeletonPhase.blank) {
                     Box(Modifier.padding(top = header_height_dp))
                 } else if (inbox_error_now) {
                     Box(Modifier.padding(top = header_height_dp).then(handoff)) {

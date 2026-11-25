@@ -40,17 +40,17 @@ import org.astermail.android.design.aster_fade_in
 import org.astermail.android.design.aster_fade_out
 import org.astermail.android.design.aster_threshold_easing
 
-const val nav_anim_forward_ms = 300
-const val nav_anim_backward_ms = 300
+const val nav_anim_forward_ms = 280
+const val nav_anim_backward_ms = 240
 const val nav_anim_duration_ms = nav_anim_forward_ms
 const val nav_slide_fraction = 0.1f
 const val nav_sheet_exit_ms = 250
-private const val nav_slide_dp = 30f
+private const val nav_slide_dp = 44f
 
 private val nav_fade_out_easing =
-    aster_threshold_easing(AsterEasing.emphasized, 0f, AsterMotionSpec.fade_through_threshold)
+    aster_threshold_easing(LinearEasing, 0f, AsterMotionSpec.fade_through_threshold)
 private val nav_fade_in_easing =
-    aster_threshold_easing(AsterEasing.emphasized, AsterMotionSpec.fade_through_threshold, 1f)
+    aster_threshold_easing(AsterEasing.emphasized_decelerate, 0.08f, 0.6f)
 private val nav_sheet_fade_in_easing = aster_threshold_easing(LinearEasing, 0f, 0.3f)
 private val nav_predictive_fade_out_easing = aster_threshold_easing(LinearEasing, 0.8f, 1f)
 
@@ -58,13 +58,13 @@ private fun default_slide_px(): Int = (nav_slide_dp * Resources.getSystem().disp
 
 private fun shared_axis_enter(duration: Int, from_end: Boolean, slide_px: Int): EnterTransition =
     slideInHorizontally(
-        animationSpec = tween(durationMillis = duration, easing = AsterEasing.emphasized),
+        animationSpec = tween(durationMillis = duration, easing = AsterEasing.emphasized_decelerate),
         initialOffsetX = { (if (from_end) 1 else -1) * slide_px },
     ) + fadeIn(animationSpec = tween(durationMillis = duration, easing = nav_fade_in_easing))
 
 private fun shared_axis_exit(duration: Int, to_start: Boolean, slide_px: Int): ExitTransition =
     slideOutHorizontally(
-        animationSpec = tween(durationMillis = duration, easing = AsterEasing.emphasized),
+        animationSpec = tween(durationMillis = duration, easing = AsterEasing.emphasized_decelerate),
         targetOffsetX = { (if (to_start) -1 else 1) * slide_px },
     ) + fadeOut(animationSpec = tween(durationMillis = duration, easing = nav_fade_out_easing))
 

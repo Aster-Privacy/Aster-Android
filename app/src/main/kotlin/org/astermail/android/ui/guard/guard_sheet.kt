@@ -109,7 +109,9 @@ import java.time.Instant
 import java.util.Locale
 import kotlinx.coroutines.delay
 import org.astermail.android.R
+import org.astermail.android.ui.settings.detail.detail_collapsing_title
 import org.astermail.android.ui.settings.detail.info_dialog_button
+import org.astermail.android.ui.settings.detail.info_dialog_button_size
 import org.astermail.android.design.AsterEasing
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterShapes
@@ -302,6 +304,9 @@ fun guard_page_hero(title: String, body: String? = null, info: String? = null) {
         guard_wordmark()
         Spacer(Modifier.height(AsterSpacing.xl))
         Row(verticalAlignment = Alignment.CenterVertically) {
+            if (info != null) {
+                Spacer(Modifier.width(AsterSpacing.xs + info_dialog_button_size))
+            }
             Text(
                 text = title,
                 color = AsterMaterial.colors.text_primary,
@@ -309,7 +314,10 @@ fun guard_page_hero(title: String, body: String? = null, info: String? = null) {
                 lineHeight = 28.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.weight(1f, fill = false).semantics { heading() },
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .detail_collapsing_title(title)
+                    .semantics { heading() },
             )
             if (info != null) {
                 Spacer(Modifier.width(AsterSpacing.xs))

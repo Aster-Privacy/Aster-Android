@@ -131,12 +131,7 @@ fun SessionsScreen(
                 v_gap(AsterSpacing.lg)
             }
             if (other_sessions.isNotEmpty()) {
-                section_header_action(
-                    title = stringResource(R.string.sessions_other_devices_section),
-                    action_label = stringResource(R.string.sign_out_others_action),
-                    enabled = true,
-                    on_click = { show_logout_others_confirm = true },
-                )
+                section_label(stringResource(R.string.sessions_other_devices_section))
                 AsterCard(modifier = Modifier.fillMaxWidth()) {
                     other_sessions.forEachIndexed { idx, s ->
                         session_row(
@@ -146,6 +141,12 @@ fun SessionsScreen(
                         if (idx < other_sessions.lastIndex) settings_row_gap()
                     }
                 }
+                v_gap(AsterSpacing.md)
+                org.astermail.android.design.components.AsterDestructiveButton(
+                    label = stringResource(R.string.sign_out_all_other),
+                    onClick = { show_logout_others_confirm = true },
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
         v_gap(AsterSpacing.xxl)

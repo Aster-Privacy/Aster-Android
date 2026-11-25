@@ -197,6 +197,7 @@ internal fun build_email_html(
     text_zoom: Int = 100,
     underline_links: Boolean = false,
     hide_quote_label: String? = null,
+    show_quote_label: String? = null,
 ): String {
     val chip_scale = maxOf(1f, text_zoom.coerceIn(50, 300) / 100f)
     fun scaled_px(value: Float): String = String.format(java.util.Locale.US, "%.1fpx", value * chip_scale)
@@ -343,6 +344,7 @@ a{color:$PAPER_LINK}
         is_newsletter = has_newsletter_layout,
         simple_dark = simple_dark,
         hide_quote_label = hide_quote_label,
+        show_quote_label = show_quote_label,
     )
 
     val html_style = when {
@@ -391,9 +393,15 @@ details.aster-quoted-wrapper{margin-top:18px;margin-bottom:4px}
 .aster-quoted-content.aster-quoted-solo{margin-top:0;padding-top:0;border-top:none}
 a.aster-quote-close,a.aster-quote-cover{display:none}
 details[open].aster-quoted-wrapper>.aster-quote-toggle::before{display:none}
-details[open].aster-quoted-wrapper>.aster-quote-toggle>a.aster-quote-close,#m details[open].aster-quoted-wrapper>.aster-quote-toggle>a.aster-quote-close{display:flex;align-items:center;align-self:stretch;margin:0 -${scaled_px(16f)};padding:0 ${scaled_px(16f)};color:inherit!important;font-family:inherit;font-size:13px;font-weight:500;line-height:1;white-space:nowrap;text-decoration:none!important;-webkit-tap-highlight-color:transparent}
+details[open].aster-quoted-wrapper>.aster-quote-toggle>a.aster-quote-close,#m details[open].aster-quoted-wrapper>.aster-quote-toggle>a.aster-quote-close{display:flex;align-items:center;align-self:stretch;margin:0 -${scaled_px(16f)};padding:0 ${scaled_px(16f)};color:inherit!important;font-family:inherit;font-size:13px;font-weight:500;line-height:1;white-space:nowrap;text-decoration:none!important;-webkit-tap-highlight-color:transparent;pointer-events:auto}
+details[open].aster-quoted-wrapper>.aster-quote-toggle>a.aster-quote-close::after{content:'';position:absolute;top:-${scaled_px(8f)};right:-${scaled_px(8f)};bottom:-${scaled_px(8f)};left:-${scaled_px(8f)}}
+details[open].aster-quoted-wrapper>.aster-quote-toggle,details[open].aster-forwarded-collapse>summary{pointer-events:none}
 details.aster-forwarded-collapse>summary{position:relative}
-details[open].aster-forwarded-collapse>summary>a.aster-quote-cover{display:block;position:absolute;top:0;right:0;bottom:0;left:0}
+details.aster-quote-managed>summary{pointer-events:none!important}
+a.aster-quote-open,#m a.aster-quote-open{display:block!important;position:absolute!important;top:-${scaled_px(8f)}!important;right:-${scaled_px(8f)}!important;bottom:-${scaled_px(8f)}!important;left:-${scaled_px(8f)}!important;margin:0!important;padding:0!important;border:none!important;background:transparent!important;font-size:0!important;line-height:0!important;text-decoration:none!important;pointer-events:auto!important;-webkit-tap-highlight-color:transparent}
+details.aster-forwarded-collapse>summary>a.aster-quote-open,#m details.aster-forwarded-collapse>summary>a.aster-quote-open{top:0!important;right:0!important;bottom:0!important;left:0!important}
+details[open]>summary>a.aster-quote-open,#m details[open]>summary>a.aster-quote-open{display:none!important}
+details[open].aster-forwarded-collapse>summary>a.aster-quote-cover{display:block;position:absolute;top:0;right:0;bottom:0;left:0;pointer-events:auto}
 .aster-quoted-content .aster_quote_attr,.aster-quoted-content .gmail_attr{color:$bq_color;font-size:0.82em;margin-bottom:4px}
 .aster-quoted-content blockquote{margin:0;padding:0 0 0 12px;border-left:2px solid $bq_border2;color:$bq_color}
 .aster-quoted-content blockquote blockquote{border-left-color:$bq_border3}

@@ -115,7 +115,7 @@ fun VacationReplyScreen(
             return@detail_scaffold
         }
         if (state.is_loading) {
-            settings_pending_spinner()
+            vacation_reply_skeleton()
             return@detail_scaffold
         }
 
@@ -272,6 +272,18 @@ fun VacationReplyScreen(
     }
 }
 
+@Composable
+private fun vacation_reply_skeleton() {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        skeleton_hero_card(lines = 1)
+        skeleton_section_label()
+        skeleton_hero_card(lines = 0)
+        skeleton_section_label()
+        skeleton_hero_card(lines = 3)
+        skeleton_section_label()
+        skeleton_hero_card(lines = 0)
+    }
+}
 
 @Composable
 private fun vacation_date_row(

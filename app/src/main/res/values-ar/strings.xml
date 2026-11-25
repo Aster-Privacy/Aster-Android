@@ -278,7 +278,7 @@
     <string name="unsubscribed">تم إلغاء الاشتراك</string>
     <string name="scanning">جارٍ الفحص...</string>
     <string name="no_mailing_lists">لا توجد قوائم بريدية بعد</string>
-    <string name="scan_inbox_hint">انقر على «فحص البريد الوارد» للعثور على النشرات الإخبارية والمرسلين التسويقيين.</string>
+    <string name="scan_inbox_hint">اسحب للأسفل لفحص بريدك الوارد بحثًا عن النشرات الإخبارية والمرسلين التسويقيين.</string>
     <string name="active_tab">نشط</string>
     <string name="unsubscribed_tab">الاشتراكات الملغاة</string>
     <string name="reactivate">إعادة التفعيل</string>
@@ -802,6 +802,7 @@
     <string name="unblock">إلغاء الحظر</string>
     <string name="block_a_sender">حظر مُرسِل</string>
     <string name="block_sender_hint">أدخل عنوان بريد إلكتروني أو نطاقًا. سينتقل البريد الجديد منهم مباشرة إلى الرسائل المزعجة.</string>
+    <string name="block_sender_invalid">أدخل عنوان بريد إلكتروني أو نطاقًا مثل example.com.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">حظر</string>
     <string name="blocked_domain">النطاق بالكامل</string>
@@ -2409,6 +2410,14 @@
         <item quantity="few">تم العثور على %d اشتراكات جديدة</item>
         <item quantity="many">تم العثور على %d اشتراكًا جديدًا</item>
         <item quantity="other">تم العثور على %d اشتراك جديد</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="zero">تم فحص %1$s من %2$s رسالة ولم يتم العثور على مرسلين</item>
+        <item quantity="one">تم فحص %1$s من %2$s رسالة والعثور على مرسل واحد</item>
+        <item quantity="two">تم فحص %1$s من %2$s رسالة والعثور على مرسلَين</item>
+        <item quantity="few">تم فحص %1$s من %2$s رسالة والعثور على %3$s مرسلين</item>
+        <item quantity="many">تم فحص %1$s من %2$s رسالة والعثور على %3$s مرسلًا</item>
+        <item quantity="other">تم فحص %1$s من %2$s رسالة والعثور على %3$s مرسل</item>
     </plurals>
     <string name="reaction_info_title">تفاعل</string>
     <string name="reaction_badge_label">تفاعل جديد</string>

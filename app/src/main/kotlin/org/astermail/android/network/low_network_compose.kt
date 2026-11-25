@@ -23,11 +23,15 @@ package org.astermail.android.network
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import org.astermail.android.api.network.low_network_state
 
+val local_low_network = compositionLocalOf<Boolean?> { null }
+
 @Composable
 fun low_network_active(): Boolean {
+    local_low_network.current?.let { return it }
     val active by low_network_state.is_active.collectAsState()
     return active
 }

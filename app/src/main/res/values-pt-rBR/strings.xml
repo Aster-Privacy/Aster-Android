@@ -278,7 +278,7 @@
     <string name="unsubscribed">cancelado</string>
     <string name="scanning">Analisando...</string>
     <string name="no_mailing_lists">Nenhuma lista de e-mails ainda</string>
-    <string name="scan_inbox_hint">Toque em Analisar caixa de entrada para encontrar newsletters e remetentes de marketing.</string>
+    <string name="scan_inbox_hint">Puxe para baixo para analisar sua caixa de entrada em busca de newsletters e remetentes de marketing.</string>
     <string name="active_tab">Ativo</string>
     <string name="unsubscribed_tab">Cancelados</string>
     <string name="reactivate">Reativar</string>
@@ -801,6 +801,7 @@
     <string name="unblock">Desbloquear</string>
     <string name="block_a_sender">Bloquear um remetente</string>
     <string name="block_sender_hint">Digite um endereço de e-mail ou um domínio. As novas mensagens vão direto para o spam.</string>
+    <string name="block_sender_invalid">Digite um endereço de e-mail ou um domínio como example.com.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">Bloquear</string>
     <string name="blocked_domain">Domínio inteiro</string>
@@ -2374,6 +2375,11 @@
         <item quantity="one">%d inscrição nova encontrada</item>
         <item quantity="many">%d inscrições novas encontradas</item>
         <item quantity="other">%d inscrições novas encontradas</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">%1$s de %2$s mensagens analisadas, %3$s remetente encontrado</item>
+        <item quantity="many">%1$s de %2$s mensagens analisadas, %3$s remetentes encontrados</item>
+        <item quantity="other">%1$s de %2$s mensagens analisadas, %3$s remetentes encontrados</item>
     </plurals>
     <string name="reaction_info_title">Reação</string>
     <string name="reaction_badge_label">Nova reação</string>

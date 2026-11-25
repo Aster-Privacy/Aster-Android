@@ -59,6 +59,8 @@ import org.astermail.android.api.BuildConfig as ApiBuildConfig
 import org.astermail.android.api.auth.PublicProfile
 import org.astermail.android.contacts.ContactPhotoDirectory
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.components.shimmer
+import org.astermail.android.design.components.shimmer_state
 import org.astermail.android.mail.AsterProfileResolverHolder
 import org.astermail.android.mail.OwnAddressAvatars
 import org.astermail.android.mail.is_aster_domain
@@ -103,9 +105,44 @@ private const val FAVICON_RETRY_BASE_DELAY_MS = 700L
 
 private val favicon_blocked_until = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
+object favicon_miss_store {
+    private const val prefs_name = "aster_favicon_misses"
+    private const val max_entries = 500
+    @Volatile private var prefs: android.content.SharedPreferences? = null
+
+    fun attach(context: android.content.Context) {
+        val store = context.applicationContext.getSharedPreferences(prefs_name, android.content.Context.MODE_PRIVATE)
+        prefs = store
+        val now = System.currentTimeMillis()
+        val expired = mutableListOf<String>()
+        for ((domain, value) in store.all) {
+            val until = value as? Long ?: continue
+            if (until > now) favicon_blocked_until.putIfAbsent(domain, until) else expired.add(domain)
+        }
+        if (expired.isNotEmpty()) store.edit().apply { expired.forEach { remove(it) } }.apply()
+    }
+
+    internal fun remember_miss(root_domain: String, until: Long) {
+        val store = prefs ?: return
+        if (store.all.size >= max_entries) return
+        store.edit().putLong(root_domain, until).apply()
+    }
+
+    internal fun forget(root_domain: String) {
+        val store = prefs ?: return
+        if (store.contains(root_domain)) store.edit().remove(root_domain).apply()
+    }
+}
+
 internal fun note_favicon_hit(root_domain: String) = clear_favicon_miss(root_domain)
 
-internal fun note_favicon_definitive_miss(root_domain: String) = mark_favicon_missed(root_domain, FAVICON_MISS_TTL_MS)
+internal fun note_favicon_definitive_miss(root_domain: String) = mark_favicon_definitive_miss(root_domain)
+
+private fun mark_favicon_definitive_miss(root_domain: String) {
+    val until = System.currentTimeMillis() + FAVICON_MISS_TTL_MS
+    favicon_blocked_until[root_domain] = until
+    favicon_miss_store.remember_miss(root_domain, until)
+}
 
 internal fun favicon_recently_missed(root_domain: String): Boolean {
     val blocked_until = favicon_blocked_until[root_domain] ?: return false
@@ -119,7 +156,7 @@ private fun mark_favicon_missed(root_domain: String, ttl_ms: Long) {
 }
 
 private fun clear_favicon_miss(root_domain: String) {
-    favicon_blocked_until.remove(root_domain)
+    if (favicon_blocked_until.remove(root_domain) != null) favicon_miss_store.forget(root_domain)
 }
 
 private fun http_status_of(error: Throwable?): Int? =
@@ -150,6 +187,32 @@ private fun decode_base64_payload(payload: String): ByteArray? {
     if (cleaned.isEmpty()) return null
     return runCatching { Base64.decode(cleaned, Base64.DEFAULT) }.getOrNull()
         ?: runCatching { Base64.decode(cleaned, Base64.URL_SAFE) }.getOrNull()
+}
+
+private const val AVATAR_PENDING_MAX_MS = 1200L
+
+internal fun avatar_shows_initials(loaded: Boolean, failed: Boolean, wait_expired: Boolean): Boolean =
+    !loaded && (failed || wait_expired)
+
+@Composable
+private fun remember_avatar_wait_expired(key: Any?, active: Boolean): Boolean {
+    var expired by remember(key) { mutableStateOf(false) }
+    LaunchedEffect(key, active) {
+        if (!active || expired) return@LaunchedEffect
+        kotlinx.coroutines.delay(AVATAR_PENDING_MAX_MS)
+        expired = true
+    }
+    return expired
+}
+
+@Composable
+private fun Modifier.avatar_fill(loaded: Boolean, loaded_color: Color, show_initials: Boolean, initials_color: Color): Modifier {
+    val pending_state = shimmer_state(animated = false)
+    return when {
+        loaded -> this.background(loaded_color)
+        show_initials -> this.background(initials_color)
+        else -> this.shimmer(pending_state, CircleShape)
+    }
 }
 
 internal fun avatar_already_cached(context: android.content.Context, key: String): Boolean =
@@ -193,15 +256,18 @@ fun SenderAvatar(
         var loaded_pp by remember(resolved_profile_picture) {
             mutableStateOf(avatar_already_cached(context, resolved_profile_picture))
         }
+        var failed_pp by remember(resolved_profile_picture) { mutableStateOf(false) }
+        val pp_wait_expired = remember_avatar_wait_expired(resolved_profile_picture, active = !loaded_pp)
+        val pp_initials = avatar_shows_initials(loaded_pp, failed_pp, pp_wait_expired)
         var pp_drawable by remember(resolved_profile_picture) { mutableStateOf<android.graphics.drawable.Drawable?>(null) }
         val pp_tone = remember_logo_tone(resolved_profile_picture, pp_drawable)
         val pp_backdrop = logo_contrast_backdrop(pp_tone, AsterMaterial.colors.is_dark)
         val pp_inset = if (loaded_pp && pp_backdrop != null) size * logo_backdrop_inset else 0.dp
         Box(
-            modifier = modifier.size(size).clip(CircleShape).background(if (loaded_pp) pp_backdrop ?: Color.Transparent else bg_fb),
+            modifier = modifier.size(size).clip(CircleShape).avatar_fill(loaded_pp, pp_backdrop ?: Color.Transparent, pp_initials, bg_fb),
             contentAlignment = Alignment.Center,
         ) {
-            if (!loaded_pp) {
+            if (pp_initials) {
                 Text(
                     text = initial_for(name, email),
                     color = fg_fb,
@@ -225,6 +291,7 @@ fun SenderAvatar(
                 onState = { state ->
                     loaded_pp = state is coil.compose.AsyncImagePainter.State.Success
                     if (state is coil.compose.AsyncImagePainter.State.Success) pp_drawable = state.result.drawable
+                    if (state is coil.compose.AsyncImagePainter.State.Error && !is_cancelled_favicon_load(state.result.throwable)) failed_pp = true
                 },
                 modifier = Modifier.size(size).padding(pp_inset).clip(CircleShape),
             )
@@ -271,6 +338,9 @@ fun SenderAvatar(
     var loaded by remember(url) { mutableStateOf(avatar_already_cached(context, url)) }
     var attempt by remember(url) { mutableStateOf(0) }
     var pending_attempt by remember(url) { mutableStateOf(0) }
+    var failed by remember(url) { mutableStateOf(false) }
+    val wait_expired = remember_avatar_wait_expired(url, active = !loaded)
+    val show_initials = avatar_shows_initials(loaded, failed, wait_expired)
     var logo_drawable by remember(url) { mutableStateOf<android.graphics.drawable.Drawable?>(null) }
     val logo_tone = remember_logo_tone(url, logo_drawable)
     val is_dark = AsterMaterial.colors.is_dark
@@ -283,10 +353,10 @@ fun SenderAvatar(
     }
 
     Box(
-        modifier = modifier.size(size).clip(CircleShape).background(if (loaded) sender_logo_backdrop(logo_tone, is_dark) else bg),
+        modifier = modifier.size(size).clip(CircleShape).avatar_fill(loaded, sender_logo_backdrop(logo_tone, is_dark), show_initials, bg),
         contentAlignment = Alignment.Center,
     ) {
-        if (!loaded) {
+        if (show_initials) {
             Text(
                 text = initial_for(name, email),
                 color = fg,
@@ -315,9 +385,15 @@ fun SenderAvatar(
                     val error = state.result.throwable
                     when {
                         is_cancelled_favicon_load(error) -> Unit
-                        is_definitive_favicon_miss(error) -> mark_favicon_missed(root_domain, FAVICON_MISS_TTL_MS)
+                        is_definitive_favicon_miss(error) -> {
+                            failed = true
+                            mark_favicon_definitive_miss(root_domain)
+                        }
                         pending_attempt < FAVICON_MAX_ATTEMPTS -> pending_attempt += 1
-                        else -> mark_favicon_missed(root_domain, FAVICON_TRANSIENT_TTL_MS)
+                        else -> {
+                            failed = true
+                            mark_favicon_missed(root_domain, FAVICON_TRANSIENT_TTL_MS)
+                        }
                     }
                 }
             },
@@ -404,10 +480,10 @@ private fun AsterSystemAvatar(
         contentAlignment = Alignment.Center,
     ) {
         Image(
-            painter = painterResource(id = R.drawable.aster_favicon),
+            painter = painterResource(id = R.drawable.aster_wordmark),
             contentDescription = null,
             contentScale = ContentScale.Fit,
-            modifier = Modifier.size(size * 0.78f),
+            modifier = Modifier.size(width = size * 0.72f, height = size * 0.18f),
         )
     }
 }
@@ -442,6 +518,13 @@ private fun AsterDomainAvatar(
     val profile by own_profile_flow.collectAsStateWithLifecycle(
         initialValue = profiles_flow.value[lower_email],
     )
+    val known_flow = remember(profiles_flow, lower_email) {
+        profiles_flow.map { it.containsKey(lower_email) }.distinctUntilChanged()
+    }
+    val profile_known by known_flow.collectAsStateWithLifecycle(
+        initialValue = profiles_flow.value.containsKey(lower_email),
+    )
+    val profile_wait_expired = remember_avatar_wait_expired(lower_email, active = !profile_known)
 
     val resolved_pic = profile?.profile_picture
         ?.takeIf { it.isNotBlank() }
@@ -453,15 +536,18 @@ private fun AsterDomainAvatar(
         var loaded by remember(resolved_pic) {
             mutableStateOf(avatar_already_cached(context, resolved_pic))
         }
+        var pic_failed by remember(resolved_pic) { mutableStateOf(false) }
+        val pic_wait_expired = remember_avatar_wait_expired(resolved_pic, active = !loaded)
+        val pic_initials = avatar_shows_initials(loaded, pic_failed, pic_wait_expired)
         var pic_drawable by remember(resolved_pic) { mutableStateOf<android.graphics.drawable.Drawable?>(null) }
         val pic_tone = remember_logo_tone(resolved_pic, pic_drawable)
         val pic_backdrop = logo_contrast_backdrop(pic_tone, AsterMaterial.colors.is_dark)
         val pic_inset = if (loaded && pic_backdrop != null) size * logo_backdrop_inset else 0.dp
         Box(
-            modifier = modifier.size(size).clip(CircleShape).background(if (loaded) pic_backdrop ?: Color.Transparent else aster_bg),
+            modifier = modifier.size(size).clip(CircleShape).avatar_fill(loaded, pic_backdrop ?: Color.Transparent, pic_initials, aster_bg),
             contentAlignment = Alignment.Center,
         ) {
-            if (!loaded) {
+            if (pic_initials) {
                 Text(
                     text = initial_for(name, email),
                     color = aster_fg,
@@ -485,6 +571,7 @@ private fun AsterDomainAvatar(
                 onState = { state ->
                     loaded = state is coil.compose.AsyncImagePainter.State.Success
                     if (state is coil.compose.AsyncImagePainter.State.Success) pic_drawable = state.result.drawable
+                    if (state is coil.compose.AsyncImagePainter.State.Error && !is_cancelled_favicon_load(state.result.throwable)) pic_failed = true
                 },
                 modifier = Modifier.size(size).padding(pic_inset).clip(CircleShape),
             )
@@ -492,6 +579,14 @@ private fun AsterDomainAvatar(
         return
     }
 
+    val awaiting_profile = resolver != null &&
+        !profile_known &&
+        !profile_wait_expired &&
+        org.astermail.android.api.network.should_load_remote_avatar(low_network)
+    if (awaiting_profile) {
+        Box(modifier = modifier.size(size).clip(CircleShape).avatar_fill(false, Color.Transparent, false, aster_bg))
+        return
+    }
     initials_circle(name, email, aster_bg, aster_fg, size, modifier)
 }
 

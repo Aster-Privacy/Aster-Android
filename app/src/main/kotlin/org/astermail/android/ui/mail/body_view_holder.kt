@@ -164,6 +164,10 @@ internal class body_view_holder(capacity: Int = LIVE_BODY_VIEW_CAPACITY) {
         entries.evict_detached()
     }
 
+    fun evict_detached_beyond(keep: Int) {
+        entries.evict_detached_beyond(keep)
+    }
+
     fun release_all() {
         released = true
         on_quote_collapse = null
@@ -173,6 +177,55 @@ internal class body_view_holder(capacity: Int = LIVE_BODY_VIEW_CAPACITY) {
     }
 }
 
+internal object retained_body_holders {
+    private val holders = LinkedHashMap<String, body_view_holder>()
+    private var trim_registered = false
+
+    fun take(key: String): body_view_holder? {
+        val holder = holders.remove(key) ?: return null
+        return holder.takeIf { !it.is_released }
+    }
+
+    fun keep(key: String, holder: body_view_holder, ctx: android.content.Context) {
+        if (holder.is_released) return
+        holder.on_quote_collapse = null
+        holder.evict_detached_beyond(RETAINED_BODY_VIEWS_PER_THREAD)
+        val previous = holders.remove(key)
+        if (previous != null && previous !== holder) previous.release_all()
+        holders[key] = holder
+        while (holders.size > RETAINED_THREAD_CAPACITY) {
+            val eldest = holders.keys.first()
+            holders.remove(eldest)?.release_all()
+        }
+        register_trim(ctx.applicationContext)
+    }
+
+    fun release_all() {
+        val all = holders.values.toList()
+        holders.clear()
+        all.forEach { it.release_all() }
+    }
+
+    private fun register_trim(app: android.content.Context) {
+        if (trim_registered) return
+        trim_registered = true
+        app.registerComponentCallbacks(object : android.content.ComponentCallbacks2 {
+            override fun onConfigurationChanged(new_config: android.content.res.Configuration) {
+                release_all()
+            }
+            @Deprecated("Deprecated in Java")
+            override fun onLowMemory() {
+                release_all()
+            }
+            override fun onTrimMemory(level: Int) {
+                if (trim_level_evicts_bodies(level)) release_all()
+            }
+        })
+    }
+}
+
+internal const val RETAINED_THREAD_CAPACITY = 3
+internal const val RETAINED_BODY_VIEWS_PER_THREAD = 2
 internal const val KEPT_BODY_MEASURE_CAPACITY = 96
 
 internal val local_body_view_holder = staticCompositionLocalOf<body_view_holder?> { null }

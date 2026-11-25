@@ -52,4 +52,12 @@
         <item quantity="one">%1$d tracker geblokkeerd</item>
         <item quantity="other">%1$d trackers geblokkeerd</item>
     </plurals>
+    <plurals name="trash_emptied_count">
+        <item quantity="one">%d bericht uit de prullenbak verwijderd</item>
+        <item quantity="other">%d berichten uit de prullenbak verwijderd</item>
+    </plurals>
+    <plurals name="spam_emptied_count">
+        <item quantity="one">%d bericht uit spam verwijderd</item>
+        <item quantity="other">%d berichten uit spam verwijderd</item>
+    </plurals>
 </resources>

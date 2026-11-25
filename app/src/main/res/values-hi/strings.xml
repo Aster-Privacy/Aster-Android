@@ -455,7 +455,7 @@
     <string name="unsubscribed">सदस्यता छोड़ी गई</string>
     <string name="scanning">स्कैन हो रहा है...</string>
     <string name="no_mailing_lists">अभी तक कोई मेलिंग सूची नहीं</string>
-    <string name="scan_inbox_hint">न्यूज़लेटर और प्रचार भेजने वालों को ढूंढने के लिए "इनबॉक्स जांचें" पर टैप करें।</string>
+    <string name="scan_inbox_hint">न्यूज़लेटर और प्रचार भेजने वालों को ढूंढने के लिए इनबॉक्स जांचने हेतु नीचे खींचें।</string>
     <string name="active_tab">सक्रिय</string>
     <string name="unsubscribed_tab">सदस्यता छोड़ी गई</string>
     <string name="reactivate">फिर से चालू करें</string>
@@ -1120,6 +1120,7 @@
     <string name="unblock">अनब्लॉक करें</string>
     <string name="block_a_sender">किसी प्रेषक को ब्लॉक करें</string>
     <string name="block_sender_hint">कोई ईमेल पता या डोमेन डालें। उससे आने वाली नई मेल सीधे स्पैम में जाएगी।</string>
+    <string name="block_sender_invalid">कोई ईमेल पता या example.com जैसा डोमेन दर्ज करें।</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">ब्लॉक करें</string>
     <string name="blocked_domain">पूरा डोमेन</string>
@@ -1629,6 +1630,10 @@
     <plurals name="subscriptions_found_count">
         <item quantity="one">%d नई सदस्यता मिली</item>
         <item quantity="other">%d नई सदस्यताएं मिलीं</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">%2$s में से %1$s संदेश जांचे गए, %3$s प्रेषक मिला</item>
+        <item quantity="other">%2$s में से %1$s संदेश जांचे गए, %3$s प्रेषक मिले</item>
     </plurals>
     <string name="unsubscribe_in_progress">सदस्यता रद्द की जा रही है</string>
     <string name="subscription_hero_summary">%1$s सक्रिय प्रेषक, %2$s की सदस्यता रद्द, %3$s ईमेल</string>

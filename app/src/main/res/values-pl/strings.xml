@@ -278,7 +278,7 @@
     <string name="unsubscribed">wypisano</string>
     <string name="scanning">Skanowanie...</string>
     <string name="no_mailing_lists">Brak list mailingowych</string>
-    <string name="scan_inbox_hint">Dotknij \"Skanuj skrzynkę\", aby znaleźć newslettery i nadawców marketingowych.</string>
+    <string name="scan_inbox_hint">Przeciągnij w dół, aby przeskanować skrzynkę w poszukiwaniu newsletterów i nadawców marketingowych.</string>
     <string name="active_tab">Aktywne</string>
     <string name="unsubscribed_tab">Wypisane</string>
     <string name="reactivate">Reaktywuj</string>
@@ -802,6 +802,7 @@
     <string name="unblock">Odblokuj</string>
     <string name="block_a_sender">Zablokuj nadawcę</string>
     <string name="block_sender_hint">Podaj adres e-mail lub domenę. Nowe wiadomości trafią prosto do spamu.</string>
+    <string name="block_sender_invalid">Wpisz adres e-mail lub domenę, np. example.com.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">Zablokuj</string>
     <string name="blocked_domain">Cała domena</string>
@@ -2387,6 +2388,12 @@
         <item quantity="few">Znaleziono %d nowe subskrypcje</item>
         <item quantity="many">Znaleziono %d nowych subskrypcji</item>
         <item quantity="other">Znaleziono %d nowej subskrypcji</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">Przeskanowano %1$s z %2$s wiadomości, znaleziono %3$s nadawcę</item>
+        <item quantity="few">Przeskanowano %1$s z %2$s wiadomości, znaleziono %3$s nadawców</item>
+        <item quantity="many">Przeskanowano %1$s z %2$s wiadomości, znaleziono %3$s nadawców</item>
+        <item quantity="other">Przeskanowano %1$s z %2$s wiadomości, znaleziono %3$s nadawcy</item>
     </plurals>
     <string name="reaction_info_title">Reakcja</string>
     <string name="reaction_badge_label">Nowa reakcja</string>

@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import kotlinx.coroutines.flow.first
 
 internal const val BODY_WEB_VIEW_WARM_DELAY_MS = 900L
 
@@ -97,7 +98,12 @@ internal object body_web_view_pool {
 }
 
 @Composable
-internal fun warm_body_web_view() {
+internal fun warm_body_web_view(ready: Boolean, busy: () -> Boolean) {
     val ctx = LocalContext.current
-    LaunchedEffect(ctx) { body_web_view_pool.warm(ctx) }
+    val latest_busy = androidx.compose.runtime.rememberUpdatedState(busy)
+    LaunchedEffect(ctx, ready) {
+        if (!ready) return@LaunchedEffect
+        androidx.compose.runtime.snapshotFlow { latest_busy.value() }.first { !it }
+        body_web_view_pool.warm(ctx)
+    }
 }

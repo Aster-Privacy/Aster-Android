@@ -536,7 +536,7 @@
     <string name="unsubscribed">unsubscribed</string>
     <string name="scanning">Scanning...</string>
     <string name="no_mailing_lists">No mailing lists yet</string>
-    <string name="scan_inbox_hint">Tap "Scan inbox" to find newsletters and marketing senders.</string>
+    <string name="scan_inbox_hint">Pull down to scan your inbox for newsletters and marketing senders.</string>
     <string name="active_tab">Active</string>
     <string name="unsubscribed_tab">Unsubscribed</string>
     <string name="reactivate">Reactivate</string>
@@ -1267,6 +1267,7 @@
     <string name="unblock">Unblock</string>
     <string name="block_a_sender">Block a sender</string>
     <string name="block_sender_hint">Enter an email address or a domain. New mail from them goes straight to spam.</string>
+    <string name="block_sender_invalid">Enter an email address or a domain like example.com.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">Block</string>
     <string name="blocked_domain">Entire domain</string>
@@ -1842,6 +1843,10 @@
     <plurals name="subscriptions_found_count">
         <item quantity="one">Found %d new subscription</item>
         <item quantity="other">Found %d new subscriptions</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">Scanned %1$s of %2$s messages and found %3$s sender</item>
+        <item quantity="other">Scanned %1$s of %2$s messages and found %3$s senders</item>
     </plurals>
     <string name="unsubscribe_in_progress">Unsubscribing</string>
     <string name="subscription_hero_summary">%1$s active senders, %2$s unsubscribed, %3$s emails</string>
@@ -3801,6 +3806,7 @@
     <string name="confirm_back_exit">Confirm before exiting</string>
     <string name="confirm_back_exit_subtitle">Press back twice to leave the app from the inbox</string>
     <string name="hide_quoted_text">Hide quoted text</string>
+    <string name="show_quoted_text">Show quoted text</string>
     <string name="toast_position_title">In-app alert position</string>
     <string name="toast_position_subtitle">Where alerts appear while you use the app</string>
     <string name="toast_position_top">Top</string>

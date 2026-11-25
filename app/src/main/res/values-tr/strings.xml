@@ -278,7 +278,7 @@
     <string name="unsubscribed">abonelikten çıkıldı</string>
     <string name="scanning">Taranıyor...</string>
     <string name="no_mailing_lists">Henüz e-posta listesi yok</string>
-    <string name="scan_inbox_hint">Bültenleri ve pazarlama gönderenlerini bulmak için \"Gelen kutusunu tara\" seçeneğine dokunun.</string>
+    <string name="scan_inbox_hint">Bültenleri ve pazarlama gönderenlerini bulmak üzere gelen kutunuzu taramak için aşağı çekin.</string>
     <string name="active_tab">Aktif</string>
     <string name="unsubscribed_tab">Abonelikten çıkılanlar</string>
     <string name="reactivate">Yeniden etkinleştir</string>
@@ -802,6 +802,7 @@
     <string name="unblock">Engeli kaldır</string>
     <string name="block_a_sender">Bir göndereni engelle</string>
     <string name="block_sender_hint">Bir e-posta adresi veya alan adı girin. Yeni iletiler doğrudan spam klasörüne gider.</string>
+    <string name="block_sender_invalid">Bir e-posta adresi veya example.com gibi bir alan adı girin.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">Engelle</string>
     <string name="blocked_domain">Tüm alan adı</string>
@@ -2365,6 +2366,10 @@
     <plurals name="subscriptions_found_count">
         <item quantity="one">%d yeni abonelik bulundu</item>
         <item quantity="other">%d yeni abonelik bulundu</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">%2$s iletiden %1$s tanesi tarandı, %3$s gönderen bulundu</item>
+        <item quantity="other">%2$s iletiden %1$s tanesi tarandı, %3$s gönderen bulundu</item>
     </plurals>
     <string name="reaction_info_title">Tepki</string>
     <string name="reaction_badge_label">Yeni tepki</string>

@@ -134,8 +134,15 @@ fun StorageScreen(
     LaunchedEffect(vm) {
         vm.storage_format_events.collect { saved ->
             val message = if (saved) R.string.storage_format_updated else R.string.storage_format_update_failed
-            org.astermail.android.ui.common.app_toast.show(message.toString())
+            org.astermail.android.ui.common.app_toast.show(context.getString(message))
         }
+    }
+
+    var cleanup_was_running by remember { mutableStateOf(false) }
+    LaunchedEffect(is_emptying_trash, is_emptying_spam) {
+        val running = is_emptying_trash || is_emptying_spam
+        if (cleanup_was_running && !running) vm.load_storage(force = true)
+        cleanup_was_running = running
     }
 
     LaunchedEffect(billing_state.portal_url) {
@@ -296,9 +303,13 @@ fun StorageScreen(
             }
             v_gap(AsterSpacing.lg)
             storage_distribution_section(segments, on_open_folder)
+            val live_trash_count = stats?.trash ?: 0
+            val live_spam_count = stats?.spam ?: 0
+            val frozen_trash_count = remember(is_emptying_trash) { live_trash_count }
+            val frozen_spam_count = remember(is_emptying_spam) { live_spam_count }
             storage_cleanup_section(
-                trash_count = stats?.trash ?: 0,
-                spam_count = stats?.spam ?: 0,
+                trash_count = if (is_emptying_trash) frozen_trash_count else live_trash_count,
+                spam_count = if (is_emptying_spam) frozen_spam_count else live_spam_count,
                 is_emptying_spam = is_emptying_spam,
                 is_emptying_trash = is_emptying_trash,
                 on_empty_trash = { show_empty_trash_confirm = true },
@@ -316,9 +327,7 @@ fun StorageScreen(
             section_label(stringResource(R.string.storage_format))
             val prefs = state.preferences
             if (prefs == null) {
-                AsterCard(modifier = Modifier.fillMaxWidth()) {
-                    settings_pending_spinner(padding = AsterSpacing.xl)
-                }
+                skeleton_card_list(rows = 2)
             } else {
                 Column(
                     modifier = Modifier

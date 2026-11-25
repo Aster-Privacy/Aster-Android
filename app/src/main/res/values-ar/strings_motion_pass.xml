@@ -20,6 +20,7 @@
     <string name="contacts_show_all">إظهار كل جهات الاتصال</string>
     <string name="guard_changes_subtitle">تنتظر التغييرات على حسابك هنا قبل أن تصبح سارية.</string>
     <string name="hide_quoted_text">إخفاء النص المقتبس</string>
+    <string name="show_quoted_text">إظهار النص المقتبس</string>
     <string name="search_keywords_more_exit">خروج, رجوع, نقر مزدوج, رجوع مزدوج, الضغط على رجوع مرتين, زر الرجوع, إغلاق التطبيق, مغادرة التطبيق, exit, back</string>
     <string name="search_keywords_more_quick_actions">إجراءات سريعة, عوامل تصفية سريعة, أزرار البريد الوارد, أزرار الرأس, أزرار التصفية, quick actions</string>
     <string name="search_keywords_more_reduce_motion">تقليل الحركة, الرسوم المتحركة, الحركة, الانتقالات, إمكانية الوصول, دوار الحركة, reduce motion</string>

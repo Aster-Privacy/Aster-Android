@@ -310,7 +310,7 @@ fun swipe_action_row(
         val icon_scale = remember { Animatable(1f) }
         LaunchedEffect(armed, reduce_motion) {
             if (!armed || reduce_motion) {
-                icon_scale.snapTo(1f)
+                if (icon_scale.value != 1f) icon_scale.snapTo(1f)
                 return@LaunchedEffect
             }
             icon_scale.animateTo(1.15f, tween(100, easing = AsterEasing.emphasized_decelerate))

@@ -205,12 +205,13 @@
     <string name="guard_switches_paused">Prośby o logowanie są wstrzymane do %1$s.</string>
     <string name="guard_switches_missing_rescue">Nie masz kodu ratunkowego. Utwórz go, aby zawsze mieć sposób na powrót do konta.</string>
     <string name="guard_switches_not_guard_device">Aby zmienić te ustawienia, użyj jednego z urządzeń Guard.</string>
-    <string name="guard_switches_canceled">Nic się nie zmieniło. Aby zapisać, potwierdź, że to Ty.</string>
+    <string name="guard_switches_canceled">Zmiany nie zostały zapisane. Aby je zapisać, potwierdź swoją tożsamość.</string>
     <string name="guard_switches_code_subtitle">Zatwierdź logowanie bez powiadomienia</string>
     <string name="guard_devices_section">Urządzenia Guard</string>
     <string name="guard_devices_this_device">Ten telefon</string>
     <string name="guard_devices_unnamed">Urządzenie bez nazwy</string>
     <string name="guard_devices_remove_prompt_subtitle">Usuń urządzenie Guard</string>
+    <string name="guard_devices_remove_confirm">%1$s nie będzie już zatwierdzać zmian na Twoim koncie. Aby używać go ponownie, dołącz do Guard z tego urządzenia.</string>
     <string name="guard_security_row_off">Włącz go, aby zatwierdzać logowania i wstrzymywać ryzykowne zmiany z tego telefonu</string>
     <string name="guard_changes_title">Wstrzymane zmiany</string>
     <string name="guard_changes_body">Te zmiany na Twoim koncie czekają, zanim zaczną obowiązywać. Jeśli którejś z nich nie wprowadzono przez Ciebie, anuluj ją.</string>
@@ -226,7 +227,7 @@
     <string name="guard_changes_step_up_required">Aby pominąć oczekiwanie, użyj urządzenia, którego używasz od 7 dni lub dłużej, albo klucza bezpieczeństwa.</string>
     <string name="guard_changes_not_guard_device">Aby anulować lub zatrzymać zmianę, użyj jednego z urządzeń Guard.</string>
     <string name="guard_changes_prompt_subtitle">Potwierdź tę zmianę na koncie</string>
-    <string name="guard_changes_prompt_canceled">Nic się nie zmieniło. Aby kontynuować, potwierdź, że to Ty.</string>
+    <string name="guard_changes_prompt_canceled">Aby kontynuować, potwierdź swoją tożsamość.</string>
     <string name="guard_changes_done_canceled">Zmiana została anulowana.</string>
     <string name="guard_changes_done_skipped">Zmiana zaczęła obowiązywać.</string>
     <string name="guard_changes_done_stopped">Odzyskiwanie zostało zatrzymane.</string>

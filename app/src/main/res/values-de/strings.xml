@@ -279,7 +279,7 @@
     <string name="unsubscribed">Abbestellt</string>
     <string name="scanning">Wird gescannt...</string>
     <string name="no_mailing_lists">Noch keine Mailinglisten</string>
-    <string name="scan_inbox_hint">Tippen Sie auf \"Posteingang scannen\", um Newsletter und Marketing-Absender zu finden.</string>
+    <string name="scan_inbox_hint">Ziehen Sie nach unten, um Ihren Posteingang nach Newslettern und Marketing-Absendern zu durchsuchen.</string>
     <string name="active_tab">Aktiv</string>
     <string name="unsubscribed_tab">Abbestellt</string>
     <string name="reactivate">Reaktivieren</string>
@@ -803,6 +803,7 @@
     <string name="unblock">Entsperren</string>
     <string name="block_a_sender">Absender blockieren</string>
     <string name="block_sender_hint">Geben Sie eine E-Mail-Adresse oder eine Domain ein. Neue E-Mails von dort landen direkt im Spam.</string>
+    <string name="block_sender_invalid">Geben Sie eine E-Mail-Adresse oder eine Domain wie example.com ein.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">Blockieren</string>
     <string name="blocked_domain">Gesamte Domain</string>
@@ -2366,6 +2367,10 @@
     <plurals name="subscriptions_found_count">
         <item quantity="one">%d neues Abo gefunden</item>
         <item quantity="other">%d neue Abos gefunden</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">%1$s von %2$s Nachrichten gescannt, %3$s Absender gefunden</item>
+        <item quantity="other">%1$s von %2$s Nachrichten gescannt, %3$s Absender gefunden</item>
     </plurals>
     <string name="reaction_info_title">Reaktion</string>
     <string name="reaction_badge_label">Neue Reaktion</string>

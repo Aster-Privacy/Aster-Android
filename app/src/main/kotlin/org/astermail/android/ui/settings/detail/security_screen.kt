@@ -204,6 +204,7 @@ fun SecurityScreen(
 
     val lock_vm: AppLockViewModel = hiltViewModel()
     val guard_entry_vm: org.astermail.android.ui.guard.GuardEntryViewModel = hiltViewModel()
+    remember(guard_entry_vm) { guard_entry_vm.bind_account(vm.account_store.get_current_id()) }
     val guard_entry by guard_entry_vm.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { guard_entry_vm.refresh() }
 
@@ -236,12 +237,13 @@ fun SecurityScreen(
         state.login_alerts_enabled != null &&
         state.vanguard_enabled != null &&
         (state.hardware_keys_loaded || state.hardware_keys_load_failed) &&
+        guard_entry.loaded &&
         !state.is_loading
 
     var content_ready by remember {
         mutableStateOf(
             sec != null && prefs != null && state.login_alerts_enabled != null && state.vanguard_enabled != null &&
-                (state.hardware_keys_loaded || state.hardware_keys_load_failed),
+                (state.hardware_keys_loaded || state.hardware_keys_load_failed) && guard_entry.loaded,
         )
     }
     LaunchedEffect(security_signals_ready) {

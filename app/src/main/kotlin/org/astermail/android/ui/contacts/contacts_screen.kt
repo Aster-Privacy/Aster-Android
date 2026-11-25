@@ -46,6 +46,20 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationException
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -305,6 +319,81 @@ fun ContactsScreen(
         .asPaddingValues()
         .calculateBottomPadding()
     val contacts_list_state = androidx.compose.foundation.lazy.rememberLazyListState()
+    val drag_order = remember(grouped) { grouped.values.flatMap { group -> group.map { it.id } } }
+    val drag_index = remember(drag_order) {
+        HashMap<String, Int>(drag_order.size * 2).also { map ->
+            drag_order.forEachIndexed { i, id -> map[id] = i }
+        }
+    }
+    val latest_drag_order = rememberUpdatedState(drag_order)
+    val latest_drag_index = rememberUpdatedState(drag_index)
+    val latest_selected_ids = rememberUpdatedState(ui_state.selected_ids)
+    val contact_haptics_enabled = org.astermail.android.ui.theme.local_accessibility.current.haptic_enabled
+    val contact_haptics = LocalHapticFeedback.current
+    val contact_density = LocalDensity.current
+    val drag_anchor_index = remember { mutableIntStateOf(-1) }
+    val drag_last_index = remember { mutableIntStateOf(-1) }
+    val drag_pre_selected = remember { mutableStateListOf<String>() }
+    val drag_pointer_y = remember { mutableFloatStateOf(-1f) }
+    val drag_viewport_height = remember { mutableFloatStateOf(0f) }
+    var drag_selecting by remember { mutableStateOf(false) }
+
+    fun contact_index_at_offset(y: Float): Int? {
+        val info = contacts_list_state.layoutInfo
+        val item_y = y + info.viewportStartOffset
+        val entry = info.visibleItemsInfo.firstOrNull { entry ->
+            item_y >= entry.offset && item_y < entry.offset + entry.size
+        } ?: return null
+        val key = entry.key as? String ?: return null
+        return latest_drag_index.value[key]
+    }
+
+    fun apply_contact_drag_selection(y: Float) {
+        val anchor = drag_anchor_index.intValue
+        if (anchor < 0) return
+        val idx = contact_index_at_offset(y) ?: return
+        if (idx == drag_last_index.intValue) return
+        drag_last_index.intValue = idx
+        val order = latest_drag_order.value
+        val target = LinkedHashSet<String>(drag_pre_selected)
+        for (i in minOf(anchor, idx)..maxOf(anchor, idx)) {
+            order.getOrNull(i)?.let { target.add(it) }
+        }
+        val current = latest_selected_ids.value
+        if (target.size != current.size || !target.containsAll(current)) {
+            if (contact_haptics_enabled) contact_haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            vm.set_selection(target)
+        }
+    }
+
+    val drag_edge_px = with(contact_density) { 72.dp.toPx() }
+    LaunchedEffect(drag_selecting) {
+        if (!drag_selecting) return@LaunchedEffect
+        while (true) {
+            withFrameNanos { }
+            val y = drag_pointer_y.floatValue
+            val viewport = drag_viewport_height.floatValue
+            if (y < 0f || viewport <= 0f) continue
+            val info = contacts_list_state.layoutInfo
+            val content_top = info.beforeContentPadding.toFloat()
+            val content_bottom = viewport - info.afterContentPadding.toFloat()
+            val usable = content_bottom - content_top
+            if (usable <= 0f) continue
+            val edge = minOf(drag_edge_px, usable / 3f)
+            if (edge <= 0f) continue
+            val top_bound = content_top + edge
+            val bottom_bound = content_bottom - edge
+            val ratio = when {
+                y < top_bound -> -((top_bound - y) / edge)
+                y > bottom_bound -> (y - bottom_bound) / edge
+                else -> 0f
+            }.coerceIn(-1f, 1f)
+            if (ratio != 0f) {
+                contacts_list_state.scrollBy(ratio * 26f)
+                apply_contact_drag_selection(y.coerceIn(content_top, content_bottom - 1f))
+            }
+        }
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -594,6 +683,8 @@ fun ContactsScreen(
                 }
             }
 
+            val contacts_pending = ui_state.contacts.isEmpty() &&
+                (ui_state.is_loading || (!ui_state.contacts_settled && ui_state.error == null))
             if (ui_state.tab == ContactsTab.GROUPS) {
                 groups_pane(
                     groups = filtered_groups,
@@ -606,6 +697,8 @@ fun ContactsScreen(
                     on_edit = { editing_group = it },
                     on_delete = { pending_group_delete = it },
                 )
+            } else if (ui_state.tab == ContactsTab.TRASH && contacts_pending) {
+                Spacer(Modifier.weight(1f).fillMaxWidth())
             } else if (ui_state.tab == ContactsTab.TRASH) {
                 trash_pane(
                     contacts = filtered_trash,
@@ -638,7 +731,7 @@ fun ContactsScreen(
                     )
                 }
 
-                if (ui_state.is_loading && ui_state.contacts.isEmpty()) {
+                if (contacts_pending) {
                     Box(
                         modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = nav_bottom),
                         contentAlignment = Alignment.Center,
@@ -672,7 +765,72 @@ fun ContactsScreen(
                 } else {
                     LazyColumn(
                         state = contacts_list_state,
-                        modifier = Modifier.weight(1f).lazy_top_fade(contacts_list_state),
+                        modifier = Modifier
+                            .weight(1f)
+                            .lazy_top_fade(contacts_list_state)
+                            .pointerInput(Unit) {
+                                val press_slop = viewConfiguration.touchSlop
+                                val long_press_ms = viewConfiguration.longPressTimeoutMillis
+                                val drag_start_slop = 24.dp.toPx()
+                                awaitEachGesture {
+                                    val down = awaitFirstDown(
+                                        requireUnconsumed = false,
+                                        pass = PointerEventPass.Initial,
+                                    )
+                                    val anchor_index = contact_index_at_offset(down.position.y)
+                                    if (anchor_index == null) return@awaitEachGesture
+                                    var long_pressed = false
+                                    var aborted = false
+                                    try {
+                                        withTimeout(long_press_ms) {
+                                            while (true) {
+                                                val event = awaitPointerEvent(PointerEventPass.Initial)
+                                                val change = event.changes.firstOrNull()
+                                                if (change == null || !change.pressed) {
+                                                    aborted = true
+                                                    break
+                                                }
+                                                if ((change.position - down.position).getDistance() > press_slop) {
+                                                    aborted = true
+                                                    break
+                                                }
+                                            }
+                                        }
+                                    } catch (_: PointerEventTimeoutCancellationException) {
+                                        long_pressed = true
+                                    }
+                                    if (!long_pressed || aborted) return@awaitEachGesture
+                                    var drag_started = false
+                                    try {
+                                        while (true) {
+                                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                                            val change = event.changes.firstOrNull() ?: break
+                                            val has_selection = latest_selected_ids.value.isNotEmpty()
+                                            if (drag_started || has_selection) change.consume()
+                                            if (!change.pressed) break
+                                            if (!has_selection) continue
+                                            if ((change.position - down.position).getDistance() < drag_start_slop) continue
+                                            if (!drag_started) {
+                                                drag_anchor_index.intValue = anchor_index
+                                                drag_last_index.intValue = anchor_index
+                                                drag_pre_selected.clear()
+                                                drag_pre_selected.addAll(latest_selected_ids.value)
+                                                drag_viewport_height.floatValue = size.height.toFloat()
+                                                drag_started = true
+                                                drag_selecting = true
+                                            }
+                                            drag_pointer_y.floatValue = change.position.y
+                                            apply_contact_drag_selection(change.position.y)
+                                        }
+                                    } finally {
+                                        drag_selecting = false
+                                        drag_pointer_y.floatValue = -1f
+                                        drag_anchor_index.intValue = -1
+                                        drag_last_index.intValue = -1
+                                        drag_pre_selected.clear()
+                                    }
+                                }
+                            },
                         contentPadding = PaddingValues(bottom = 96.dp + nav_bottom),
                     ) {
                         if (!filter_favorites && query.isBlank()) {

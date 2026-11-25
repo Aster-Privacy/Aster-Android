@@ -184,6 +184,19 @@ internal fun skeleton_section_label() {
 }
 
 @Composable
+internal fun settings_page_skeleton(rows: Int = 3) {
+    skeleton_section_label()
+    skeleton_card_list(rows = rows)
+}
+
+@Composable
+internal fun settings_hero_skeleton(rows: Int = 3, bar: Boolean = false) {
+    skeleton_hero_card(lines = 2, bar = bar)
+    Spacer(Modifier.height(AsterSpacing.md))
+    skeleton_card_list(rows = rows)
+}
+
+@Composable
 internal fun settings_load_spinner(modifier: Modifier = Modifier, size: Dp = 24.dp) {
     org.astermail.android.design.components.aster_spinner(
         color = org.astermail.android.design.AsterMaterial.colors.accent_blue,

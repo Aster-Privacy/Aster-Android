@@ -66,6 +66,8 @@ import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.ui.mail.MessageAttachment
 
 private const val INBOX_FETCH_BACKSTOP_MS = 50_000L
+private const val REACTION_WARM_TIMEOUT_MS = 1_500L
+private const val RESOLVED_REACTION_CACHE_SIZE = 512
 private const val PULL_REFRESH_BACKSTOP_MS = 20_000L
 private const val PENDING_DRAIN_BEFORE_REFRESH_MS = 8_000L
 private const val LIVE_SYNC_DEBOUNCE_MS = 600L
@@ -85,8 +87,10 @@ private const val STATS_TTL_MS = 30_000L
 private const val RESUME_FRESH_MS = 20_000L
 private const val RESUME_RETRY_MS = 5_000L
 private const val STATS_DEBOUNCE_MS = 400L
+private const val EMPTIED_FOLDER_HOLD_MS = 120_000L
 internal const val RESUME_REFRESH_AFTER_MS = 30_000L
 private const val STATS_DIRTY_MS = 1_200L
+private const val STATS_DELTA_PENDING_MAX_MS = 60_000L
 private const val OVERRIDE_TTL_MS = 30_000L
 private const val REACTION_SEEN_OVERRIDE_MS = 30_000L
 private const val READ_OVERRIDE_TTL_MS = 10 * 60_000L
@@ -313,6 +317,51 @@ class MailViewModel @Inject constructor(
     private val _message_reactions = MutableStateFlow<Map<String, List<DecryptedReaction>>>(emptyMap())
     val message_reactions: StateFlow<Map<String, List<DecryptedReaction>>> = _message_reactions.asStateFlow()
 
+    private val _reaction_placeholders = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val reaction_placeholders: StateFlow<Map<String, Int>> = _reaction_placeholders.asStateFlow()
+
+    private val resolved_reaction_cache = LinkedHashMap<String, DecryptedReaction>(64, 0.75f, true)
+
+    private val reaction_resolve_inflight = java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.Deferred<DecryptedReaction?>>()
+
+    private fun cached_reaction(reaction_id: String): DecryptedReaction? =
+        synchronized(resolved_reaction_cache) { resolved_reaction_cache[reaction_id] }
+
+    private fun remember_reaction(reaction: DecryptedReaction) {
+        if (reaction.reaction_mail_item_id.startsWith(PENDING_REACTION_PREFIX)) return
+        synchronized(resolved_reaction_cache) {
+            resolved_reaction_cache[reaction.reaction_mail_item_id] = reaction
+            while (resolved_reaction_cache.size > RESOLVED_REACTION_CACHE_SIZE) {
+                resolved_reaction_cache.remove(resolved_reaction_cache.keys.first())
+            }
+        }
+    }
+
+    private suspend fun resolve_reaction_cached(reaction_id: String): DecryptedReaction? {
+        cached_reaction(reaction_id)?.let { return it }
+        val job = reaction_resolve_inflight.computeIfAbsent(reaction_id) {
+            viewModelScope.async(Dispatchers.IO, start = kotlinx.coroutines.CoroutineStart.LAZY) {
+                repository.resolve_reaction(reaction_id)
+            }
+        }
+        val result = try {
+            job.await()
+        } finally {
+            reaction_resolve_inflight.remove(reaction_id, job)
+        }
+        if (result != null) remember_reaction(result)
+        return result
+    }
+
+    private suspend fun warm_reactions(messages: List<ThreadMessageDecrypted>) {
+        if (!reactions_enabled) return
+        val ids = messages.flatMap { msg ->
+            msg.raw_item.reactions.orEmpty().filter { it.emoji.isNullOrBlank() }.map { it.reaction_mail_item_id }
+        }.filter { cached_reaction(it) == null }
+        if (ids.isEmpty()) return
+        kotlinx.coroutines.coroutineScope { ids.map { id -> async { resolve_reaction_cached(id) } }.awaitAll() }
+    }
+
     private var reactions_enabled = true
 
     private val PENDING_REACTION_PREFIX = "pending_"
@@ -330,29 +379,37 @@ class MailViewModel @Inject constructor(
     private fun load_reactions(messages: List<ThreadMessageDecrypted>) {
         if (!reactions_enabled) {
             _message_reactions.value = emptyMap()
+            _reaction_placeholders.value = emptyMap()
             return
         }
+        val current = _message_reactions.value
         val direct = LinkedHashMap<String, MutableList<DecryptedReaction>>()
         val unresolved = ArrayList<Triple<String, String, Boolean>>()
         val known_resolved = HashMap<String, DecryptedReaction>()
-        _message_reactions.value.forEach { (message_id, list) ->
+        current.forEach { (message_id, list) ->
             list.forEach { known_resolved["$message_id\u0000${it.reaction_mail_item_id}"] = it }
         }
         for (msg in messages) {
-            for (summary in msg.raw_item.reactions.orEmpty()) {
+            val summaries = msg.raw_item.reactions
+            if (summaries == null) {
+                current[msg.id]?.let { kept -> direct[msg.id] = kept.toMutableList() }
+                continue
+            }
+            for (summary in summaries) {
                 val emoji = summary.emoji
                 if (!emoji.isNullOrBlank()) {
-                    direct.getOrPut(msg.id) { ArrayList() }.add(
-                        DecryptedReaction(
-                            reaction_mail_item_id = summary.reaction_mail_item_id,
-                            emoji = emoji,
-                            reactor_email = summary.reactor_email.orEmpty(),
-                            is_own = summary.is_own,
-                            is_unseen = summary.is_unseen,
-                        ),
+                    val reaction = DecryptedReaction(
+                        reaction_mail_item_id = summary.reaction_mail_item_id,
+                        emoji = emoji,
+                        reactor_email = summary.reactor_email.orEmpty(),
+                        is_own = summary.is_own,
+                        is_unseen = summary.is_unseen,
                     )
+                    remember_reaction(reaction)
+                    direct.getOrPut(msg.id) { ArrayList() }.add(reaction)
                 } else {
                     val known = known_resolved["${msg.id}\u0000${summary.reaction_mail_item_id}"]
+                        ?: cached_reaction(summary.reaction_mail_item_id)
                     if (known != null) {
                         direct.getOrPut(msg.id) { ArrayList() }.add(
                             known.copy(is_own = summary.is_own, is_unseen = summary.is_unseen),
@@ -365,7 +422,7 @@ class MailViewModel @Inject constructor(
                 }
             }
         }
-        val pending_by_message = _message_reactions.value.mapValues { (_, list) ->
+        val pending_by_message = current.mapValues { (_, list) ->
             list.filter { it.reaction_mail_item_id.startsWith(PENDING_REACTION_PREFIX) }
         }.filterValues { it.isNotEmpty() }
         for ((message_id, pending) in pending_by_message) {
@@ -376,18 +433,17 @@ class MailViewModel @Inject constructor(
             }
         }
         _message_reactions.value = direct.mapValues { it.value.toList() }
+        _reaction_placeholders.value = unresolved.groupingBy { it.first }.eachCount()
         if (unresolved.isEmpty()) return
         viewModelScope.launch(Dispatchers.IO) {
             val resolved = unresolved.map { (message_id, reaction_id, is_own) ->
                 async {
-                    message_id to repository.resolve_reaction(reaction_id)
-                        ?.copy(is_own = is_own)
+                    Triple(message_id, reaction_id, resolve_reaction_cached(reaction_id)?.copy(is_own = is_own))
                 }
             }.awaitAll()
-            if (resolved.none { it.second != null }) return@launch
             val merged = LinkedHashMap<String, MutableList<DecryptedReaction>>()
             _message_reactions.value.forEach { (k, v) -> merged[k] = v.toMutableList() }
-            for ((message_id, reaction) in resolved) {
+            for ((message_id, _, reaction) in resolved) {
                 if (reaction == null) continue
                 val bucket = merged.getOrPut(message_id) { ArrayList() }
                 if (bucket.none { it.reaction_mail_item_id == reaction.reaction_mail_item_id }) {
@@ -395,6 +451,11 @@ class MailViewModel @Inject constructor(
                 }
             }
             _message_reactions.value = merged.mapValues { it.value.toList() }
+            val settled = resolved.map { it.second }.toSet()
+            _reaction_placeholders.update { placeholders ->
+                val remaining = unresolved.filter { it.second !in settled }.groupingBy { it.first }.eachCount()
+                placeholders.filterKeys { key -> unresolved.none { it.first == key } } + remaining
+            }
         }
     }
 
@@ -1134,6 +1195,7 @@ class MailViewModel @Inject constructor(
 
     fun reset_for_account_switch() {
         account_generation++
+        org.astermail.android.ui.search.clear_search_screen_cache()
         list_scroll_anchors.clear()
         consumed_scroll_top_token = 0
         offline_prefetch_job?.cancel()
@@ -1162,6 +1224,7 @@ class MailViewModel @Inject constructor(
         tag_overrides.clear()
         read_overrides.clear()
         read_flips.clear()
+        pending_stats_deltas.clear()
         _label_unread_deltas.value = emptyMap()
         mark_read_jobs.values.forEach { it.cancel() }
         mark_read_jobs.clear()
@@ -2407,11 +2470,14 @@ class MailViewModel @Inject constructor(
                     if (confirmed_at != null && confirmed_at <= started) flip.copy(stats_absorbed = true) else flip
                 }
                 prune_read_flips()
+                val overlay = pending_stats_overlay(started)
                 stats_owner_account = account_id
                 if (account_id == stats_seed_blocked_account) stats_seed_blocked_account = null
                 _inbox_state.update {
                     it.copy(
-                        stats = stats.copy(unread = (stats.unread + pending).coerceAtLeast(0)),
+                        stats = apply_emptied_folder_holds(
+                            apply_stats_delta(stats.copy(unread = (stats.unread + pending).coerceAtLeast(0)), overlay),
+                        ),
                         stats_loaded_at = started,
                         stats_refreshing = false,
                     )
@@ -2950,6 +3016,7 @@ class MailViewModel @Inject constructor(
             listOf(opened)
         }
         warm_preloaded_bodies(messages, item_id)
+        withTimeoutOrNull(REACTION_WARM_TIMEOUT_MS) { warm_reactions(messages) }
         return preloaded_thread(item = item, messages = messages, thread_token = token, grouped = grouping)
     }
 
@@ -3549,15 +3616,22 @@ class MailViewModel @Inject constructor(
             val step = if (flip.to_read) -1 else 1
             flip.folder_tokens.forEach { token -> deltas[token] = (deltas[token] ?: 0) + step }
         }
+        pending_stats_deltas.values.forEach { entry ->
+            if (entry.labels_absorbed) return@forEach
+            entry.delta.label_unread.forEach { (token, step) -> deltas[token] = (deltas[token] ?: 0) + step }
+        }
         _label_unread_deltas.value = deltas.filterValues { it != 0 }
     }
 
     fun on_labels_loaded(token: Int) {
         val previous = labels_token
         labels_token = token
-        if (previous == null || previous == token || read_flips.isEmpty()) return
+        if (previous == null || previous == token) return
+        if (read_flips.isEmpty() && pending_stats_deltas.isEmpty()) return
         read_flips.replaceAll { _, flip -> if (flip.confirmed_at != null) flip.copy(labels_absorbed = true) else flip }
+        pending_stats_deltas.values.forEach { entry -> if (entry.confirmed_at != null) entry.labels_absorbed = true }
         prune_read_flips()
+        prune_stats_deltas()
         publish_label_deltas()
     }
 
@@ -3598,6 +3672,153 @@ class MailViewModel @Inject constructor(
             s.copy(stats = stats.copy(unread = (stats.unread + delta).coerceAtLeast(0)))
         }
     }
+
+    private data class StatsDelta(
+        val unread: Int = 0,
+        val drafts: Int = 0,
+        val scheduled: Int = 0,
+        val spam: Int = 0,
+        val trash: Int = 0,
+        val label_unread: Map<String, Int> = emptyMap(),
+    ) {
+        fun has_counts(): Boolean = unread != 0 || drafts != 0 || scheduled != 0 || spam != 0 || trash != 0
+
+        fun is_empty(): Boolean = !has_counts() && label_unread.values.all { it == 0 }
+
+        fun negated(): StatsDelta = StatsDelta(
+            unread = -unread,
+            drafts = -drafts,
+            scheduled = -scheduled,
+            spam = -spam,
+            trash = -trash,
+            label_unread = label_unread.mapValues { -it.value },
+        )
+
+        operator fun plus(other: StatsDelta): StatsDelta {
+            val labels = HashMap(label_unread)
+            other.label_unread.forEach { (token, step) -> labels[token] = (labels[token] ?: 0) + step }
+            return StatsDelta(
+                unread = unread + other.unread,
+                drafts = drafts + other.drafts,
+                scheduled = scheduled + other.scheduled,
+                spam = spam + other.spam,
+                trash = trash + other.trash,
+                label_unread = labels.filterValues { it != 0 },
+            )
+        }
+    }
+
+    private class StatsChange(val key: Long, val delta: StatsDelta)
+
+    private class PendingStatsDelta(val delta: StatsDelta, val created_at: Long) {
+        @Volatile var confirmed_at: Long? = null
+        @Volatile var stats_absorbed: Boolean = false
+        @Volatile var labels_absorbed: Boolean = false
+    }
+
+    private val pending_stats_deltas = java.util.concurrent.ConcurrentHashMap<Long, PendingStatsDelta>()
+    private val stats_delta_sequence = java.util.concurrent.atomic.AtomicLong(0L)
+
+    private fun apply_stats_delta(stats: MailUserStatsResponse, delta: StatsDelta): MailUserStatsResponse {
+        if (!delta.has_counts()) return stats
+        return stats.copy(
+            unread = (stats.unread + delta.unread).coerceAtLeast(0),
+            drafts = (stats.drafts + delta.drafts).coerceAtLeast(0),
+            scheduled = (stats.scheduled + delta.scheduled).coerceAtLeast(0),
+            spam = (stats.spam + delta.spam).coerceAtLeast(0),
+            trash = (stats.trash + delta.trash).coerceAtLeast(0),
+        )
+    }
+
+    private fun apply_stats_delta_now(delta: StatsDelta) {
+        if (!delta.has_counts()) return
+        _inbox_state.update { s ->
+            val stats = s.stats ?: return@update s
+            s.copy(stats = apply_stats_delta(stats, delta))
+        }
+    }
+
+    private fun begin_stats_delta(delta: StatsDelta): StatsChange? {
+        if (delta.is_empty()) return null
+        val key = stats_delta_sequence.incrementAndGet()
+        pending_stats_deltas[key] = PendingStatsDelta(delta, override_clock_ms())
+        stats_dirty_until = System.currentTimeMillis() + STATS_DIRTY_MS
+        apply_stats_delta_now(delta)
+        if (delta.label_unread.isNotEmpty()) publish_label_deltas()
+        return StatsChange(key, delta)
+    }
+
+    private fun confirm_stats_delta(change: StatsChange?) {
+        if (change == null) return
+        pending_stats_deltas[change.key]?.confirmed_at = override_clock_ms()
+    }
+
+    private fun revert_stats_delta(change: StatsChange?) {
+        if (change == null) return
+        val entry = pending_stats_deltas.remove(change.key) ?: return
+        if (!entry.stats_absorbed) apply_stats_delta_now(entry.delta.negated())
+        if (entry.delta.label_unread.isNotEmpty()) publish_label_deltas()
+    }
+
+    private fun undo_stats_delta(change: StatsChange?): StatsChange? {
+        if (change == null) return null
+        return begin_stats_delta(change.delta.negated())
+    }
+
+    private fun pending_stats_overlay(started: Long): StatsDelta {
+        val now = override_clock_ms()
+        var labels_dropped = false
+        pending_stats_deltas.entries.removeIf { (_, entry) ->
+            val expired = entry.confirmed_at == null && now - entry.created_at > STATS_DELTA_PENDING_MAX_MS
+            if (expired && entry.delta.label_unread.isNotEmpty()) labels_dropped = true
+            expired
+        }
+        var overlay = StatsDelta()
+        pending_stats_deltas.values.forEach { entry ->
+            val confirmed_at = entry.confirmed_at
+            if (confirmed_at != null && confirmed_at <= started) entry.stats_absorbed = true
+            if (!entry.stats_absorbed) {
+                overlay = overlay + entry.delta.copy(label_unread = emptyMap())
+            }
+        }
+        prune_stats_deltas()
+        if (labels_dropped) publish_label_deltas()
+        return overlay
+    }
+
+    private fun prune_stats_deltas() {
+        pending_stats_deltas.entries.removeIf { (_, entry) ->
+            entry.stats_absorbed && (entry.labels_absorbed || entry.delta.label_unread.isEmpty())
+        }
+    }
+
+    private fun inbox_unread_removed(removed_items: List<InboxItem>): Int {
+        if (removed_items.isEmpty()) return 0
+        val inbox_ids = inbox_member_ids()
+        return removed_items.count { !it.is_read && counts_toward_inbox(it.id, it, inbox_ids) }
+    }
+
+    private fun label_unread_steps(items: List<InboxItem>, step: Int): Map<String, Int> {
+        val deltas = HashMap<String, Int>()
+        items.forEach { item ->
+            if (item.is_read) return@forEach
+            org.astermail.android.folders.inbox_item_folder_tokens(item).forEach { token ->
+                deltas[token] = (deltas[token] ?: 0) + step
+            }
+        }
+        return deltas.filterValues { it != 0 }
+    }
+
+    private fun message_units(items: List<InboxItem>, message_scope: Boolean): Int =
+        if (message_scope) items.size else items.sumOf { maxOf(1, it.thread_message_count) }
+
+    private fun inbox_unread_returning(items: List<InboxItem>): Int =
+        items.count { item ->
+            val item_type = item.raw_item.item_type
+            !item.is_read &&
+                item_type != "sent" && item_type != "draft" && item_type != "scheduled" && item_type != "outbox" &&
+                folder_matches_item("inbox", item.copy(is_trashed = false, is_archived = false, is_spam = false))
+        }
 
     private fun find_item(item_id: String): InboxItem? =
         _inbox_state.value.items.find { it.id == item_id }
@@ -3721,7 +3942,7 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = _inbox_state.value.items.filter { it.id != item_id },
         )
-        adjust_stats_for_removed(removed_items)
+        val stats_change = adjust_stats_for_removed(removed_items)
         val search_removed = remove_search_items(item_ids)
         pending_removed_ids.addAll(item_ids)
         protect_removed(item_ids)
@@ -3729,11 +3950,13 @@ class MailViewModel @Inject constructor(
             try {
                 repository.snooze(item_id, snoozed_until_iso).fold(
                     onSuccess = {
+                        confirm_stats_delta(stats_change)
                         invalidate_caches(listOf("inbox", "snoozed"))
                         load_stats()
                         emit_toast(context.getString(R.string.snoozed_until, label))
                     },
                     onFailure = { t ->
+                        revert_stats_delta(stats_change)
                         undo_local_restore(removed_items)
                         undo_search_restore(search_removed)
                         emit_toast(org.astermail.android.localized_api_error(context, t, context.getString(R.string.couldnt_snooze)))
@@ -3741,6 +3964,7 @@ class MailViewModel @Inject constructor(
                 )
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                revert_stats_delta(stats_change)
                 undo_local_restore(removed_items)
                 undo_search_restore(search_removed)
                 emit_toast(context.getString(R.string.couldnt_snooze))
@@ -4274,11 +4498,22 @@ class MailViewModel @Inject constructor(
         val from_label = folder_label_token(current_folder)
         var search_removed: List<InboxItem> = emptyList()
         apply_move_labels(id_set, folder_token, from_label)
+        val move_steps = HashMap<String, Int>()
+        removed_items.forEach { item ->
+            if (item.is_read) return@forEach
+            if (folder_token !in item.labels) move_steps[folder_token] = (move_steps[folder_token] ?: 0) + 1
+            if (from_label != null && from_label != folder_token && from_label in item.labels) {
+                move_steps[from_label] = (move_steps[from_label] ?: 0) - 1
+            }
+        }
+        val stats_change = adjust_stats_for_removed(
+            removed_items,
+            StatsDelta(label_unread = move_steps.filterValues { it != 0 }),
+        )
         if (!stays_visible) {
             _inbox_state.value = _inbox_state.value.copy(
                 items = _inbox_state.value.items.filter { it.id !in id_set },
             )
-            adjust_stats_for_removed(removed_items)
             search_removed = remove_search_items(ids)
             pending_removed_ids.addAll(ids)
             protect_removed(ids)
@@ -4290,6 +4525,7 @@ class MailViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val failed_ids = repository.move_to_folder_bulk(ids, folder_token, from_label)
+                if (failed_ids.size < ids.size) confirm_stats_delta(stats_change) else revert_stats_delta(stats_change)
                 if (failed_ids.isEmpty()) {
                     runCatching {
                         search_index_manager.add_label_token(ids, folder_token)
@@ -4310,6 +4546,7 @@ class MailViewModel @Inject constructor(
                                     before = removed_items,
                                     search_before = search_before,
                                     search_removed = search_removed,
+                                    stats_change = stats_change,
                                 ),
                             )
                         }
@@ -4326,6 +4563,7 @@ class MailViewModel @Inject constructor(
                         undo_local_restore(removed_items.filter { it.id in failed_ids })
                         undo_search_restore(search_removed.filter { it.id in failed_ids })
                     }
+                    if (failed_ids.size < ids.size) load_stats(force = true)
                     emit_toast(context.getString(R.string.failed_to_move_items))
                 }
             } finally {
@@ -4343,6 +4581,7 @@ class MailViewModel @Inject constructor(
         val before: List<InboxItem>,
         val search_before: List<InboxItem>,
         val search_removed: List<InboxItem>,
+        val stats_change: StatsChange? = null,
     )
 
     private fun undo_folder_move(move: FolderMoveUndo) {
@@ -4352,6 +4591,7 @@ class MailViewModel @Inject constructor(
             (move.search_before + move.before).associate { it.id to it.labels },
         )
         val restore_label = move.from_label?.takeIf { it != move.folder_token }
+        val undo_change = undo_stats_delta(move.stats_change)
         revert_move_labels(move.before)
         patch_search_labels(move.search_before.associate { it.id to it.labels })
         if (!move.stays_visible) {
@@ -4376,8 +4616,10 @@ class MailViewModel @Inject constructor(
                 if (restore_label != null) search_index_manager.add_label_token(move.ids, restore_label)
             }
             if (failed.isNotEmpty()) emit_toast(context.getString(R.string.failed_to_move_items))
+            confirm_stats_delta(undo_change)
             load_inbox(_inbox_state.value.current_folder, force = true)
             load_stats(force = true)
+
         }
     }
 
@@ -4656,7 +4898,7 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = _inbox_state.value.items.filter { it.id !in id_set },
         )
-        adjust_stats_for_removed(removed_items)
+        val stats_change = adjust_stats_for_removed(removed_items)
         val search_removed = remove_search_items(ids)
         pending_removed_ids.addAll(ids)
         protect_removed(ids)
@@ -4668,6 +4910,7 @@ class MailViewModel @Inject constructor(
                     MailRepository.SnoozeBulkOutcome(failed_ids = id_set)
                 }
                 val failed_set = outcome.failed_ids
+                if (failed_set.size < ids.size) confirm_stats_delta(stats_change) else revert_stats_delta(stats_change)
                 if (failed_set.size < ids.size) {
                     invalidate_caches(listOf("inbox", "snoozed"))
                     load_stats(force = true)
@@ -4682,12 +4925,14 @@ class MailViewModel @Inject constructor(
                 }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
+                revert_stats_delta(stats_change)
                 undo_local_restore(removed_items)
                 undo_search_restore(search_removed)
                 emit_toast(context.getString(R.string.couldnt_snooze))
             } finally {
                 pending_removed_ids.removeAll(id_set)
             }
+
             if (resync) {
                 clear_removal_protection(id_set)
                 refresh()
@@ -4762,15 +5007,11 @@ class MailViewModel @Inject constructor(
         return if (n == 1) singular else "$n $plural"
     }
 
-    private fun adjust_stats_for_removed(removed_items: List<InboxItem>) {
-        val unread_removed = removed_items.count { !it.is_read }
-        if (unread_removed == 0) return
+    private fun adjust_stats_for_removed(removed_items: List<InboxItem>, extra: StatsDelta = StatsDelta()): StatsChange? {
         stats_dirty_until = System.currentTimeMillis() + STATS_DIRTY_MS
-        _inbox_state.update { s ->
-            val stats = s.stats ?: return@update s
-            s.copy(stats = stats.copy(unread = (stats.unread - unread_removed).coerceAtLeast(0)))
-        }
+        return begin_stats_delta(StatsDelta(unread = -inbox_unread_removed(removed_items)) + extra)
     }
+
 
     private fun patch_search_tags(ids: Set<String>, tag_token: String, add: Boolean): Map<String, List<String>> {
         val current = _search_state.value.all_items
@@ -4873,8 +5114,8 @@ class MailViewModel @Inject constructor(
             _inbox_state.value = _inbox_state.value.copy(
                 items = previous.filter { it.id !in item_ids },
             )
-            adjust_stats_for_removed(removed_items)
         }
+        val stats_change = adjust_stats_for_removed(target_items)
         val search_removed = remove_search_items(item_ids)
         if (!keeps_archived) {
             pending_removed_ids.addAll(item_ids)
@@ -4901,6 +5142,7 @@ class MailViewModel @Inject constructor(
                     reindex = { search_index_manager.mark_unarchived(it) },
                     restore = { repository.unarchive(it, lookup_raw_items(it), thread_tokens) },
                     pending = archive_job,
+                    stats_change = stats_change,
                 )
             }
         }
@@ -4908,11 +5150,13 @@ class MailViewModel @Inject constructor(
             try {
                 repository.archive(item_ids, raw_items, thread_tokens).fold(
                     onSuccess = {
+                        confirm_stats_delta(stats_change)
                         runCatching { search_index_manager.mark_archived(item_ids) }
                         load_stats()
                     },
                     onFailure = { t ->
                         if (BuildConfig.DEBUG) android.util.Log.w("MailVM", "archive failed", t)
+                        revert_stats_delta(stats_change)
                         clear_batch_action(archive_key)
                         if (keeps_archived) set_archived_in_view(item_ids, false)
                         undo_local_restore(removed_items)
@@ -4924,6 +5168,7 @@ class MailViewModel @Inject constructor(
                 throw cancelled
             } catch (t: Throwable) {
                 if (BuildConfig.DEBUG) android.util.Log.w("MailVM", "archive threw", t)
+                revert_stats_delta(stats_change)
                 clear_batch_action(archive_key)
                 if (keeps_archived) set_archived_in_view(item_ids, false)
                 undo_local_restore(removed_items)
@@ -4978,7 +5223,15 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
-        adjust_stats_for_removed(removed_items)
+        val trashed_units = message_units(removed_items, message_scope)
+        val stats_change = adjust_stats_for_removed(
+            removed_items,
+            StatsDelta(
+                trash = trashed_units,
+                spam = if (_inbox_state.value.current_folder == "spam") -trashed_units else 0,
+                label_unread = label_unread_steps(removed_items, -1),
+            ),
+        )
         val search_removed = flag_search_items(item_ids) { it.copy(is_trashed = true) }
         pending_removed_ids.addAll(item_ids)
         protect_removed(item_ids)
@@ -5000,6 +5253,7 @@ class MailViewModel @Inject constructor(
                     reindex = { search_index_manager.mark_restored(it) },
                     restore = { repository.restore_trash(it) },
                     pending = trash_job,
+                    stats_change = stats_change,
                 )
             }
         }
@@ -5007,10 +5261,12 @@ class MailViewModel @Inject constructor(
             try {
                 repository.trash(item_ids, raw_items, thread_tokens, thread_covered_ids).fold(
                     onSuccess = {
+                        confirm_stats_delta(stats_change)
                         runCatching { search_index_manager.mark_trashed(item_ids) }
                         load_stats()
                     },
                     onFailure = {
+                        revert_stats_delta(stats_change)
                         clear_batch_action(trash_key)
                         undo_local_restore(removed_items)
                         undo_search_restore(search_removed)
@@ -5020,6 +5276,7 @@ class MailViewModel @Inject constructor(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Throwable) {
+                revert_stats_delta(stats_change)
                 clear_batch_action(trash_key)
                 undo_local_restore(removed_items)
                 undo_search_restore(search_removed)
@@ -5050,22 +5307,31 @@ class MailViewModel @Inject constructor(
     }
 
     fun discard_sent_draft(draft_id: String, session_id: String? = null) {
+        val counted = repository.server_draft_id_for(draft_id, session_id) != null
+        val stats_change = if (counted) begin_stats_delta(StatsDelta(drafts = -1)) else null
         val pending = repository.discard_sent_draft(draft_id, session_id)
         viewModelScope.launch {
             if (runCatching { pending.await() }.getOrDefault(false)) {
+                confirm_stats_delta(stats_change)
                 runCatching { invalidate_caches(listOf("drafts")) }
                 runCatching { load_stats() }
+            } else {
+                revert_stats_delta(stats_change)
             }
         }
     }
 
     fun delete_thread_draft(draft_id: String, on_done: (Boolean) -> Unit) {
+        val counted = repository.server_draft_id_for(draft_id) != null
+        val stats_change = if (counted) begin_stats_delta(StatsDelta(drafts = -1)) else null
         viewModelScope.launch {
             val ok = repository.delete_draft(draft_id).isSuccess
             if (ok) {
+                confirm_stats_delta(stats_change)
                 load_stats()
                 emit_toast(context.resources.getQuantityString(R.plurals.draft_deleted, 1, 1))
             } else {
+                revert_stats_delta(stats_change)
                 emit_toast(context.getString(R.string.failed_to_delete_draft))
             }
             on_done(ok)
@@ -5080,6 +5346,8 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in id_set },
         )
+        val counted_drafts = id_set.mapNotNullTo(HashSet()) { repository.server_draft_id_for(it) }.size
+        val stats_change = begin_stats_delta(StatsDelta(drafts = -counted_drafts))
         pending_removed_ids.addAll(id_set)
         protect_removed(id_set)
         val phase = java.util.concurrent.atomic.AtomicInteger(DRAFT_DISCARD_PENDING)
@@ -5096,6 +5364,7 @@ class MailViewModel @Inject constructor(
                 on_undo = {
                     if (phase.compareAndSet(DRAFT_DISCARD_PENDING, DRAFT_DISCARD_UNDONE)) {
                         go.complete(Unit)
+                        revert_stats_delta(stats_change)
                         undo_local_restore(removed_items)
                     }
                 },
@@ -5105,8 +5374,12 @@ class MailViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 when (deletion.await()) {
-                    true -> load_stats()
+                    true -> {
+                        confirm_stats_delta(stats_change)
+                        load_stats()
+                    }
                     false -> {
+                        confirm_stats_delta(stats_change)
                         undo_local_restore(removed_items)
                         emit_toast(context.getString(R.string.failed_to_delete_draft))
                     }
@@ -5145,6 +5418,10 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
+        val stats_change = adjust_stats_for_removed(
+            removed_items,
+            StatsDelta(spam = if (_inbox_state.value.current_folder == "spam") 0 else message_units(removed_items, false)),
+        )
         val search_removed = flag_search_items(item_ids) { it.copy(is_spam = true) }
         pending_removed_ids.addAll(item_ids)
         protect_removed(item_ids)
@@ -5155,6 +5432,7 @@ class MailViewModel @Inject constructor(
                     removed_items.map { it.sender_email }.ifEmpty { sender_emails_hint }
                 repository.mark_spam(item_ids, raw_items, thread_tokens).fold(
                     onSuccess = {
+                        confirm_stats_delta(stats_change)
                         runCatching { search_index_manager.mark_spam(item_ids) }
                         val report_job =
                             viewModelScope.launch { repository.report_spam_senders(sender_emails) }
@@ -5168,6 +5446,7 @@ class MailViewModel @Inject constructor(
                                 item_ids = item_ids,
                                 reindex = { search_index_manager.mark_unspam(it) },
                                 restore = { repository.unmark_spam(it, thread_tokens) },
+                                stats_change = stats_change,
                             )
                             viewModelScope.launch {
                                 report_job.join()
@@ -5177,6 +5456,7 @@ class MailViewModel @Inject constructor(
                         load_stats()
                     },
                     onFailure = {
+                        revert_stats_delta(stats_change)
                         undo_local_restore(removed_items)
                         undo_search_restore(search_removed)
                         emit_toast(context.getString(R.string.failed_report_spam))
@@ -5197,6 +5477,9 @@ class MailViewModel @Inject constructor(
             items = previous.filter { it.id !in item_ids },
         )
         val search_before = flag_search_items(item_ids) { it.copy(is_spam = false) }
+        val stats_change = begin_stats_delta(
+            StatsDelta(unread = inbox_unread_returning(removed_items), spam = -message_units(removed_items, false)),
+        )
         pending_removed_ids.addAll(item_ids)
         protect_removed(item_ids)
         invalidate_caches(listOf("spam", "inbox"))
@@ -5206,6 +5489,7 @@ class MailViewModel @Inject constructor(
                     removed_items.map { it.sender_email }.ifEmpty { sender_emails_hint }
                 repository.unmark_spam(item_ids, thread_tokens).fold(
                     onSuccess = {
+                        confirm_stats_delta(stats_change)
                         runCatching { search_index_manager.mark_unspam(item_ids) }
                         val remove_job =
                             viewModelScope.launch { repository.remove_spam_senders(sender_emails) }
@@ -5219,6 +5503,7 @@ class MailViewModel @Inject constructor(
                                 item_ids = item_ids,
                                 reindex = { search_index_manager.mark_spam(it) },
                                 restore = { repository.mark_spam(it, lookup_raw_items(it), thread_tokens) },
+                                stats_change = stats_change,
                             )
                             viewModelScope.launch {
                                 remove_job.join()
@@ -5228,6 +5513,7 @@ class MailViewModel @Inject constructor(
                         load_stats()
                     },
                     onFailure = {
+                        revert_stats_delta(stats_change)
                         undo_local_restore(removed_items)
                         undo_search_restore(search_before)
                         emit_toast(context.getString(R.string.failed_remove_spam))
@@ -5350,16 +5636,23 @@ class MailViewModel @Inject constructor(
         reindex: suspend (List<String>) -> Unit,
         restore: suspend (List<String>) -> Unit,
         pending: kotlinx.coroutines.Job? = null,
+        stats_change: StatsChange? = null,
     ) {
+        val undo_change = undo_stats_delta(stats_change)
         undo_local_restore(removed_items)
         undo_search_restore(search_removed)
-        if (item_ids.isEmpty()) return
+        if (item_ids.isEmpty()) {
+            confirm_stats_delta(undo_change)
+            return
+        }
         protect_restored(item_ids)
         viewModelScope.launch {
             runCatching { pending?.join() }
             runCatching { restore(item_ids) }
             runCatching { reindex(item_ids) }
+            confirm_stats_delta(undo_change)
             load_inbox(_inbox_state.value.current_folder, force = true)
+
             load_stats(force = true)
         }
     }
@@ -5382,6 +5675,13 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in item_ids },
         )
+        val label_unread_removed = removed_items.count { !it.is_read }
+        val stats_change = begin_stats_delta(
+            StatsDelta(
+                unread = inbox_unread_returning(removed_items.map { it.copy(labels = it.labels - label_token) }),
+                label_unread = if (label_unread_removed > 0) mapOf(label_token to -label_unread_removed) else emptyMap(),
+            ),
+        )
         pending_removed_ids.addAll(item_ids)
         protect_removed(item_ids)
         invalidate_caches(listOf("inbox", "archive", "label:$label_token"))
@@ -5389,6 +5689,7 @@ class MailViewModel @Inject constructor(
             try {
                 val removed = repository.remove_label_bulk(item_ids, label_token).isEmpty()
                 val restored = repository.unarchive(item_ids, raw_items, conversation_thread_tokens(item_ids)).isSuccess
+                if (removed || restored) confirm_stats_delta(stats_change) else revert_stats_delta(stats_change)
                 if (removed && restored) {
                     runCatching { search_index_manager.mark_unarchived(item_ids) }
                     emit_toast(context.getString(R.string.moved_to_inbox))
@@ -5413,6 +5714,9 @@ class MailViewModel @Inject constructor(
         val removed_items = if (keeps_unarchived) emptyList() else previous.filter { it.id in item_ids }
         val raw_items = lookup_raw_items(item_ids)
         val thread_tokens = conversation_thread_tokens(item_ids)
+        val stats_change = begin_stats_delta(
+            StatsDelta(unread = inbox_unread_returning(previous.filter { it.id in item_ids && it.is_archived })),
+        )
         if (keeps_unarchived) {
             set_archived_in_view(item_ids, false)
         } else {
@@ -5428,6 +5732,7 @@ class MailViewModel @Inject constructor(
             try {
                 repository.unarchive(item_ids, raw_items, thread_tokens).fold(
                     onSuccess = {
+                        confirm_stats_delta(stats_change)
                         runCatching { search_index_manager.mark_unarchived(item_ids) }
                         emit_toast_undo(
                             context.getString(R.string.moved_to_inbox),
@@ -5440,11 +5745,13 @@ class MailViewModel @Inject constructor(
                                 item_ids = item_ids,
                                 reindex = { search_index_manager.mark_archived(it) },
                                 restore = { repository.archive(it, lookup_raw_items(it), thread_tokens) },
+                                stats_change = stats_change,
                             )
                         }
                         load_stats()
                     },
                     onFailure = {
+                        revert_stats_delta(stats_change)
                         if (keeps_unarchived) set_archived_in_view(item_ids, true)
                         undo_local_restore(removed_items)
                         emit_toast(context.getString(R.string.failed_to_unarchive))
@@ -5464,6 +5771,13 @@ class MailViewModel @Inject constructor(
             items = previous.filter { it.id !in item_ids },
         )
         val search_before = flag_search_items(item_ids) { it.copy(is_trashed = false) }
+        val stats_change = begin_stats_delta(
+            StatsDelta(
+                unread = inbox_unread_returning(removed_items),
+                trash = -removed_items.size,
+                label_unread = label_unread_steps(removed_items, 1),
+            ),
+        )
         pending_removed_ids.addAll(item_ids)
         protect_removed(item_ids)
         invalidate_caches(listOf("inbox", "trash"))
@@ -5471,6 +5785,7 @@ class MailViewModel @Inject constructor(
             try {
                 repository.restore_trash(item_ids).fold(
                     onSuccess = {
+                        confirm_stats_delta(stats_change)
                         runCatching { search_index_manager.mark_restored(item_ids) }
                         emit_toast_undo(
                             context.getString(R.string.restored_to_inbox),
@@ -5482,14 +5797,17 @@ class MailViewModel @Inject constructor(
                                 item_ids = item_ids,
                                 reindex = { search_index_manager.mark_trashed(it) },
                                 restore = { repository.trash(it, lookup_raw_items(it)) },
+                                stats_change = stats_change,
                             )
                         }
                         load_stats()
                     },
                     onFailure = {
+                        revert_stats_delta(stats_change)
                         undo_local_restore(removed_items)
                         undo_search_restore(search_before)
                         emit_toast(context.getString(R.string.failed_to_restore))
+
                     },
                 )
             } finally {
@@ -5509,6 +5827,7 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id != item_id },
         )
+        val stats_change = adjust_stats_for_removed(removed_items, permanent_delete_delta(removed_items))
         val search_removed = remove_search_items(listOf(item_id))
         pending_removed_ids.add(item_id)
         protect_removed(listOf(item_id))
@@ -5516,11 +5835,13 @@ class MailViewModel @Inject constructor(
             try {
                 repository.delete_permanent(item_id).fold(
                     onSuccess = {
+                        confirm_stats_delta(stats_change)
                         runCatching { search_index_manager.remove_items(listOf(item_id)) }
                         emit_toast(context.getString(R.string.deleted_permanently))
                         load_stats()
                     },
                     onFailure = {
+                        revert_stats_delta(stats_change)
                         undo_local_restore(removed_items)
                         undo_search_restore(search_removed)
                         emit_toast(context.getString(R.string.failed_to_delete))
@@ -5532,7 +5853,17 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    private fun permanent_delete_delta(removed_items: List<InboxItem>): StatsDelta {
+        if (removed_items.isEmpty()) return StatsDelta()
+        return when (_inbox_state.value.current_folder) {
+            "trash" -> StatsDelta(trash = -removed_items.size)
+            "spam" -> StatsDelta(spam = -removed_items.size, label_unread = label_unread_steps(removed_items, -1))
+            else -> StatsDelta(label_unread = label_unread_steps(removed_items, -1))
+        }
+    }
+
     fun delete_permanent_bulk(item_ids: List<String>) {
+
         if (item_ids.isEmpty()) return
         if (item_ids.size == 1) {
             delete_permanent(item_ids.first())
@@ -5550,6 +5881,7 @@ class MailViewModel @Inject constructor(
         _inbox_state.value = _inbox_state.value.copy(
             items = previous.filter { it.id !in real_ids },
         )
+        val stats_change = adjust_stats_for_removed(removed_items, permanent_delete_delta(removed_items))
         val search_removed = remove_search_items(real_ids)
         pending_removed_ids.addAll(real_ids)
         protect_removed(real_ids)
@@ -5563,6 +5895,7 @@ class MailViewModel @Inject constructor(
                     if (error != null && error !is org.astermail.android.api.ApiError.NotFoundError) failed.addAll(chunk)
                 }
                 val deleted = real_ids.filter { it !in failed }
+                if (deleted.isNotEmpty()) confirm_stats_delta(stats_change) else revert_stats_delta(stats_change)
                 if (deleted.isNotEmpty()) {
                     runCatching { search_index_manager.remove_items(deleted) }
                 }
@@ -5796,7 +6129,7 @@ class MailViewModel @Inject constructor(
         val snapshot = prior.items
         val removed_ids = snapshot.map { it.id }
         _inbox_state.update { it.copy(items = emptyList(), has_more = false, next_cursor = null) }
-        adjust_stats_for_removed(snapshot)
+        val stats_change = adjust_stats_for_removed(snapshot)
         pending_removed_ids.addAll(removed_ids)
         protect_removed(removed_ids)
         val gen = account_generation
@@ -5805,6 +6138,7 @@ class MailViewModel @Inject constructor(
             if (gen != account_generation) return@launch
             result.fold(
                 onSuccess = {
+                    confirm_stats_delta(stats_change)
                     try {
                         runCatching { index_scope_removal(folder, action, removed_ids) }
                         invalidate_caches(listOf(folder))
@@ -5816,6 +6150,7 @@ class MailViewModel @Inject constructor(
                     }
                 },
                 onFailure = {
+                    revert_stats_delta(stats_change)
                     pending_removed_ids.removeAll(removed_ids.toSet())
                     clear_removal_protection(removed_ids)
                     _inbox_state.update {
@@ -5996,6 +6331,64 @@ class MailViewModel @Inject constructor(
         }
     }
 
+    private val emptied_folder_holds = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+    private fun hold_emptied_folder(folder: String) {
+        emptied_folder_holds[folder] = System.currentTimeMillis() + EMPTIED_FOLDER_HOLD_MS
+        _inbox_state.update { s ->
+            val stats = s.stats ?: return@update s
+            s.copy(stats = apply_emptied_folder_holds(stats))
+        }
+    }
+
+    private fun apply_emptied_folder_holds(stats: MailUserStatsResponse): MailUserStatsResponse {
+        if (emptied_folder_holds.isEmpty()) return stats
+        val now = System.currentTimeMillis()
+        emptied_folder_holds.entries.removeIf { it.value <= now }
+        var next = stats
+        if (emptied_folder_holds.containsKey("trash")) {
+            if (next.trash <= 0) {
+                emptied_folder_holds.remove("trash")
+            } else {
+                next = next.copy(total_items = (next.total_items - next.trash).coerceAtLeast(0), trash = 0)
+            }
+        }
+        if (emptied_folder_holds.containsKey("spam")) {
+            if (next.spam <= 0) {
+                emptied_folder_holds.remove("spam")
+            } else {
+                next = next.copy(total_items = (next.total_items - next.spam).coerceAtLeast(0), spam = 0)
+            }
+        }
+        return next
+    }
+
+    private fun release_emptied_folder_hold(folder: String, previous: MailUserStatsResponse?) {
+        emptied_folder_holds.remove(folder)
+        val prior = previous ?: return
+        _inbox_state.update { s ->
+            val stats = s.stats ?: return@update s
+            val restored = if (folder == "trash") prior.trash else prior.spam
+            val current = if (folder == "trash") stats.trash else stats.spam
+            if (current >= restored) return@update s
+            val total = stats.total_items + restored - current
+            s.copy(
+                stats = if (folder == "trash") {
+                    stats.copy(trash = restored, total_items = total)
+                } else {
+                    stats.copy(spam = restored, total_items = total)
+                },
+            )
+        }
+    }
+
+    private fun emptied_toast_text(plural_res: Int, fallback_res: Int, deleted: Int, shown_count: Int?): String {
+        if (deleted == PENDING_UNKNOWN_COUNT) return context.getString(fallback_res)
+        val count = maxOf(deleted, shown_count ?: 0)
+        if (count <= 0) return context.getString(fallback_res)
+        return context.resources.getQuantityString(plural_res, count, count)
+    }
+
     fun empty_trash() {
         if (_emptying_trash.value) return
         val previous_state = _inbox_state.value
@@ -6038,15 +6431,18 @@ class MailViewModel @Inject constructor(
         )
         folder_cache_time["trash"] = System.currentTimeMillis()
         _emptying_trash.value = true
+        hold_emptied_folder("trash")
         viewModelScope.launch {
             repository.empty_trash().fold(
-                onSuccess = {
+                onSuccess = { deleted ->
+                    hold_emptied_folder("trash")
                     _emptying_trash.value = false
-                    emit_toast(context.getString(R.string.trash_emptied))
+                    emit_toast(emptied_toast_text(R.plurals.trash_emptied_count, R.string.trash_emptied, deleted, trash_count))
                     load_stats()
                 },
                 onFailure = {
                     _emptying_trash.value = false
+                    release_emptied_folder_hold("trash", previous_state.stats)
                     if (previous_cache != null) {
                         folder_cache["trash"] = previous_cache
                     } else {
@@ -6061,6 +6457,7 @@ class MailViewModel @Inject constructor(
                         _inbox_state.value = previous_state
                     }
                     emit_toast(context.getString(R.string.failed_empty_trash))
+                    load_stats(force = true)
                 },
             )
         }
@@ -6075,6 +6472,7 @@ class MailViewModel @Inject constructor(
             return
         }
         _emptying_spam.value = true
+        hold_emptied_folder("spam")
         viewModelScope.launch {
             repository.empty_spam().fold(
                 onSuccess = { deleted ->
@@ -6093,15 +6491,18 @@ class MailViewModel @Inject constructor(
                             total = 0,
                         )
                     }
+                    hold_emptied_folder("spam")
                     _emptying_spam.value = false
                     emit_toast(
-                        if (deleted == 0) context.getString(R.string.spam_already_empty)
-                        else context.getString(R.string.spam_emptied),
+                        if (deleted == 0 && (spam_count ?: 0) <= 0) context.getString(R.string.spam_already_empty)
+                        else emptied_toast_text(R.plurals.spam_emptied_count, R.string.spam_emptied, deleted, spam_count),
                     )
                     load_stats()
                 },
                 onFailure = {
                     _emptying_spam.value = false
+                    release_emptied_folder_hold("spam", previous_state.stats)
+                    load_stats(force = true)
                     emit_toast(context.getString(R.string.failed_empty_spam))
                 },
             )
@@ -6168,7 +6569,7 @@ class MailViewModel @Inject constructor(
                     )
                     search_index_manager.refresh_index_and_wait()
                     val refreshed = search_index_manager.get_cached_items()
-                    if (refreshed.isNotEmpty()) {
+                    if (refreshed.isNotEmpty() && refreshed != cached) {
                         _search_state.value = _search_state.value.copy(
                             all_items = carry_search_folder_items(
                                 apply_read_overrides(refreshed.map { it.to_inbox_item() }),
@@ -6275,11 +6676,13 @@ class MailViewModel @Inject constructor(
         id: String,
         success_message: Int,
         remove_locally: Boolean,
+        scheduled_step: Int = 0,
         action: suspend () -> Result<Unit>,
     ) {
         viewModelScope.launch {
             val result = action()
             if (result.isSuccess) {
+                confirm_stats_delta(begin_stats_delta(StatsDelta(scheduled = scheduled_step)))
                 if (remove_locally) remove_scheduled_locally(id)
                 emit_toast(context.getString(success_message))
                 load_stats()
@@ -6302,10 +6705,11 @@ class MailViewModel @Inject constructor(
     }
 
     fun delete_scheduled(id: String) =
-        run_scheduled_action(id, R.string.scheduled_deleted, true) { repository.delete_scheduled(id) }
+        run_scheduled_action(id, R.string.scheduled_deleted, true, scheduled_step = -1) { repository.delete_scheduled(id) }
 
     fun cancel_scheduled(id: String) =
-        run_scheduled_action(id, R.string.scheduled_cancelled, true) { repository.cancel_scheduled(id) }
+        run_scheduled_action(id, R.string.scheduled_cancelled, true, scheduled_step = -1) { repository.cancel_scheduled(id) }
+
 
     fun send_scheduled_now(id: String) =
         run_scheduled_action(id, R.string.scheduled_sending_now, true) { repository.send_scheduled_now(id) }

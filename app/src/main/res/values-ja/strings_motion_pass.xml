@@ -20,6 +20,7 @@
     <string name="contacts_show_all">すべての連絡先を表示</string>
     <string name="guard_changes_subtitle">アカウントへの変更は、有効になる前にここで保留されます。</string>
     <string name="hide_quoted_text">引用文を非表示</string>
+    <string name="show_quoted_text">引用文を表示</string>
     <string name="search_keywords_more_exit">終了, 戻る, ダブルタップ, 2回戻る, 戻るを2回押す, 戻るボタン, アプリを閉じる, アプリを終了, exit, back</string>
     <string name="search_keywords_more_quick_actions">クイックアクション, クイックフィルタ, 受信トレイのボタン, ヘッダーのボタン, フィルタボタン, quick actions</string>
     <string name="search_keywords_more_reduce_motion">モーションを軽減, アニメーション, モーション, 画面切り替え, アクセシビリティ, 乗り物酔い, reduce motion</string>

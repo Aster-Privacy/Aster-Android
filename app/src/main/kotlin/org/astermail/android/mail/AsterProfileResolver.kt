@@ -41,6 +41,43 @@ import org.astermail.android.api.auth.PublicProfile
 private val ASTER_DOMAINS = setOf("astermail.org", "aster.cx", "astermail.me", "astermail.net")
 
 private const val PROFILE_RESOLVE_TTL_MS = 30L * 60L * 1000L
+private const val PROFILE_STORE_FILE = "aster_peer_profiles.json"
+private const val PROFILE_STORE_MAX_ENTRIES = 400
+private const val PROFILE_STORE_MAX_PICTURE_CHARS = 48 * 1024
+private const val PROFILE_STORE_SAVE_DELAY_MS = 1500L
+
+private val profile_store_json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+
+internal fun encode_profile_store(profiles: Map<String, PublicProfile?>): String {
+    val kept = LinkedHashMap<String, PublicProfile>()
+    for ((email, profile) in profiles) {
+        if (profile == null) continue
+        val picture = profile.profile_picture?.takeIf { it.isNotBlank() && it.length <= PROFILE_STORE_MAX_PICTURE_CHARS }
+        val trimmed = PublicProfile(display_name = profile.display_name, profile_picture = picture, profile_color = profile.profile_color)
+        if (trimmed.profile_picture.isNullOrBlank() && trimmed.profile_color.isNullOrBlank()) continue
+        kept[email] = trimmed
+        if (kept.size >= PROFILE_STORE_MAX_ENTRIES) break
+    }
+    return profile_store_json.encodeToString(
+        kotlinx.serialization.builtins.MapSerializer(
+            kotlinx.serialization.serializer<String>(),
+            PublicProfile.serializer(),
+        ),
+        kept,
+    )
+}
+
+internal fun decode_profile_store(text: String): Map<String, PublicProfile> =
+    runCatching {
+        profile_store_json.decodeFromString(
+            kotlinx.serialization.builtins.MapSerializer(
+                kotlinx.serialization.serializer<String>(),
+                PublicProfile.serializer(),
+            ),
+            text,
+        )
+    }.getOrDefault(emptyMap())
+        .filterKeys { it.contains('@') && is_aster_domain(it.substringAfter('@')) }
 
 fun is_aster_domain(domain: String): Boolean = ASTER_DOMAINS.contains(domain.lowercase(java.util.Locale.ROOT))
 
@@ -63,6 +100,44 @@ class AsterProfileResolver @Inject constructor(
     private val resolved_at = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private val mutex = Mutex()
     private var flush_job: Job? = null
+    private val stored_only = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+    @Volatile private var store_file: java.io.File? = null
+    private var save_job: Job? = null
+
+    fun attach_store(dir: java.io.File) {
+        val file = java.io.File(dir, PROFILE_STORE_FILE)
+        store_file = file
+        val stored = runCatching { if (file.isFile) decode_profile_store(file.readText()) else emptyMap() }
+            .getOrDefault(emptyMap())
+        if (stored.isEmpty()) return
+        val current = _profiles.value.toMutableMap()
+        for ((email, profile) in stored) {
+            if (current.containsKey(email)) continue
+            current[email] = profile
+            stored_only.add(email)
+        }
+        _profiles.value = current
+    }
+
+    private fun schedule_save() {
+        val file = store_file ?: return
+        scope.launch {
+            mutex.withLock {
+                save_job?.cancel()
+                save_job = scope.launch {
+                    delay(PROFILE_STORE_SAVE_DELAY_MS)
+                    runCatching {
+                        val tmp = java.io.File(file.parentFile, file.name + ".tmp")
+                        tmp.writeText(encode_profile_store(_profiles.value))
+                        if (!tmp.renameTo(file)) {
+                            file.delete()
+                            tmp.renameTo(file)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     private fun recently_resolved(email: String): Boolean {
         val at = resolved_at[email] ?: return false
@@ -87,6 +162,7 @@ class AsterProfileResolver @Inject constructor(
         )
         current[lower] = merged
         _profiles.value = current
+        stored_only.remove(lower)
     }
 
     fun request(email: String) {
@@ -94,11 +170,11 @@ class AsterProfileResolver @Inject constructor(
         if (lower.isEmpty() || !lower.contains('@')) return
         val domain = lower.substringAfter('@', "")
         if (!is_aster_domain(domain)) return
-        if (_profiles.value[lower]?.profile_picture?.isNotBlank() == true) return
+        if (_profiles.value[lower]?.profile_picture?.isNotBlank() == true && !stored_only.contains(lower)) return
         if (recently_resolved(lower)) return
         scope.launch {
             mutex.withLock {
-                if (_profiles.value[lower]?.profile_picture?.isNotBlank() == true) return@withLock
+                if (_profiles.value[lower]?.profile_picture?.isNotBlank() == true && !stored_only.contains(lower)) return@withLock
                 if (recently_resolved(lower)) return@withLock
                 if (pending.contains(lower)) return@withLock
                 pending.add(lower)
@@ -127,9 +203,13 @@ class AsterProfileResolver @Inject constructor(
             mutex.withLock {
                 pending.clear()
                 resolved_at.clear()
+                stored_only.clear()
                 flush_job?.cancel()
                 flush_job = null
+                save_job?.cancel()
+                save_job = null
                 _profiles.value = emptyMap()
+                store_file?.let { runCatching { it.delete() } }
             }
         }
     }
@@ -158,10 +238,13 @@ class AsterProfileResolver @Inject constructor(
                 val current = _profiles.value.toMutableMap()
                 val now = System.currentTimeMillis()
                 for (email in chunk) {
-                    current[email] = merge_profiles(current[email], resp.profiles[email])
+                    val fetched = resp.profiles[email]
+                    current[email] = if (stored_only.contains(email)) fetched else merge_profiles(current[email], fetched)
+                    stored_only.remove(email)
                     resolved_at[email] = now
                 }
                 _profiles.value = current
+                schedule_save()
             } catch (c: kotlinx.coroutines.CancellationException) {
                 throw c
             } catch (t: Throwable) {

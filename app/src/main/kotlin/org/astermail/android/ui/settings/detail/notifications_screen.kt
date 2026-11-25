@@ -77,12 +77,14 @@ private fun switch_row(
     subtitle: String?,
     checked: Boolean,
     info: String? = null,
+    enabled: Boolean = true,
     on_change: (Boolean) -> Unit,
 ) {
     settings_toggle_row(
         title = title,
         subtitle = subtitle,
         checked = checked,
+        enabled = enabled,
         info_title = if (info != null) title else null,
         info_description = info,
         on_change = on_change,
@@ -131,15 +133,18 @@ fun NotificationsScreen(
     var persistent_push by remember {
         mutableStateOf(org.astermail.android.notifications.PersistentPushService.is_enabled(context))
     }
-    val is_battery_exempt = remember { mutableStateOf(false) }
-    val notifications_allowed = remember { mutableStateOf(true) }
+    fun read_battery_exempt(): Boolean = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val pm = context.getSystemService(android.content.Context.POWER_SERVICE) as? PowerManager
+        pm?.isIgnoringBatteryOptimizations(context.packageName) == true
+    } else {
+        true
+    }
+    val is_battery_exempt = remember { mutableStateOf(read_battery_exempt()) }
+    val notifications_allowed = remember {
+        mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled())
+    }
     fun refresh_battery_exempt() {
-        is_battery_exempt.value = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val pm = context.getSystemService(android.content.Context.POWER_SERVICE) as? PowerManager
-            pm?.isIgnoringBatteryOptimizations(context.packageName) == true
-        } else {
-            true
-        }
+        is_battery_exempt.value = read_battery_exempt()
         notifications_allowed.value = NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
     LaunchedEffect(Unit) { refresh_battery_exempt() }
@@ -373,21 +378,21 @@ fun NotificationsScreen(
                 switch_row(stringResource(R.string.new_emails), null, new_email) { new_email = it; save_trigger++; MailPollingWorker.set_notify_new_email(context, it) }
                 settings_row_gap(modifier = Modifier)
                 switch_row(stringResource(R.string.replies), null, replies) { replies = it; save_trigger++; MailPollingWorker.set_notify_replies(context, it) }
-                if (state.product_updates_available) {
-                    settings_row_gap(modifier = Modifier)
-                    switch_row(
-                        stringResource(R.string.product_updates),
-                        stringResource(R.string.product_updates_subtitle),
-                        state.product_updates,
-                        stringResource(R.string.product_updates_info),
-                    ) { vm.set_product_updates(it) }
-                }
-                if (org.astermail.android.BuildConfig.SPECIAL_OFFER && offer_prefs.available) {
+                settings_row_gap(modifier = Modifier)
+                switch_row(
+                    stringResource(R.string.product_updates),
+                    stringResource(R.string.product_updates_subtitle),
+                    state.product_updates,
+                    stringResource(R.string.product_updates_info),
+                    enabled = state.product_updates_available,
+                ) { vm.set_product_updates(it) }
+                if (org.astermail.android.BuildConfig.SPECIAL_OFFER) {
                     settings_row_gap(modifier = Modifier)
                     switch_row(
                         stringResource(R.string.special_offers),
                         stringResource(R.string.special_offers_description),
                         offer_prefs.enabled,
+                        enabled = offer_prefs.available,
                     ) { offer_vm.set_enabled(it) }
                 }
             }
@@ -463,32 +468,38 @@ fun NotificationsScreen(
             }
             v_gap(AsterSpacing.lg)
             section_label(stringResource(R.string.toast_position_title))
-            Text(
-                text = stringResource(R.string.toast_position_subtitle),
-                color = colors.text_tertiary,
-                fontSize = 13.sp,
-                modifier = Modifier.padding(
-                    start = AsterSpacing.lg,
-                    end = AsterSpacing.lg,
-                    bottom = AsterSpacing.sm,
-                ),
+            val toast_choice = org.astermail.android.ui.common.toast_position_choice_for(toast_position)
+            val toast_options = listOf(
+                org.astermail.android.ui.common.toast_position_top to stringResource(R.string.toast_position_top),
+                org.astermail.android.ui.common.toast_position_bottom to stringResource(R.string.toast_position_bottom),
             )
-            aster_segmented(
-                value = org.astermail.android.ui.common.toast_position_choice_for(toast_position),
-                options = listOf(
-                    switcher_option(org.astermail.android.ui.common.toast_position_top, stringResource(R.string.toast_position_top)),
-                    switcher_option(org.astermail.android.ui.common.toast_position_bottom, stringResource(R.string.toast_position_bottom)),
-                ),
-                on_change = { picked ->
-                    val next = org.astermail.android.ui.common.toast_position_after_pick(toast_position, picked) ?: picked
-                    if (next != toast_position) {
-                        toast_position = next
-                        org.astermail.android.ui.common.set_toast_position(next)
-                        save_trigger++
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                alias_select_row(
+                    title = stringResource(R.string.toast_position_title),
+                    subtitle = stringResource(R.string.toast_position_subtitle),
+                    value = toast_options.firstOrNull { it.first == toast_choice }?.second.orEmpty(),
+                    test_tag = "toast_position_selector",
+                ) { expanded, dismiss ->
+                    org.astermail.android.design.components.aster_menu(expanded = expanded, on_dismiss = dismiss) {
+                        toast_options.forEach { (option, label) ->
+                            org.astermail.android.design.components.aster_menu_item(
+                                label = label,
+                                selected = option == toast_choice,
+                                on_click = {
+                                    dismiss()
+                                    val next = org.astermail.android.ui.common.toast_position_after_pick(toast_position, option)
+                                        ?: option
+                                    if (next != toast_position) {
+                                        toast_position = next
+                                        org.astermail.android.ui.common.set_toast_position(next)
+                                        save_trigger++
+                                    }
+                                },
+                            )
+                        }
                     }
-                },
-                modifier = Modifier.padding(horizontal = AsterSpacing.lg),
-            )
+                }
+            }
         }
         v_gap(AsterSpacing.xxl)
     }

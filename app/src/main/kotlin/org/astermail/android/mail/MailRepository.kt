@@ -4549,12 +4549,11 @@ class MailRepository @Inject constructor(
         Unit
     }
 
-    suspend fun empty_trash(): Result<Unit> =
-        run_or_queue(PendingActionKind.empty_trash, PendingActionPayload(), Unit) { empty_trash_now() }
+    suspend fun empty_trash(): Result<Int> =
+        run_or_queue(PendingActionKind.empty_trash, PendingActionPayload(), PENDING_UNKNOWN_COUNT) { empty_trash_now() }
 
-    private suspend fun empty_trash_now(): Result<Unit> = runCatching {
-        mail_api.empty_trash()
-        Unit
+    private suspend fun empty_trash_now(): Result<Int> = runCatching {
+        mail_api.empty_trash().deleted_count
     }
 
     suspend fun empty_spam(): Result<Int> =
@@ -8512,6 +8511,14 @@ class MailRepository @Inject constructor(
 
     private fun local_draft_server_id(key: String): String? =
         runCatching { local_draft_prefs.getString(key, null) }.getOrNull()?.takeIf { is_uuid(it) }
+
+    fun server_draft_id_for(draft_id: String?, session_id: String? = null): String? {
+        val resolved = session_id?.let { draft_session_ids[it] }
+            ?: draft_id?.takeIf { it.isNotBlank() }
+            ?: return null
+        return if (is_local_draft_id(resolved)) local_draft_server_id(resolved) else resolved
+    }
+
 
     private fun remember_local_draft(key: String, server_id: String) {
         runCatching {

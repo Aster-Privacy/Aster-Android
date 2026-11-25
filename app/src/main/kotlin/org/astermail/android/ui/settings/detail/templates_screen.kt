@@ -35,7 +35,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import org.astermail.android.design.AsterShapes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -151,16 +151,18 @@ fun TemplatesScreen(
             v_gap(AsterSpacing.md)
         }
 
-        if (state.items.isEmpty() && !state.is_loading && state.undecryptable_count == 0) {
+        if (state.items.isEmpty() && !state.is_loading) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(AsterSpacing.lg)) {
-                    Text(
-                        text = stringResource(R.string.no_templates),
-                        color = colors.text_primary,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Spacer(Modifier.size(AsterSpacing.xs))
+                    if (state.undecryptable_count == 0) {
+                        Text(
+                            text = stringResource(R.string.no_templates),
+                            color = colors.text_primary,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Spacer(Modifier.size(AsterSpacing.xs))
+                    }
                     Text(
                         text = stringResource(R.string.templates_description),
                         color = colors.text_tertiary,
@@ -261,7 +263,7 @@ private fun template_row(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
-                        .background(colors.bg_tertiary, RoundedCornerShape(999.dp))
+                        .background(colors.bg_tertiary, AsterShapes.pill)
                         .padding(horizontal = 8.dp, vertical = 2.dp),
                 )
             }

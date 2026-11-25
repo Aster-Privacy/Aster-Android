@@ -202,12 +202,13 @@
     <string name="guard_switches_paused">登录请求已暂停至 %1$s。</string>
     <string name="guard_switches_missing_rescue">您没有救援代码。为确保始终能重新进入账户，请创建一个。</string>
     <string name="guard_switches_not_guard_device">如需更改这些设置，请使用您的一台 Guard 设备。</string>
-    <string name="guard_switches_canceled">未做任何更改。如需保存，请确认是您本人。</string>
+    <string name="guard_switches_canceled">你的更改未保存。如需保存，请验证你的身份。</string>
     <string name="guard_switches_code_subtitle">在没有通知的情况下批准登录</string>
     <string name="guard_devices_section">Guard 设备</string>
     <string name="guard_devices_this_device">此手机</string>
     <string name="guard_devices_unnamed">未命名设备</string>
     <string name="guard_devices_remove_prompt_subtitle">移除 Guard 设备</string>
+    <string name="guard_devices_remove_confirm">%1$s 将无法再批准你账户的更改。如需再次使用，请在该设备上加入 Guard。</string>
     <string name="guard_security_row_off">开启后，可以在此手机上批准登录并暂缓有风险的更改</string>
     <string name="guard_changes_title">已暂缓的更改</string>
     <string name="guard_changes_body">您账户中的这些更改会等待一段时间后再生效。如果其中有不是您做出的更改，请将其取消。</string>
@@ -223,7 +224,7 @@
     <string name="guard_changes_step_up_required">如需跳过等待，请使用您已使用 7 天或更久的设备，或使用您的安全密钥。</string>
     <string name="guard_changes_not_guard_device">如需取消或停止更改，请使用您的一台 Guard 设备。</string>
     <string name="guard_changes_prompt_subtitle">确认对您账户的此项更改</string>
-    <string name="guard_changes_prompt_canceled">未做任何更改。如需继续，请确认是您本人。</string>
+    <string name="guard_changes_prompt_canceled">如需继续，请验证你的身份。</string>
     <string name="guard_changes_done_canceled">该更改已取消。</string>
     <string name="guard_changes_done_skipped">该更改已生效。</string>
     <string name="guard_changes_done_stopped">恢复已停止。</string>

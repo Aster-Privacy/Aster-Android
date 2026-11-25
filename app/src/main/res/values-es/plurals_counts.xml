@@ -65,4 +65,14 @@
         <item quantity="many">%1$d rastreadores bloqueados</item>
         <item quantity="other">%1$d rastreadores bloqueados</item>
     </plurals>
+    <plurals name="trash_emptied_count">
+        <item quantity="one">%d mensaje eliminado de la papelera</item>
+        <item quantity="many">%d mensajes eliminados de la papelera</item>
+        <item quantity="other">%d mensajes eliminados de la papelera</item>
+    </plurals>
+    <plurals name="spam_emptied_count">
+        <item quantity="one">%d mensaje eliminado de spam</item>
+        <item quantity="many">%d mensajes eliminados de spam</item>
+        <item quantity="other">%d mensajes eliminados de spam</item>
+    </plurals>
 </resources>

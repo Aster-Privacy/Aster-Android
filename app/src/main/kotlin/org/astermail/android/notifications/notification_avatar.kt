@@ -94,7 +94,7 @@ internal const val NOTIFICATION_AVATAR_CACHE_ENTRIES = 32
 private const val NOTIFICATION_AVATAR_DP = 64
 private const val NOTIFICATION_AVATAR_MIN_PX = 128
 private const val NOTIFICATION_AVATAR_MAX_PX = 192
-private const val SYSTEM_LOGO_SCALE = 0.78f
+private const val SYSTEM_LOGO_SCALE = 0.72f
 private const val INITIAL_TEXT_SCALE = 0.4f
 private const val LOGO_TONE_SAMPLE_PX = 16
 internal const val NOTIFICATION_LOGO_REJECTED_TTL_MS = 30L * 60L * 1000L
@@ -569,19 +569,21 @@ object NotificationAvatars {
         val size = avatar_px(context)
         val logo_px = (size * SYSTEM_LOGO_SCALE).toInt().coerceAtLeast(1)
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeResource(context.resources, R.drawable.aster_favicon, bounds)
+        BitmapFactory.decodeResource(context.resources, R.drawable.aster_wordmark, bounds)
         val options = BitmapFactory.Options().apply {
             inSampleSize = logo_sample_size(bounds.outWidth, bounds.outHeight, logo_px)
             inPreferredConfig = Bitmap.Config.ARGB_8888
         }
-        val logo = BitmapFactory.decodeResource(context.resources, R.drawable.aster_favicon, options) ?: return null
+        val logo = BitmapFactory.decodeResource(context.resources, R.drawable.aster_wordmark, options) ?: return null
+        val logo_h = (logo_px.toFloat() * logo.height / logo.width.coerceAtLeast(1)).toInt().coerceAtLeast(1)
         val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(output)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         paint.color = aster_system_avatar_backdrop.toArgb()
         canvas.drawCircle(size / 2f, size / 2f, size / 2f, paint)
-        val offset = (size - logo_px) / 2
-        canvas.drawBitmap(logo, null, Rect(offset, offset, offset + logo_px, offset + logo_px), paint)
+        val left = (size - logo_px) / 2
+        val top = (size - logo_h) / 2
+        canvas.drawBitmap(logo, null, Rect(left, top, left + logo_px, top + logo_h), paint)
         rendered.put(cache_key, output)
         return output
     }

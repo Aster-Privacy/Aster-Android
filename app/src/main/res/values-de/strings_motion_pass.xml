@@ -20,6 +20,7 @@
     <string name="contacts_show_all">Alle Kontakte anzeigen</string>
     <string name="guard_changes_subtitle">Änderungen an Ihrem Konto warten hier, bevor sie wirksam werden.</string>
     <string name="hide_quoted_text">Zitierten Text ausblenden</string>
+    <string name="show_quoted_text">Zitierten Text einblenden</string>
     <string name="search_keywords_more_exit">beenden, zurück, doppelt tippen, zweimal zurück, Zurück-Taste, App schließen, App verlassen, exit, back</string>
     <string name="search_keywords_more_quick_actions">Schnellaktionen, Schnellfilter, Posteingang-Schaltflächen, Kopfzeilen-Schaltflächen, Filter-Schaltflächen, quick actions</string>
     <string name="search_keywords_more_reduce_motion">Bewegung reduzieren, Animationen, Bewegung, Übergänge, Bedienungshilfen, Barrierefreiheit, Reisekrankheit, reduce motion</string>

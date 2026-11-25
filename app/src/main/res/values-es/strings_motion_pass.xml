@@ -20,6 +20,7 @@
     <string name="contacts_show_all">Mostrar todos los contactos</string>
     <string name="guard_changes_subtitle">Los cambios en tu cuenta esperan aquí antes de aplicarse.</string>
     <string name="hide_quoted_text">Ocultar el texto citado</string>
+    <string name="show_quoted_text">Mostrar el texto citado</string>
     <string name="search_keywords_more_exit">salir, atrás, doble toque, atrás dos veces, pulsar atrás dos veces, botón atrás, cerrar app, abandonar app, exit, back</string>
     <string name="search_keywords_more_quick_actions">acciones rápidas, filtros rápidos, botones de la bandeja de entrada, botones de la cabecera, botones de filtro, quick actions</string>
     <string name="search_keywords_more_reduce_motion">reducir movimiento, reducir animaciones, animaciones, movimiento, transiciones, accesibilidad, mareo, reduce motion</string>

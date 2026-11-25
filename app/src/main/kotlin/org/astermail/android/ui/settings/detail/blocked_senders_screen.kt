@@ -63,7 +63,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCard
 import org.astermail.android.design.components.AsterDialog
@@ -170,10 +169,6 @@ internal fun filters_entry_row(
     action_test_tag: String? = null,
 ) {
     val colors = AsterMaterial.colors
-    val action_modifier = Modifier
-        .clip(SquircleShape(10.dp))
-        .clickable(onClick = on_action)
-        .padding(horizontal = AsterSpacing.sm, vertical = AsterSpacing.xs)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -216,19 +211,10 @@ internal fun filters_entry_row(
                 )
             }
         }
-        Text(
-            text = action_label,
-            color = colors.danger,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            softWrap = false,
-            modifier = if (action_test_tag != null) {
-                action_modifier.testTag(action_test_tag)
-            } else {
-                action_modifier
-            },
+        org.astermail.android.design.components.AsterCompactButton(
+            label = action_label,
+            onClick = on_action,
+            modifier = if (action_test_tag != null) Modifier.testTag(action_test_tag) else Modifier,
         )
     }
 }
@@ -289,15 +275,7 @@ internal fun filters_state_card(
 
 @Composable
 internal fun filters_loading_block() {
-    val colors = AsterMaterial.colors
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(AsterSpacing.xxl),
-        contentAlignment = Alignment.Center,
-    ) {
-        settings_load_spinner()
-    }
+    skeleton_card_list(rows = 4, leading_circle = true)
 }
 
 @Composable
@@ -341,6 +319,7 @@ fun BlockedSendersScreen(
     val state by vm.state.collectAsStateWithLifecycle()
     var show_add_dialog by remember { mutableStateOf(false) }
     var add_email by remember { mutableStateOf("") }
+    var add_attempted by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     val senders = state.blocked_senders
     val filtered = remember(senders, query) {
@@ -366,7 +345,8 @@ fun BlockedSendersScreen(
         on_refresh = { vm.join_launched { vm.load_blocked_senders() } },
     ) {
         when {
-            state.blocked_senders_loading && senders.isEmpty() -> filters_loading_block()
+            senders.isEmpty() && (state.blocked_senders_loading || !state.blocked_senders_loaded) ->
+                filters_loading_block()
 
             state.blocked_senders_error != null && senders.isEmpty() -> filters_error_card(
                 message = state.blocked_senders_error,
@@ -426,30 +406,39 @@ fun BlockedSendersScreen(
     }
 
     if (show_add_dialog) {
+        val can_block = add_email.contains(".")
+        val close_dialog = { show_add_dialog = false; add_email = ""; add_attempted = false }
         AsterDialog(
-            on_dismiss = { show_add_dialog = false; add_email = "" },
+            on_dismiss = close_dialog,
             title = stringResource(R.string.block_sender),
             message = stringResource(R.string.block_sender_hint),
             body = {
                 AsterTextField(
                     value = add_email,
-                    onValueChange = { add_email = it.trim().lowercase() },
+                    onValueChange = { add_email = it.trim().lowercase(); add_attempted = false },
                     placeholder = stringResource(R.string.block_sender_placeholder),
+                    error_text = if (add_attempted && !can_block) {
+                        stringResource(R.string.block_sender_invalid)
+                    } else {
+                        null
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
             },
             footer = {
                 AsterDialogOutlineButton(
                     label = stringResource(R.string.cancel),
-                    onClick = { show_add_dialog = false; add_email = "" },
+                    onClick = close_dialog,
                 )
                 AsterDialogDestructiveButton(
                     label = stringResource(R.string.block),
-                    enabled = add_email.contains("."),
                     onClick = {
-                        vm.block_sender(add_email)
-                        show_add_dialog = false
-                        add_email = ""
+                        if (can_block) {
+                            vm.block_sender(add_email)
+                            close_dialog()
+                        } else {
+                            add_attempted = true
+                        }
                     },
                 )
             },

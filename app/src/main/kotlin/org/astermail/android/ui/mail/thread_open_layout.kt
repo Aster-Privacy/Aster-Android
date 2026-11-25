@@ -22,7 +22,7 @@
 package org.astermail.android.ui.mail
 
 const val thread_visible_tail_count = 2
-const val thread_body_wait_ms = 280L
+const val thread_body_wait_ms = 140L
 const val thread_min_hidden_run = 2
 
 data class ThreadOpenLayout(

@@ -106,7 +106,7 @@ fun TwoFactorScreen(
         refresh_enabled = !state.is_loading && !state.is_busy && state.mode == TwoFactorMode.Idle,
     ) {
         if (state.is_loading) {
-            settings_pending_spinner()
+            settings_hero_skeleton(rows = 2)
             return@detail_scaffold
         }
 

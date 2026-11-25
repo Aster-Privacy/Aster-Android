@@ -124,6 +124,15 @@ import org.astermail.android.ui.settings.remember_settings_anchor_host
 import org.astermail.android.ui.settings.settings_search_anchor
 import org.astermail.android.ui.settings.settings_search_content
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.style.TextAlign
 
 internal val settings_row_min_height = 56.dp
 
@@ -183,7 +192,7 @@ internal fun ColumnScope.SettingsExpand(
         exit = aster_collapse_out(reduce),
     ) { content() }
 }
-internal val settings_group_inset = AsterSpacing.xs
+internal val settings_group_inset = 0.dp
 internal val settings_row_gap_height = AsterSpacing.row_gap
 
 internal fun absolute_date_time_label(iso: String?): String {
@@ -248,6 +257,37 @@ internal fun relative_time_label(iso: String?): String {
     }
 }
 
+internal class detail_title_collapse {
+    var title by mutableStateOf("")
+    var bar_bottom by mutableFloatStateOf(Float.NaN)
+    var title_top by mutableFloatStateOf(Float.NaN)
+    var title_height by mutableFloatStateOf(0f)
+
+    fun fraction(): Float {
+        if (bar_bottom.isNaN() || title_top.isNaN() || title_height <= 0f) return 0f
+        return ((bar_bottom - title_top) / title_height).coerceIn(0f, 1f)
+    }
+}
+
+internal val local_detail_title_collapse = staticCompositionLocalOf<detail_title_collapse?> { null }
+
+@Composable
+internal fun Modifier.detail_collapsing_title(title: String): Modifier {
+    val host = local_detail_title_collapse.current ?: return this
+    SideEffect { host.title = title }
+    DisposableEffect(host) {
+        onDispose {
+            host.title = ""
+            host.title_top = Float.NaN
+            host.title_height = 0f
+        }
+    }
+    return this.onGloballyPositioned { coords ->
+        host.title_top = coords.positionInRoot().y
+        host.title_height = coords.size.height.toFloat()
+    }
+}
+
 @Composable
 internal fun detail_scaffold(
     title: String,
@@ -261,22 +301,52 @@ internal fun detail_scaffold(
 ) {
     val colors = AsterMaterial.colors
     val effective_scroll = scroll_state ?: rememberScrollState()
+    val collapse = remember { detail_title_collapse() }
     Column(
         modifier = Modifier
             .fillMaxSize()
             .page_surface(colors)
             .windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.ime)),
     ) {
-        AsterTopBar(
-            title = title,
-            on_back = on_back,
-            trailing = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    trailing?.invoke()
-                    org.astermail.android.ui.settings.settings_search_action()
-                }
-            },
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onGloballyPositioned { coords ->
+                    collapse.bar_bottom = coords.positionInRoot().y + coords.size.height
+                },
+        ) {
+            AsterTopBar(
+                title = title,
+                on_back = on_back,
+                trailing = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        trailing?.invoke()
+                        org.astermail.android.ui.settings.settings_search_action()
+                    }
+                },
+            )
+            if (title.isEmpty() && collapse.title.isNotEmpty()) {
+                Text(
+                    text = collapse.title,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.text_primary,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth()
+                        .padding(horizontal = AsterSpacing.xxxl + AsterSpacing.xxxl)
+                        .graphicsLayer {
+                            val shown = collapse.fraction()
+                            alpha = shown
+                            translationY = (1f - shown) * AsterSpacing.sm.toPx()
+                        }
+                        .clearAndSetSemantics {},
+                )
+            }
+        }
 
         org.astermail.android.ui.settings.settings_pull_refresh_box(
             on_refresh = on_refresh,
@@ -285,7 +355,10 @@ internal fun detail_scaffold(
         ) {
             if (scrollable) {
                 val anchor_host = remember_settings_anchor_host(effective_scroll)
-                CompositionLocalProvider(local_settings_anchor_host provides anchor_host) {
+                CompositionLocalProvider(
+                    local_settings_anchor_host provides anchor_host,
+                    local_detail_title_collapse provides collapse,
+                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -380,7 +453,7 @@ internal fun preferences_load_placeholder() {
     val colors = AsterMaterial.colors
 
     if (state.is_loading || state.error == null) {
-        settings_pending_spinner()
+        settings_page_skeleton()
 
         return
     }
@@ -724,13 +797,15 @@ internal fun section_header_action(
     }
 }
 
+internal val info_dialog_button_size = 24.dp
+
 @Composable
 internal fun info_dialog_button(title: String, description: String) {
     val colors = AsterMaterial.colors
     var show by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
-            .size(24.dp)
+            .size(info_dialog_button_size)
             .clip(CircleShape)
             .clickable { show = true },
         contentAlignment = Alignment.Center,

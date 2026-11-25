@@ -68,7 +68,6 @@ import org.astermail.android.R
 import org.astermail.android.api.mail.MailUserStatsResponse
 import org.astermail.android.design.auto_mirrored
 import org.astermail.android.design.components.AsterCard
-import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
@@ -558,14 +557,10 @@ private fun cleanup_row(
             )
         }
         Spacer(Modifier.width(AsterSpacing.sm))
-        if (is_busy) {
-            org.astermail.android.design.components.aster_spinner(
-                color = colors.accent_blue,
-                stroke_width = 2.dp,
-                modifier = Modifier.size(18.dp),
-            )
-        } else {
-            AsterGhostButton(label = action_label, onClick = on_action)
-        }
+        org.astermail.android.design.components.AsterCompactDestructiveButton(
+            label = action_label,
+            onClick = on_action,
+            is_loading = is_busy,
+        )
     }
 }

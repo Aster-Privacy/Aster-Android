@@ -278,7 +278,7 @@
     <string name="unsubscribed">수신 거부됨</string>
     <string name="scanning">스캔 중...</string>
     <string name="no_mailing_lists">아직 메일링 리스트가 없습니다</string>
-    <string name="scan_inbox_hint">"받은편지함 스캔"을 탭하여 뉴스레터와 마케팅 발신자를 찾으세요.</string>
+    <string name="scan_inbox_hint">아래로 당겨 받은편지함에서 뉴스레터와 마케팅 발신자를 찾으세요.</string>
     <string name="active_tab">활성</string>
     <string name="unsubscribed_tab">수신 거부됨</string>
     <string name="reactivate">재활성화</string>
@@ -802,6 +802,7 @@
     <string name="unblock">차단 해제</string>
     <string name="block_a_sender">발신자 차단</string>
     <string name="block_sender_hint">이메일 주소 또는 도메인을 입력하세요. 해당 주소에서 오는 새 메일은 바로 스팸으로 이동합니다.</string>
+    <string name="block_sender_invalid">이메일 주소 또는 example.com 같은 도메인을 입력하세요.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">차단</string>
     <string name="blocked_domain">도메인 전체</string>
@@ -2355,6 +2356,9 @@
     </plurals>
     <plurals name="subscriptions_found_count">
         <item quantity="other">새 구독 %d개를 찾았습니다</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="other">메시지 %2$s개 중 %1$s개를 스캔했으며 발신자 %3$s명을 찾았습니다</item>
     </plurals>
     <string name="reaction_info_title">반응</string>
     <string name="reaction_badge_label">새 반응</string>

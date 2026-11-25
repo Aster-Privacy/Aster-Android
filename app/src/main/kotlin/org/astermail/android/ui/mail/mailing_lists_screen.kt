@@ -61,6 +61,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
@@ -243,6 +244,12 @@ fun MailingListsScreen(
     }
 
     val list_state = rememberLazyListState()
+    val pull_refreshing = state.is_scanning && state.scan_scanned == 0
+    val pull_state = org.astermail.android.ui.common.remember_aster_pull_refresh_state(
+        refreshing = pull_refreshing,
+        enabled = selected_ids.isEmpty(),
+        on_refresh = { vm.scan() },
+    )
     val nav_bar_bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val status_bar_top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     var header_height_px by remember { mutableIntStateOf(0) }
@@ -351,6 +358,7 @@ fun MailingListsScreen(
             state = list_state,
             modifier = Modifier
                 .fillMaxSize()
+                .nestedScroll(pull_state)
                 .pointerInput(Unit) {
                     val press_slop = viewConfiguration.touchSlop
                     val long_press_ms = viewConfiguration.longPressTimeoutMillis
@@ -434,6 +442,9 @@ fun MailingListsScreen(
                         ?.takeIf { items.size == state.items.size }
                         ?: items.sumOf { it.email_count },
                     is_scanning = state.is_scanning,
+                    scan_scanned = state.scan_scanned,
+                    scan_total = state.scan_total,
+                    scan_found = state.scan_found,
                     is_loading = state.is_loading || blocked_pending,
                     modifier = Modifier.padding(horizontal = inbox_card_horizontal_margin),
                 )
@@ -521,6 +532,15 @@ fun MailingListsScreen(
             }
         }
 
+        org.astermail.android.ui.common.aster_pull_refresh_indicator(
+            state = pull_state,
+            refreshing = pull_refreshing,
+            enabled = selected_ids.isEmpty(),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = header_height_dp),
+        )
+
         org.astermail.android.ui.common.vertical_scroll_bar(
             state = list_state,
             modifier = Modifier.align(Alignment.TopEnd),
@@ -557,9 +577,6 @@ fun MailingListsScreen(
                     on_back = on_back,
                     on_open_drawer = on_open_drawer,
                     on_open_search = on_open_search,
-                    on_scan = { vm.scan() },
-                    on_cancel_scan = { vm.cancel_scan() },
-                    is_scanning = state.is_scanning,
                     on_open_account = on_open_account,
                     stored_account = stored_account,
                 )
@@ -661,38 +678,10 @@ private fun subscription_top_bar(
     on_back: () -> Unit,
     on_open_drawer: (() -> Unit)?,
     on_open_search: () -> Unit,
-    on_scan: () -> Unit,
-    on_cancel_scan: () -> Unit,
-    is_scanning: Boolean,
     on_open_account: (() -> Unit)?,
     stored_account: org.astermail.android.storage.StoredAccount?,
 ) {
     val colors = AsterMaterial.colors
-    val scan_action: @Composable () -> Unit = {
-        if (is_scanning) {
-            val cancel_label = stringResource(R.string.cancel)
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(SquircleShape(24.dp))
-                    .clickable { on_cancel_scan() }
-                    .semantics { contentDescription = cancel_label },
-                contentAlignment = Alignment.Center,
-            ) {
-                org.astermail.android.design.components.aster_spinner(
-                    color = colors.accent_blue,
-                    stroke_width = 2.dp,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-        } else {
-            AsterIconButton(
-                icon = TablerIcons.Refresh,
-                content_description = stringResource(R.string.scan_inbox),
-                onClick = on_scan,
-            )
-        }
-    }
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -742,7 +731,7 @@ private fun subscription_top_bar(
                     on_click = on_open_account,
                 )
             } else {
-                scan_action()
+                Spacer(Modifier.width(48.dp))
             }
         }
         Row(
@@ -759,7 +748,6 @@ private fun subscription_top_bar(
                 fontSize = 16.sp,
                 modifier = Modifier.weight(1f),
             )
-            if (on_open_account != null) scan_action()
         }
     }
 }
@@ -770,6 +758,9 @@ private fun subscription_hero(
     unsubscribed_count: Int,
     email_count: Int,
     is_scanning: Boolean,
+    scan_scanned: Int,
+    scan_total: Int,
+    scan_found: Int,
     is_loading: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -832,40 +823,13 @@ private fun subscription_hero(
                     )
                 }
             }
-            androidx.compose.animation.AnimatedVisibility(
-                visible = is_scanning,
-                enter = aster_fade_in(reduce_motion) + androidx.compose.animation.scaleIn(initialScale = 0.9f),
-                exit = aster_fade_out(reduce_motion) + androidx.compose.animation.scaleOut(targetScale = 0.9f),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .clip(AsterShapes.pill)
-                        .background(field_surface_color(colors))
-                        .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.sm),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    org.astermail.android.design.components.aster_spinner(
-                        color = colors.accent_blue,
-                        stroke_width = 2.dp,
-                        modifier = Modifier.size(12.dp),
-                    )
-                    Spacer(Modifier.width(AsterSpacing.sm))
-                    Text(
-                        text = stringResource(R.string.scanning),
-                        color = colors.text_secondary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                    )
-                }
-            }
         }
         Spacer(Modifier.height(AsterSpacing.lg))
         hero_split_bar(
             fraction = fraction,
             has_data = total > 0,
             active_color = colors.accent_blue,
-            unsubscribed_color = colors.success,
+            unsubscribed_color = colors.text_tertiary,
             track_color = field_surface_color(colors),
         )
         Spacer(Modifier.height(AsterSpacing.md))
@@ -878,7 +842,7 @@ private fun subscription_hero(
                 value = unsubscribed_count,
                 text = number_format.format(unsubscribed_count),
                 label = stringResource(R.string.stat_unsubscribed),
-                dot_color = colors.success,
+                dot_color = colors.text_tertiary,
                 show_placeholder = show_placeholder,
             )
             hero_stat_tile(
@@ -886,8 +850,69 @@ private fun subscription_hero(
                 value = email_count,
                 text = number_format.format(email_count),
                 label = stringResource(R.string.stat_emails),
-                dot_color = colors.text_tertiary,
+                dot_color = null,
                 show_placeholder = show_placeholder,
+            )
+        }
+        androidx.compose.animation.AnimatedVisibility(
+            visible = is_scanning,
+            enter = aster_fade_in(reduce_motion) + androidx.compose.animation.expandVertically(),
+            exit = aster_fade_out(reduce_motion) + androidx.compose.animation.shrinkVertically(),
+        ) {
+            hero_scan_progress(
+                scanned = scan_scanned,
+                total = scan_total,
+                found = scan_found,
+            )
+        }
+    }
+}
+
+@Composable
+private fun hero_scan_progress(scanned: Int, total: Int, found: Int) {
+    val colors = AsterMaterial.colors
+    val reduce_motion = aster_reduce_motion()
+    val number_format = remember { java.text.NumberFormat.getIntegerInstance() }
+    val track = field_surface_color(colors)
+    val label = if (total > 0) {
+        pluralStringResource(
+            R.plurals.subscription_scan_progress,
+            found,
+            number_format.format(scanned),
+            number_format.format(total),
+            number_format.format(found),
+        )
+    } else {
+        stringResource(R.string.scanning)
+    }
+    Column(modifier = Modifier.fillMaxWidth().padding(top = AsterSpacing.md)) {
+        Text(
+            text = label,
+            color = colors.text_tertiary,
+            fontSize = 13.sp,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(Modifier.height(AsterSpacing.sm))
+        if (total > 0) {
+            val animated by animateFloatAsState(
+                targetValue = (scanned.toFloat() / total.toFloat()).coerceIn(0f, 1f),
+                animationSpec = tween(if (reduce_motion) 0 else 400),
+                label = "subscription_scan_progress",
+            )
+            LinearProgressIndicator(
+                progress = { animated },
+                modifier = Modifier.fillMaxWidth().height(4.dp).clip(AsterShapes.pill),
+                color = colors.accent_blue,
+                trackColor = track,
+                gapSize = 0.dp,
+                drawStopIndicator = {},
+            )
+        } else {
+            org.astermail.android.design.components.aster_linear_progress(
+                modifier = Modifier.fillMaxWidth().height(4.dp).clip(AsterShapes.pill),
+                color = colors.accent_blue,
+                track_color = track,
             )
         }
     }
@@ -937,7 +962,7 @@ private fun hero_stat_tile(
     value: Int,
     text: String,
     label: String,
-    dot_color: androidx.compose.ui.graphics.Color,
+    dot_color: androidx.compose.ui.graphics.Color?,
     show_placeholder: Boolean,
 ) {
     val colors = AsterMaterial.colors
@@ -948,13 +973,15 @@ private fun hero_stat_tile(
             .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.md),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .clip(CircleShape)
-                    .background(dot_color),
-            )
-            Spacer(Modifier.width(6.dp))
+            if (dot_color != null) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(dot_color),
+                )
+                Spacer(Modifier.width(6.dp))
+            }
             Text(
                 text = label,
                 color = colors.text_tertiary,

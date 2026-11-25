@@ -20,6 +20,7 @@
     <string name="contacts_show_all">Tüm kişileri göster</string>
     <string name="guard_changes_subtitle">Hesabınızdaki değişiklikler geçerli olmadan önce burada bekler.</string>
     <string name="hide_quoted_text">Alıntılanan metni gizle</string>
+    <string name="show_quoted_text">Alıntılanan metni göster</string>
     <string name="search_keywords_more_exit">çıkış, geri, çift dokunma, çift geri, iki kez geri bas, geri tuşu, uygulamayı kapat, uygulamadan çık, exit, back</string>
     <string name="search_keywords_more_quick_actions">hızlı işlemler, hızlı filtreler, gelen kutusu düğmeleri, başlık düğmeleri, filtre düğmeleri, quick actions</string>
     <string name="search_keywords_more_reduce_motion">hareketi azalt, animasyonlar, hareket, geçişler, erişilebilirlik, hareket hastalığı, reduce motion</string>

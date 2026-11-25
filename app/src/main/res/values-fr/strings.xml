@@ -297,7 +297,7 @@
     <string name="unsubscribed">désabonné</string>
     <string name="scanning">Analyse en cours...</string>
     <string name="no_mailing_lists">Aucune liste de diffusion</string>
-    <string name="scan_inbox_hint">Appuyez sur « Analyser la boîte de réception » pour trouver les newsletters et les expéditeurs marketing.</string>
+    <string name="scan_inbox_hint">Balayez vers le bas pour analyser votre boîte de réception et trouver les newsletters et les expéditeurs marketing.</string>
     <string name="active_tab">Actifs</string>
     <string name="unsubscribed_tab">Désabonnés</string>
     <string name="reactivate">Réactiver</string>
@@ -846,6 +846,7 @@
     <string name="unblock">Débloquer</string>
     <string name="block_a_sender">Bloquer un expéditeur</string>
     <string name="block_sender_hint">Saisissez une adresse e-mail ou un domaine. Les nouveaux messages iront directement dans les spams.</string>
+    <string name="block_sender_invalid">Saisissez une adresse e-mail ou un domaine comme example.com.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">Bloquer</string>
     <string name="blocked_domain">Domaine entier</string>
@@ -2404,6 +2405,11 @@
         <item quantity="one">%d nouvel abonnement trouvé</item>
         <item quantity="many">%d nouveaux abonnements trouvés</item>
         <item quantity="other">%d nouveaux abonnements trouvés</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">%1$s messages analysés sur %2$s, %3$s expéditeur trouvé</item>
+        <item quantity="many">%1$s messages analysés sur %2$s, %3$s expéditeurs trouvés</item>
+        <item quantity="other">%1$s messages analysés sur %2$s, %3$s expéditeurs trouvés</item>
     </plurals>
     <string name="reaction_info_title">Réaction</string>
     <string name="reaction_badge_label">Nouvelle réaction</string>

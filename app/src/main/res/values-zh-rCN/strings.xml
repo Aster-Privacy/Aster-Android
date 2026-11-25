@@ -278,7 +278,7 @@
     <string name="unsubscribed">已取消订阅</string>
     <string name="scanning">扫描中...</string>
     <string name="no_mailing_lists">还没有邮件列表</string>
-    <string name="scan_inbox_hint">点击“扫描收件箱”即可查找新闻通讯和营销发件人。</string>
+    <string name="scan_inbox_hint">下拉即可扫描收件箱，查找新闻通讯和营销发件人。</string>
     <string name="active_tab">活跃</string>
     <string name="unsubscribed_tab">已取消订阅</string>
     <string name="reactivate">重新激活</string>
@@ -802,6 +802,7 @@
     <string name="unblock">取消屏蔽</string>
     <string name="block_a_sender">屏蔽发件人</string>
     <string name="block_sender_hint">输入邮箱地址或域名。之后来自对方的新邮件将直接进入垃圾邮件。</string>
+    <string name="block_sender_invalid">请输入电子邮件地址或域名，例如 example.com。</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">屏蔽</string>
     <string name="blocked_domain">整个域名</string>
@@ -2355,6 +2356,9 @@
     </plurals>
     <plurals name="subscriptions_found_count">
         <item quantity="other">找到 %d 个新订阅</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="other">已扫描 %2$s 封邮件中的 %1$s 封，找到 %3$s 个发件人</item>
     </plurals>
     <string name="reaction_info_title">回应</string>
     <string name="reaction_badge_label">新回应</string>

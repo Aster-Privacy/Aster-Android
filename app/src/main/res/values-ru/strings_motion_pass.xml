@@ -20,6 +20,7 @@
     <string name="contacts_show_all">Показать все контакты</string>
     <string name="guard_changes_subtitle">Изменения в вашем аккаунте ждут здесь, прежде чем вступить в силу.</string>
     <string name="hide_quoted_text">Скрыть цитируемый текст</string>
+    <string name="show_quoted_text">Показать цитируемый текст</string>
     <string name="search_keywords_more_exit">выход, назад, двойное нажатие, дважды назад, нажать назад дважды, кнопка назад, закрыть приложение, выйти из приложения, exit, back</string>
     <string name="search_keywords_more_quick_actions">быстрые действия, быстрые фильтры, кнопки входящих, кнопки заголовка, кнопки фильтров, quick actions</string>
     <string name="search_keywords_more_reduce_motion">уменьшить движение, анимации, движение, переходы, специальные возможности, укачивание, reduce motion</string>

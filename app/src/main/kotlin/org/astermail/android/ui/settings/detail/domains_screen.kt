@@ -76,6 +76,7 @@ import org.astermail.android.design.components.AsterCard
 import org.astermail.android.settings.DomainPurchaseViewModel
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.settings.domains.DnsZoneViewModel
+import org.astermail.android.settings.host_activity
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.ui.settings.join_launched
 
@@ -119,7 +120,8 @@ fun DomainsScreen(
     val effective_dns = remember(cached_dns, domain_dns) { cached_dns + domain_dns }
     val selected_domain = state.domains.firstOrNull { it.id == selected_domain_id }
 
-    val purchase_vm: DomainPurchaseViewModel = hiltViewModel()
+    val purchase_host = context.host_activity()
+    val purchase_vm: DomainPurchaseViewModel = if (purchase_host != null) hiltViewModel(purchase_host) else hiltViewModel()
     val purchase_state by purchase_vm.state.collectAsStateWithLifecycle()
 
     BackHandler(enabled = selected_domain_id != null) { selected_domain_id = null }
@@ -297,6 +299,15 @@ fun DomainsScreen(
                         on_verify = { verify_domain(domain.id) },
                         on_open_bimi = { on_open_bimi(domain.id) },
                         on_deleted = { selected_domain_id = null },
+                    )
+                } else if (!purchase_state.orders_loaded && domains_phase != domains_load_phase.failed) {
+                    domains_list_content(
+                        state = state.copy(domains = emptyList()),
+                        phase = domains_load_phase.loading,
+                        error = null,
+                        on_show_add = { show_add_domain = true },
+                        on_retry = {},
+                        on_open = {},
                     )
                 } else {
                     domains_list_content(

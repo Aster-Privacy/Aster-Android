@@ -20,6 +20,7 @@
     <string name="contacts_show_all">모든 연락처 표시</string>
     <string name="guard_changes_subtitle">계정 변경 사항은 적용되기 전에 여기에서 대기합니다.</string>
     <string name="hide_quoted_text">인용된 텍스트 숨기기</string>
+    <string name="show_quoted_text">인용된 텍스트 표시</string>
     <string name="search_keywords_more_exit">종료, 뒤로, 두 번 탭, 두 번 뒤로, 뒤로 두 번 누르기, 뒤로 버튼, 앱 닫기, 앱 나가기, exit, back</string>
     <string name="search_keywords_more_quick_actions">빠른 작업, 빠른 필터, 받은편지함 버튼, 헤더 버튼, 필터 버튼, quick actions</string>
     <string name="search_keywords_more_reduce_motion">모션 줄이기, 애니메이션, 모션, 전환 효과, 접근성, 멀미, reduce motion</string>

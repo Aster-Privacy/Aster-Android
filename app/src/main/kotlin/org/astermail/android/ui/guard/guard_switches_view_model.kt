@@ -279,33 +279,66 @@ data class guard_entry_ui(
     val on: Boolean = false,
     val is_guard_device: Boolean = false,
     val criterion_met: Boolean = false,
+    val loaded: Boolean = false,
 )
 
 fun guard_criterion_met(status: GuardStatus): Boolean = status.switches and GuardSwitch.NEW_DEVICE_APPROVAL != 0
+
+internal object guard_entry_memory {
+    private val entries = java.util.concurrent.ConcurrentHashMap<String, guard_entry_ui>()
+
+    fun read(account_key: String?): guard_entry_ui? =
+        account_key?.takeIf { it.isNotBlank() }?.let { entries[it] }
+
+    fun write(account_key: String?, entry: guard_entry_ui) {
+        val key = account_key?.takeIf { it.isNotBlank() } ?: return
+        entries[key] = entry
+    }
+}
 
 @HiltViewModel
 class GuardEntryViewModel @Inject constructor(private val api: GuardApi) : ViewModel() {
     private val _state = MutableStateFlow(guard_entry_ui())
     val state: StateFlow<guard_entry_ui> = _state.asStateFlow()
+    private var account_key: String? = null
+
+    fun bind_account(key: String?) {
+        if (key == account_key) return
+        account_key = key
+        _state.value = guard_entry_memory.read(key) ?: guard_entry_ui()
+    }
 
     fun refresh() {
         viewModelScope.launch { load() }
     }
 
     suspend fun load() {
+        val key = account_key
         val status = try {
             api.status()
         } catch (t: CancellationException) {
             throw t
-        } catch (_: Throwable) {
-            _state.value = guard_entry_ui()
+        } catch (t: Throwable) {
+            val current = _state.value
+            val keep = current.loaded && t !is ApiError.NotFoundError
+            publish(key, if (keep) current else guard_entry_ui(loaded = true))
             return
         }
-        _state.value = guard_entry_ui(
-            visible = true,
-            on = guard_is_on(status),
-            is_guard_device = status.this_device != null,
-            criterion_met = guard_criterion_met(status),
+        publish(
+            key,
+            guard_entry_ui(
+                visible = true,
+                on = guard_is_on(status),
+                is_guard_device = status.this_device != null,
+                criterion_met = guard_criterion_met(status),
+                loaded = true,
+            ),
         )
+    }
+
+    private fun publish(key: String?, entry: guard_entry_ui) {
+        if (key != account_key) return
+        guard_entry_memory.write(key, entry)
+        _state.value = entry
     }
 }

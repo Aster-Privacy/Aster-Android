@@ -65,4 +65,14 @@
         <item quantity="many">%1$d rastreadores bloqueados</item>
         <item quantity="other">%1$d rastreadores bloqueados</item>
     </plurals>
+    <plurals name="trash_emptied_count">
+        <item quantity="one">%d mensagem excluída da lixeira</item>
+        <item quantity="many">%d mensagens excluídas da lixeira</item>
+        <item quantity="other">%d mensagens excluídas da lixeira</item>
+    </plurals>
+    <plurals name="spam_emptied_count">
+        <item quantity="one">%d mensagem excluída do spam</item>
+        <item quantity="many">%d mensagens excluídas do spam</item>
+        <item quantity="other">%d mensagens excluídas do spam</item>
+    </plurals>
 </resources>

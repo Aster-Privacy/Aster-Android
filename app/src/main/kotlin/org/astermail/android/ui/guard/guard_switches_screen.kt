@@ -27,9 +27,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -57,7 +61,10 @@ import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.AsterButton
 import org.astermail.android.design.components.AsterCompactButton
 import org.astermail.android.design.components.AsterCompactGhostButton
-import org.astermail.android.design.components.AsterGhostButton
+import org.astermail.android.design.components.AsterCompactDestructiveButton
+import org.astermail.android.design.components.AsterDialog
+import org.astermail.android.design.components.AsterDialogDestructiveButton
+import org.astermail.android.design.components.AsterDialogOutlineButton
 import org.astermail.android.guard.GuardHeldBanner
 import org.astermail.android.guard.guard_format_instant
 import org.astermail.android.guard.guard_parse_instant
@@ -334,8 +341,30 @@ private fun guard_device_row(
     on_remove: () -> Unit,
 ) {
     val subtitle = if (is_this) stringResource(R.string.guard_devices_this_device) else null
+    val device_name = device.name.ifBlank { stringResource(R.string.guard_devices_unnamed) }
+    var confirm_remove by remember { mutableStateOf(false) }
+    if (confirm_remove) {
+        AsterDialog(
+            on_dismiss = { confirm_remove = false },
+            title = stringResource(R.string.are_you_sure),
+            message = stringResource(R.string.guard_devices_remove_confirm, device_name),
+            footer = {
+                AsterDialogOutlineButton(
+                    label = stringResource(R.string.cancel),
+                    onClick = { confirm_remove = false },
+                )
+                AsterDialogDestructiveButton(
+                    label = stringResource(R.string.guard_devices_remove),
+                    onClick = {
+                        confirm_remove = false
+                        on_remove()
+                    },
+                )
+            },
+        )
+    }
     detail_row(
-        title = device.name.ifBlank { stringResource(R.string.guard_devices_unnamed) },
+        title = device_name,
         subtitle = subtitle,
         leading = {
             guard_vector_tile(
@@ -346,10 +375,11 @@ private fun guard_device_row(
         },
         trailing = if (can_remove) {
             {
-                AsterGhostButton(
+                AsterCompactDestructiveButton(
                     label = stringResource(R.string.guard_devices_remove),
-                    onClick = on_remove,
-                    enabled = !removing,
+                    onClick = { confirm_remove = true },
+                    is_loading = removing,
+                    modifier = Modifier.widthIn(min = 84.dp).testTag("guard_device_remove"),
                 )
             }
         } else {

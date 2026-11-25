@@ -78,4 +78,16 @@
         <item quantity="many">Zablokowano %1$d elementów śledzących</item>
         <item quantity="other">Zablokowano %1$d elementu śledzącego</item>
     </plurals>
+    <plurals name="trash_emptied_count">
+        <item quantity="one">Usunięto %d wiadomość z kosza</item>
+        <item quantity="few">Usunięto %d wiadomości z kosza</item>
+        <item quantity="many">Usunięto %d wiadomości z kosza</item>
+        <item quantity="other">Usunięto %d wiadomości z kosza</item>
+    </plurals>
+    <plurals name="spam_emptied_count">
+        <item quantity="one">Usunięto %d wiadomość ze spamu</item>
+        <item quantity="few">Usunięto %d wiadomości ze spamu</item>
+        <item quantity="many">Usunięto %d wiadomości ze spamu</item>
+        <item quantity="other">Usunięto %d wiadomości ze spamu</item>
+    </plurals>
 </resources>

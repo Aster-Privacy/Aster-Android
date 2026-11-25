@@ -496,7 +496,7 @@ private fun signature_edit_modal(
         }
         if (initial != null) {
             v_gap(AsterSpacing.md)
-            AsterSecondaryButton(
+            org.astermail.android.design.components.AsterDestructiveButton(
                 label = stringResource(R.string.delete_signature),
                 onClick = on_delete,
             )

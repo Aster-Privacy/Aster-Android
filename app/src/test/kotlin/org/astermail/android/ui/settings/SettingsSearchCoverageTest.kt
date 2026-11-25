@@ -51,6 +51,7 @@ class SettingsSearchCoverageTest {
         "color_theme_default", "color_theme_show_all", "font_option_default", "font_option_system",
         "font_option_system_mono", "integrations", "connected_apps", "slack", "slack_subtitle", "calendar",
         "calendar_subtitle", "zapier", "zapier_subtitle", "webhooks", "manage_webhooks",
+        "mail_rules_color", "rules_when_title", "rules_then_title", "mail_rules_match_case",
     )
 
     private val locales = listOf(

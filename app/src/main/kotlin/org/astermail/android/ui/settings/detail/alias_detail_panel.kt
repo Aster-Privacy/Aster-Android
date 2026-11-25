@@ -661,11 +661,7 @@ internal fun alias_delivery_picker(
             subtitle = stringResource(R.string.alias_delivery_label_subtitle),
             value = selected_label_name,
             test_tag = "alias_delivery_label_selector",
-            trailing = if (run_menu != null) {
-                { Spacer(Modifier.size(ALIAS_RUN_MENU_SIZE)) }
-            } else {
-                null
-            },
+            end_reserve = if (run_menu != null) ALIAS_RUN_MENU_SIZE else 0.dp,
         ) { expanded, dismiss ->
             aster_menu(expanded = expanded, on_dismiss = dismiss) {
                 aster_menu_item(

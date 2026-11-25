@@ -40,7 +40,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -60,7 +59,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
@@ -414,12 +415,12 @@ private fun skeleton_text_line(
     state: shimmer_appearance,
     modifier: Modifier = Modifier,
 ) {
-    Text(
-        text = " ",
-        style = style,
-        maxLines = 1,
-        modifier = modifier.shimmer_line(state),
-    )
+    val measurer = rememberTextMeasurer(cacheSize = 4)
+    val density = LocalDensity.current
+    val line_height = remember(style, density, measurer) {
+        with(density) { measurer.measure(" ", style, maxLines = 1).size.height.toDp() }
+    }
+    Box(modifier = modifier.height(line_height).shimmer_line(state))
 }
 
 @Composable

@@ -21,17 +21,10 @@
 
 package org.astermail.android.ui.settings.detail
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,11 +35,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.astermail.android.R
@@ -79,9 +70,10 @@ fun AutoForwardScreen(
     LaunchedEffect(Unit) { vm.load_forwarding_rules() }
 
     val active_rule = rules.firstOrNull()
-    var enabled by remember(active_rule) { mutableStateOf(active_rule?.enabled ?: true) }
-    var target by remember(active_rule) { mutableStateOf(active_rule?.target_address ?: "") }
-    var keep_copy by remember(active_rule) { mutableStateOf(active_rule?.keep_copy ?: true) }
+    val active_rule_id = active_rule?.id
+    var enabled by remember(active_rule_id) { mutableStateOf(active_rule?.enabled ?: true) }
+    var target by remember(active_rule_id) { mutableStateOf(active_rule?.target_address ?: "") }
+    var keep_copy by remember(active_rule_id) { mutableStateOf(active_rule?.keep_copy ?: true) }
 
     LaunchedEffect(state.save_status) {
         if (state.save_status == SaveStatus.SAVED) {
@@ -135,8 +127,8 @@ fun AutoForwardScreen(
             load_failed_card(state.error) { vm.load_forwarding_rules() }
             return@detail_scaffold
         }
-        if (state.is_loading && rules.isEmpty() && active_rule == null) {
-            settings_pending_spinner()
+        if (!state.forwarding_rules_loaded && rules.isEmpty()) {
+            auto_forward_skeleton()
         } else {
             if (active_rule != null) {
                 AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -183,36 +175,12 @@ fun AutoForwardScreen(
                 placeholder = stringResource(R.string.forward_to_placeholder),
             )
             v_gap(AsterSpacing.md)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { keep_copy = !keep_copy }
-                    .padding(vertical = AsterSpacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(20.dp)
-                        .background(
-                            if (keep_copy) colors.accent_blue else Color.Transparent,
-                            RoundedCornerShape(4.dp),
-                        )
-                        .border(
-                            width = 1.5.dp,
-                            color = colors.border_primary,
-                            shape = RoundedCornerShape(4.dp),
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (keep_copy) {
-                        Text("\u2713", color = colors.on_accent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-                Spacer(Modifier.size(AsterSpacing.md))
-                Text(
-                    text = stringResource(R.string.keep_copy_in_inbox),
-                    color = colors.text_primary,
-                    fontSize = 14.sp,
+            AsterCard(modifier = Modifier.fillMaxWidth()) {
+                settings_toggle_row(
+                    title = stringResource(R.string.keep_copy_in_inbox),
+                    checked = keep_copy,
+                    test_tag = "auto_forward_keep_copy",
+                    on_change = { keep_copy = it },
                 )
             }
             v_gap(AsterSpacing.lg)
@@ -302,5 +270,16 @@ fun AutoForwardScreen(
             }
         }
         v_gap(AsterSpacing.xxl)
+    }
+}
+
+@Composable
+private fun auto_forward_skeleton() {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        skeleton_hero_card(lines = 1)
+        v_gap(AsterSpacing.lg)
+        skeleton_hero_card(lines = 0)
+        v_gap(AsterSpacing.md)
+        skeleton_card_list(rows = 1)
     }
 }

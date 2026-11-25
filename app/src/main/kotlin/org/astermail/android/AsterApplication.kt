@@ -182,6 +182,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         }
         runCatching { org.astermail.android.ui.common.apply_app_night_mode(this) }
         start_secure_prefs_warm()
+        start_text_pattern_warm()
         org.astermail.android.ui.theme.custom_theme_image.init(this)
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             runCatching { org.astermail.android.ui.theme.theme_manifest.load_cached(this@AsterApplication) }
@@ -191,8 +192,11 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         )
         runCatching {
             val ep = EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
-            org.astermail.android.mail.AsterProfileResolverHolder.shared = ep.aster_profile_resolver()
+            val resolver = ep.aster_profile_resolver()
+            resolver.attach_store(noBackupFilesDir)
+            org.astermail.android.mail.AsterProfileResolverHolder.shared = resolver
         }
+        runCatching { org.astermail.android.ui.mail.favicon_miss_store.attach(this) }
         runCatching {
             EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
                 .ratchet_vault_flush_triggers()
@@ -227,6 +231,20 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
     @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
     private fun disable_compose_content_capture() {
         androidx.compose.ui.contentcapture.ContentCaptureManager.isEnabled = false
+    }
+
+    private fun start_text_pattern_warm() {
+        Thread({
+            runCatching {
+                org.astermail.android.ui.mail.detect_inbox_order_hint(
+                    "Your order receipt has shipped",
+                    "Order #123-4567890-1234567 total: \$10.00 shipped, arriving Monday",
+                )
+            }
+        }, "aster-pattern-warm").apply {
+            priority = Thread.NORM_PRIORITY
+            start()
+        }
     }
 
     private fun start_secure_prefs_warm() {

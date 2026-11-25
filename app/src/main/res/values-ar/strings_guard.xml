@@ -207,12 +207,13 @@
     <string name="guard_switches_paused">طلبات تسجيل الدخول متوقفة مؤقتًا حتى %1$s.</string>
     <string name="guard_switches_missing_rescue">ليس لديك رمز إنقاذ. أنشئ رمزًا لتكون لديك دائمًا طريقة للعودة إلى حسابك.</string>
     <string name="guard_switches_not_guard_device">لتغيير هذه الإعدادات، استخدم أحد أجهزة Guard لديك.</string>
-    <string name="guard_switches_canceled">لم يتغير شيء. للحفظ، أكّد أنك أنت.</string>
+    <string name="guard_switches_canceled">لم يتم حفظ تغييراتك. لحفظها، أكّد هويتك.</string>
     <string name="guard_switches_code_subtitle">الموافقة على تسجيل دخول دون إشعار</string>
     <string name="guard_devices_section">أجهزة Guard</string>
     <string name="guard_devices_this_device">هذا الهاتف</string>
     <string name="guard_devices_unnamed">جهاز بلا اسم</string>
     <string name="guard_devices_remove_prompt_subtitle">إزالة جهاز Guard</string>
+    <string name="guard_devices_remove_confirm">لن يوافق %1$s بعد الآن على التغييرات في حسابك. لاستخدامه مرة أخرى، انضم إلى Guard من ذلك الجهاز.</string>
     <string name="guard_security_row_off">شغّله للموافقة على عمليات تسجيل الدخول وتعليق التغييرات الخطرة من هذا الهاتف</string>
     <string name="guard_changes_title">التغييرات المعلقة</string>
     <string name="guard_changes_body">تنتظر هذه التغييرات في حسابك قبل أن تسري. إذا لم تجرِ أحدها، فألغِه.</string>
@@ -228,7 +229,7 @@
     <string name="guard_changes_step_up_required">لتخطي الانتظار، استخدم جهازًا تستخدمه منذ 7 أيام أو أكثر، أو مفتاح الأمان.</string>
     <string name="guard_changes_not_guard_device">لإلغاء تغيير أو إيقافه، استخدم أحد أجهزة Guard لديك.</string>
     <string name="guard_changes_prompt_subtitle">تأكيد هذا التغيير في حسابك</string>
-    <string name="guard_changes_prompt_canceled">لم يتغير شيء. للمتابعة، أكّد أنك أنت.</string>
+    <string name="guard_changes_prompt_canceled">للمتابعة، أكّد هويتك.</string>
     <string name="guard_changes_done_canceled">تم إلغاء التغيير.</string>
     <string name="guard_changes_done_skipped">سرى التغيير.</string>
     <string name="guard_changes_done_stopped">تم إيقاف الاسترداد.</string>

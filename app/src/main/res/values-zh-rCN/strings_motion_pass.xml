@@ -20,6 +20,7 @@
     <string name="contacts_show_all">显示所有联系人</string>
     <string name="guard_changes_subtitle">对账户的更改会先在这里等待，然后才生效。</string>
     <string name="hide_quoted_text">隐藏引用的文本</string>
+    <string name="show_quoted_text">显示引用的文本</string>
     <string name="search_keywords_more_exit">退出, 返回, 双击, 两次返回, 按两次返回, 返回键, 关闭应用, 离开应用, exit, back</string>
     <string name="search_keywords_more_quick_actions">快捷操作, 快速筛选, 收件箱按钮, 顶栏按钮, 筛选按钮, quick actions</string>
     <string name="search_keywords_more_reduce_motion">减少动画, 动画, 动效, 过渡, 无障碍, 晕动症, reduce motion</string>

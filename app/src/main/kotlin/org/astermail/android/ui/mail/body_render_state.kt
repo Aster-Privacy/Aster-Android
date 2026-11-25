@@ -22,11 +22,14 @@
 package org.astermail.android.ui.mail
 
 internal const val BODY_SKELETON_DELAY_MS = 150L
+internal const val plain_text_sync_build_chars = 24_000
 internal const val BODY_PAINT_FALLBACK_MS = 2500L
 internal const val BODY_READ_FALLBACK_ATTEMPTS = 10
 internal const val BODY_READ_FALLBACK_STEP_MS = 120L
 
 internal const val BODY_HEIGHT_SLACK_CSS = 1
+
+internal const val BODY_HEIGHT_ROUNDING_CSS = 3
 
 internal const val LIVE_BODY_VIEW_CAPACITY = 6
 
@@ -61,7 +64,7 @@ internal fun judge_body_reading(
     view_is_known_height: Boolean,
 ): body_reading_verdict = when {
     !accepted || content_css <= 0 || view_css <= 0 -> body_reading_verdict.stale
-    content_css > view_css + BODY_HEIGHT_SLACK_CSS -> body_reading_verdict.grow
+    content_css > view_css + BODY_HEIGHT_ROUNDING_CSS -> body_reading_verdict.grow
     view_css <= probe_css + BODY_HEIGHT_SLACK_CSS -> body_reading_verdict.settle
     view_is_known_height -> body_reading_verdict.settle
     else -> body_reading_verdict.probe
@@ -100,28 +103,48 @@ internal class pending_collapse(
 internal class quote_toggle_state {
     private var base_dp = 0f
     private var current_dp = 0f
+    private var layout_stale = false
+    private val open_set = LinkedHashSet<Int>()
 
-    val collapsed_height_dp: Float? get() = if (base_dp >= 1f) base_dp else null
+    val open_quotes: Set<Int> get() = open_set
 
-    val is_expanded: Boolean get() = base_dp >= 1f && current_dp > base_dp + BODY_HEIGHT_SLACK_CSS
+    val has_open: Boolean get() = open_set.isNotEmpty()
+
+    fun set_open(index: Int, open: Boolean): Boolean = if (open) open_set.add(index) else open_set.remove(index)
+
+    fun close_all(): Boolean {
+        if (open_set.isEmpty()) return false
+        open_set.clear()
+        return true
+    }
+
+    val collapsed_height_dp: Float? get() = if (!layout_stale && base_dp >= 1f) base_dp else null
+
+    val is_expanded: Boolean get() = layout_stale || (base_dp >= 1f && current_dp > base_dp + BODY_HEIGHT_SLACK_CSS)
 
     fun on_exact_height(height_dp: Float) {
         if (height_dp < 1f) return
-        if (base_dp < 1f) base_dp = height_dp
+        if (!layout_stale && base_dp < 1f) base_dp = height_dp
         current_dp = height_dp
     }
 
     fun on_collapse_requested(): Float {
-        val target = base_dp
-        if (target < 1f) return 0f
+        val target = collapsed_height_dp ?: return 0f
         val shift = (current_dp - target).coerceAtLeast(0f)
         current_dp = target
         return shift
     }
 
+    fun on_layout_changed() {
+        base_dp = 0f
+        layout_stale = true
+    }
+
     fun reset() {
         base_dp = 0f
         current_dp = 0f
+        layout_stale = false
+        open_set.clear()
     }
 }
 
@@ -164,6 +187,13 @@ internal class live_view_lru<K : Any, V : Any>(
     fun evict_detached() {
         val victims = entries.keys.filter { it !in attached }
         for (key in victims) entries.remove(key)?.let { safe_release(it) }
+    }
+
+    fun evict_detached_beyond(keep: Int) {
+        val detached = entries.keys.filter { it !in attached }
+        val excess = detached.size - keep.coerceAtLeast(0)
+        if (excess <= 0) return
+        for (key in detached.take(excess)) entries.remove(key)?.let { safe_release(it) }
     }
 
     fun release_all() {

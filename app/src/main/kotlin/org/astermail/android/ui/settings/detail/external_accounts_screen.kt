@@ -528,7 +528,7 @@ fun ExternalAccountsScreen(
                         label = stringResource(R.string.retry),
                         onClick = { vm.load() },
                     )
-                } else if (state.accounts.isEmpty() && state.loading) {
+                } else if (state.accounts.isEmpty() && (state.loading || !state.accounts_loaded)) {
                     settings_load_spinner(size = 20.dp)
                 } else if (state.accounts.isEmpty()) {
                     Text(

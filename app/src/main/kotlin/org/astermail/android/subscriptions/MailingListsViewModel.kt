@@ -47,6 +47,7 @@ import org.astermail.android.api.ApiError
 import org.astermail.android.api.subscriptions.DeleteSubscriptionsRequest
 import org.astermail.android.api.subscriptions.MailingListStats
 import org.astermail.android.api.subscriptions.MailingListSubscription
+import org.astermail.android.api.subscriptions.MailingListsResponse
 import org.astermail.android.api.subscriptions.ProxyUnsubscribeRequest
 import org.astermail.android.api.subscriptions.SubscriptionsApi
 import org.astermail.android.api.subscriptions.TrackSubscriptionRequest
@@ -64,6 +65,9 @@ private const val PRIME_WAIT_MS = 20_000L
 private const val SUCCESS_HOLD_MS = 700L
 private const val FAILURE_HOLD_MS = 1_800L
 private const val BULK_CONCURRENCY = 4
+private const val LIST_CONCURRENCY = 4
+private const val TRACK_CONCURRENCY = 6
+internal const val PROVISIONAL_PREFIX = "scan:"
 
 data class ManualUnsubscribePrompt(
     val subscription_id: String,
@@ -94,6 +98,9 @@ data class MailingListsState(
     val failed_ids: Set<String> = emptySet(),
     val manual_prompt: ManualUnsubscribePrompt? = null,
     val message: String? = null,
+    val scan_scanned: Int = 0,
+    val scan_total: Int = 0,
+    val scan_found: Int = 0,
 )
 
 internal const val BULK_UNSUBSCRIBE_LIMIT = 50
@@ -125,6 +132,7 @@ class MailingListsViewModel @Inject constructor(
     private val deleted_store: DeletedSubscriptionsStore,
     private val cache_sync: SubscriptionCacheSync,
     private val info_cache: UnsubscribeInfoCache,
+    private val list_memory: SubscriptionListMemory,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -157,55 +165,115 @@ class MailingListsViewModel @Inject constructor(
         list_unsubscribe_header,
     )
 
+    private fun settle_items(
+        items: List<MailingListSubscription>,
+        succeeded_ids: Set<String>,
+    ): List<MailingListSubscription> {
+        val local_tokens = unsubscribed_store.tokens.value
+        return items.map { item ->
+            val settled = item.id in succeeded_ids ||
+                unsubscribed_store.token_for(item.sender_email) in local_tokens
+            if (item.status == "active" && settled) item.copy(status = "unsubscribed") else item
+        }
+    }
+
     fun load() {
         if (load_job?.isActive == true) return
-        _state.value = _state.value.copy(is_loading = true, error = null, load_error = null)
+        val cached = list_memory.get()
+        _state.update { current ->
+            if (current.items.isEmpty() && cached != null) {
+                current.copy(
+                    items = settle_items(cached.items, current.succeeded_ids),
+                    stats = current.stats ?: cached.stats,
+                    is_loading = true,
+                    error = null,
+                    load_error = null,
+                )
+            } else {
+                current.copy(is_loading = true, error = null, load_error = null)
+            }
+        }
         load_job = viewModelScope.launch {
             try {
-                val tombstones = cache_sync.sync_tombstones()
-                val items = load_all_subscriptions().filterNot {
-                    is_deleted_subscription(tombstones, it.sender_email, it.last_received)
-                }
-                if (items.size < subscription_page_size * max_subscription_pages) {
-                    unsubscribed_store.replace_confirmed(
-                        items.filter { it.status == "unsubscribed" }.map { it.sender_email },
+                coroutineScope {
+                    val tombstones_job = async { cache_sync.sync_tombstones() }
+                    val stats_job = async {
+                        try {
+                            api.stats()
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (_: Throwable) {
+                            null
+                        }
+                    }
+                    val first = api.list(limit = subscription_page_size, offset = 0)
+                    val tombstones = tombstones_job.await()
+                    val visible = { list: List<MailingListSubscription> ->
+                        list.filterNot { is_deleted_subscription(tombstones, it.sender_email, it.last_received) }
+                    }
+                    if (_state.value.items.isEmpty()) {
+                        _state.update { current ->
+                            current.copy(items = settle_items(visible(first.subscriptions), current.succeeded_ids))
+                        }
+                    }
+                    val items = visible(
+                        (first.subscriptions + load_remaining_pages(first)).distinctBy { it.id },
                     )
+                    if (items.size < subscription_page_size * max_subscription_pages) {
+                        unsubscribed_store.replace_confirmed(
+                            items.filter { it.status == "unsubscribed" }.map { it.sender_email },
+                        )
+                    }
+                    val stats = stats_job.await()
+                    _state.update { current ->
+                        current.copy(
+                            items = settle_items(items, current.succeeded_ids),
+                            stats = stats ?: current.stats,
+                            load_error = null,
+                        )
+                    }
+                    list_memory.put(items, stats)
+                    if (items.any { it.status == "active" }) prime_info_cache()
                 }
-                val stats = try {
-                    api.stats()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (_: Throwable) {
-                    null
-                }
-                val local_tokens = unsubscribed_store.tokens.value
-                _state.update { current ->
-                    current.copy(
-                        items = items.map { item ->
-                            val settled = item.id in current.succeeded_ids ||
-                                unsubscribed_store.token_for(item.sender_email) in local_tokens
-                            if (item.status == "active" && settled) item.copy(status = "unsubscribed") else item
-                        },
-                        stats = stats,
-                        load_error = null,
-                    )
-                }
-                if (items.any { it.status == "active" }) prime_info_cache()
             } catch (e: CancellationException) {
                 throw e
             } catch (t: Throwable) {
-                _state.value = _state.value.copy(
-                    load_error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.failed_to_load)),
-                )
+                _state.update {
+                    it.copy(
+                        load_error = org.astermail.android.localized_api_error(
+                            context,
+                            t,
+                            context.getString(R.string.failed_to_load),
+                        ),
+                    )
+                }
             } finally {
-                _state.value = _state.value.copy(is_loading = false)
+                _state.update { it.copy(is_loading = false) }
             }
         }
     }
 
-    private suspend fun load_all_subscriptions(): List<MailingListSubscription> {
+    private suspend fun load_remaining_pages(first: MailingListsResponse): List<MailingListSubscription> {
+        if (!first.has_more || first.subscriptions.size < subscription_page_size) return emptyList()
+        if (first.total > subscription_page_size) {
+            val page_count = minOf(
+                (first.total + subscription_page_size - 1) / subscription_page_size,
+                max_subscription_pages,
+            )
+            val gate = Semaphore(LIST_CONCURRENCY)
+            return coroutineScope {
+                (1 until page_count).map { page ->
+                    async {
+                        gate.withPermit {
+                            api.list(limit = subscription_page_size, offset = page * subscription_page_size)
+                                .subscriptions
+                        }
+                    }
+                }.awaitAll().flatten()
+            }
+        }
         val collected = mutableListOf<MailingListSubscription>()
-        var page = 0
+        var page = 1
         while (page < max_subscription_pages) {
             val response = api.list(limit = subscription_page_size, offset = page * subscription_page_size)
             collected += response.subscriptions
@@ -215,76 +283,134 @@ class MailingListsViewModel @Inject constructor(
         return collected
     }
 
+    private fun provisional_item(sender: DiscoveredSubscription): MailingListSubscription =
+        MailingListSubscription(
+            id = PROVISIONAL_PREFIX + sender.sender_email,
+            sender_email = sender.sender_email,
+            sender_name = sender.sender_name,
+            domain = sender.domain,
+            email_count = sender.email_count,
+            last_received = sender.last_received,
+            unsubscribe_link = sender.unsubscribe_link,
+            category = sender.category,
+        )
+
+    private fun publish_scan_progress(progress: SubscriptionScanProgress, tombstones: Map<String, String>) {
+        remember_info(progress.found)
+        val found = progress.found.filterNot {
+            is_deleted_subscription(tombstones, it.sender_email, it.last_received)
+        }
+        _state.update { current ->
+            val known = current.items.map { normalize_sender_email(it.sender_email) }.toSet()
+            val fresh = found
+                .filter { normalize_sender_email(it.sender_email) !in known }
+                .map { provisional_item(it) }
+            current.copy(
+                items = if (fresh.isEmpty()) current.items else current.items + settle_items(fresh, current.succeeded_ids),
+                scan_scanned = progress.scanned,
+                scan_total = progress.total,
+                scan_found = found.size,
+            )
+        }
+    }
+
+    private suspend fun track_discovered(discovered: List<DiscoveredSubscription>): Int {
+        val track_deadline = SystemClock.elapsedRealtime() + TRACK_BUDGET_MS
+        val gate = Semaphore(TRACK_CONCURRENCY)
+        return coroutineScope {
+            discovered.map { sender ->
+                async {
+                    gate.withPermit {
+                        if (SystemClock.elapsedRealtime() > track_deadline) return@withPermit false
+                        try {
+                            api.track_subscription(
+                                TrackSubscriptionRequest(
+                                    sender_email = sender.sender_email,
+                                    sender_name = sender.sender_name.ifBlank { null },
+                                    unsubscribe_link = sender.unsubscribe_link,
+                                    list_unsubscribe_header = sender.list_unsubscribe_header,
+                                    category = sender.category,
+                                ),
+                            ).is_new
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (_: Throwable) {
+                            false
+                        }
+                    }
+                }
+            }.awaitAll().count { it }
+        }
+    }
+
     fun scan(force_full: Boolean = false) {
         if (scan_job?.isActive == true) return
         val full = force_full || !info_cache.is_primed()
         prime_job?.cancel()
         prime_job = null
-        _state.value = _state.value.copy(is_scanning = true, error = null, message = null)
+        _state.update {
+            it.copy(
+                is_scanning = true,
+                error = null,
+                message = null,
+                scan_scanned = 0,
+                scan_total = 0,
+                scan_found = 0,
+            )
+        }
         scan_job = viewModelScope.launch {
             var scan_error: String? = null
             var cancelled = false
             var tracked = 0
             try {
+                val tombstones = cache_sync.sync_tombstones()
                 val discovered = withTimeoutOrNull(SCAN_TIMEOUT_MS) {
-                    scanner.scan(force_full = full)
+                    scanner.scan(force_full = full) { progress -> publish_scan_progress(progress, tombstones) }
                 }.also { found ->
                     if (found != null) {
                         remember_info(found)
                         if (full) info_cache.mark_primed()
                     }
-                }.orEmpty().let { found ->
-                    val tombstones = cache_sync.sync_tombstones()
-                    found.filterNot { is_deleted_subscription(tombstones, it.sender_email, it.last_received) }
+                }.orEmpty().filterNot {
+                    is_deleted_subscription(tombstones, it.sender_email, it.last_received)
                 }
-                val track_deadline = SystemClock.elapsedRealtime() + TRACK_BUDGET_MS
-                for (sender in discovered) {
-                    if (SystemClock.elapsedRealtime() > track_deadline) break
-                    val result = try {
-                        api.track_subscription(
-                            TrackSubscriptionRequest(
-                                sender_email = sender.sender_email,
-                                sender_name = sender.sender_name.ifBlank { null },
-                                unsubscribe_link = sender.unsubscribe_link,
-                                list_unsubscribe_header = sender.list_unsubscribe_header,
-                                category = sender.category,
-                            ),
-                        )
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (_: Throwable) {
-                        null
-                    }
-                    if (result?.is_new == true) tracked += 1
-                }
+                tracked = track_discovered(discovered)
             } catch (e: CancellationException) {
                 cancelled = true
                 throw e
             } catch (t: Throwable) {
                 scan_error = org.astermail.android.localized_api_error(context, t, context.getString(R.string.scan_failed))
             } finally {
-                _state.value = _state.value.copy(
-                    is_scanning = false,
-                    error = scan_error,
-                    message = when {
-                        cancelled || scan_error != null -> null
-                        tracked > 0 -> context.resources.getQuantityString(
-                            R.plurals.subscriptions_found_count,
-                            tracked,
-                            tracked,
-                        )
-                        else -> context.getString(R.string.scan_complete)
-                    },
-                )
+                _state.update {
+                    it.copy(
+                        is_scanning = false,
+                        scan_scanned = 0,
+                        scan_total = 0,
+                        scan_found = 0,
+                        error = scan_error,
+                        message = when {
+                            cancelled || scan_error != null -> null
+                            tracked > 0 -> context.resources.getQuantityString(
+                                R.plurals.subscriptions_found_count,
+                                tracked,
+                                tracked,
+                            )
+                            else -> context.getString(R.string.scan_complete)
+                        },
+                    )
+                }
             }
-            if (scan_error == null) load()
+            if (scan_error == null) {
+                load_job?.join()
+                load()
+            }
         }
     }
 
     fun cancel_scan() {
         scan_job?.cancel()
         scan_job = null
-        _state.value = _state.value.copy(is_scanning = false)
+        _state.update { it.copy(is_scanning = false, scan_scanned = 0, scan_total = 0, scan_found = 0) }
     }
 
     suspend fun proxy_unsubscribe(request: ProxyUnsubscribeRequest): Boolean {

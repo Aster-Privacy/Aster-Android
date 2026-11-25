@@ -160,7 +160,11 @@ fun aster_theme_root(content: @Composable () -> Unit) {
                 fontScale = base_density.fontScale * text_size_state.scale,
             )
         }
+        val low_network by org.astermail.android.api.network.low_network_state.is_active.collectAsStateWithLifecycle()
+        val trust_context = org.astermail.android.ui.mail.collected_sender_trust_context()
         CompositionLocalProvider(
+            org.astermail.android.network.local_low_network provides low_network,
+            org.astermail.android.ui.mail.local_sender_trust_context provides trust_context,
             LocalDensity provides scaled_density,
             local_text_scale provides text_size_state.scale,
             local_accessibility provides a11y,

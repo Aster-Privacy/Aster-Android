@@ -116,8 +116,16 @@ internal fun slot_sentence(resource: Int, vararg values: String): AnnotatedStrin
 
 @Composable
 fun remember_sender_trust(message: SenderTrustMessage?): SenderTrust? {
-    val context by SenderTrustStore.context.collectAsStateWithLifecycle()
+    val context = local_sender_trust_context.current ?: collected_sender_trust_context()
     return remember(message, context) { sender_trust_for(message, context) }
+}
+
+val local_sender_trust_context = androidx.compose.runtime.compositionLocalOf<org.astermail.android.security.SenderTrustContext?> { null }
+
+@Composable
+fun collected_sender_trust_context(): org.astermail.android.security.SenderTrustContext {
+    val context by SenderTrustStore.context.collectAsStateWithLifecycle()
+    return context
 }
 
 @Composable

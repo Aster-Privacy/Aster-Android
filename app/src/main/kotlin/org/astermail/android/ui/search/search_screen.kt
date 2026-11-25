@@ -125,6 +125,9 @@ import org.astermail.android.ui.mail.search_field_bg_color
 import org.astermail.android.ui.common.glass_bar
 import org.astermail.android.ui.common.page_surface
 import org.astermail.android.design.acrylic
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 private data class FilterToggle(val key: String, val value: String, val label_res: Int)
 
@@ -155,16 +158,78 @@ private val operator_chips_saver = listSaver<List<SearchOperator>, String>(
 private const val BODY_HITS_TIMEOUT_MS = 2_000L
 
 private const val BODY_INDEX_STEP_SIZE = 100
+private const val CORPUS_SETTLE_MS = 400L
 
 private const val SEARCH_READ_FADE_SCALE = 0.5f
 
 private enum class SearchBodyKind { tips, loading, empty, results }
+
+private const val SAME_QUERY_REFRESH_SETTLE_MS = 180L
+
+internal fun clear_search_screen_cache() {
+    search_screen_cache.clear()
+}
+
+internal fun same_result_items(
+    a: List<org.astermail.android.mail.InboxItem>,
+    b: List<org.astermail.android.mail.InboxItem>,
+): Boolean {
+    if (a.size != b.size) return false
+    for (i in a.indices) {
+        if (a[i] !== b[i]) return false
+    }
+    return true
+}
 
 internal fun body_index_step(indexed: Int?): Int =
     if (indexed == null) -1 else indexed.coerceAtLeast(0) / BODY_INDEX_STEP_SIZE
 
 internal fun body_index_fraction(indexed: Int, total: Int): Float =
     if (total <= 0) 0f else (indexed.toFloat() / total).coerceIn(0f, 1f)
+
+private class search_filtered_results(
+    val items: List<org.astermail.android.mail.InboxItem>,
+    val ids: Set<String>,
+)
+
+private class search_corpus_lookup(
+    val by_id: Map<String, org.astermail.android.mail.InboxItem>,
+    val thread_index: Map<String, List<String>>,
+    val trashed_ids: Set<String>,
+)
+
+private class search_selection_flags(
+    val all_starred: Boolean,
+    val all_read: Boolean,
+    val delete_plan: org.astermail.android.mail.SelectionDeletePlan,
+)
+
+private val EMPTY_FILTERED = search_filtered_results(emptyList(), emptySet())
+
+private fun search_selection_flags_of(
+    selection: List<String>,
+    expand: (List<String>) -> List<String>,
+    lookup: search_corpus_lookup?,
+    shown_ids: Set<String>,
+): search_selection_flags {
+    if (selection.isEmpty() || lookup == null) {
+        return search_selection_flags(
+            all_starred = false,
+            all_read = false,
+            delete_plan = org.astermail.android.mail.plan_selection_delete(emptyMap(), emptySet(), emptySet()),
+        )
+    }
+    val picked = expand(selection).mapNotNull { lookup.by_id[it] }
+    return search_selection_flags(
+        all_starred = picked.isNotEmpty() && picked.all { it.is_starred },
+        all_read = picked.isNotEmpty() && picked.all { it.is_read },
+        delete_plan = org.astermail.android.mail.plan_selection_delete(
+            rows = selection.associateWith { expand(listOf(it)) },
+            shown_ids = shown_ids,
+            trashed_ids = lookup.trashed_ids,
+        ),
+    )
+}
 
 private object search_screen_cache {
     var source: List<org.astermail.android.mail.InboxItem>? = null
@@ -184,6 +249,42 @@ private object search_screen_cache {
     var threads_tags: List<*>? = null
     var threads: List<ThreadRow> = emptyList()
     var people: ChipPeopleLists? = null
+    var filtered_source: List<org.astermail.android.mail.InboxItem>? = null
+    var filtered_revision: Long = Long.MIN_VALUE
+    var filtered: search_filtered_results? = null
+    var lookup_corpus: List<org.astermail.android.mail.InboxItem>? = null
+    var lookup: search_corpus_lookup? = null
+
+    fun clear() {
+        source = null
+        lock_revision = Long.MIN_VALUE
+        visible = null
+        corpus = null
+        sorted = null
+        parsed = null
+        env_labels = null
+        outcome = null
+        outcome_corpus = null
+        outcome_day = Long.MIN_VALUE
+        outcome_body_step = Int.MIN_VALUE
+        people_corpus = null
+        threads_source = null
+        threads_grouping = true
+        threads_tags = null
+        threads = emptyList()
+        people = null
+        filtered_source = null
+        filtered_revision = Long.MIN_VALUE
+        filtered = null
+        lookup_corpus = null
+        lookup = null
+    }
+
+    fun filtered_for(source: List<org.astermail.android.mail.InboxItem>, revision: Long) =
+        filtered.takeIf { filtered_source === source && filtered_revision == revision }
+
+    fun lookup_for(corpus: List<org.astermail.android.mail.InboxItem>) =
+        lookup.takeIf { lookup_corpus === corpus }
 
     fun sorted_for(corpus: List<org.astermail.android.mail.InboxItem>) =
         sorted.takeIf { this.corpus === corpus }
@@ -192,7 +293,7 @@ private object search_screen_cache {
         people.takeIf { people_corpus === corpus }
 
     fun threads_for(source: List<org.astermail.android.mail.InboxItem>, grouping: Boolean, tags: List<*>) =
-        threads.takeIf { threads_source === source && threads_grouping == grouping && threads_tags === tags }
+        threads.takeIf { threads_source === source && threads_grouping == grouping && threads_tags == tags }
 
     fun outcome_for(
         parsed: ParsedQuery,
@@ -394,6 +495,7 @@ fun SearchScreen(
             value = it
             return@produceState
         }
+        if (value != null) kotlinx.coroutines.delay(CORPUS_SETTLE_MS)
         val sorted = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
             visible_corpus
                 .map { it to parse_item_timestamp(it.timestamp) }
@@ -405,13 +507,21 @@ fun SearchScreen(
         value = sorted
     }
 
-    val body_progress by mail_vm.body_index_progress.collectAsStateWithLifecycle()
-    val body_step = body_index_step(body_progress?.indexed)
+    val body_step_flow = remember(mail_vm) {
+        mail_vm.body_index_progress
+            .map { body_index_step(it?.indexed) }
+            .distinctUntilChanged()
+    }
+    val body_step by body_step_flow.collectAsStateWithLifecycle(
+        initialValue = body_index_step(mail_vm.body_index_progress.value?.indexed),
+    )
 
+    val query_body_step = if (body_search_terms(parsed).isEmpty()) -1 else body_step
     var search_running by remember { mutableStateOf(false) }
+    val results_scrolling = remember { mutableStateOf(false) }
     val computed by androidx.compose.runtime.produceState<SearchOutcome?>(
         initialValue = search_screen_cache.outcome_for(parsed, search_labels, sorted_corpus),
-        parsed, search_labels, sorted_corpus, has_query, body_step,
+        parsed, search_labels, sorted_corpus, has_query, query_body_step,
     ) {
         if (!has_query) {
             search_running = false
@@ -425,7 +535,7 @@ fun SearchScreen(
             return@produceState
         }
         val body_terms = body_search_terms(parsed)
-        val body_current = body_terms.isEmpty() || search_screen_cache.outcome_body_step == body_step
+        val body_current = body_terms.isEmpty() || search_screen_cache.outcome_body_step == query_body_step
         search_screen_cache.outcome_for(parsed, search_labels, corpus)?.takeIf { body_current }?.let {
             search_running = false
             value = it
@@ -433,7 +543,12 @@ fun SearchScreen(
         }
         val same_query = search_screen_cache.parsed == parsed && search_screen_cache.env_labels == search_labels
         search_running = !same_query
-        if (parsed.terms.isNotEmpty()) kotlinx.coroutines.delay(120)
+        if (same_query && search_screen_cache.outcome != null) {
+            androidx.compose.runtime.snapshotFlow { results_scrolling.value }.first { !it }
+            kotlinx.coroutines.delay(SAME_QUERY_REFRESH_SETTLE_MS)
+        } else if (parsed.terms.isNotEmpty()) {
+            kotlinx.coroutines.delay(120)
+        }
         val base_env = current_search_env(search_labels).let { env ->
             if (body_terms.isEmpty()) {
                 env
@@ -472,14 +587,21 @@ fun SearchScreen(
                     hidden++
                 }
             }
-            SearchOutcome(results, hidden)
+            val previous = search_screen_cache.outcome
+            if (same_query && previous != null && previous.hidden_spam_trash == hidden &&
+                same_result_items(previous.results, results)
+            ) {
+                previous
+            } else {
+                SearchOutcome(results, hidden)
+            }
         }
         search_screen_cache.parsed = parsed
         search_screen_cache.env_labels = search_labels
         search_screen_cache.outcome = outcome
         search_screen_cache.outcome_corpus = corpus
         search_screen_cache.outcome_day = env_day
-        search_screen_cache.outcome_body_step = body_step
+        search_screen_cache.outcome_body_step = query_body_step
         value = outcome
         search_running = false
     }
@@ -521,9 +643,30 @@ fun SearchScreen(
     val chip_people = people_lists.first
     val chip_recipients = people_lists.second
     val visible_results = computed?.results ?: last_results
-    val filtered = remember(visible_results, lock_revision) {
-        org.astermail.android.folders.filter_locked_items(visible_results)
+    val filtered_state by androidx.compose.runtime.produceState(
+        initialValue = search_screen_cache.filtered_for(visible_results, lock_revision.toLong())
+            ?.let { visible_results to it }
+            ?: (null to EMPTY_FILTERED),
+        visible_results, lock_revision,
+    ) {
+        val revision = lock_revision.toLong()
+        search_screen_cache.filtered_for(visible_results, revision)?.let {
+            value = visible_results to it
+            return@produceState
+        }
+        val source = visible_results
+        val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            val items = org.astermail.android.folders.filter_locked_items(source)
+            search_filtered_results(items, items.mapTo(HashSet(items.size)) { it.id })
+        }
+        search_screen_cache.filtered_source = source
+        search_screen_cache.filtered_revision = revision
+        search_screen_cache.filtered = result
+        value = source to result
     }
+    val filtered = filtered_state.second.items
+    val filtered_ids = filtered_state.second.ids
+    val filtered_settled = filtered_state.first === visible_results
     val grouping_enabled = settings_state.preferences?.conversation_grouping != false
     val result_tags = settings_state.tags
     val threads_state by androidx.compose.runtime.produceState(
@@ -549,27 +692,73 @@ fun SearchScreen(
     val result_threads = threads_state.second
     val threads_settled = threads_state.first === filtered
     val threads_catching_up = !threads_settled && filtered.isNotEmpty()
-    val search_refreshing = has_query && (search_running || !threads_settled)
-    val thread_index = remember(visible_corpus, grouping_enabled) {
-        if (grouping_enabled) search_thread_index(visible_corpus) else emptyMap()
-    }
-    val thread_member_ids = remember(result_threads, thread_index, grouping_enabled) {
-        if (grouping_enabled) thread_member_ids_from_index(result_threads, thread_index) else emptyMap()
-    }
-    fun expand_selection(ids: List<String>): List<String> =
-        expand_thread_selection(ids, thread_member_ids, grouping_enabled)
-
-    val selection_all_starred = selected_ids.isNotEmpty() &&
-        expand_selection(selected_ids.toList()).toSet().let { ids ->
-            val picked = visible_corpus.filter { it.id in ids }
-            picked.isNotEmpty() && picked.none { !it.is_starred }
+    val corpus_lookup by androidx.compose.runtime.produceState<search_corpus_lookup?>(
+        initialValue = search_screen_cache.lookup_for(visible_corpus),
+        visible_corpus,
+    ) {
+        search_screen_cache.lookup_for(visible_corpus)?.let {
+            value = it
+            return@produceState
         }
-
-    val selection_all_read = selected_ids.isNotEmpty() &&
-        expand_selection(selected_ids.toList()).toSet().let { ids ->
-            val picked = visible_corpus.filter { it.id in ids }
-            picked.isNotEmpty() && picked.none { !it.is_read }
+        val corpus = visible_corpus
+        val lookup = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            search_corpus_lookup(
+                by_id = corpus.associateBy { it.id },
+                thread_index = search_thread_index(corpus),
+                trashed_ids = corpus.asSequence().filter { it.is_trashed }.mapTo(HashSet()) { it.id },
+            )
         }
+        search_screen_cache.lookup_corpus = corpus
+        search_screen_cache.lookup = lookup
+        value = lookup
+    }
+    val member_ids_state by androidx.compose.runtime.produceState<Pair<List<ThreadRow>?, Map<String, List<String>>>>(
+        initialValue = null to emptyMap(),
+        result_threads, corpus_lookup, grouping_enabled,
+    ) {
+        val index = corpus_lookup?.thread_index
+        val threads = result_threads
+        if (!grouping_enabled) {
+            value = threads to emptyMap()
+            return@produceState
+        }
+        if (index == null) return@produceState
+        val members = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            thread_member_ids_from_index(threads, index)
+        }
+        value = threads to members
+    }
+    val thread_member_ids = member_ids_state.second
+    val members_settled = member_ids_state.first === result_threads
+    var shown_query by remember { mutableStateOf<ParsedQuery?>(null) }
+    LaunchedEffect(parsed, filtered_settled, threads_settled, search_running) {
+        if (!search_running && filtered_settled && threads_settled) shown_query = parsed
+    }
+    val query_catching_up = shown_query != parsed && (!filtered_settled || !threads_settled)
+    val search_refreshing = has_query &&
+        (search_running || query_catching_up || (select_mode && !members_settled))
+    fun expand_selection(ids: List<String>): List<String> {
+        val members = when {
+            !grouping_enabled || members_settled -> thread_member_ids
+            else -> thread_member_ids_from_index(
+                result_threads,
+                corpus_lookup?.thread_index ?: search_thread_index(visible_corpus),
+            )
+        }
+        return expand_thread_selection(ids, members, grouping_enabled)
+    }
+
+    val selection_snapshot = selected_ids.toList()
+    val selection_flags = remember(selection_snapshot, thread_member_ids, grouping_enabled, corpus_lookup, filtered_ids) {
+        search_selection_flags_of(
+            selection = selection_snapshot,
+            expand = { expand_thread_selection(it, thread_member_ids, grouping_enabled) },
+            lookup = corpus_lookup,
+            shown_ids = filtered_ids,
+        )
+    }
+    val selection_all_starred = selection_flags.all_starred
+    val selection_all_read = selection_flags.all_read
 
     LaunchedEffect(result_threads, results_pending, search_refreshing) {
         if (select_mode && !results_pending && !search_refreshing) {
@@ -595,19 +784,10 @@ fun SearchScreen(
         exit_select_mode()
     }
 
-    val selection_delete_plan = if (selected_ids.isEmpty()) {
-        org.astermail.android.mail.plan_selection_delete(emptyMap(), emptySet(), emptySet())
-    } else {
-        org.astermail.android.mail.plan_selection_delete(
-            rows = selected_ids.associateWith { expand_selection(listOf(it)) },
-            shown_ids = filtered.mapTo(HashSet()) { it.id },
-            trashed_ids = visible_corpus.filter { it.is_trashed }.mapTo(HashSet()) { it.id },
-        )
-    }
-    val selection_all_trashed = selection_delete_plan.all_trashed
+    val selection_all_trashed = selection_flags.delete_plan.all_trashed
 
     fun delete_selected() {
-        val plan = selection_delete_plan
+        val plan = selection_flags.delete_plan
         if (plan.trash_ids.isNotEmpty()) mail_vm.trash(plan.trash_ids, plan.trash_row_count)
         if (plan.permanent_ids.isEmpty()) {
             exit_select_mode()
@@ -721,46 +901,14 @@ fun SearchScreen(
             )
         }
 
-        val index_progress by mail_vm.search_index_progress.collectAsStateWithLifecycle()
-        val index_paused by mail_vm.search_index_paused.collectAsStateWithLifecycle()
-        val search_status = search_status_of(
+        search_status_section(
+            mail_vm = mail_vm,
             has_query = has_query,
             metadata_indexing = search_state.is_indexing,
-            paused = index_paused,
-            metadata_progress = index_progress,
-            body_progress = body_progress,
             partial = search_state.is_partial,
+            search_refreshing = search_refreshing,
+            reduce_motion = reduce_motion,
         )
-        search_status_strip(
-            status = search_status,
-            on_action = { action ->
-                when (action) {
-                    SearchStatusAction.pause -> mail_vm.pause_search_indexing()
-                    SearchStatusAction.resume -> mail_vm.resume_search_indexing()
-                    SearchStatusAction.retry -> mail_vm.build_search_index(force = true)
-                }
-            },
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(2.dp),
-        ) {
-            val refresh_bar_visible = org.astermail.android.design.remember_steady_flag(search_refreshing && search_status == null)
-            androidx.compose.animation.AnimatedVisibility(
-                visible = refresh_bar_visible,
-                enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(if (reduce_motion) 0 else 160)),
-                exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(if (reduce_motion) 0 else 220)),
-            ) {
-                org.astermail.android.design.components.aster_linear_progress(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(2.dp),
-                    color = colors.accent_blue,
-                    track_color = Color.Transparent,
-                )
-            }
-        }
 
         if (has_query && !select_mode && !results_pending && hidden_spam_trash > 0) {
             Column(
@@ -933,6 +1081,7 @@ fun SearchScreen(
                                 selected_ids.clear()
                                 selected_ids.addAll(ids)
                             },
+                            on_scroll_busy = { results_scrolling.value = it },
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -1331,6 +1480,59 @@ private fun search_input_bar(
 }
 
 @Composable
+private fun search_status_section(
+    mail_vm: MailViewModel,
+    has_query: Boolean,
+    metadata_indexing: Boolean,
+    partial: Boolean,
+    search_refreshing: Boolean,
+    reduce_motion: Boolean,
+) {
+    val colors = AsterMaterial.colors
+    val index_progress by mail_vm.search_index_progress.collectAsStateWithLifecycle()
+    val index_paused by mail_vm.search_index_paused.collectAsStateWithLifecycle()
+    val body_progress by mail_vm.body_index_progress.collectAsStateWithLifecycle()
+    val search_status = search_status_of(
+        has_query = has_query,
+        metadata_indexing = metadata_indexing,
+        paused = index_paused,
+        metadata_progress = index_progress,
+        body_progress = body_progress,
+        partial = partial,
+    )
+    search_status_strip(
+        status = search_status,
+        on_action = { action ->
+            when (action) {
+                SearchStatusAction.pause -> mail_vm.pause_search_indexing()
+                SearchStatusAction.resume -> mail_vm.resume_search_indexing()
+                SearchStatusAction.retry -> mail_vm.build_search_index(force = true)
+            }
+        },
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(2.dp),
+    ) {
+        val refresh_bar_visible = org.astermail.android.design.remember_steady_flag(search_refreshing && search_status == null)
+        androidx.compose.animation.AnimatedVisibility(
+            visible = refresh_bar_visible,
+            enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(if (reduce_motion) 0 else 160)),
+            exit = androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(if (reduce_motion) 0 else 220)),
+        ) {
+            org.astermail.android.design.components.aster_linear_progress(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(2.dp),
+                color = colors.accent_blue,
+                track_color = Color.Transparent,
+            )
+        }
+    }
+}
+
+@Composable
 internal fun search_results_list(
     threads: List<ThreadRow>,
     select_mode: Boolean,
@@ -1340,10 +1542,19 @@ internal fun search_results_list(
     on_enter_select_mode: (String) -> Unit,
     on_toggle_star: (String) -> Unit,
     on_set_selection: (List<String>) -> Unit = {},
+    on_scroll_busy: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val selected_set = selected_ids.toSet()
     val list_state = rememberLazyListState()
+    val live_scroll_busy by rememberUpdatedState(on_scroll_busy)
+    LaunchedEffect(list_state) {
+        androidx.compose.runtime.snapshotFlow { list_state.isScrollInProgress }
+            .collect { live_scroll_busy(it) }
+    }
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { live_scroll_busy(false) }
+    }
     val haptics = LocalHapticFeedback.current
     val settings_vm = org.astermail.android.settings.optional_shared_settings_view_model()
     val settings_state = settings_vm?.state?.collectAsStateWithLifecycle()?.value
@@ -1355,11 +1566,11 @@ internal fun search_results_list(
     val live_threads by rememberUpdatedState(threads)
     val live_enter_select_mode by rememberUpdatedState(on_enter_select_mode)
     val live_set_selection by rememberUpdatedState(on_set_selection)
-    val id_at_offset: (Float) -> String? = remember(list_state) {
+    val index_at_visible_offset: (Float) -> Int? = remember(list_state) {
         { y ->
             list_state.layoutInfo.visibleItemsInfo
                 .firstOrNull { y >= it.offset && y < it.offset + it.size }
-                ?.key as? String
+                ?.index
         }
     }
     val drag_anchor_index = remember { androidx.compose.runtime.mutableIntStateOf(-1) }
@@ -1370,9 +1581,8 @@ internal fun search_results_list(
     var drag_selecting by remember { mutableStateOf(false) }
 
     fun index_at_offset(y: Float): Int? {
-        val id = id_at_offset(y) ?: return null
-        val idx = live_threads.indexOfFirst { it.newest.id == id }
-        return if (idx >= 0) idx else null
+        val idx = index_at_visible_offset(y) ?: return null
+        return idx.takeIf { it in live_threads.indices }
     }
 
     fun apply_drag_selection(y: Float) {

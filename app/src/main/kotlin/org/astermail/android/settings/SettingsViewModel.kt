@@ -211,9 +211,13 @@ data class SettingsUiState(
     val hardware_key_held: org.astermail.android.guard.guard_held_notice? = null,
     val blocked_senders: List<BlockedSenderView> = emptyList(),
     val blocked_senders_loading: Boolean = false,
+    val blocked_senders_loaded: Boolean = false,
+    val labels_loaded_types: Set<String> = emptySet(),
+    val tags_loaded: Boolean = false,
     val blocked_senders_error: String? = null,
     val allowed_senders: List<AllowedSenderView> = emptyList(),
     val allowed_senders_loading: Boolean = false,
+    val allowed_senders_loaded: Boolean = false,
     val allowed_senders_error: String? = null,
     val aliases: List<AliasInfo> = emptyList(),
     val max_aliases: Int = 0,
@@ -247,6 +251,7 @@ data class SettingsUiState(
     val api_keys: List<ApiKeyInfo> = emptyList(),
     val api_key_creating: Boolean = false,
     val forwarding_rules_load_failed: Boolean = false,
+    val forwarding_rules_loaded: Boolean = false,
     val webhooks: List<WebhookInfo> = emptyList(),
     val directories: List<AliasDirectory> = emptyList(),
     val directories_loading: Boolean = false,
@@ -1134,13 +1139,18 @@ class SettingsViewModel @Inject constructor(
                     }
                 }
                 _state.update {
-                    it.copy(blocked_senders = decrypted, blocked_senders_loading = false)
+                    it.copy(
+                        blocked_senders = decrypted,
+                        blocked_senders_loading = false,
+                        blocked_senders_loaded = true,
+                    )
                 }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update {
                     it.copy(
                         blocked_senders_loading = false,
+                        blocked_senders_loaded = true,
                         blocked_senders_error = user_facing_error(t),
                     )
                 }
@@ -1405,13 +1415,18 @@ class SettingsViewModel @Inject constructor(
                     }
                 }
                 _state.update {
-                    it.copy(allowed_senders = decrypted, allowed_senders_loading = false)
+                    it.copy(
+                        allowed_senders = decrypted,
+                        allowed_senders_loading = false,
+                        allowed_senders_loaded = true,
+                    )
                 }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update {
                     it.copy(
                         allowed_senders_loading = false,
+                        allowed_senders_loaded = true,
                         allowed_senders_error = user_facing_error(t),
                     )
                 }
@@ -5221,7 +5236,16 @@ class SettingsViewModel @Inject constructor(
         val now = System.currentTimeMillis()
         val labels_key = folder_type ?: "all"
         if (!force && last_labels_load_ms[labels_key]?.let { now - it < LIST_TTL_MS } == true) return
-        viewModelScope.launch { fetch_labels(folder_type, silent = false) }
+        val gen = account_generation
+        viewModelScope.launch {
+            try {
+                fetch_labels(folder_type, silent = false)
+            } finally {
+                if (gen == account_generation) {
+                    _state.update { it.copy(labels_loaded_types = it.labels_loaded_types + labels_key) }
+                }
+            }
+        }
     }
 
     fun reload_labels_from_sync() {
@@ -5536,7 +5560,14 @@ class SettingsViewModel @Inject constructor(
             if (last_tags_load_ms > 0L && now - last_tags_load_ms < TAGS_TTL_MS) return
             if (tags_load_job?.isActive == true) return
         }
-        tags_load_job = viewModelScope.launch { fetch_tags(silent = false) }
+        val gen = account_generation
+        tags_load_job = viewModelScope.launch {
+            try {
+                fetch_tags(silent = false)
+            } finally {
+                if (gen == account_generation) _state.update { it.copy(tags_loaded = true) }
+            }
+        }
     }
 
     fun reload_tags_from_sync() {
@@ -7734,6 +7765,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     forwarding_rules = response.rules,
                     forwarding_rules_load_failed = false,
+                    forwarding_rules_loaded = true,
                     is_loading = false,
                 )
             } catch (t: Throwable) {
@@ -7741,6 +7773,7 @@ class SettingsViewModel @Inject constructor(
                 _state.value = _state.value.copy(
                     is_loading = false,
                     forwarding_rules_load_failed = true,
+                    forwarding_rules_loaded = true,
                     error = user_facing_error(t),
                 )
             }

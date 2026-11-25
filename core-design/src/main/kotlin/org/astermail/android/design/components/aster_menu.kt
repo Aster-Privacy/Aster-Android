@@ -60,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -98,9 +99,8 @@ import org.astermail.android.design.aster_reduce_motion
 import androidx.compose.material3.ripple
 
 private val menu_surface_shape = AsterShapes.island
-private val menu_item_shape = AsterShapes.control
+private val menu_item_shape = RectangleShape
 private val menu_screen_margin = 12.dp
-private val menu_surface_padding = 6.dp
 private val menu_surface_elevation = 3.dp
 private val menu_item_min_height = 44.dp
 private val menu_item_padding_horizontal = 12.dp
@@ -163,13 +163,13 @@ fun aster_menu_surface(
     Column(
         modifier = modifier
             .shadow(menu_surface_elevation, menu_surface_shape, clip = false)
+            .clip(menu_surface_shape)
             .acrylic(AsterMaterial.colors, menu_surface_shape, aster_menu_surface_color())
             .defaultMinSize(minWidth = min_width)
             .widthIn(max = max_width)
             .width(IntrinsicSize.Max)
             .heightIn(max = max_height)
-            .verticalScroll(rememberScrollState())
-            .padding(menu_surface_padding),
+            .verticalScroll(rememberScrollState()),
         content = content,
     )
 }
@@ -261,14 +261,14 @@ fun aster_menu(
                 content = {
                     Column(
                         modifier = modifier
+                            .clip(menu_surface_shape)
                             .acrylic(menu_colors, menu_surface_shape, surface_color)
                             .clickable(interactionSource = surface_tap, indication = null) {}
                             .defaultMinSize(minWidth = min_width)
                             .widthIn(max = max_width)
                             .width(IntrinsicSize.Max)
                             .heightIn(max = max_height)
-                            .verticalScroll(rememberScrollState())
-                            .padding(menu_surface_padding),
+                            .verticalScroll(rememberScrollState()),
                         content = content,
                     )
                 },

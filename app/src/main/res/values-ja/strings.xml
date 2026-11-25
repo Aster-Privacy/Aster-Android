@@ -278,7 +278,7 @@
     <string name="unsubscribed">購読解除済み</string>
     <string name="scanning">スキャン中...</string>
     <string name="no_mailing_lists">まだメーリングリストはありません</string>
-    <string name="scan_inbox_hint">「受信トレイをスキャン」をタップしてニュースレターやマーケティング送信者を見つけましょう。</string>
+    <string name="scan_inbox_hint">下に引くと、受信トレイをスキャンしてニュースレターやマーケティング送信者を探します。</string>
     <string name="active_tab">アクティブ</string>
     <string name="unsubscribed_tab">購読解除済み</string>
     <string name="reactivate">再有効化</string>
@@ -802,6 +802,7 @@
     <string name="unblock">ブロック解除</string>
     <string name="block_a_sender">送信者をブロック</string>
     <string name="block_sender_hint">メールアドレスまたはドメインを入力してください。以降のメールはスパムに直接振り分けられます。</string>
+    <string name="block_sender_invalid">メールアドレスまたは example.com のようなドメインを入力してください。</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">ブロック</string>
     <string name="blocked_domain">ドメイン全体</string>
@@ -2355,6 +2356,9 @@
     </plurals>
     <plurals name="subscriptions_found_count">
         <item quantity="other">新しい購読が %d 件見つかりました</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="other">%2$s 件中 %1$s 件のメッセージをスキャンし、%3$s 件の送信者が見つかりました</item>
     </plurals>
     <string name="reaction_info_title">リアクション</string>
     <string name="reaction_badge_label">新しいリアクション</string>

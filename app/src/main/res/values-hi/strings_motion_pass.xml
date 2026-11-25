@@ -20,6 +20,7 @@
     <string name="contacts_show_all">सभी संपर्क दिखाएं</string>
     <string name="guard_changes_subtitle">आपके खाते में किए गए बदलाव लागू होने से पहले यहां रुकते हैं।</string>
     <string name="hide_quoted_text">उद्धृत टेक्स्ट छिपाएं</string>
+    <string name="show_quoted_text">उद्धृत टेक्स्ट दिखाएं</string>
     <string name="search_keywords_more_exit">बाहर निकलें, वापस, डबल टैप, दो बार वापस, दो बार वापस दबाएं, वापस बटन, ऐप बंद करें, ऐप छोड़ें, exit, back</string>
     <string name="search_keywords_more_quick_actions">त्वरित कार्रवाइयां, त्वरित फ़िल्टर, इनबॉक्स बटन, हेडर बटन, फ़िल्टर बटन, quick actions</string>
     <string name="search_keywords_more_reduce_motion">गति घटाएं, एनिमेशन, गति, ट्रांज़िशन, सुलभता, मोशन सिकनेस, reduce motion</string>

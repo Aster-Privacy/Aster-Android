@@ -105,6 +105,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -238,7 +239,7 @@ import org.astermail.android.ui.common.glass_bar
 import org.astermail.android.ui.common.chrome_surface
 import org.astermail.android.ui.common.page_surface
 
-private val placeholder_body_height = 240.dp
+private val placeholder_body_height = 96.dp
 private const val thread_draft_remove_ms = 260L
 
 private val body_tag_regex = Regex("<[^>]{0,4000}>")
@@ -251,16 +252,13 @@ internal fun fitted_viewport_width(document: String): Int? =
 
 private val MEASURE_PROBE_HEIGHT = 24.dp
 
-private const val QUOTE_CLOSE_SCRIPT =
-    "document.querySelectorAll('details.aster-quoted-wrapper[open],details.aster-forwarded-collapse[open]').forEach(function(d){d.open=false})"
-
 private fun estimated_body_height(html: String, width_dp: Int): androidx.compose.ui.unit.Dp {
     val sample = if (html.length > 40000) html.substring(0, 40000) else html
     val text_length = body_tag_regex.replace(sample, " ").trim().length
     val chars_per_line = (width_dp / 7).coerceAtLeast(24)
-    val lines = (text_length + chars_per_line - 1) / chars_per_line + 2
+    val lines = (text_length + chars_per_line - 1) / chars_per_line + 1
     val images = body_image_tag_regex.findAll(sample).count().coerceAtMost(4)
-    return (lines * 19 + images * 120).coerceIn(120, 640).dp
+    return (lines * 19 + images * 120).coerceIn(24, 640).dp
 }
 
 private fun escape_body_text(raw: String): String = raw
@@ -303,6 +301,7 @@ internal fun plain_text_fallback_document(raw: String, bg_hex: String, fg_hex: S
         "font-family:-apple-system,Roboto,sans-serif;font-size:15px;line-height:1.5\">" +
         "<div id=\"m\">" + plain_text_fallback_body(raw) + "</div></body></html>"
 
+private const val BODY_REPAINT_STEP_DP = 24f
 private const val BODY_PENDING_TIMEOUT_MS = 12_000L
 private const val SLOW_LINK_BODY_PENDING_TIMEOUT_MS = 65_000L
 
@@ -513,14 +512,53 @@ internal fun inline_cid_references(html: String): Set<String> =
 internal fun inline_cids_resolved(references: Set<String>, inline_images: Map<String, String>): Boolean =
     references.all { inline_images.containsKey(it) || inline_images.containsKey(it.substringBefore('@')) }
 
-internal fun resolve_inline_cids(html: String, inline_images: Map<String, String>): String =
-    CID_SRC_PATTERN.replace(html) { match ->
+internal fun resolve_inline_cids(html: String, inline_images: Map<String, String>): String {
+    if (!html.contains("cid:", ignoreCase = true)) return html
+    val sized = INLINE_IMG_TAG_PATTERN.replace(html) { tag_match ->
+        val tag = tag_match.value
+        var size: Pair<Int, Int>? = null
+        val rewritten = CID_SRC_PATTERN.replace(tag) { match ->
+            val reference = inline_reference_key(match.groupValues[2])
+            val resolved = inline_images[reference]
+                ?: inline_images[reference.substringBefore('@')]
+                ?: TRANSPARENT_PIXEL_DATA_URI
+            if (resolved != TRANSPARENT_PIXEL_DATA_URI) size = InlineImageStore.size_for(resolved)
+            "${match.groupValues[1]}$resolved${match.groupValues[3]}"
+        }
+        with_intrinsic_size(rewritten, size)
+    }
+    if (!sized.contains("cid:", ignoreCase = true)) return sized
+    return CID_SRC_PATTERN.replace(sized) { match ->
         val reference = inline_reference_key(match.groupValues[2])
         val resolved = inline_images[reference]
             ?: inline_images[reference.substringBefore('@')]
             ?: TRANSPARENT_PIXEL_DATA_URI
         "${match.groupValues[1]}$resolved${match.groupValues[3]}"
     }
+}
+
+private val INLINE_IMG_TAG_PATTERN = Regex("""<img\s[^>]*>""", RegexOption.IGNORE_CASE)
+
+private val IMG_WIDTH_ATTR = Regex("""\swidth\s*=\s*["']?\s*(\d+(?:\.\d+)?)\s*(?:px)?\s*["']?(?=[\s/>])""", RegexOption.IGNORE_CASE)
+
+private val IMG_HEIGHT_ATTR = Regex("""\sheight\s*=""", RegexOption.IGNORE_CASE)
+
+private val IMG_ANY_WIDTH_ATTR = Regex("""\swidth\s*=""", RegexOption.IGNORE_CASE)
+
+internal fun with_intrinsic_size(tag: String, size: Pair<Int, Int>?): String {
+    val (w, h) = size ?: return tag
+    if (w <= 0 || h <= 0) return tag
+    if (IMG_HEIGHT_ATTR.containsMatchIn(tag)) return tag
+    val insert = if (IMG_ANY_WIDTH_ATTR.containsMatchIn(tag)) {
+        val declared = IMG_WIDTH_ATTR.find(tag)?.groupValues?.get(1)?.toFloatOrNull() ?: return tag
+        if (declared <= 0f) return tag
+        " height=\"${(declared * h / w).toInt().coerceAtLeast(1)}\""
+    } else {
+        " width=\"$w\" height=\"$h\""
+    }
+    val end = if (tag.endsWith("/>")) tag.length - 2 else tag.length - 1
+    return tag.substring(0, end).trimEnd() + insert + tag.substring(end)
+}
 
 internal fun inline_image_sources(
     body_html: String,
@@ -555,6 +593,7 @@ internal fun inline_image_sources(
             val local_key = InlineImageStore.content_key(used.first(), local)
             InlineImageStore.put(local_key, att.content_type, local)
             val local_url = InlineImageStore.url_for(local_key)
+            InlineImageStore.remember_size(local_url, local)
             used.forEach { alias -> resolved.putIfAbsent(alias, local_url) }
             continue
         }
@@ -590,6 +629,7 @@ internal fun inline_image_sources(
             },
         )
         val url = InlineImageStore.url_for(key)
+        InlineImageStore.remember_size(url, bytes)
         used.forEach { alias -> resolved.putIfAbsent(alias, url) }
     }
     return resolved
@@ -641,6 +681,7 @@ fun MailDetailScreen(
         ?: false
     val show_encryption_indicators = settings_state.preferences?.show_encryption_indicators != false
     val message_reactions by mail_vm.message_reactions.collectAsStateWithLifecycle()
+    val reaction_placeholders by mail_vm.reaction_placeholders.collectAsStateWithLifecycle()
     val decrypt_retry_active by mail_vm.decrypt_retry_active.collectAsStateWithLifecycle()
     val locked_data_vm: org.astermail.android.mail.LockedDataViewModel = hiltViewModel()
     val locked_data_state by locked_data_vm.state.collectAsStateWithLifecycle()
@@ -656,8 +697,8 @@ fun MailDetailScreen(
                 ?.let { e -> org.astermail.android.mail.ratchet.PinIdentity.canonical_id(e) }
         }.toSet()
     }
-    var reaction_picker_open by remember { mutableStateOf(false) }
-    var left_after_unread by remember(email_id) { mutableStateOf(false) }
+    val reaction_picker_open_state = remember { mutableStateOf(false) }
+    val left_after_unread_state = remember(email_id) { mutableStateOf(false) }
 
     LaunchedEffect(reactions_enabled) {
         mail_vm.set_reactions_enabled(reactions_enabled)
@@ -816,7 +857,8 @@ fun MailDetailScreen(
     }
     var star_override by remember(email_id) { mutableStateOf<Boolean?>(null) }
     val is_starred = star_override ?: (api_item?.is_starred == true)
-    var is_spam_override by remember(email_id) { mutableStateOf<Boolean?>(null) }
+    val is_spam_override_state = remember(email_id) { mutableStateOf<Boolean?>(null) }
+    val is_spam_override by is_spam_override_state
     val inbox_state_for_folder by mail_vm.inbox_state.collectAsStateWithLifecycle()
     val is_in_spam_folder = inbox_state_for_folder.current_folder == "spam"
     val is_spam = is_spam_override ?: ((api_item?.is_spam == true) || is_in_spam_folder)
@@ -927,22 +969,27 @@ fun MailDetailScreen(
                 require_encryption = require_encryption,
             )
         }
-    var show_action_sheet by remember { mutableStateOf(false) }
-    var show_topbar_menu by remember { mutableStateOf(false) }
-    var show_message_details by remember { mutableStateOf(false) }
-    var show_raw_source_dialog by remember { mutableStateOf(false) }
-    var show_encryption_info by remember { mutableStateOf(false) }
-    var pending_block_sender by remember { mutableStateOf<String?>(null) }
-    var pending_delete_permanent by remember { mutableStateOf<List<String>?>(null) }
-    var profile_sender by remember { mutableStateOf<Pair<String, String>?>(null) }
-    var profile_sender_trust by remember { mutableStateOf<org.astermail.android.security.SenderTrust?>(null) }
-    var show_snooze_sheet by remember { mutableStateOf(false) }
-    var show_folder_sheet by remember { mutableStateOf(false) }
-    var show_label_sheet by remember { mutableStateOf(false) }
-    var show_category_sheet by remember { mutableStateOf(false) }
+    val show_action_sheet_state = remember { mutableStateOf(false) }
+    var show_action_sheet by show_action_sheet_state
+    val show_topbar_menu_state = remember { mutableStateOf(false) }
+    val show_message_details_state = remember { mutableStateOf(false) }
+    val show_raw_source_dialog_state = remember { mutableStateOf(false) }
+    val show_encryption_info_state = remember { mutableStateOf(false) }
+    val pending_block_sender_state = remember { mutableStateOf<String?>(null) }
+    val pending_delete_permanent_state = remember { mutableStateOf<List<String>?>(null) }
+    val profile_sender_state = remember { mutableStateOf<Pair<String, String>?>(null) }
+    var profile_sender by profile_sender_state
+    val profile_sender_trust_state = remember { mutableStateOf<org.astermail.android.security.SenderTrust?>(null) }
+    var profile_sender_trust by profile_sender_trust_state
+    val show_snooze_sheet_state = remember { mutableStateOf(false) }
+    val show_folder_sheet_state = remember { mutableStateOf(false) }
+    val show_label_sheet_state = remember { mutableStateOf(false) }
+    val show_category_sheet_state = remember { mutableStateOf(false) }
     val categories_enabled = settings_state.preferences?.inbox_categories_enabled ?: true
-    var action_target_id by remember { mutableStateOf<String?>(null) }
-    var action_menu_anchor by remember { mutableStateOf<IntRect?>(null) }
+    val action_target_id_state = remember { mutableStateOf<String?>(null) }
+    var action_target_id by action_target_id_state
+    val action_menu_anchor_state = remember { mutableStateOf<IntRect?>(null) }
+    var action_menu_anchor by action_menu_anchor_state
 
     var show_encryption_dropdown by remember { mutableStateOf(false) }
     var hidden_group_revealed by remember(email_id) { mutableStateOf(false) }
@@ -950,12 +997,17 @@ fun MailDetailScreen(
     var dismissed_unsub_ids by remember(email_id) { mutableStateOf(emptySet<String>()) }
     val unsubscribed_tokens by subscriptions_vm.unsubscribed_tokens.collectAsStateWithLifecycle()
     LaunchedEffect(email_id) { subscriptions_vm.refresh_unsubscribed() }
-    var pending_link by remember { mutableStateOf<String?>(null) }
-    var lightbox_src by remember { mutableStateOf<String?>(null) }
-    var preview_attachment by remember { mutableStateOf<MessageAttachment?>(null) }
-    var preview_bytes by remember { mutableStateOf<ByteArray?>(null) }
+    val pending_link_state = remember { mutableStateOf<String?>(null) }
+    var pending_link by pending_link_state
+    val lightbox_src_state = remember { mutableStateOf<String?>(null) }
+    var lightbox_src by lightbox_src_state
+    val preview_attachment_state = remember { mutableStateOf<MessageAttachment?>(null) }
+    var preview_attachment by preview_attachment_state
+    val preview_bytes_state = remember { mutableStateOf<ByteArray?>(null) }
+    var preview_bytes by preview_bytes_state
     var is_downloading_attachment by remember { mutableStateOf(false) }
-    var options_attachment by remember { mutableStateOf<MessageAttachment?>(null) }
+    val options_attachment_state = remember { mutableStateOf<MessageAttachment?>(null) }
+    var options_attachment by options_attachment_state
     val save_as_pending = remember { arrayOfNulls<ByteArray>(1) }
     val save_as_launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val target = result.data?.data
@@ -1079,7 +1131,8 @@ fun MailDetailScreen(
     val is_thread_outside_pgp = remember(messages) { thread_reaches_outside_with_pgp(messages) }
     val thread_trackers_blocked = remember(messages) { messages.sumOf { it.trackers_blocked } }
 
-    var bottom_bar_height by remember { mutableStateOf(132.dp) }
+    val bottom_bar_height_state = remember { mutableStateOf(132.dp) }
+    val bottom_bar_height by bottom_bar_height_state
 
     val hidden_seed_ids = open_layout?.hidden_ids.orEmpty()
     val hidden_id_set = remember(display_messages, hidden_group_revealed, hidden_seed_ids) {
@@ -1225,7 +1278,7 @@ fun MailDetailScreen(
     val card_reduce_motion = org.astermail.android.design.aster_reduce_motion()
     val card_placement_spec: androidx.compose.animation.core.FiniteAnimationSpec<androidx.compose.ui.unit.IntOffset>? =
         if (card_reduce_motion) null else org.astermail.android.design.AsterSpring.fast_spatial()
-    val body_holder = remember(email_id) { body_view_holder() }
+    val body_holder = remember(email_id) { retained_body_holders.take(email_id) ?: body_view_holder() }
     val body_holder_context = LocalContext.current
     DisposableEffect(body_holder, body_holder_context) {
         val callbacks = object : android.content.ComponentCallbacks2 {
@@ -1248,15 +1301,20 @@ fun MailDetailScreen(
         app_context.registerComponentCallbacks(callbacks)
         onDispose {
             runCatching { app_context.unregisterComponentCallbacks(callbacks) }
-            body_holder.release_all()
+            retained_body_holders.keep(email_id, body_holder, app_context)
         }
     }
-    val show_topbar_subject by remember {
+    val show_topbar_subject_state = remember {
         derivedStateOf { list_state.firstVisibleItemIndex > 0 || list_state.firstVisibleItemScrollOffset > 80 }
     }
 
     LaunchedEffect(email_id, open_layout) {
         if (initial_scroll_done || open_layout == null) return@LaunchedEffect
+        if (user_dragged) {
+            followed_tail_key = tail_key
+            initial_scroll_done = true
+            return@LaunchedEffect
+        }
         val anchor = thread_open_anchor_id(display_ids, own_sent_ids, email_id)
         val target = initial_thread_scroll_index(
             message_ids = display_ids,
@@ -1335,6 +1393,33 @@ fun MailDetailScreen(
         }
     }
 
+    val detail_flags = detail_screen_flags(
+        show_action_sheet = show_action_sheet_state,
+        show_topbar_menu = show_topbar_menu_state,
+        show_message_details = show_message_details_state,
+        show_raw_source_dialog = show_raw_source_dialog_state,
+        show_encryption_info = show_encryption_info_state,
+        pending_block_sender = pending_block_sender_state,
+        pending_delete_permanent = pending_delete_permanent_state,
+        profile_sender = profile_sender_state,
+        profile_sender_trust = profile_sender_trust_state,
+        show_snooze_sheet = show_snooze_sheet_state,
+        show_folder_sheet = show_folder_sheet_state,
+        show_label_sheet = show_label_sheet_state,
+        show_category_sheet = show_category_sheet_state,
+        action_target_id = action_target_id_state,
+        action_menu_anchor = action_menu_anchor_state,
+        left_after_unread = left_after_unread_state,
+        is_spam_override = is_spam_override_state,
+        reaction_picker_open = reaction_picker_open_state,
+        bottom_bar_height = bottom_bar_height_state,
+        pending_link = pending_link_state,
+        lightbox_src = lightbox_src_state,
+        preview_attachment = preview_attachment_state,
+        preview_bytes = preview_bytes_state,
+        options_attachment = options_attachment_state,
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1342,293 +1427,37 @@ fun MailDetailScreen(
             .statusBarsPadding(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .chrome_surface(colors)
-                    .padding(horizontal = AsterSpacing.xs),
-                contentAlignment = Alignment.Center,
-            ) {
-                org.astermail.android.design.components.AsterIconSlotButton(
-                    content_description = stringResource(R.string.back),
-                    onClick = on_back,
-                    modifier = Modifier.align(Alignment.CenterStart).testTag("back"),
-                ) { tint, icon_modifier ->
-                    val morph = remember {
-                        androidx.compose.animation.core.Animatable(detail_back_icon_start_progress(swipe_direction, chained))
-                    }
-                    LaunchedEffect(Unit) {
-                        if (morph.value >= 1f) return@LaunchedEffect
-                        morph.animateTo(
-                            targetValue = 1f,
-                            animationSpec = androidx.compose.animation.core.tween(
-                                durationMillis = 320,
-                                easing = AsterEasing.emphasized,
-                            ),
-                        )
-                    }
-                    org.astermail.android.design.components.menu_back_morph_icon(
-                        progress = morph.value,
-                        tint = tint,
-                        modifier = icon_modifier.mirror_in_rtl(),
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 52.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    val topbar_subject = translated_thread_subject?.ifBlank { null }
-                        ?: email?.subject?.ifBlank { stringResource(R.string.no_subject) }
-                        ?: stringResource(R.string.no_subject)
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = show_topbar_subject && email != null,
-                        enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
-                        exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
-                    ) {
-                        Text(
-                            text = topbar_subject,
-                            color = colors.text_primary,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                        )
-                    }
-                    val badge_known = thread_settled || metadata_shows_transit
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = !show_topbar_subject && email != null && show_encryption_indicators,
-                        enter = androidx.compose.animation.EnterTransition.None,
-                        exit = fadeOut(),
-                    ) {
-                        val label = encryption_badge_label(is_thread_encrypted, is_thread_pgp)
-                        val tint = if (is_thread_encrypted) colors.accent_blue else colors.text_muted
-                        Row(
-                            modifier = Modifier
-                                .graphicsLayer { alpha = if (badge_known) 1f else 0f }
-                                .clip(SquircleShape(999.dp))
-                                .clickable(enabled = badge_known) { show_encryption_info = true }
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                                .testTag("encryption_badge"),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                            Icon(
-                                imageVector = if (is_thread_encrypted) TablerIcons.Lock else TablerIcons.LockOpen,
-                                contentDescription = null,
-                                tint = tint,
-                                modifier = Modifier.size(16.dp),
-                            )
-                            Text(
-                                text = label,
-                                color = tint,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            )
-                        }
-                    }
-                }
-                val is_archived = api_item?.is_archived == true
-                Row(
-                    modifier = Modifier.align(Alignment.CenterEnd),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box {
-                    AsterIconButton(
-                        icon = TablerIcons.DotsVertical,
-                        content_description = stringResource(R.string.more),
-                        onClick = { show_topbar_menu = true },
-                        modifier = Modifier.testTag("more"),
-                    )
-                    aster_menu(
-                        expanded = show_topbar_menu,
-                        on_dismiss = { show_topbar_menu = false },
-                        offset = DpOffset(0.dp, 8.dp),
-                        min_width = 260.dp,
-                    ) {
-                        val is_pinned = api_item?.raw_item?.metadata?.is_pinned == true
-                        detail_menu_action(
-                            icon = if (is_archived) TablerIcons.Inbox else TablerIcons.Archive,
-                            text = if (is_archived) stringResource(R.string.swipe_move_to_inbox) else stringResource(R.string.archive_action),
-                            tint = colors.text_primary,
-                            test_tag = "archive",
-                        ) {
-                            show_topbar_menu = false
-                            if (is_archived) {
-                                mail_vm.unarchive(listOf(email_id))
-                                on_archive()
-                            } else {
-                                mail_vm.archive(listOf(email_id))
-                                on_archive()
-                            }
-                        }
-                        detail_menu_action(
-                            icon = TablerIcons.Mail,
-                            text = stringResource(R.string.mark_as_unread),
-                            tint = colors.text_primary,
-                        ) {
-                            show_topbar_menu = false
-                            if (!left_after_unread) {
-                                left_after_unread = true
-                                mail_vm.mark_unread(email_id)
-                                show_toast(context.getString(R.string.marked_as_unread))
-                                on_back()
-                            }
-                        }
-                        detail_menu_action(
-                            icon = if (is_pinned) pin_icon_filled else pin_icon,
-                            text = if (is_pinned) stringResource(R.string.unpin) else stringResource(R.string.pin_to_top),
-                            tint = colors.text_primary,
-                        ) {
-                            show_topbar_menu = false
-                            mail_vm.toggle_pin(email_id)
-                        }
-                        detail_menu_action(
-                            icon = TablerIcons.Moon,
-                            text = stringResource(R.string.snooze),
-                            tint = colors.text_primary,
-                        ) {
-                            show_topbar_menu = false
-                            show_snooze_sheet = true
-                        }
-                        detail_menu_divider()
-                        detail_menu_action(
-                            icon = TablerIcons.Folder,
-                            text = stringResource(R.string.move_to_folder),
-                            tint = colors.text_primary,
-                        ) {
-                            show_topbar_menu = false
-                            settings_vm.load_labels()
-                            show_folder_sheet = true
-                        }
-                        detail_menu_action(
-                            icon = TablerIcons.Tag,
-                            text = stringResource(R.string.add_label),
-                            tint = colors.text_primary,
-                        ) {
-                            show_topbar_menu = false
-                            settings_vm.load_tags()
-                            show_label_sheet = true
-                        }
-                        if (can_move_to_category(api_item, categories_enabled)) {
-                            detail_menu_action(
-                                icon = TablerIcons.LayoutGrid,
-                                text = stringResource(R.string.move_to_category),
-                                tint = colors.text_primary,
-                                test_tag = "move_to_category",
-                            ) {
-                                show_topbar_menu = false
-                                show_category_sheet = true
-                            }
-                        }
-                        detail_menu_action(
-                            icon = TablerIcons.Printer,
-                            text = stringResource(R.string.print),
-                            tint = colors.text_primary,
-                        ) {
-                            show_topbar_menu = false
-                            val msg = messages.lastOrNull()
-                            if (msg != null) {
-                                val print_subject = email?.subject.orEmpty()
-                                val print_allow_external = message_loads_remote_content(
-                                    blocked = block_external_images,
-                                    granted = msg.id in allow_external_ids,
-                                    grant_allowed = image_grant_allowed,
-                                    is_system_sender = is_aster_system_sender(msg),
-                                )
-                                val print_sanitize_options =
-                                    remote_content_sanitize_options(settings_state.preferences)
-                                scope.launch {
-                                    print_email(
-                                        context = context,
-                                        msg = msg,
-                                        subject = print_subject,
-                                        allow_external = print_allow_external,
-                                        sanitize_options = print_sanitize_options,
-                                    ) {
-                                        show_toast(context.getString(R.string.print_failed))
-                                    }
-                                }
-                            } else {
-                                show_toast(context.getString(R.string.nothing_to_print))
-                            }
-                        }
-                        detail_menu_action(
-                            icon = TablerIcons.InfoCircle,
-                            text = stringResource(R.string.message_details),
-                            tint = colors.text_primary,
-                            test_tag = "message_details",
-                        ) {
-                            show_topbar_menu = false
-                            show_message_details = true
-                        }
-                        detail_menu_action(
-                            icon = TablerIcons.Code,
-                            text = stringResource(R.string.detail_view_raw_source),
-                            tint = colors.text_primary,
-                        ) {
-                            show_topbar_menu = false
-                            show_raw_source_dialog = true
-                        }
-                        detail_menu_divider()
-                        detail_menu_action(
-                            icon = spam_action_icon(is_spam),
-                            text = if (is_spam) stringResource(R.string.swipe_not_spam) else stringResource(R.string.report_spam),
-                            tint = if (is_spam) colors.accent_blue else colors.danger,
-                        ) {
-                            show_topbar_menu = false
-                            val spam_sender_hint =
-                                listOfNotNull(messages.lastOrNull()?.sender_email)
-                            if (is_spam) {
-                                is_spam_override = false
-                                mail_vm.unmark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
-                            } else {
-                                is_spam_override = true
-                                mail_vm.mark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
-                            }
-                            on_back()
-                        }
-                        detail_menu_action(
-                            icon = TablerIcons.Ban,
-                            text = stringResource(R.string.block_sender),
-                            tint = colors.danger,
-                        ) {
-                            show_topbar_menu = false
-                            val sender = messages.lastOrNull()?.sender_email
-                            if (!sender.isNullOrBlank()) {
-                                pending_block_sender = sender
-                            }
-                        }
-                        detail_menu_action(
-                            icon = if (is_trashed) TablerIcons.TrashOff else TablerIcons.Trash,
-                            text = if (is_trashed) {
-                                stringResource(R.string.swipe_delete_forever)
-                            } else {
-                                stringResource(R.string.delete_action)
-                            },
-                            tint = colors.danger,
-                        ) {
-                            show_topbar_menu = false
-                            if (is_trashed) {
-                                pending_delete_permanent = org.astermail.android.mail.permanent_delete_targets(
-                                    email_id,
-                                    message_scope = false,
-                                    thread_trash_flags = thread_trash_flags,
-                                )
-                            } else {
-                                mail_vm.trash(listOf(email_id))
-                                on_delete()
-                            }
-                        }
-                    }
-                    }
-                }
-            }
+            detail_top_bar(
+                flags = detail_flags,
+                on_back = on_back,
+                on_archive = on_archive,
+                on_delete = on_delete,
+                swipe_direction = swipe_direction,
+                chained = chained,
+                email_id = email_id,
+                email = email,
+                api_item = api_item,
+                messages = messages,
+                translated_thread_subject = translated_thread_subject,
+                show_topbar_subject_state = show_topbar_subject_state,
+                thread_settled = thread_settled,
+                metadata_shows_transit = metadata_shows_transit,
+                show_encryption_indicators = show_encryption_indicators,
+                is_thread_encrypted = is_thread_encrypted,
+                is_thread_pgp = is_thread_pgp,
+                categories_enabled = categories_enabled,
+                block_external_images = block_external_images,
+                allow_external_ids = allow_external_ids,
+                image_grant_allowed = image_grant_allowed,
+                settings_state = settings_state,
+                is_spam = is_spam,
+                is_trashed = is_trashed,
+                thread_trash_flags = thread_trash_flags,
+                scope = scope,
+                mail_vm = mail_vm,
+                settings_vm = settings_vm,
+                show_toast = { message -> show_toast(message) },
+            )
 
             val subject_base = translated_thread_subject?.ifBlank { null }
                 ?: email?.subject?.ifBlank { stringResource(R.string.no_subject) }
@@ -1897,7 +1726,7 @@ fun MailDetailScreen(
                                 }
                             },
                             show_unsub = msg.id !in dismissed_unsub_ids &&
-                                subscriptions_vm.sender_token(msg.sender_email) !in unsubscribed_tokens,
+                                remember(msg.sender_email) { subscriptions_vm.sender_token(msg.sender_email) } !in unsubscribed_tokens,
                             on_dismiss_unsub = {
                                 dismissed_unsub_ids = dismissed_unsub_ids + msg.id
                             },
@@ -2005,6 +1834,7 @@ fun MailDetailScreen(
                             },
                             on_attachment_options = { att -> options_attachment = att },
                             reactions = if (reactions_enabled && !is_pending_send) message_reactions[msg.id].orEmpty() else emptyList(),
+                            reaction_placeholders = if (reactions_enabled && !is_pending_send) reaction_placeholders[msg.id] ?: 0 else 0,
                             on_react = { emoji ->
                                 if (is_pending_send) return@expanded_message
                                 val blocked = reaction_restriction_for(msg)
@@ -2051,204 +1881,731 @@ fun MailDetailScreen(
 
 
         if (email != null && messages.isNotEmpty()) {
-            val latest_msg = messages.last()
-            val detail_prefs_state by settings_vm.state.collectAsStateWithLifecycle()
-            LaunchedEffect(detail_prefs_state.preferences?.toolbar_actions) {
-                val raw = detail_prefs_state.preferences?.toolbar_actions
-                if (raw != null) {
-                    cache_toolbar_actions(context, parse_toolbar_actions(raw))
-                }
+            detail_bottom_bar(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                flags = detail_flags,
+                email_id = email_id,
+                messages = messages,
+                thread_state = thread_state,
+                api_item = api_item,
+                inbox_state_for_folder = inbox_state_for_folder,
+                settings_state = settings_state,
+                is_trashed = is_trashed,
+                is_starred = is_starred,
+                is_spam = is_spam,
+                thread_trash_flags = thread_trash_flags,
+                thread_ghost_email = thread_ghost_email,
+                reaction_restriction_for = reaction_restriction_for,
+                dispatch_reaction = { message_id, emoji -> dispatch_reaction(message_id, emoji) },
+                show_toast = { message -> show_toast(message) },
+                mail_vm = mail_vm,
+                settings_vm = settings_vm,
+                on_reply = on_reply,
+                on_forward = on_forward,
+                on_back = on_back,
+                on_delete = on_delete,
+                on_archive = on_archive,
+            )
+        }
+    }
+
+    detail_overlays(
+        flags = detail_flags,
+        email_id = email_id,
+        email = email,
+        messages = messages,
+        api_item = api_item,
+        inbox_state_for_folder = inbox_state_for_folder,
+        settings_state = settings_state,
+        is_starred = is_starred,
+        is_spam = is_spam,
+        is_trashed = is_trashed,
+        thread_trash_flags = thread_trash_flags,
+        message_is_trashed = message_is_trashed,
+        thread_ghost_email = thread_ghost_email,
+        reaction_own_addresses = reaction_own_addresses,
+        is_thread_encrypted = is_thread_encrypted,
+        is_thread_pgp = is_thread_pgp,
+        is_thread_outside_pgp = is_thread_outside_pgp,
+        scope = scope,
+        request_storage_access = request_storage_access,
+        save_as_pending = save_as_pending,
+        save_as_launcher = save_as_launcher,
+        show_toast = { message -> show_toast(message) },
+        announce_saved = { saved -> announce_saved(saved) },
+        with_attachment_bytes = { att, block -> with_attachment_bytes(att, block) },
+        mail_vm = mail_vm,
+        settings_vm = settings_vm,
+        on_reply = on_reply,
+        on_reply_all = on_reply_all,
+        on_forward = on_forward,
+        on_back = on_back,
+        on_delete = on_delete,
+        on_archive = on_archive,
+        on_navigate = on_navigate,
+    )
+}
+
+private class detail_screen_flags(
+    val show_action_sheet: MutableState<Boolean>,
+    val show_topbar_menu: MutableState<Boolean>,
+    val show_message_details: MutableState<Boolean>,
+    val show_raw_source_dialog: MutableState<Boolean>,
+    val show_encryption_info: MutableState<Boolean>,
+    val pending_block_sender: MutableState<String?>,
+    val pending_delete_permanent: MutableState<List<String>?>,
+    val profile_sender: MutableState<Pair<String, String>?>,
+    val profile_sender_trust: MutableState<org.astermail.android.security.SenderTrust?>,
+    val show_snooze_sheet: MutableState<Boolean>,
+    val show_folder_sheet: MutableState<Boolean>,
+    val show_label_sheet: MutableState<Boolean>,
+    val show_category_sheet: MutableState<Boolean>,
+    val action_target_id: MutableState<String?>,
+    val action_menu_anchor: MutableState<IntRect?>,
+    val left_after_unread: MutableState<Boolean>,
+    val is_spam_override: MutableState<Boolean?>,
+    val reaction_picker_open: MutableState<Boolean>,
+    val bottom_bar_height: MutableState<Dp>,
+    val pending_link: MutableState<String?>,
+    val lightbox_src: MutableState<String?>,
+    val preview_attachment: MutableState<MessageAttachment?>,
+    val preview_bytes: MutableState<ByteArray?>,
+    val options_attachment: MutableState<MessageAttachment?>,
+)
+
+@Composable
+private fun detail_top_bar(
+    flags: detail_screen_flags,
+    on_back: () -> Unit,
+    on_archive: () -> Unit,
+    on_delete: () -> Unit,
+    swipe_direction: Int,
+    chained: Boolean,
+    email_id: String,
+    email: Email?,
+    api_item: org.astermail.android.mail.InboxItem?,
+    messages: List<ThreadMessage>,
+    translated_thread_subject: String?,
+    show_topbar_subject_state: androidx.compose.runtime.State<Boolean>,
+    thread_settled: Boolean,
+    metadata_shows_transit: Boolean,
+    show_encryption_indicators: Boolean,
+    is_thread_encrypted: Boolean,
+    is_thread_pgp: Boolean,
+    categories_enabled: Boolean,
+    block_external_images: Boolean,
+    allow_external_ids: Set<String>,
+    image_grant_allowed: Boolean,
+    settings_state: org.astermail.android.settings.SettingsUiState,
+    is_spam: Boolean,
+    is_trashed: Boolean,
+    thread_trash_flags: List<Pair<String, Boolean>>,
+    scope: kotlinx.coroutines.CoroutineScope,
+    mail_vm: MailViewModel,
+    settings_vm: SettingsViewModel,
+    show_toast: (String) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val context = LocalContext.current
+    val show_topbar_subject by show_topbar_subject_state
+    var show_topbar_menu by flags.show_topbar_menu
+    var show_encryption_info by flags.show_encryption_info
+    var left_after_unread by flags.left_after_unread
+    var show_snooze_sheet by flags.show_snooze_sheet
+    var show_folder_sheet by flags.show_folder_sheet
+    var show_label_sheet by flags.show_label_sheet
+    var show_category_sheet by flags.show_category_sheet
+    var show_message_details by flags.show_message_details
+    var show_raw_source_dialog by flags.show_raw_source_dialog
+    var is_spam_override by flags.is_spam_override
+    var pending_block_sender by flags.pending_block_sender
+    var pending_delete_permanent by flags.pending_delete_permanent
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .chrome_surface(colors)
+            .padding(horizontal = AsterSpacing.xs),
+        contentAlignment = Alignment.Center,
+    ) {
+        org.astermail.android.design.components.AsterIconSlotButton(
+            content_description = stringResource(R.string.back),
+            onClick = on_back,
+            modifier = Modifier.align(Alignment.CenterStart).testTag("back"),
+        ) { tint, icon_modifier ->
+            val morph = remember {
+                androidx.compose.animation.core.Animatable(detail_back_icon_start_progress(swipe_direction, chained))
             }
-            val detail_toolbar_slots = remember(detail_prefs_state.preferences?.toolbar_actions) {
-                load_toolbar_actions(context)
+            LaunchedEffect(Unit) {
+                if (morph.value >= 1f) return@LaunchedEffect
+                morph.animateTo(
+                    targetValue = 1f,
+                    animationSpec = androidx.compose.animation.core.tween(
+                        durationMillis = 320,
+                        easing = AsterEasing.emphasized,
+                    ),
+                )
             }
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .glass_bar(colors)
-                    .pointerInput(Unit) {}
-                    .onGloballyPositioned { coords ->
-                        val measured = with(density) { coords.size.height.toDp() }
-                        if (measured > 0.dp && measured != bottom_bar_height) {
-                            bottom_bar_height = measured
-                        }
-                    }
-                    .navigationBarsPadding(),
+            org.astermail.android.design.components.menu_back_morph_icon(
+                progress = morph.value,
+                tint = tint,
+                modifier = icon_modifier.mirror_in_rtl(),
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 52.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            val topbar_subject = translated_thread_subject?.ifBlank { null }
+                ?: email?.subject?.ifBlank { stringResource(R.string.no_subject) }
+                ?: stringResource(R.string.no_subject)
+            androidx.compose.animation.AnimatedVisibility(
+                visible = show_topbar_subject && email != null,
+                enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
+                exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
             ) {
-                if (!colors.is_glass) AsterDivider(modifier = Modifier.fillMaxWidth())
-                val react_target = messages.lastOrNull { reaction_restriction_for(it) == null } ?: latest_msg
-                val latest_restriction = reaction_restriction_for(react_target)
-                LaunchedEffect(latest_restriction) {
-                    if (latest_restriction != null) reaction_picker_open = false
-                }
-                run {
-                    reaction_quick_picker(
-                        visible = reaction_picker_open && latest_restriction == null,
-                        skin_tone = settings_state.preferences?.emoji_skin_tone
-                            ?: org.astermail.android.api.preferences.EMOJI_SKIN_TONE_DEFAULT,
-                        on_skin_tone = { settings_vm.set_emoji_skin_tone(it) },
-                        on_pick = { emoji ->
-                            reaction_picker_open = false
-                            val blocked = reaction_restriction_for(react_target)
-                            if (blocked != null) {
-                                show_toast(
-                                    context.getString(
-                                        org.astermail.android.mail.reaction_restriction_string(blocked),
-                                    ),
-                                )
-                                return@reaction_quick_picker
-                            }
-                            haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                            dispatch_reaction(react_target.id, emoji)
-                        },
-                    )
-                }
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
+                Text(
+                    text = topbar_subject,
+                    color = colors.text_primary,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+            }
+            val badge_known = thread_settled || metadata_shows_transit
+            androidx.compose.animation.AnimatedVisibility(
+                visible = !show_topbar_subject && email != null && show_encryption_indicators,
+                enter = androidx.compose.animation.EnterTransition.None,
+                exit = fadeOut(),
+            ) {
+                val label = encryption_badge_label(is_thread_encrypted, is_thread_pgp)
+                val tint = if (is_thread_encrypted) colors.accent_blue else colors.text_muted
+                Row(
+                    modifier = Modifier
+                        .graphicsLayer { alpha = if (badge_known) 1f else 0f }
+                        .clip(SquircleShape(999.dp))
+                        .clickable(enabled = badge_known) { show_encryption_info = true }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .testTag("encryption_badge"),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    reply_action_row(
-                        on_reply = { on_reply(latest_msg.id, thread_ghost_email) },
-                        on_forward = { on_forward(latest_msg.id, thread_ghost_email) },
-                        show_react = latest_restriction != org.astermail.android.mail.ReactionRestriction.disabled,
-                        react_enabled = latest_restriction == null,
-                        on_react = {
-                            val blocked = reaction_restriction_for(react_target)
-                            if (blocked != null) {
-                                show_toast(
-                                    context.getString(
-                                        org.astermail.android.mail.reaction_restriction_string(blocked),
-                                    ),
-                                )
-                            } else {
-                                reaction_picker_open = !reaction_picker_open
-                            }
-                        },
+                    Icon(
+                        imageVector = if (is_thread_encrypted) TablerIcons.Lock else TablerIcons.LockOpen,
+                        contentDescription = null,
+                        tint = tint,
+                        modifier = Modifier.size(16.dp),
                     )
-                    thread_draft_slot(
-                        email_id = email_id,
-                        thread_token = thread_state.item?.thread_token,
-                        mail_vm = mail_vm,
+                    Text(
+                        text = label,
+                        color = tint,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = AsterSpacing.md)
-                            .padding(top = 2.dp, bottom = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceAround,
-                        verticalAlignment = Alignment.CenterVertically,
+                }
+            }
+        }
+        val is_archived = api_item?.is_archived == true
+        Row(
+            modifier = Modifier.align(Alignment.CenterEnd),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box {
+            AsterIconButton(
+                icon = TablerIcons.DotsVertical,
+                content_description = stringResource(R.string.more),
+                onClick = { show_topbar_menu = true },
+                modifier = Modifier.testTag("more"),
+            )
+            aster_menu(
+                expanded = show_topbar_menu,
+                on_dismiss = { show_topbar_menu = false },
+                offset = DpOffset(0.dp, 8.dp),
+                min_width = 260.dp,
+            ) {
+                val is_pinned = api_item?.raw_item?.metadata?.is_pinned == true
+                detail_menu_action(
+                    icon = if (is_archived) TablerIcons.Inbox else TablerIcons.Archive,
+                    text = if (is_archived) stringResource(R.string.swipe_move_to_inbox) else stringResource(R.string.archive_action),
+                    tint = colors.text_primary,
+                    test_tag = "archive",
+                ) {
+                    show_topbar_menu = false
+                    if (is_archived) {
+                        mail_vm.unarchive(listOf(email_id))
+                        on_archive()
+                    } else {
+                        mail_vm.archive(listOf(email_id))
+                        on_archive()
+                    }
+                }
+                detail_menu_action(
+                    icon = TablerIcons.Mail,
+                    text = stringResource(R.string.mark_as_unread),
+                    tint = colors.text_primary,
+                ) {
+                    show_topbar_menu = false
+                    if (!left_after_unread) {
+                        left_after_unread = true
+                        mail_vm.mark_unread(email_id)
+                        show_toast(context.getString(R.string.marked_as_unread))
+                        on_back()
+                    }
+                }
+                detail_menu_action(
+                    icon = if (is_pinned) pin_icon_filled else pin_icon,
+                    text = if (is_pinned) stringResource(R.string.unpin) else stringResource(R.string.pin_to_top),
+                    tint = colors.text_primary,
+                ) {
+                    show_topbar_menu = false
+                    mail_vm.toggle_pin(email_id)
+                }
+                detail_menu_action(
+                    icon = TablerIcons.Moon,
+                    text = stringResource(R.string.snooze),
+                    tint = colors.text_primary,
+                ) {
+                    show_topbar_menu = false
+                    show_snooze_sheet = true
+                }
+                detail_menu_divider()
+                detail_menu_action(
+                    icon = TablerIcons.Folder,
+                    text = stringResource(R.string.move_to_folder),
+                    tint = colors.text_primary,
+                ) {
+                    show_topbar_menu = false
+                    settings_vm.load_labels()
+                    show_folder_sheet = true
+                }
+                detail_menu_action(
+                    icon = TablerIcons.Tag,
+                    text = stringResource(R.string.add_label),
+                    tint = colors.text_primary,
+                ) {
+                    show_topbar_menu = false
+                    settings_vm.load_tags()
+                    show_label_sheet = true
+                }
+                if (can_move_to_category(api_item, categories_enabled)) {
+                    detail_menu_action(
+                        icon = TablerIcons.LayoutGrid,
+                        text = stringResource(R.string.move_to_category),
+                        tint = colors.text_primary,
+                        test_tag = "move_to_category",
                     ) {
-                        detail_toolbar_slots.forEach { slot_id ->
-                            when (slot_id) {
-                                "read" -> {
-                                    val read_state = api_item?.is_read == true
-                                    if (read_state) {
-                                        bottom_action(TablerIcons.Mail, stringResource(R.string.mark_as_unread), test_tag = "mark_read") {
-                                            if (!left_after_unread) {
-                                                left_after_unread = true
-                                                mail_vm.mark_unread(email_id)
-                                                show_toast(context.getString(R.string.marked_as_unread))
-                                                on_back()
-                                            }
-                                        }
-                                    } else {
-                                        bottom_action(TablerIcons.MailOpened, stringResource(R.string.mark_as_read), test_tag = "mark_read") {
-                                            mail_vm.mark_read(email_id)
-                                            show_toast(context.getString(R.string.marked_as_read))
-                                        }
+                        show_topbar_menu = false
+                        show_category_sheet = true
+                    }
+                }
+                detail_menu_action(
+                    icon = TablerIcons.Printer,
+                    text = stringResource(R.string.print),
+                    tint = colors.text_primary,
+                ) {
+                    show_topbar_menu = false
+                    val msg = messages.lastOrNull()
+                    if (msg != null) {
+                        val print_subject = email?.subject.orEmpty()
+                        val print_allow_external = message_loads_remote_content(
+                            blocked = block_external_images,
+                            granted = msg.id in allow_external_ids,
+                            grant_allowed = image_grant_allowed,
+                            is_system_sender = is_aster_system_sender(msg),
+                        )
+                        val print_sanitize_options =
+                            remote_content_sanitize_options(settings_state.preferences)
+                        scope.launch {
+                            print_email(
+                                context = context,
+                                msg = msg,
+                                subject = print_subject,
+                                allow_external = print_allow_external,
+                                sanitize_options = print_sanitize_options,
+                            ) {
+                                show_toast(context.getString(R.string.print_failed))
+                            }
+                        }
+                    } else {
+                        show_toast(context.getString(R.string.nothing_to_print))
+                    }
+                }
+                detail_menu_action(
+                    icon = TablerIcons.InfoCircle,
+                    text = stringResource(R.string.message_details),
+                    tint = colors.text_primary,
+                    test_tag = "message_details",
+                ) {
+                    show_topbar_menu = false
+                    show_message_details = true
+                }
+                detail_menu_action(
+                    icon = TablerIcons.Code,
+                    text = stringResource(R.string.detail_view_raw_source),
+                    tint = colors.text_primary,
+                ) {
+                    show_topbar_menu = false
+                    show_raw_source_dialog = true
+                }
+                detail_menu_divider()
+                detail_menu_action(
+                    icon = spam_action_icon(is_spam),
+                    text = if (is_spam) stringResource(R.string.swipe_not_spam) else stringResource(R.string.report_spam),
+                    tint = if (is_spam) colors.accent_blue else colors.danger,
+                ) {
+                    show_topbar_menu = false
+                    val spam_sender_hint =
+                        listOfNotNull(messages.lastOrNull()?.sender_email)
+                    if (is_spam) {
+                        is_spam_override = false
+                        mail_vm.unmark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
+                    } else {
+                        is_spam_override = true
+                        mail_vm.mark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
+                    }
+                    on_back()
+                }
+                detail_menu_action(
+                    icon = TablerIcons.Ban,
+                    text = stringResource(R.string.block_sender),
+                    tint = colors.danger,
+                ) {
+                    show_topbar_menu = false
+                    val sender = messages.lastOrNull()?.sender_email
+                    if (!sender.isNullOrBlank()) {
+                        pending_block_sender = sender
+                    }
+                }
+                detail_menu_action(
+                    icon = if (is_trashed) TablerIcons.TrashOff else TablerIcons.Trash,
+                    text = if (is_trashed) {
+                        stringResource(R.string.swipe_delete_forever)
+                    } else {
+                        stringResource(R.string.delete_action)
+                    },
+                    tint = colors.danger,
+                ) {
+                    show_topbar_menu = false
+                    if (is_trashed) {
+                        pending_delete_permanent = org.astermail.android.mail.permanent_delete_targets(
+                            email_id,
+                            message_scope = false,
+                            thread_trash_flags = thread_trash_flags,
+                        )
+                    } else {
+                        mail_vm.trash(listOf(email_id))
+                        on_delete()
+                    }
+                }
+            }
+            }
+        }
+    }
+}
+
+@Composable
+private fun detail_bottom_bar(
+    modifier: Modifier,
+    flags: detail_screen_flags,
+    email_id: String,
+    messages: List<ThreadMessage>,
+    thread_state: org.astermail.android.mail.ThreadUiState,
+    api_item: org.astermail.android.mail.InboxItem?,
+    inbox_state_for_folder: org.astermail.android.mail.InboxUiState,
+    settings_state: org.astermail.android.settings.SettingsUiState,
+    is_trashed: Boolean,
+    is_starred: Boolean,
+    is_spam: Boolean,
+    thread_trash_flags: List<Pair<String, Boolean>>,
+    thread_ghost_email: String?,
+    reaction_restriction_for: (ThreadMessage) -> org.astermail.android.mail.ReactionRestriction?,
+    dispatch_reaction: (String, String) -> Unit,
+    show_toast: (String) -> Unit,
+    mail_vm: MailViewModel,
+    settings_vm: SettingsViewModel,
+    on_reply: (String, String?) -> Unit,
+    on_forward: (String, String?) -> Unit,
+    on_back: () -> Unit,
+    on_delete: () -> Unit,
+    on_archive: () -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val density = LocalDensity.current
+    val context = LocalContext.current
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+    var bottom_bar_height by flags.bottom_bar_height
+    var reaction_picker_open by flags.reaction_picker_open
+    var left_after_unread by flags.left_after_unread
+    var pending_delete_permanent by flags.pending_delete_permanent
+    var show_folder_sheet by flags.show_folder_sheet
+    var show_label_sheet by flags.show_label_sheet
+    var show_snooze_sheet by flags.show_snooze_sheet
+    var is_spam_override by flags.is_spam_override
+    var action_target_id by flags.action_target_id
+    var action_menu_anchor by flags.action_menu_anchor
+    var show_action_sheet by flags.show_action_sheet
+    val latest_msg = messages.last()
+    val detail_prefs_state by settings_vm.state.collectAsStateWithLifecycle()
+    LaunchedEffect(detail_prefs_state.preferences?.toolbar_actions) {
+        val raw = detail_prefs_state.preferences?.toolbar_actions
+        if (raw != null) {
+            cache_toolbar_actions(context, parse_toolbar_actions(raw))
+        }
+    }
+    val detail_toolbar_slots = remember(detail_prefs_state.preferences?.toolbar_actions) {
+        load_toolbar_actions(context)
+    }
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .glass_bar(colors)
+            .pointerInput(Unit) {}
+            .onGloballyPositioned { coords ->
+                val measured = with(density) { coords.size.height.toDp() }
+                if (measured > 0.dp && measured != bottom_bar_height) {
+                    bottom_bar_height = measured
+                }
+            }
+            .navigationBarsPadding(),
+    ) {
+        if (!colors.is_glass) AsterDivider(modifier = Modifier.fillMaxWidth())
+        val react_target = messages.lastOrNull { reaction_restriction_for(it) == null } ?: latest_msg
+        val latest_restriction = reaction_restriction_for(react_target)
+        LaunchedEffect(latest_restriction) {
+            if (latest_restriction != null) reaction_picker_open = false
+        }
+        run {
+            reaction_quick_picker(
+                visible = reaction_picker_open && latest_restriction == null,
+                skin_tone = settings_state.preferences?.emoji_skin_tone
+                    ?: org.astermail.android.api.preferences.EMOJI_SKIN_TONE_DEFAULT,
+                on_skin_tone = { settings_vm.set_emoji_skin_tone(it) },
+                on_pick = { emoji ->
+                    reaction_picker_open = false
+                    val blocked = reaction_restriction_for(react_target)
+                    if (blocked != null) {
+                        show_toast(
+                            context.getString(
+                                org.astermail.android.mail.reaction_restriction_string(blocked),
+                            ),
+                        )
+                        return@reaction_quick_picker
+                    }
+                    haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                    dispatch_reaction(react_target.id, emoji)
+                },
+            )
+        }
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            reply_action_row(
+                on_reply = { on_reply(latest_msg.id, thread_ghost_email) },
+                on_forward = { on_forward(latest_msg.id, thread_ghost_email) },
+                show_react = latest_restriction != org.astermail.android.mail.ReactionRestriction.disabled,
+                react_enabled = latest_restriction == null,
+                on_react = {
+                    val blocked = reaction_restriction_for(react_target)
+                    if (blocked != null) {
+                        show_toast(
+                            context.getString(
+                                org.astermail.android.mail.reaction_restriction_string(blocked),
+                            ),
+                        )
+                    } else {
+                        reaction_picker_open = !reaction_picker_open
+                    }
+                },
+            )
+            thread_draft_slot(
+                email_id = email_id,
+                thread_token = thread_state.item?.thread_token,
+                mail_vm = mail_vm,
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AsterSpacing.md)
+                    .padding(top = 2.dp, bottom = 6.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                detail_toolbar_slots.forEach { slot_id ->
+                    when (slot_id) {
+                        "read" -> {
+                            val read_state = api_item?.is_read == true
+                            if (read_state) {
+                                bottom_action(TablerIcons.Mail, stringResource(R.string.mark_as_unread), test_tag = "mark_read") {
+                                    if (!left_after_unread) {
+                                        left_after_unread = true
+                                        mail_vm.mark_unread(email_id)
+                                        show_toast(context.getString(R.string.marked_as_unread))
+                                        on_back()
                                     }
                                 }
-                                "trash" -> {
-                                    if (is_trashed) {
-                                        bottom_action(TablerIcons.TrashOff, stringResource(R.string.swipe_delete_forever), test_tag = "delete") {
-                                            pending_delete_permanent = org.astermail.android.mail.permanent_delete_targets(
-                                                email_id,
-                                                message_scope = false,
-                                                thread_trash_flags = thread_trash_flags,
-                                            )
-                                        }
-                                    } else {
-                                        bottom_action(TablerIcons.Trash, stringResource(if (inbox_state_for_folder.current_folder == "drafts") R.string.discard_draft else R.string.move_to_trash), test_tag = "delete") {
-                                            mail_vm.trash(listOf(email_id))
-                                            on_delete()
-                                        }
-                                    }
-                                }
-                                "archive" -> if (is_trashed) {
-                                    bottom_action(TablerIcons.Inbox, stringResource(R.string.swipe_restore), test_tag = "toolbar_archive") {
-                                        mail_vm.restore_trash(listOf(email_id))
-                                        on_delete()
-                                    }
-                                } else {
-                                    val archived = api_item?.is_archived == true
-                                    bottom_action(
-                                        if (archived) TablerIcons.Inbox else TablerIcons.Archive,
-                                        if (archived) stringResource(R.string.swipe_restore) else stringResource(R.string.swipe_archive),
-                                        test_tag = "toolbar_archive",
-                                    ) {
-                                        if (archived) {
-                                            mail_vm.unarchive(listOf(email_id))
-                                            on_archive()
-                                        } else {
-                                            mail_vm.archive(listOf(email_id))
-                                            on_archive()
-                                        }
-                                    }
-                                }
-                                "folder" -> bottom_action(TablerIcons.Folder, stringResource(R.string.move_to_folder)) {
-                                    settings_vm.load_labels(force = settings_state.labels.isEmpty())
-                                    show_folder_sheet = true
-                                }
-                                "label" -> bottom_action(TablerIcons.Tag, stringResource(R.string.label)) {
-                                    settings_vm.load_tags(force = settings_state.tags.isEmpty())
-                                    show_label_sheet = true
-                                }
-                                "star" -> bottom_action(
-                                    if (is_starred) TablerIcons.StarOff else TablerIcons.Star,
-                                    if (is_starred) stringResource(R.string.unstar) else stringResource(R.string.star),
-                                    test_tag = "toolbar_star",
-                                ) {
-                                    haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                    mail_vm.toggle_star(email_id)
-                                    show_toast(if (!is_starred) context.getString(R.string.starred) else context.getString(R.string.unstarred))
-                                }
-                                "snooze" -> bottom_action(TablerIcons.Clock, stringResource(R.string.snooze)) {
-                                    show_snooze_sheet = true
-                                }
-                                "spam" -> bottom_action(
-                                    spam_action_icon(is_spam),
-                                    if (is_spam) stringResource(R.string.swipe_not_spam) else stringResource(R.string.report_spam),
-                                    test_tag = "toolbar_spam",
-                                ) {
-                                    val spam_sender_hint = listOfNotNull(messages.lastOrNull()?.sender_email)
-                                    if (is_spam) {
-                                        is_spam_override = false
-                                        mail_vm.unmark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
-                                    } else {
-                                        is_spam_override = true
-                                        mail_vm.mark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
-                                    }
-                                    on_back()
-                                }
-                                "reply" -> bottom_action(TablerIcons.ArrowBackUp.auto_mirrored(), stringResource(R.string.reply), test_tag = "toolbar_reply") {
-                                    on_reply(latest_msg.id, thread_ghost_email)
-                                }
-                                "forward" -> bottom_action(TablerIcons.MailForward, stringResource(R.string.forward), test_tag = "toolbar_forward") {
-                                    on_forward(latest_msg.id, thread_ghost_email)
+                            } else {
+                                bottom_action(TablerIcons.MailOpened, stringResource(R.string.mark_as_read), test_tag = "mark_read") {
+                                    mail_vm.mark_read(email_id)
+                                    show_toast(context.getString(R.string.marked_as_read))
                                 }
                             }
                         }
-                        bottom_action(TablerIcons.Dots, stringResource(R.string.more)) {
-                            action_target_id = null
-                            action_menu_anchor = null
-                            show_action_sheet = true
+                        "trash" -> {
+                            if (is_trashed) {
+                                bottom_action(TablerIcons.TrashOff, stringResource(R.string.swipe_delete_forever), test_tag = "delete") {
+                                    pending_delete_permanent = org.astermail.android.mail.permanent_delete_targets(
+                                        email_id,
+                                        message_scope = false,
+                                        thread_trash_flags = thread_trash_flags,
+                                    )
+                                }
+                            } else {
+                                bottom_action(TablerIcons.Trash, stringResource(if (inbox_state_for_folder.current_folder == "drafts") R.string.discard_draft else R.string.move_to_trash), test_tag = "delete") {
+                                    mail_vm.trash(listOf(email_id))
+                                    on_delete()
+                                }
+                            }
+                        }
+                        "archive" -> if (is_trashed) {
+                            bottom_action(TablerIcons.Inbox, stringResource(R.string.swipe_restore), test_tag = "toolbar_archive") {
+                                mail_vm.restore_trash(listOf(email_id))
+                                on_delete()
+                            }
+                        } else {
+                            val archived = api_item?.is_archived == true
+                            bottom_action(
+                                if (archived) TablerIcons.Inbox else TablerIcons.Archive,
+                                if (archived) stringResource(R.string.swipe_restore) else stringResource(R.string.swipe_archive),
+                                test_tag = "toolbar_archive",
+                            ) {
+                                if (archived) {
+                                    mail_vm.unarchive(listOf(email_id))
+                                    on_archive()
+                                } else {
+                                    mail_vm.archive(listOf(email_id))
+                                    on_archive()
+                                }
+                            }
+                        }
+                        "folder" -> bottom_action(TablerIcons.Folder, stringResource(R.string.move_to_folder)) {
+                            settings_vm.load_labels(force = settings_state.labels.isEmpty())
+                            show_folder_sheet = true
+                        }
+                        "label" -> bottom_action(TablerIcons.Tag, stringResource(R.string.label)) {
+                            settings_vm.load_tags(force = settings_state.tags.isEmpty())
+                            show_label_sheet = true
+                        }
+                        "star" -> bottom_action(
+                            if (is_starred) TablerIcons.StarOff else TablerIcons.Star,
+                            if (is_starred) stringResource(R.string.unstar) else stringResource(R.string.star),
+                            test_tag = "toolbar_star",
+                        ) {
+                            haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                            mail_vm.toggle_star(email_id)
+                            show_toast(if (!is_starred) context.getString(R.string.starred) else context.getString(R.string.unstarred))
+                        }
+                        "snooze" -> bottom_action(TablerIcons.Clock, stringResource(R.string.snooze)) {
+                            show_snooze_sheet = true
+                        }
+                        "spam" -> bottom_action(
+                            spam_action_icon(is_spam),
+                            if (is_spam) stringResource(R.string.swipe_not_spam) else stringResource(R.string.report_spam),
+                            test_tag = "toolbar_spam",
+                        ) {
+                            val spam_sender_hint = listOfNotNull(messages.lastOrNull()?.sender_email)
+                            if (is_spam) {
+                                is_spam_override = false
+                                mail_vm.unmark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
+                            } else {
+                                is_spam_override = true
+                                mail_vm.mark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
+                            }
+                            on_back()
+                        }
+                        "reply" -> bottom_action(TablerIcons.ArrowBackUp.auto_mirrored(), stringResource(R.string.reply), test_tag = "toolbar_reply") {
+                            on_reply(latest_msg.id, thread_ghost_email)
+                        }
+                        "forward" -> bottom_action(TablerIcons.MailForward, stringResource(R.string.forward), test_tag = "toolbar_forward") {
+                            on_forward(latest_msg.id, thread_ghost_email)
                         }
                     }
+                }
+                bottom_action(TablerIcons.Dots, stringResource(R.string.more)) {
+                    action_target_id = null
+                    action_menu_anchor = null
+                    show_action_sheet = true
                 }
             }
         }
     }
+}
 
+@Composable
+private fun detail_overlays(
+    flags: detail_screen_flags,
+    email_id: String,
+    email: Email?,
+    messages: List<ThreadMessage>,
+    api_item: org.astermail.android.mail.InboxItem?,
+    inbox_state_for_folder: org.astermail.android.mail.InboxUiState,
+    settings_state: org.astermail.android.settings.SettingsUiState,
+    is_starred: Boolean,
+    is_spam: Boolean,
+    is_trashed: Boolean,
+    thread_trash_flags: List<Pair<String, Boolean>>,
+    message_is_trashed: (String) -> Boolean,
+    thread_ghost_email: String?,
+    reaction_own_addresses: Set<String>,
+    is_thread_encrypted: Boolean,
+    is_thread_pgp: Boolean,
+    is_thread_outside_pgp: Boolean,
+    scope: kotlinx.coroutines.CoroutineScope,
+    request_storage_access: (() -> Unit) -> Unit,
+    save_as_pending: Array<ByteArray?>,
+    save_as_launcher: androidx.activity.result.ActivityResultLauncher<Intent>,
+    show_toast: (String) -> Unit,
+    announce_saved: (saved_attachment?) -> Unit,
+    with_attachment_bytes: (MessageAttachment, (MessageAttachment, ByteArray) -> Unit) -> Unit,
+    mail_vm: MailViewModel,
+    settings_vm: SettingsViewModel,
+    on_reply: (String, String?) -> Unit,
+    on_reply_all: (String, String?) -> Unit,
+    on_forward: (String, String?) -> Unit,
+    on_back: () -> Unit,
+    on_delete: () -> Unit,
+    on_archive: () -> Unit,
+    on_navigate: ((String) -> Unit)?,
+) {
+    val colors = AsterMaterial.colors
+    val context = LocalContext.current
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+    var show_action_sheet by flags.show_action_sheet
+    val action_target_id by flags.action_target_id
+    val action_menu_anchor by flags.action_menu_anchor
+    var left_after_unread by flags.left_after_unread
+    var pending_delete_permanent by flags.pending_delete_permanent
+    var is_spam_override by flags.is_spam_override
+    var show_snooze_sheet by flags.show_snooze_sheet
+    var show_label_sheet by flags.show_label_sheet
+    var show_folder_sheet by flags.show_folder_sheet
+    var show_category_sheet by flags.show_category_sheet
+    var show_message_details by flags.show_message_details
+    var show_raw_source_dialog by flags.show_raw_source_dialog
+    var show_encryption_info by flags.show_encryption_info
+    var preview_attachment by flags.preview_attachment
+    var preview_bytes by flags.preview_bytes
+    var lightbox_src by flags.lightbox_src
+    var options_attachment by flags.options_attachment
+    var pending_link by flags.pending_link
+    var profile_sender by flags.profile_sender
+    var profile_sender_trust by flags.profile_sender_trust
+    var pending_block_sender by flags.pending_block_sender
     run {
         val target = action_target_id ?: messages.lastOrNull()?.id.orEmpty()
         val item_target = action_target_id ?: email_id
@@ -2791,6 +3148,7 @@ internal fun expanded_message(
     pending_attachments: List<MessageAttachment> = emptyList(),
     on_retry_attachments: () -> Unit = {},
     reactions: List<DecryptedReaction> = emptyList(),
+    reaction_placeholders: Int = 0,
     on_react: (String) -> Unit = {},
     on_unreact: (String) -> Unit = {},
     is_system: Boolean = false,
@@ -2841,13 +3199,21 @@ internal fun expanded_message(
             },
         )
     }
+    val content_analysis_key = remember(msg.id, msg.body_html) { card_analysis_memo.key_of(msg.id, msg.body_html) }
     val content_analysis by androidx.compose.runtime.produceState(
-        initialValue = MessageContentAnalysis(),
-        msg.body_html,
+        initialValue = card_analysis_memo.content_get(content_analysis_key) ?: MessageContentAnalysis(),
+        content_analysis_key,
     ) {
-        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+        val cached = card_analysis_memo.content_get(content_analysis_key)
+        if (cached != null) {
+            value = cached
+            return@produceState
+        }
+        val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
             analyze_message_content(msg.body_html)
         }
+        card_analysis_memo.content_put(content_analysis_key, result)
+        value = result
     }
     val tracker_report = content_analysis.tracker_report
     var show_tracker_details by remember(msg.id) { mutableStateOf(false) }
@@ -3236,11 +3602,24 @@ internal fun expanded_message(
 
         sender_trust_banner(trust)
 
-        val phishing_result by produceState<org.astermail.android.security.PhishingResult?>(
-            initialValue = null,
-            msg.body_html, msg.body, msg.sender_email, is_system, auth_status,
+        val phishing_key = remember(msg.id, msg.body_html, msg.body, msg.sender_email, is_system, auth_status) {
+            card_analysis_memo.key_of(msg.id, msg.body_html) * 31L +
+                listOf(msg.body, msg.sender_email, is_system, auth_status).hashCode().toLong()
+        }
+        val phishing_result by produceState(
+            initialValue = if (is_system) null else card_analysis_memo.phishing_get(phishing_key),
+            phishing_key,
         ) {
-            value = if (is_system) null else withContext(kotlinx.coroutines.Dispatchers.Default) {
+            if (is_system) {
+                value = null
+                return@produceState
+            }
+            val cached = card_analysis_memo.phishing_get(phishing_key)
+            if (cached != null) {
+                value = cached
+                return@produceState
+            }
+            value = withContext(kotlinx.coroutines.Dispatchers.Default) {
                 org.astermail.android.security.analyze_email(
                     html_content = msg.body_html.orEmpty(),
                     text_content = msg.body,
@@ -3252,6 +3631,7 @@ internal fun expanded_message(
                     dmarc_result = msg.dmarc_result,
                 )
             }
+            value?.let { card_analysis_memo.phishing_put(phishing_key, it) }
         }
         val phishing_snapshot = phishing_result
         AnimatedVisibility(
@@ -3304,9 +3684,12 @@ internal fun expanded_message(
             low_network = org.astermail.android.network.low_network_active(),
         )
         val html_part = remember(msg.body_html, msg.body) { renderable_html_part(msg.body_html, msg.body) }
-        val text_part = remember(msg.body_html, msg.body) {
-            msg.body.ifBlank { org.astermail.android.mail.html_to_plain_text(msg.body_html.orEmpty()) }
+        val text_part_lazy = remember(msg.body_html, msg.body) {
+            lazy(LazyThreadSafetyMode.NONE) {
+                msg.body.ifBlank { org.astermail.android.mail.html_to_plain_text(msg.body_html.orEmpty()) }
+            }
         }
+        val text_part by text_part_lazy
         if (msg.is_body_pending) {
             var body_wait_expired by remember(msg.id, retry_in_progress) { mutableStateOf(false) }
             LaunchedEffect(msg.id, retry_in_progress) {
@@ -3337,7 +3720,7 @@ internal fun expanded_message(
                     )
                 }
             } else {
-                email_body_skeleton(
+                deferred_body_skeleton(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(placeholder_body_height)
@@ -3488,20 +3871,29 @@ internal fun expanded_message(
         } else {
             val e2e_no_key_text = stringResource(R.string.e2e_no_key_description)
             val no_body_text = stringResource(R.string.no_body)
-            val plain_html by produceState(initialValue = "", text_part, msg.is_encrypted, e2e_no_key_text, no_body_text) {
-                value = withContext(kotlinx.coroutines.Dispatchers.Default) {
-                val body_source = text_part.ifBlank {
-                    if (msg.is_encrypted) {
-                        e2e_no_key_text
-                    } else {
-                        no_body_text
-                    }
-                }
-                org.astermail.android.mail.build_plain_text_html(body_source)
+            val plain_source = text_part.ifBlank {
+                if (msg.is_encrypted) {
+                    e2e_no_key_text
+                } else {
+                    no_body_text
                 }
             }
+            val plain_sync_html = remember(plain_source) {
+                if (plain_source.length <= plain_text_sync_build_chars) {
+                    org.astermail.android.mail.build_plain_text_html(plain_source)
+                } else {
+                    null
+                }
+            }
+            val plain_async_html by produceState(initialValue = "", plain_source, plain_sync_html) {
+                if (plain_sync_html != null) return@produceState
+                value = withContext(kotlinx.coroutines.Dispatchers.Default) {
+                    org.astermail.android.mail.build_plain_text_html(plain_source)
+                }
+            }
+            val plain_html = plain_sync_html ?: plain_async_html
             if (plain_html.isEmpty()) {
-                email_body_skeleton(
+                deferred_body_skeleton(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(placeholder_body_height)
@@ -3557,6 +3949,7 @@ internal fun expanded_message(
         if (!is_pending_send) {
             reaction_chip_row(
                 reactions = reactions,
+                placeholders = reaction_placeholders,
                 my_email = my_email,
                 on_react = on_react,
                 on_unreact = on_unreact,
@@ -3864,11 +4257,12 @@ private fun reaction_quick_picker(
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 private fun reaction_chip_row(
     reactions: List<DecryptedReaction>,
+    placeholders: Int,
     my_email: String,
     on_react: (String) -> Unit,
     on_unreact: (String) -> Unit,
 ) {
-    if (reactions.isEmpty()) return
+    if (reactions.isEmpty() && placeholders <= 0) return
     val colors = AsterMaterial.colors
     val reduce_motion = aster_reduce_motion()
     var info_emoji by remember { mutableStateOf<String?>(null) }
@@ -3883,7 +4277,11 @@ private fun reaction_chip_row(
     val groups = remember(reactions, my_email) {
         group_reaction_chips(reactions, my_email)
     }
+    val skeleton_count = if (reactions.isEmpty()) placeholders.coerceIn(1, 3) else 0
+    val came_from_skeleton = remember { booleanArrayOf(false) }
+    if (skeleton_count > 0) came_from_skeleton[0] = true
     val initial_chip_emojis = remember { groups.map { (emoji, _, _) -> emoji }.toSet() }
+    val skeleton_shimmer = if (skeleton_count > 0) org.astermail.android.design.components.shimmer_state() else null
     FlowRow(
         modifier = Modifier
             .fillMaxWidth()
@@ -3893,10 +4291,20 @@ private fun reaction_chip_row(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
+        if (skeleton_shimmer != null) {
+            repeat(skeleton_count) {
+                Box(
+                    modifier = Modifier
+                        .height(32.dp)
+                        .width(52.dp)
+                        .shimmer(skeleton_shimmer, SquircleShape(999.dp)),
+                )
+            }
+        }
         groups.forEach { (emoji, count, mine) ->
             androidx.compose.runtime.key(emoji) {
                 val appear = remember {
-                    MutableTransitionState(emoji in initial_chip_emojis).apply { targetState = true }
+                    MutableTransitionState(emoji in initial_chip_emojis || came_from_skeleton[0]).apply { targetState = true }
                 }
                 val bg by org.astermail.android.design.aster_animate_color(
                     target = if (mine) chip_palette.own_fill else chip_palette.other_fill,
@@ -6513,6 +6921,38 @@ private object body_height_cache {
     @Synchronized fun put(key: Long, value: Float) { store[key] = value }
 }
 
+private object card_analysis_memo {
+    private const val capacity = 96
+    private val content = object : LinkedHashMap<Long, MessageContentAnalysis>(32, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, MessageContentAnalysis>?): Boolean =
+            size > capacity
+    }
+    private val phishing = object : LinkedHashMap<Long, org.astermail.android.security.PhishingResult>(32, 0.75f, true) {
+        override fun removeEldestEntry(
+            eldest: MutableMap.MutableEntry<Long, org.astermail.android.security.PhishingResult>?,
+        ): Boolean = size > capacity
+    }
+
+    fun key_of(id: String, html: String?): Long =
+        (id.hashCode().toLong() shl 32) xor ((html?.length ?: -1).toLong() * 31L + (html?.hashCode() ?: 0).toLong())
+
+    @Synchronized
+    fun content_get(key: Long): MessageContentAnalysis? = content[key]
+
+    @Synchronized
+    fun content_put(key: Long, value: MessageContentAnalysis) {
+        content[key] = value
+    }
+
+    @Synchronized
+    fun phishing_get(key: Long): org.astermail.android.security.PhishingResult? = phishing[key]
+
+    @Synchronized
+    fun phishing_put(key: Long, value: org.astermail.android.security.PhishingResult) {
+        phishing[key] = value
+    }
+}
+
 private object thread_revealed_cache {
     private const val max_entries = 64
     private val store = object : java.util.LinkedHashMap<String, Boolean>(max_entries, 0.75f, true) {
@@ -6870,6 +7310,7 @@ internal fun email_html_view(
     }
     val forwarded_label = stringResource(R.string.forwarded_message_label)
     val hide_quote_label_text = stringResource(R.string.hide_quoted_text)
+    val show_quote_label_text = stringResource(R.string.show_quoted_text)
     val blocked_image_labels = BlockedImageLabels(
         image = stringResource(R.string.image_blocked),
         tracking_pixel = stringResource(R.string.tracking_pixel_blocked),
@@ -7202,6 +7643,7 @@ internal fun email_html_view(
         text_zoom = text_zoom,
         underline_links = underline_links,
         hide_quote_label = hide_quote_label_text,
+        show_quote_label = show_quote_label_text,
     )
 
     val translate_active = translate_active_early
@@ -7217,6 +7659,8 @@ internal fun email_html_view(
         measure.measured = true
     }
 
+    val stale_content_dp = remember(measure) { floatArrayOf(0f) }
+
     fun read_body(web: mail_body_web_view, generation: Int) {
         if (!alive[0] || web.destroyed || renderer_exhausted.value) return
         try {
@@ -7228,7 +7672,16 @@ internal fun email_html_view(
             val view_dp = kotlin.math.round(web.height / density).toInt()
             val probe_dp = MEASURE_PROBE_HEIGHT.value.toInt()
             val accepted = measure.accepts(generation) && measure.painted
-            val verdict = judge_body_reading(accepted, content_dp, view_dp, probe_dp, measure.view_is_known_height)
+            val judged = judge_body_reading(accepted, content_dp, view_dp, probe_dp, measure.view_is_known_height)
+            val left_height = stale_content_dp[0]
+            val verdict = if (judged == body_reading_verdict.grow && left_height >= 1f &&
+                kotlin.math.abs(content_dp - left_height) <= BODY_HEIGHT_ROUNDING_CSS
+            ) {
+                body_reading_verdict.stale
+            } else {
+                judged
+            }
+            if (accepted && verdict != body_reading_verdict.stale) stale_content_dp[0] = 0f
             when (verdict) {
                 body_reading_verdict.stale -> Unit
                 body_reading_verdict.probe -> if (!measure.probing) {
@@ -7247,7 +7700,7 @@ internal fun email_html_view(
                     measure.probing = false
                     measure.measured = true
                     measure.quote.on_exact_height(height)
-                    if (cacheable_load[0] && !measure.quote.is_expanded &&
+                    if (cacheable_load[0] && !measure.quote.is_expanded && !measure.quote.has_open &&
                         body_height_cacheable(accepted, measure.painted, verdict, height)
                     ) {
                         body_height_cache.put(measure.height_key, height)
@@ -7276,15 +7729,17 @@ internal fun email_html_view(
         }
     }
 
-    fun load_body(web: mail_body_web_view, built: String, notify: Boolean = true) {
+    fun load_body(web: mail_body_web_view, built: String, notify: Boolean = true, keep_quotes: Boolean = false) {
         if (web.destroyed) return
         measure.begin_load(android.os.SystemClock.uptimeMillis(), keep_height = measure.measured)
+        if (!keep_quotes) measure.quote.reset()
         web.forget_content_height()
         measure.loaded_built = built
         measure.loaded_external = allow_external_ref[0]
         visual_ready.value = false
         if (notify) load_tick.value++
-        web.loadDataWithBaseURL("https://mail-content.invalid/", built, "text/html", "UTF-8", null)
+        val rendered = if (keep_quotes) with_open_quotes(built, measure.quote.open_quotes) else built
+        web.loadDataWithBaseURL("https://mail-content.invalid/", rendered, "text/html", "UTF-8", null)
     }
 
     val pending_quote_collapse = remember(measure) { arrayOfNulls<pending_collapse>(1) }
@@ -7499,28 +7954,31 @@ internal fun email_html_view(
                         val target = view as? mail_body_web_view ?: return true
                         val built = measure.loaded_built ?: return true
                         if (target.destroyed) return true
-                        val compensate = request.url?.schemeSpecificPart != QUOTE_CLOSE_ACTION
+                        val link = parse_quote_link(request.url?.schemeSpecificPart) ?: return true
                         main_handler.post {
                             if (!alive[0] || target.destroyed || measure.loaded_built != built) return@post
-                            val shift = measure.quote.on_collapse_requested()
-                            val collapsed = measure.quote.collapsed_height_dp
-                            if (collapsed == null) {
-                                load_body(target, built)
-                                pending_quote_collapse[0] = pending_collapse(
-                                    generation = measure.load_generation,
-                                    collapsed_dp = null,
-                                    shift_dp = if (compensate) shift else 0f,
-                                )
+                            val quote = measure.quote
+                            val changed = when {
+                                link.action == QUOTE_OPEN_ACTION -> quote.set_open(link.index ?: return@post, true)
+                                link.index != null -> quote.set_open(link.index, false)
+                                else -> quote.close_all()
+                            }
+                            if (!changed) return@post
+                            if (link.action == QUOTE_OPEN_ACTION) {
+                                pending_quote_collapse[0] = null
+                                load_body(target, built, keep_quotes = true)
                                 return@post
                             }
-                            target.evaluateJavascript(QUOTE_CLOSE_SCRIPT, null)
-                            target.forget_content_height()
-                            measure.view_dp = collapsed
-                            measure.view_is_known_height = true
-                            val key = message_key
-                            if (compensate && shift > 0f && key != null) {
-                                body_holder?.on_quote_collapse?.invoke(key, shift)
-                            }
+                            val all_closed = !quote.has_open
+                            val shift = if (all_closed) quote.on_collapse_requested() else 0f
+                            val collapsed = if (all_closed) quote.collapsed_height_dp else null
+                            stale_content_dp[0] = if (collapsed != null) measure.view_dp else 0f
+                            load_body(target, built, keep_quotes = true)
+                            pending_quote_collapse[0] = pending_collapse(
+                                generation = measure.load_generation,
+                                collapsed_dp = collapsed,
+                                shift_dp = if (link.action == QUOTE_COVER_ACTION) shift else 0f,
+                            )
                         }
                         return true
                     }
@@ -7744,7 +8202,6 @@ internal fun email_html_view(
       val probing_now = measure.probing
       val measured_now = measure.measured
       var skeleton_due by remember(measure) { mutableStateOf(!measure.measured) }
-      val body_skeleton_reduce_motion = aster_reduce_motion()
       LaunchedEffect(measure, measured_now, base_height_key) {
           if (measured_now) {
               skeleton_due = false
@@ -7811,6 +8268,7 @@ internal fun email_html_view(
                         if (alive[0] && !destroyed) {
                             layout_tick.value++
                             measure.view_is_known_height = false
+                            measure.quote.on_layout_changed()
                             forget_content_height()
                             request_read(this)
                         }
@@ -7953,9 +8411,10 @@ internal fun email_html_view(
                 .onGloballyPositioned { coords ->
                     if (!coords.isAttached) return@onGloballyPositioned
                     val window_y = coords.positionInWindow().y
-                    if (window_y != last_window_y[0]) {
+                    val previous_y = last_window_y[0]
+                    if (previous_y.isNaN() || kotlin.math.abs(window_y - previous_y) >= layout_density * BODY_REPAINT_STEP_DP) {
                         last_window_y[0] = window_y
-                        web_ref[0]?.invalidate()
+                        web_ref[0]?.postInvalidateOnAnimation()
                     }
                 },
             onRelease = { web_view ->
@@ -7970,11 +8429,7 @@ internal fun email_html_view(
         androidx.compose.animation.AnimatedVisibility(
             visible = !renderer_exhausted.value && skeleton_due && !measured_now,
             enter = androidx.compose.animation.EnterTransition.None,
-            exit = if (body_skeleton_reduce_motion) {
-                androidx.compose.animation.ExitTransition.None
-            } else {
-                fadeOut(animationSpec = org.astermail.android.design.AsterSpring.effects<Float>())
-            },
+            exit = androidx.compose.animation.ExitTransition.None,
             modifier = Modifier
                 .matchParentSize()
                 .align(Alignment.TopStart),

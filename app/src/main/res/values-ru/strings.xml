@@ -278,7 +278,7 @@
     <string name="unsubscribed">отписано</string>
     <string name="scanning">Сканирование...</string>
     <string name="no_mailing_lists">Рассылок пока нет</string>
-    <string name="scan_inbox_hint">Нажмите «Сканировать входящие», чтобы найти рассылки и маркетинговых отправителей.</string>
+    <string name="scan_inbox_hint">Потяните вниз, чтобы просканировать входящие и найти рассылки и маркетинговых отправителей.</string>
     <string name="active_tab">Активные</string>
     <string name="unsubscribed_tab">Отписанные</string>
     <string name="reactivate">Возобновить</string>
@@ -802,6 +802,7 @@
     <string name="unblock">Разблокировать</string>
     <string name="block_a_sender">Заблокировать отправителя</string>
     <string name="block_sender_hint">Укажите адрес электронной почты или домен. Новые письма будут сразу попадать в спам.</string>
+    <string name="block_sender_invalid">Введите адрес электронной почты или домен, например example.com.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">Заблокировать</string>
     <string name="blocked_domain">Весь домен</string>
@@ -2387,6 +2388,12 @@
         <item quantity="few">Найдено %d новых подписки</item>
         <item quantity="many">Найдено %d новых подписок</item>
         <item quantity="other">Найдено %d новой подписки</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">Проверено %1$s из %2$s писем, найден %3$s отправитель</item>
+        <item quantity="few">Проверено %1$s из %2$s писем, найдено %3$s отправителя</item>
+        <item quantity="many">Проверено %1$s из %2$s писем, найдено %3$s отправителей</item>
+        <item quantity="other">Проверено %1$s из %2$s писем, найдено %3$s отправителя</item>
     </plurals>
     <string name="reaction_info_title">Реакция</string>
     <string name="reaction_badge_label">Новая реакция</string>

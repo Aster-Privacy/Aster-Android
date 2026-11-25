@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -262,11 +263,17 @@ internal fun alias_select_row(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     enabled: Boolean = true,
+    end_reserve: Dp = 0.dp,
     trailing: (@Composable () -> Unit)? = null,
     menu: @Composable (expanded: Boolean, dismiss: () -> Unit) -> Unit,
 ) {
     val colors = AsterMaterial.colors
     var open by remember { mutableStateOf(false) }
+    val end_padding = when {
+        trailing != null -> AsterSpacing.xs
+        end_reserve > 0.dp -> AsterSpacing.xs + end_reserve + AsterSpacing.xs
+        else -> AsterSpacing.lg
+    }
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -274,48 +281,49 @@ internal fun alias_select_row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(modifier = Modifier.weight(1f)) {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = settings_row_min_height)
                     .clickable(enabled = enabled, role = Role.DropdownList) { open = true }
-                    .padding(start = AsterSpacing.lg, end = if (trailing != null) AsterSpacing.xs else AsterSpacing.lg)
+                    .padding(start = AsterSpacing.lg, end = end_padding)
                     .padding(vertical = AsterSpacing.sm)
                     .testTag(test_tag),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.Center,
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = title,
                         color = if (enabled) colors.text_primary else colors.text_tertiary,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f),
                     )
-                    if (subtitle != null) {
-                        Text(
-                            text = subtitle,
-                            color = colors.text_tertiary,
-                            fontSize = 13.sp,
-                            modifier = Modifier.padding(top = 2.dp),
-                        )
-                    }
+                    Spacer(Modifier.width(AsterSpacing.md))
+                    Text(
+                        text = value,
+                        color = colors.text_secondary,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.widthIn(max = 168.dp),
+                    )
+                    Spacer(Modifier.width(AsterSpacing.xs))
+                    Icon(
+                        imageVector = TablerIcons.ChevronDown,
+                        contentDescription = null,
+                        tint = colors.text_tertiary,
+                        modifier = Modifier.size(18.dp),
+                    )
                 }
-                Spacer(Modifier.width(AsterSpacing.md))
-                Text(
-                    text = value,
-                    color = colors.text_secondary,
-                    fontSize = 14.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.widthIn(max = 148.dp),
-                )
-                Spacer(Modifier.width(AsterSpacing.xs))
-                Icon(
-                    imageVector = TablerIcons.ChevronDown,
-                    contentDescription = null,
-                    tint = colors.text_tertiary,
-                    modifier = Modifier.size(18.dp),
-                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        color = colors.text_tertiary,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
             }
             menu(open) { open = false }
         }

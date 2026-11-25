@@ -278,7 +278,7 @@
     <string name="unsubscribed">uitgeschreven</string>
     <string name="scanning">Scannen...</string>
     <string name="no_mailing_lists">Nog geen mailinglijsten</string>
-    <string name="scan_inbox_hint">Tik op "Inbox scannen" om nieuwsbrieven en marketingafzenders te vinden.</string>
+    <string name="scan_inbox_hint">Trek omlaag om je inbox te scannen op nieuwsbrieven en marketingafzenders.</string>
     <string name="active_tab">Actief</string>
     <string name="unsubscribed_tab">Uitgeschreven</string>
     <string name="reactivate">Heractiveren</string>
@@ -802,6 +802,7 @@
     <string name="unblock">Deblokkeren</string>
     <string name="block_a_sender">Afzender blokkeren</string>
     <string name="block_sender_hint">Voer een e-mailadres of domein in. Nieuwe berichten gaan direct naar spam.</string>
+    <string name="block_sender_invalid">Voer een e-mailadres of een domein zoals example.com in.</string>
     <string name="block_sender_placeholder">spam@example.com</string>
     <string name="block">Blokkeren</string>
     <string name="blocked_domain">Volledig domein</string>
@@ -2365,6 +2366,10 @@
     <plurals name="subscriptions_found_count">
         <item quantity="one">%d nieuw abonnement gevonden</item>
         <item quantity="other">%d nieuwe abonnementen gevonden</item>
+    </plurals>
+    <plurals name="subscription_scan_progress">
+        <item quantity="one">%1$s van %2$s berichten gescand, %3$s afzender gevonden</item>
+        <item quantity="other">%1$s van %2$s berichten gescand, %3$s afzenders gevonden</item>
     </plurals>
     <string name="reaction_info_title">Reactie</string>
     <string name="reaction_badge_label">Nieuwe reactie</string>

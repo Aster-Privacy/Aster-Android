@@ -21,11 +21,6 @@
 
 package org.astermail.android.ui.mail
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +39,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,9 +54,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
-import org.astermail.android.design.AsterSpring
-import org.astermail.android.design.aster_finite_spec
-import org.astermail.android.design.aster_reduce_motion
 import org.astermail.android.design.components.shimmer
 import org.astermail.android.design.components.shimmer_appearance
 import org.astermail.android.design.components.shimmer_state
@@ -234,29 +231,27 @@ fun remember_detail_skeleton_phase(thread_key: String, wanted: Boolean): Skeleto
 
 internal fun detail_content_alpha(revealed: Boolean): Float = if (revealed) 1f else 0f
 
-@Composable
 fun Modifier.detail_content_handoff(thread_key: String, revealed: Boolean): Modifier {
-    val reduce_motion = aster_reduce_motion()
-    val alpha = key(thread_key) {
-        animateFloatAsState(
-            targetValue = detail_content_alpha(revealed),
-            animationSpec = aster_finite_spec(reduce_motion, AsterSpring.effects<Float>()),
-            label = "detail_content_handoff",
-        )
-    }
-    return this.graphicsLayer { this.alpha = alpha.value }
+    val alpha = detail_content_alpha(revealed)
+    return this.graphicsLayer { this.alpha = alpha }
 }
 
 @Composable
 fun detail_skeleton_layer(phase: SkeletonPhase, modifier: Modifier = Modifier, message_count: Int = 1) {
-    val reduce_motion = aster_reduce_motion()
-    AnimatedVisibility(
-        visible = phase == SkeletonPhase.skeleton,
-        enter = EnterTransition.None,
-        exit = if (reduce_motion) ExitTransition.None else fadeOut(animationSpec = AsterSpring.effects<Float>()),
-        modifier = modifier,
-    ) {
-        detail_skeleton(message_count = message_count)
+    val wanted = phase == SkeletonPhase.skeleton
+    var due by remember { mutableStateOf(false) }
+    LaunchedEffect(wanted) {
+        if (!wanted) {
+            due = false
+            return@LaunchedEffect
+        }
+        delay(BODY_SKELETON_DELAY_MS)
+        due = true
+    }
+    if (wanted && due) {
+        Box(modifier = modifier) {
+            detail_skeleton(message_count = message_count)
+        }
     }
 }
 
@@ -271,6 +266,20 @@ fun email_body_skeleton(modifier: Modifier = Modifier) {
             .padding(horizontal = 8.dp)
             .padding(top = AsterSpacing.md, bottom = AsterSpacing.sm),
     )
+}
+
+@Composable
+fun deferred_body_skeleton(modifier: Modifier = Modifier) {
+    var due by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(BODY_SKELETON_DELAY_MS)
+        due = true
+    }
+    if (due) {
+        email_body_skeleton(modifier = modifier)
+    } else {
+        Box(modifier = modifier)
+    }
 }
 
 private const val email_body_skeleton_max_lines = 30

@@ -824,6 +824,7 @@ private fun AsterNavHost() {
     val context = LocalContext.current
     val a11y = local_accessibility.current
     val nav_duration = if (org.astermail.android.design.aster_reduce_motion()) 0 else nav_anim_duration_ms
+    val nav_back_duration = if (nav_duration == 0) 0 else org.astermail.android.ui.common.nav_anim_backward_ms
 
     val session_expired_state by auth_gate.session_expired.collectAsStateWithLifecycle()
     androidx.compose.runtime.LaunchedEffect(session_expired_state, is_signed_in_state) {
@@ -1025,7 +1026,7 @@ private fun AsterNavHost() {
         if (initial?.startsWith("compose") == true || is_search_route(initial)) {
             androidx.compose.animation.EnterTransition.None
         } else {
-            nav_backward_enter(nav_duration)
+            nav_backward_enter(nav_back_duration)
         }
     }
     val nav_pop_exit: androidx.compose.animation.AnimatedContentTransitionScope<androidx.navigation.NavBackStackEntry>.() -> ExitTransition = {
@@ -1034,7 +1035,7 @@ private fun AsterNavHost() {
         } else if (is_search_route(initialState.destination.route)) {
             nav_search_exit(nav_duration)
         } else {
-            nav_backward_exit(nav_duration)
+            nav_backward_exit(nav_back_duration)
         }
     }
 
@@ -1344,7 +1345,7 @@ private fun AsterNavHost() {
             }
             MailDetailScreen(
                 email_id = email_id,
-                on_back = { pop_once(nav_controller) },
+                on_back = { pop_entry(nav_controller, entry) },
                 on_reply = { msg_id, ghost ->
                     org.astermail.android.ui.compose.publish_compose_thread_seed(detail_thread_state)
                     context.startActivity(ComposeActivity.intent_for(context, reply_to = msg_id, mode = "reply", thread_ghost_email = ghost))
@@ -2423,7 +2424,8 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
 
     androidx.compose.runtime.LaunchedEffect(drawer_state.isOpen) {
         if (drawer_state.isOpen) {
-            kotlinx.coroutines.delay(220)
+            androidx.compose.runtime.snapshotFlow { drawer_state.isAnimationRunning }.first { !it }
+            kotlinx.coroutines.delay(120)
             settings_vm.load_labels()
             settings_vm.load_tags()
             settings_vm.load_aliases()
@@ -2532,21 +2534,23 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
     }
     val inbox_counts_ready = inbox_state.current_folder == "inbox" &&
         (inbox_state.items.isNotEmpty() || !inbox_state.is_loading)
-    val category_unread = androidx.compose.runtime.remember(
+    val category_unread by androidx.compose.runtime.produceState(
+        initialValue = last_inbox_category_unread.filterKeys { it in active_category_tabs },
         inbox_state.items,
         inbox_counts_ready,
         active_category_tabs,
-        last_inbox_category_unread,
+        accounts_state.current_account_id,
         prefs?.conversation_grouping,
     ) {
-        if (inbox_counts_ready) {
-            org.astermail.android.mail.category_unread_counts(
-                inbox_state.items,
-                active_category_tabs,
-                prefs?.conversation_grouping != false,
-            )
-        } else {
-            last_inbox_category_unread.filterKeys { it in active_category_tabs }
+        val tabs = active_category_tabs
+        if (!inbox_counts_ready) {
+            value = last_inbox_category_unread.filterKeys { it in tabs }
+            return@produceState
+        }
+        val items = inbox_state.items
+        val grouping = prefs?.conversation_grouping != false
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            org.astermail.android.mail.category_unread_counts(items, tabs, grouping)
         }
     }
     androidx.compose.runtime.LaunchedEffect(category_unread, inbox_counts_ready) {
@@ -3019,6 +3023,11 @@ private fun InboxWithDrawer(nav_controller: NavHostController) {
                 api_folder_items = api_folders,
                 api_label_items = api_labels,
                 api_alias_items = api_aliases,
+                folders_settled = settings_state.labels_loaded_types.let { "all" in it || "folder" in it },
+                labels_settled = settings_state.tags_loaded && settings_state.labels_loaded_types.let {
+                    "all" in it || "label" in it
+                },
+                aliases_settled = settings_state.aliases_settled,
                 accounts = accounts_state.accounts,
                 current_account_id = accounts_state.current_account_id,
                 can_add_account = accounts_state.can_add_more,
@@ -3672,7 +3681,7 @@ private fun navigate_once(nav_controller: NavHostController, route: String) {
 
 private fun open_mail_detail(nav_controller: NavHostController, email_id: String) {
     val entry = nav_controller.currentBackStackEntry ?: return
-    if (!entry.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
+    if (!entry.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return
     if (entry.destination.route == routes.mail_detail) return
     nav_controller.navigate(routes.mail_detail_for(email_id)) { launchSingleTop = true }
 }

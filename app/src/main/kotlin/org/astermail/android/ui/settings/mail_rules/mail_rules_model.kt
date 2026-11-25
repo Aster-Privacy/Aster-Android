@@ -34,6 +34,8 @@ import org.astermail.android.api.mail_rules.MatchMode
 import org.astermail.android.api.mail_rules.NumericOp
 import org.astermail.android.api.mail_rules.ReadState
 import org.astermail.android.api.mail_rules.TextOp
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 enum class field_id {
     from, reply_to, to, cc, bcc, any_recipient,
@@ -266,7 +268,7 @@ private fun has_condition_value(c: Condition): Boolean = when (c) {
     is Condition.ListId -> c.op == TextOp.IS_EMPTY || c.value.isNotBlank()
     is Condition.Header -> c.name.isNotBlank() && (c.op == TextOp.IS_EMPTY || c.value.isNotBlank())
     is Condition.AttachmentName -> c.value.isNotBlank()
-    else -> true
+    else -> !condition_has_invalid_number(c)
 }
 
 fun is_valid_rfc3339(value: String): Boolean =
@@ -293,10 +295,6 @@ private fun exclusive_signature(c: Condition): Pair<String, String>? {
     val entry = when (c) {
         is Condition.From -> c.op.name to exclusive_address_value(c.op, c.value)
         is Condition.ReplyTo -> c.op.name to exclusive_address_value(c.op, c.value)
-        is Condition.To -> c.op.name to exclusive_address_value(c.op, c.value)
-        is Condition.Cc -> c.op.name to exclusive_address_value(c.op, c.value)
-        is Condition.Bcc -> c.op.name to exclusive_address_value(c.op, c.value)
-        is Condition.AnyRecipient -> c.op.name to exclusive_address_value(c.op, c.value)
         is Condition.Subject -> c.op.name to exclusive_text_value(c.op, c.value)
         is Condition.Body -> c.op.name to exclusive_text_value(c.op, c.value)
         is Condition.ListId -> c.op.name to exclusive_text_value(c.op, c.value)
@@ -495,15 +493,29 @@ fun rule_summary_line(
     return parts.joinToString(" · ")
 }
 
-private fun summary_part(label: String, values: List<String>, separator: String, limit: Int): String? {
+private fun summary_part(label: String, values: List<String>, separator: String, limit: Int): String? =
+    summary_body(values, separator, limit)?.let { "$label $it" }
+
+private fun summary_body(values: List<String>, separator: String, limit: Int): String? {
     val capped = limit.coerceAtLeast(1)
     val cleaned = values.map { it.trim() }.filter { it.isNotEmpty() }
     if (cleaned.isEmpty()) return null
     val shown = cleaned.take(capped).joinToString(separator)
     val hidden = cleaned.size - capped
-    val body = if (hidden > 0) "$shown +$hidden" else shown
-    return "$label $body"
+    return if (hidden > 0) "$shown +$hidden" else shown
 }
+
+const val rule_arrow = "→"
+
+fun rule_arrow_summary(
+    conditions: List<String>,
+    actions: List<String>,
+    joiner: String,
+    limit: Int = rule_summary_segment_limit,
+): String = listOfNotNull(
+    summary_body(conditions, " $joiner ", limit),
+    summary_body(actions, ", ", limit),
+).joinToString(" $rule_arrow ")
 
 fun sort_rules_for_display(rules: List<MailRule>): List<MailRule> =
     rules.sortedWith(
@@ -516,3 +528,398 @@ val palette_colors = listOf(
     "#EF4444", "#EC4899", "#A855F7", "#14B8A6",
     "#F97316", "#0EA5E9",
 )
+
+@Serializable
+data class rule_draft(
+    val name: String = "",
+    val color: String = "",
+    val match_mode: MatchMode = MatchMode.ALL,
+    val conditions: List<Condition> = emptyList(),
+    val actions: List<Action> = emptyList(),
+)
+
+private val rule_draft_json = Json {
+    ignoreUnknownKeys = true
+    encodeDefaults = true
+    allowSpecialFloatingPointValues = true
+}
+
+fun encode_rule_draft(draft: rule_draft): String =
+    rule_draft_json.encodeToString(rule_draft.serializer(), draft)
+
+fun decode_rule_draft(raw: String?): rule_draft? {
+    if (raw.isNullOrBlank()) return null
+    return runCatching { rule_draft_json.decodeFromString(rule_draft.serializer(), raw) }.getOrNull()
+}
+
+fun rule_draft_of(rule: MailRule?, default_color: String): rule_draft =
+    if (rule == null) {
+        rule_draft(color = default_color)
+    } else {
+        rule_draft(
+            name = rule.name,
+            color = rule.color.ifBlank { default_color },
+            match_mode = rule.match_mode,
+            conditions = rule.conditions,
+            actions = strip_unavailable_actions(rule.actions),
+        )
+    }
+
+fun preserved_actions_of(rule: MailRule?): List<Action> =
+    rule?.actions.orEmpty().filter { action_of(it) in unavailable_actions }
+
+fun needs_value(c: Condition): Boolean = when (c) {
+    is Condition.HasAttachment, is Condition.IsReply, is Condition.IsForward,
+    is Condition.IsAutoSubmitted, is Condition.HasCalendarInvite, is Condition.HasListId,
+    is Condition.DkimResult, is Condition.SpfResult, is Condition.DmarcResult,
+    -> false
+    is Condition.And, is Condition.Or, is Condition.Not, Condition.Unsupported -> false
+    is Condition.Subject -> c.op != TextOp.IS_EMPTY
+    is Condition.Body -> c.op != TextOp.IS_EMPTY
+    is Condition.ListId -> c.op != TextOp.IS_EMPTY
+    is Condition.Header -> c.op != TextOp.IS_EMPTY
+    else -> address_op_of(c) != AddressOp.IS_EMPTY
+}
+
+fun current_operator_id(c: Condition): String? = when (c) {
+    is Condition.From -> c.op.name
+    is Condition.ReplyTo -> c.op.name
+    is Condition.To -> c.op.name
+    is Condition.Cc -> c.op.name
+    is Condition.Bcc -> c.op.name
+    is Condition.AnyRecipient -> c.op.name
+    is Condition.Subject -> c.op.name
+    is Condition.Body -> c.op.name
+    is Condition.ListId -> c.op.name
+    is Condition.Header -> c.op.name
+    is Condition.AttachmentName -> c.op.name
+    is Condition.AttachmentSize -> c.op.name
+    is Condition.TotalSize -> c.op.name
+    is Condition.RecipientCount -> c.op.name
+    is Condition.SpamScore -> c.op.name
+    is Condition.DateReceived -> c.op.name
+    else -> null
+}
+
+fun operator_ids_for(c: Condition): List<String> = when (field_of(c)?.let { field_kind_of(it) }) {
+    field_kind.address -> AddressOp.entries.map { it.name }
+    field_kind.text, field_kind.header -> TextOp.entries.map { it.name }
+    field_kind.attachment_name -> AttachmentNameOp.entries.map { it.name }
+    field_kind.numeric_size, field_kind.numeric_plain -> NumericOp.entries.map { it.name }
+    field_kind.date -> DateOp.entries.map { it.name }
+    else -> emptyList()
+}
+
+fun apply_operator(c: Condition, op_id: String): Condition {
+    if (op_id !in operator_ids_for(c)) return c
+    return when (c) {
+        is Condition.From -> AddressOp.valueOf(op_id).let { c.copy(op = it, value = value_for_address_op(it, c.value)) }
+        is Condition.ReplyTo -> AddressOp.valueOf(op_id).let { c.copy(op = it, value = value_for_address_op(it, c.value)) }
+        is Condition.To -> AddressOp.valueOf(op_id).let { c.copy(op = it, value = value_for_address_op(it, c.value)) }
+        is Condition.Cc -> AddressOp.valueOf(op_id).let { c.copy(op = it, value = value_for_address_op(it, c.value)) }
+        is Condition.Bcc -> AddressOp.valueOf(op_id).let { c.copy(op = it, value = value_for_address_op(it, c.value)) }
+        is Condition.AnyRecipient -> AddressOp.valueOf(op_id).let { c.copy(op = it, value = value_for_address_op(it, c.value)) }
+        is Condition.Subject -> TextOp.valueOf(op_id).let { c.copy(op = it, value = value_for_text_op(it, c.value)) }
+        is Condition.Body -> TextOp.valueOf(op_id).let { c.copy(op = it, value = value_for_text_op(it, c.value)) }
+        is Condition.ListId -> TextOp.valueOf(op_id).let { c.copy(op = it, value = value_for_text_op(it, c.value)) }
+        is Condition.Header -> TextOp.valueOf(op_id).let { c.copy(op = it, value = value_for_text_op(it, c.value)) }
+        is Condition.AttachmentName -> c.copy(op = AttachmentNameOp.valueOf(op_id))
+        is Condition.AttachmentSize -> c.copy(op = NumericOp.valueOf(op_id))
+        is Condition.TotalSize -> c.copy(op = NumericOp.valueOf(op_id))
+        is Condition.RecipientCount -> c.copy(op = NumericOp.valueOf(op_id))
+        is Condition.SpamScore -> c.copy(op = NumericOp.valueOf(op_id))
+        is Condition.DateReceived -> c.copy(op = DateOp.valueOf(op_id))
+        else -> c
+    }
+}
+
+fun uses_regex_op(c: Condition): Boolean =
+    current_operator_id(c) == AddressOp.MATCHES_REGEX.name
+
+fun supports_case_sensitive(c: Condition): Boolean = when (field_of(c)?.let { field_kind_of(it) }) {
+    field_kind.address, field_kind.text, field_kind.header, field_kind.attachment_name -> true
+    else -> false
+}
+
+private fun case_flag_of(c: Condition): Boolean? = when (c) {
+    is Condition.From -> c.case_sensitive
+    is Condition.ReplyTo -> c.case_sensitive
+    is Condition.To -> c.case_sensitive
+    is Condition.Cc -> c.case_sensitive
+    is Condition.Bcc -> c.case_sensitive
+    is Condition.AnyRecipient -> c.case_sensitive
+    is Condition.Subject -> c.case_sensitive
+    is Condition.Body -> c.case_sensitive
+    is Condition.ListId -> c.case_sensitive
+    is Condition.Header -> c.case_sensitive
+    is Condition.AttachmentName -> c.case_sensitive
+    else -> null
+}
+
+fun case_sensitive_of(c: Condition): Boolean = case_flag_of(c) == true
+
+fun set_case_sensitive(c: Condition, case: Boolean?): Condition = when (c) {
+    is Condition.From -> c.copy(case_sensitive = case)
+    is Condition.ReplyTo -> c.copy(case_sensitive = case)
+    is Condition.To -> c.copy(case_sensitive = case)
+    is Condition.Cc -> c.copy(case_sensitive = case)
+    is Condition.Bcc -> c.copy(case_sensitive = case)
+    is Condition.AnyRecipient -> c.copy(case_sensitive = case)
+    is Condition.Subject -> c.copy(case_sensitive = case)
+    is Condition.Body -> c.copy(case_sensitive = case)
+    is Condition.ListId -> c.copy(case_sensitive = case)
+    is Condition.Header -> c.copy(case_sensitive = case)
+    is Condition.AttachmentName -> c.copy(case_sensitive = case)
+    else -> c
+}
+
+fun condition_text_value(c: Condition): String = when (c) {
+    is Condition.From -> c.value
+    is Condition.ReplyTo -> c.value
+    is Condition.To -> c.value
+    is Condition.Cc -> c.value
+    is Condition.Bcc -> c.value
+    is Condition.AnyRecipient -> c.value
+    is Condition.Subject -> c.value
+    is Condition.Body -> c.value
+    is Condition.ListId -> c.value
+    is Condition.Header -> c.value
+    is Condition.AttachmentName -> c.value
+    else -> ""
+}
+
+fun set_condition_text(c: Condition, value: String): Condition = when (c) {
+    is Condition.Header -> c.copy(value = value)
+    else -> set_case_sensitive(set_condition_value(c, value, false), case_flag_of(c))
+}
+
+private fun address_condition(field: field_id, op: AddressOp, value: String, case: Boolean?): Condition? = when (field) {
+    field_id.from -> Condition.From(op, value, case)
+    field_id.reply_to -> Condition.ReplyTo(op, value, case)
+    field_id.to -> Condition.To(op, value, case)
+    field_id.cc -> Condition.Cc(op, value, case)
+    field_id.bcc -> Condition.Bcc(op, value, case)
+    field_id.any_recipient -> Condition.AnyRecipient(op, value, case)
+    else -> null
+}
+
+private fun text_condition(field: field_id, op: TextOp, value: String, case: Boolean?): Condition? = when (field) {
+    field_id.subject -> Condition.Subject(op, value, case)
+    field_id.body -> Condition.Body(op, value, case)
+    field_id.list_id -> Condition.ListId(op, value, case)
+    else -> null
+}
+
+fun switch_condition_field(c: Condition, field: field_id): Condition {
+    if (field_of(c) == field) return c
+    val case = case_flag_of(c)
+    val address_op = address_op_of(c)
+    if (address_op != null && field_kind_of(field) == field_kind.address) {
+        return address_condition(field, address_op, condition_text_value(c), case) ?: default_condition_for(field)
+    }
+    val text_op = when (c) {
+        is Condition.Subject -> c.op
+        is Condition.Body -> c.op
+        is Condition.ListId -> c.op
+        else -> null
+    }
+    if (text_op != null && field_kind_of(field) == field_kind.text) {
+        return text_condition(field, text_op, condition_text_value(c), case) ?: default_condition_for(field)
+    }
+    return default_condition_for(field)
+}
+
+const val invalid_number = -1L
+const val number_max_length = 15
+
+enum class size_unit(val factor: Long) {
+    bytes(1L),
+    kb(1024L),
+    mb(1024L * 1024L),
+    gb(1024L * 1024L * 1024L),
+}
+
+fun split_size(bytes: Long): Pair<Long, size_unit> {
+    if (bytes <= 0L) return 0L to size_unit.mb
+    val unit = size_unit.entries.reversed().first { bytes % it.factor == 0L }
+    return bytes / unit.factor to unit
+}
+
+fun join_size(amount: Long, unit: size_unit): Long = when {
+    amount < 0L -> invalid_number
+    amount > Long.MAX_VALUE / unit.factor -> invalid_number
+    else -> amount * unit.factor
+}
+
+fun parse_whole_number(text: String): Long {
+    val trimmed = text.trim()
+    if (trimmed.isEmpty() || !trimmed.all { it.isDigit() }) return invalid_number
+    return trimmed.toLongOrNull() ?: invalid_number
+}
+
+fun score_input(raw: String): String {
+    val negative = raw.trimStart().startsWith('-')
+    val body = raw.filter { it.isDigit() || it == '.' || it == ',' }
+    return ((if (negative) "-" else "") + body).take(number_max_length)
+}
+
+fun parse_score(text: String): Double =
+    text.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() } ?: Double.NaN
+
+fun condition_has_invalid_number(c: Condition): Boolean = when (c) {
+    is Condition.AttachmentSize -> c.value < 0L
+    is Condition.TotalSize -> c.value < 0L
+    is Condition.RecipientCount -> c.value < 0L
+    is Condition.DateReceived -> c.value < 0L
+    is Condition.SpamScore -> !c.value.isFinite()
+    else -> false
+}
+
+enum class rule_save_blocker {
+    rule_name, add_condition, header_name, number, finish_condition, duplicate,
+    add_action, folder, labels, snooze, finish_action,
+}
+
+fun rule_save_blocker_of(draft: rule_draft, preserved_action_count: Int = 0): rule_save_blocker? = when {
+    draft.name.isBlank() -> rule_save_blocker.rule_name
+    draft.conditions.isEmpty() -> rule_save_blocker.add_condition
+    draft.conditions.any { it is Condition.Header && it.name.isBlank() } -> rule_save_blocker.header_name
+    draft.conditions.any { condition_has_invalid_number(it) } -> rule_save_blocker.number
+    draft.conditions.any { !is_condition_complete(it) } -> rule_save_blocker.finish_condition
+    duplicate_condition_indices(draft.conditions).isNotEmpty() -> rule_save_blocker.duplicate
+    draft.actions.isEmpty() && preserved_action_count == 0 -> rule_save_blocker.add_action
+    draft.actions.any { it is Action.MoveTo && it.folder_token.isBlank() } -> rule_save_blocker.folder
+    draft.actions.any { it is Action.ApplyLabels && it.label_tokens.isEmpty() } -> rule_save_blocker.labels
+    draft.actions.any { it is Action.Snooze && !is_valid_rfc3339(it.until_iso8601) } -> rule_save_blocker.snooze
+    draft.actions.any { !is_action_complete(it) } -> rule_save_blocker.finish_action
+    else -> null
+}
+
+@StringRes
+fun rule_save_blocker_res(blocker: rule_save_blocker): Int = when (blocker) {
+    rule_save_blocker.rule_name -> R.string.rules_hint_name
+    rule_save_blocker.add_condition -> R.string.rules_hint_add_condition
+    rule_save_blocker.header_name -> R.string.rules_hint_header_name
+    rule_save_blocker.number -> R.string.rules_hint_number
+    rule_save_blocker.finish_condition -> R.string.rules_hint_finish_condition
+    rule_save_blocker.duplicate -> R.string.rules_hint_duplicate
+    rule_save_blocker.add_action -> R.string.rules_hint_add_action
+    rule_save_blocker.folder -> R.string.rules_hint_folder
+    rule_save_blocker.labels -> R.string.rules_hint_labels
+    rule_save_blocker.snooze -> R.string.rules_hint_snooze
+    rule_save_blocker.finish_action -> R.string.rules_hint_finish_action
+}
+
+fun replace_condition(draft: rule_draft, index: Int, updated: Condition): rule_draft =
+    if (index !in draft.conditions.indices) {
+        draft
+    } else {
+        draft.copy(conditions = draft.conditions.toMutableList().also { it[index] = updated })
+    }
+
+fun remove_condition(draft: rule_draft, index: Int): rule_draft =
+    if (index !in draft.conditions.indices) {
+        draft
+    } else {
+        draft.copy(conditions = draft.conditions.filterIndexed { i, _ -> i != index })
+    }
+
+fun replace_action(draft: rule_draft, index: Int, updated: Action): rule_draft =
+    if (index !in draft.actions.indices) {
+        draft
+    } else {
+        draft.copy(actions = draft.actions.toMutableList().also { it[index] = updated })
+    }
+
+fun remove_action(draft: rule_draft, index: Int): rule_draft =
+    if (index !in draft.actions.indices) {
+        draft
+    } else {
+        draft.copy(actions = draft.actions.filterIndexed { i, _ -> i != index })
+    }
+
+fun used_action_kinds(actions: List<Action>, except_index: Int? = null): Set<action_id> =
+    actions.filterIndexed { i, _ -> i != except_index }.mapNotNull { action_of(it) }.toSet()
+
+fun toggle_label_token(action: Action.ApplyLabels, token: String): Action.ApplyLabels =
+    if (token in action.label_tokens) {
+        action.copy(label_tokens = action.label_tokens - token)
+    } else {
+        action.copy(label_tokens = action.label_tokens + token)
+    }
+
+fun snooze_until_from_now(duration: java.time.Duration, now: java.time.OffsetDateTime): String =
+    now.withOffsetSameInstant(java.time.ZoneOffset.UTC)
+        .plus(duration)
+        .format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+
+fun condition_flag_of(c: Condition): Boolean? = when (c) {
+    is Condition.HasAttachment -> c.`is`
+    is Condition.IsReply -> c.`is`
+    is Condition.IsForward -> c.`is`
+    is Condition.IsAutoSubmitted -> c.`is`
+    is Condition.HasCalendarInvite -> c.`is`
+    is Condition.HasListId -> c.`is`
+    else -> null
+}
+
+fun set_condition_flag(c: Condition, value: Boolean): Condition = when (c) {
+    is Condition.HasAttachment -> c.copy(`is` = value)
+    is Condition.IsReply -> c.copy(`is` = value)
+    is Condition.IsForward -> c.copy(`is` = value)
+    is Condition.IsAutoSubmitted -> c.copy(`is` = value)
+    is Condition.HasCalendarInvite -> c.copy(`is` = value)
+    is Condition.HasListId -> c.copy(`is` = value)
+    else -> c
+}
+
+fun auth_result_of(c: Condition): AuthResult? = when (c) {
+    is Condition.DkimResult -> c.value
+    is Condition.SpfResult -> c.value
+    is Condition.DmarcResult -> c.value
+    else -> null
+}
+
+fun set_auth_result(c: Condition, value: AuthResult): Condition = when (c) {
+    is Condition.DkimResult -> c.copy(value = value)
+    is Condition.SpfResult -> c.copy(value = value)
+    is Condition.DmarcResult -> c.copy(value = value)
+    else -> c
+}
+
+fun condition_number_of(c: Condition): Long? = when (c) {
+    is Condition.AttachmentSize -> c.value
+    is Condition.TotalSize -> c.value
+    is Condition.RecipientCount -> c.value
+    is Condition.DateReceived -> c.value
+    else -> null
+}
+
+fun set_condition_number(c: Condition, value: Long): Condition = when (c) {
+    is Condition.AttachmentSize -> c.copy(value = value)
+    is Condition.TotalSize -> c.copy(value = value)
+    is Condition.RecipientCount -> c.copy(value = value)
+    is Condition.DateReceived -> c.copy(value = value)
+    else -> c
+}
+
+fun whole_number_text(value: Long): String = if (value < 0L) "" else value.toString()
+
+fun score_text(value: Double): String = when {
+    !value.isFinite() -> ""
+    value % 1.0 == 0.0 && kotlin.math.abs(value) < 1e15 -> value.toLong().toString()
+    else -> value.toString()
+}
+
+fun score_matches(text: String, value: Double): Boolean {
+    val parsed = parse_score(text)
+    return if (parsed.isNaN()) value.isNaN() else parsed == value
+}
+
+fun size_text_matches(text: String, unit: size_unit, bytes: Long): Boolean =
+    join_size(parse_whole_number(text), unit) == bytes
+
+fun size_text_of(bytes: Long): String = if (bytes < 0L) "" else split_size(bytes).first.toString()
+
+fun is_dirty(initial_json: String?, draft_json: String?): Boolean =
+    draft_json != null && initial_json != null && draft_json != initial_json

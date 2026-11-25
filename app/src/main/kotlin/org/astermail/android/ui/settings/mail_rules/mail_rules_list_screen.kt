@@ -391,12 +391,10 @@ private fun rule_summary_text(rule: MailRule, folder_names: Map<String, String>)
     val joiner = stringResource(
         if (rule.match_mode == MatchMode.ANY) R.string.mail_rules_or else R.string.mail_rules_and,
     )
-    return rule_summary_line(
-        when_label = stringResource(R.string.mail_rules_when_section),
-        then_label = stringResource(R.string.mail_rules_then_section),
-        joiner = joiner,
+    return rule_arrow_summary(
         conditions = conditions,
         actions = actions,
+        joiner = joiner,
     )
 }
 

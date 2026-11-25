@@ -295,6 +295,9 @@ fun DrawerContent(
     api_folder_items: List<drawer_folder_item> = emptyList(),
     api_label_items: List<drawer_label_item> = emptyList(),
     api_alias_items: List<drawer_alias_item> = emptyList(),
+    folders_settled: Boolean = true,
+    labels_settled: Boolean = true,
+    aliases_settled: Boolean = true,
     accounts: List<StoredAccount> = emptyList(),
     current_account_id: String? = null,
     can_add_account: Boolean = true,
@@ -641,7 +644,7 @@ fun DrawerContent(
                             ) {
                                 androidx.compose.foundation.layout.Column {
                                     if (folder_items.isEmpty()) {
-                                        empty_section_hint(stringResource(R.string.no_folders_yet))
+                                        if (folders_settled) empty_section_hint(stringResource(R.string.no_folders_yet))
                                     } else {
                                         val root_count = root_folder_count(folder_items)
                                         val has_more_roots = root_count > folders_collapsed_root_count
@@ -767,7 +770,7 @@ fun DrawerContent(
                             ) {
                                 androidx.compose.foundation.layout.Column {
                                     if (label_items.isEmpty()) {
-                                        empty_section_hint(stringResource(R.string.no_labels_yet))
+                                        if (labels_settled) empty_section_hint(stringResource(R.string.no_labels_yet))
                                     } else {
                                         label_items.forEach { item ->
                                             Box {
@@ -841,7 +844,7 @@ fun DrawerContent(
                             ) {
                                 androidx.compose.foundation.layout.Column {
                                     if (alias_items.isEmpty()) {
-                                        empty_section_hint(stringResource(R.string.no_aliases_yet))
+                                        if (aliases_settled) empty_section_hint(stringResource(R.string.no_aliases_yet))
                                     } else {
                                         val collapsed_aliases = alias_items.take(aliases_collapsed_count)
                                         val extra_aliases = if (alias_items.size > aliases_collapsed_count) {

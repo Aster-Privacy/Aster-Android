@@ -203,12 +203,13 @@
     <string name="guard_switches_paused">Aanmeldverzoeken zijn gepauzeerd tot %1$s.</string>
     <string name="guard_switches_missing_rescue">Je hebt geen herstelcode. Maak er een aan, zodat je altijd een manier hebt om terug in je account te komen.</string>
     <string name="guard_switches_not_guard_device">Gebruik een van je Guard-apparaten om deze instellingen te wijzigen.</string>
-    <string name="guard_switches_canceled">Er is niets gewijzigd. Bevestig dat jij het bent om op te slaan.</string>
+    <string name="guard_switches_canceled">Je wijzigingen zijn niet opgeslagen. Bevestig dat jij het bent om ze op te slaan.</string>
     <string name="guard_switches_code_subtitle">Een aanmelding goedkeuren zonder melding</string>
     <string name="guard_devices_section">Guard-apparaten</string>
     <string name="guard_devices_this_device">Deze telefoon</string>
     <string name="guard_devices_unnamed">Naamloos apparaat</string>
     <string name="guard_devices_remove_prompt_subtitle">Een Guard-apparaat verwijderen</string>
+    <string name="guard_devices_remove_confirm">%1$s keurt geen wijzigingen in je account meer goed. Om het weer te gebruiken, neem je vanaf dat apparaat opnieuw deel aan Guard.</string>
     <string name="guard_security_row_off">Zet het aan om aanmeldingen goed te keuren en riskante wijzigingen vanaf deze telefoon tegen te houden</string>
     <string name="guard_changes_title">Vastgehouden wijzigingen</string>
     <string name="guard_changes_body">Deze wijzigingen aan je account wachten voordat ze ingaan. Als je er een niet zelf hebt gedaan, annuleer je die.</string>
@@ -224,7 +225,7 @@
     <string name="guard_changes_step_up_required">Gebruik een apparaat dat je 7 dagen of langer gebruikt, of je beveiligingssleutel, om de wachttijd over te slaan.</string>
     <string name="guard_changes_not_guard_device">Gebruik een van je Guard-apparaten om een wijziging te annuleren of te stoppen.</string>
     <string name="guard_changes_prompt_subtitle">Bevestig deze wijziging aan je account</string>
-    <string name="guard_changes_prompt_canceled">Er is niets gewijzigd. Bevestig dat jij het bent om door te gaan.</string>
+    <string name="guard_changes_prompt_canceled">Bevestig dat jij het bent om door te gaan.</string>
     <string name="guard_changes_done_canceled">De wijziging is geannuleerd.</string>
     <string name="guard_changes_done_skipped">De wijziging is ingegaan.</string>
     <string name="guard_changes_done_stopped">Het herstel is gestopt.</string>

@@ -93,6 +93,13 @@ internal fun cached_inbox_order_hint(id: String, subject: String, preview: Strin
     return hint
 }
 
+internal suspend fun precompute_inbox_order_hints(emails: List<Email>) {
+    for (email in emails) {
+        kotlinx.coroutines.yield()
+        cached_inbox_order_hint(email.id, email.subject, email.preview)
+    }
+}
+
 @Composable
 internal fun inbox_preview_or_order_line(
     email: Email,

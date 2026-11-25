@@ -232,7 +232,7 @@ fun FilteredInboxScreen(
             val row_geometry = remember_row_geometry(skeleton_geometry_of(settings_state.preferences))
             val record_row_height = remember_row_height_recorder()
             Box(modifier = Modifier.fillMaxSize()) {
-            if (skeleton_now || skeleton_phase != SkeletonPhase.content || awaiting_disk_rows) {
+            if (skeleton_now || skeleton_phase == SkeletonPhase.blank || awaiting_disk_rows) {
                 Box(Modifier.fillMaxSize())
             } else if (threads.isEmpty() && inbox_state.error != null) {
                 Box(modifier = Modifier.fillMaxSize().then(handoff)) {

@@ -203,12 +203,13 @@
     <string name="guard_switches_paused">Oturum açma istekleri %1$s tarihine kadar duraklatıldı.</string>
     <string name="guard_switches_missing_rescue">Kurtarma kodunuz yok. Hesabınıza her zaman geri dönebilmek için bir tane oluşturun.</string>
     <string name="guard_switches_not_guard_device">Bu ayarları değiştirmek için Guard cihazlarınızdan birini kullanın.</string>
-    <string name="guard_switches_canceled">Hiçbir şey değişmedi. Kaydetmek için siz olduğunuzu onaylayın.</string>
+    <string name="guard_switches_canceled">Değişiklikleriniz kaydedilmedi. Kaydetmek için kimliğinizi doğrulayın.</string>
     <string name="guard_switches_code_subtitle">Bildirim olmadan oturum açmayı onayla</string>
     <string name="guard_devices_section">Guard cihazları</string>
     <string name="guard_devices_this_device">Bu telefon</string>
     <string name="guard_devices_unnamed">Adsız cihaz</string>
     <string name="guard_devices_remove_prompt_subtitle">Guard cihazını kaldır</string>
+    <string name="guard_devices_remove_confirm">%1$s artık hesabınızdaki değişiklikleri onaylamayacak. Yeniden kullanmak için o cihazdan Guard\'a katılın.</string>
     <string name="guard_security_row_off">Oturum açmaları onaylamak ve riskli değişiklikleri bu telefondan bekletmek için açın</string>
     <string name="guard_changes_title">Bekletilen değişiklikler</string>
     <string name="guard_changes_body">Hesabınızdaki bu değişiklikler geçerli olmadan önce bekliyor. Birini siz yapmadıysanız iptal edin.</string>
@@ -224,7 +225,7 @@
     <string name="guard_changes_step_up_required">Beklemeyi atlamak için 7 gün veya daha uzun süredir kullandığınız bir cihazı ya da güvenlik anahtarınızı kullanın.</string>
     <string name="guard_changes_not_guard_device">Bir değişikliği iptal etmek veya durdurmak için Guard cihazlarınızdan birini kullanın.</string>
     <string name="guard_changes_prompt_subtitle">Hesabınızdaki bu değişikliği onaylayın</string>
-    <string name="guard_changes_prompt_canceled">Hiçbir şey değişmedi. Devam etmek için siz olduğunuzu onaylayın.</string>
+    <string name="guard_changes_prompt_canceled">Devam etmek için kimliğinizi doğrulayın.</string>
     <string name="guard_changes_done_canceled">Değişiklik iptal edildi.</string>
     <string name="guard_changes_done_skipped">Değişiklik geçerli oldu.</string>
     <string name="guard_changes_done_stopped">Kurtarma durduruldu.</string>

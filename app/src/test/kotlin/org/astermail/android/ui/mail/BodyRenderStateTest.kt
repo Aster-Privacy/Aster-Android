@@ -157,6 +157,31 @@ class BodyRenderStateTest {
     }
 
     @Test
+    fun a_width_change_while_expanded_forgets_the_collapsed_height() {
+        val quote = quote_toggle_state()
+        quote.on_exact_height(300f)
+        quote.on_exact_height(900f)
+        quote.on_layout_changed()
+        quote.on_exact_height(700f)
+
+        assertNull(quote.collapsed_height_dp)
+        assertTrue(quote.is_expanded)
+        assertEquals(0f, quote.on_collapse_requested(), 0f)
+    }
+
+    @Test
+    fun a_fresh_document_after_a_width_change_measures_again() {
+        val quote = quote_toggle_state()
+        quote.on_exact_height(300f)
+        quote.on_layout_changed()
+        quote.reset()
+        quote.on_exact_height(260f)
+
+        assertEquals(260f, quote.collapsed_height_dp)
+        assertFalse(quote.is_expanded)
+    }
+
+    @Test
     fun the_least_recently_used_detached_view_is_released_first() {
         val released = mutableListOf<String>()
         val lru = live_view_lru<String, String>(2) { released.add(it) }
@@ -248,5 +273,22 @@ class BodyRenderStateTest {
         assertEquals(listOf("view_b"), released)
         assertEquals(0, lru.size)
         assertFalse(lru.is_attached("b"))
+    }
+
+    @Test
+    fun viewport_rounding_does_not_count_as_growth() {
+        assertEquals(body_reading_verdict.settle, judge_body_reading(true, 180, 178, 24, true))
+        assertEquals(body_reading_verdict.probe, judge_body_reading(true, 180, 178, 24, false))
+        assertEquals(body_reading_verdict.grow, judge_body_reading(true, 182, 178, 24, true))
+    }
+
+    @Test
+    fun open_quotes_mark_only_the_requested_details() {
+        val html = "<details class=\"aster-quoted-wrapper aster-quote-managed\" data-aster-quote=\"0\"><summary></summary></details>" +
+            "<details class=\"aster-quoted-wrapper aster-quote-managed\" data-aster-quote=\"1\"><summary></summary></details>"
+        val rendered = with_open_quotes(html, setOf(1))
+        assertEquals(1, Regex(" open>").findAll(rendered).count())
+        assertEquals(true, rendered.contains("data-aster-quote=\"1\" open>"))
+        assertEquals(html, with_open_quotes(html, emptySet()))
     }
 }

@@ -202,12 +202,13 @@
     <string name="guard_switches_paused">サインインリクエストは %1$s まで一時停止されています。</string>
     <string name="guard_switches_missing_rescue">レスキューコードがありません。いつでもアカウントに戻れるように、作成してください。</string>
     <string name="guard_switches_not_guard_device">これらの設定を変更するには、Guard デバイスのいずれかを使用してください。</string>
-    <string name="guard_switches_canceled">何も変更されていません。保存するには、本人確認を行ってください。</string>
+    <string name="guard_switches_canceled">変更は保存されていません。保存するには、本人確認を行ってください。</string>
     <string name="guard_switches_code_subtitle">通知なしでサインインを承認</string>
     <string name="guard_devices_section">Guard デバイス</string>
     <string name="guard_devices_this_device">このスマートフォン</string>
     <string name="guard_devices_unnamed">名前のないデバイス</string>
     <string name="guard_devices_remove_prompt_subtitle">Guard デバイスを削除</string>
+    <string name="guard_devices_remove_confirm">%1$s はアカウントの変更を承認できなくなります。再び使うには、そのデバイスから Guard に参加してください。</string>
     <string name="guard_security_row_off">オンにすると、このスマートフォンでサインインを承認し、リスクのある変更を保留できます</string>
     <string name="guard_changes_title">保留中の変更</string>
     <string name="guard_changes_body">アカウントへのこれらの変更は、有効になる前に待機しています。心当たりのない変更があれば、キャンセルしてください。</string>
@@ -223,7 +224,7 @@
     <string name="guard_changes_step_up_required">待機をスキップするには、7 日以上使用しているデバイスか、セキュリティキーを使用してください。</string>
     <string name="guard_changes_not_guard_device">変更をキャンセルまたは停止するには、Guard デバイスのいずれかを使用してください。</string>
     <string name="guard_changes_prompt_subtitle">アカウントへのこの変更を確認</string>
-    <string name="guard_changes_prompt_canceled">何も変更されていません。続けるには、本人確認を行ってください。</string>
+    <string name="guard_changes_prompt_canceled">続行するには、本人確認を行ってください。</string>
     <string name="guard_changes_done_canceled">変更はキャンセルされました。</string>
     <string name="guard_changes_done_skipped">変更は有効になりました。</string>
     <string name="guard_changes_done_stopped">復旧は停止されました。</string>

@@ -20,6 +20,7 @@
     <string name="contacts_show_all">Alle contacten tonen</string>
     <string name="guard_changes_subtitle">Wijzigingen aan je account wachten hier voordat ze ingaan.</string>
     <string name="hide_quoted_text">Geciteerde tekst verbergen</string>
+    <string name="show_quoted_text">Geciteerde tekst weergeven</string>
     <string name="search_keywords_more_exit">afsluiten, terug, dubbeltikken, twee keer terug, twee keer op terug drukken, terugknop, app sluiten, app verlaten, exit, back</string>
     <string name="search_keywords_more_quick_actions">snelle acties, snelfilters, inboxknoppen, kopknoppen, filterknoppen, quick actions</string>
     <string name="search_keywords_more_reduce_motion">beweging verminderen, animaties, beweging, overgangen, toegankelijkheid, bewegingsziekte, wagenziekte, reduce motion</string>

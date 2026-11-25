@@ -204,12 +204,13 @@
     <string name="guard_switches_paused">As solicitações de login estão pausadas até %1$s.</string>
     <string name="guard_switches_missing_rescue">Você não tem um código de resgate. Para manter uma forma de voltar à sua conta, crie um.</string>
     <string name="guard_switches_not_guard_device">Para alterar essas configurações, use um dos seus dispositivos Guard.</string>
-    <string name="guard_switches_canceled">Nada foi alterado. Para salvar, confirme que é você.</string>
+    <string name="guard_switches_canceled">Suas alterações não foram salvas. Para salvá-las, confirme sua identidade.</string>
     <string name="guard_switches_code_subtitle">Aprovar um login sem notificação</string>
     <string name="guard_devices_section">Dispositivos Guard</string>
     <string name="guard_devices_this_device">Este celular</string>
     <string name="guard_devices_unnamed">Dispositivo sem nome</string>
     <string name="guard_devices_remove_prompt_subtitle">Remover um dispositivo Guard</string>
+    <string name="guard_devices_remove_confirm">%1$s não vai mais aprovar alterações na sua conta. Para usá-lo de novo, entre no Guard por esse dispositivo.</string>
     <string name="guard_security_row_off">Ative-o para aprovar logins e reter alterações arriscadas neste celular</string>
     <string name="guard_changes_title">Alterações retidas</string>
     <string name="guard_changes_body">Estas alterações na sua conta aguardam antes de entrar em vigor. Se você não fez alguma delas, cancele-a.</string>
@@ -225,7 +226,7 @@
     <string name="guard_changes_step_up_required">Para pular a espera, use um dispositivo que você usa há 7 dias ou mais, ou sua chave de segurança.</string>
     <string name="guard_changes_not_guard_device">Para cancelar ou interromper uma alteração, use um dos seus dispositivos Guard.</string>
     <string name="guard_changes_prompt_subtitle">Confirme esta alteração na sua conta</string>
-    <string name="guard_changes_prompt_canceled">Nada foi alterado. Para continuar, confirme que é você.</string>
+    <string name="guard_changes_prompt_canceled">Para continuar, confirme sua identidade.</string>
     <string name="guard_changes_done_canceled">A alteração foi cancelada.</string>
     <string name="guard_changes_done_skipped">A alteração está em vigor.</string>
     <string name="guard_changes_done_stopped">A recuperação foi interrompida.</string>

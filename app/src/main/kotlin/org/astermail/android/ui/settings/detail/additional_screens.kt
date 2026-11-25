@@ -493,7 +493,7 @@ fun ReferralScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         if (referral == null && state.referral_load_failed) {
             load_failed_card(null) { vm.load_referral_info() }
         } else if (referral == null) {
-            settings_pending_spinner()
+            settings_hero_skeleton()
         } else {
             val commission_percent =
                 if (referral.commission_percent > 0) referral.commission_percent else 10
@@ -1176,8 +1176,10 @@ fun LabelsScreen(
         }
         v_gap(AsterSpacing.md)
 
-        if (state.is_loading && rows.isEmpty()) {
-            settings_pending_spinner()
+        val labels_settled = state.tags_loaded &&
+            ("label" in state.labels_loaded_types || "all" in state.labels_loaded_types)
+        if (rows.isEmpty() && (state.is_loading || (!labels_settled && state.error == null))) {
+            skeleton_card_list(rows = 4)
         } else if (rows.isEmpty() && state.error != null) {
             load_failed_card(state.error) {
                 vm.load_labels(folder_type = "label")
@@ -1406,8 +1408,9 @@ fun FoldersScreen(
         }
         v_gap(AsterSpacing.md)
 
-        if (state.is_loading && folder_nodes.isEmpty()) {
-            settings_pending_spinner()
+        val folders_settled = "folder" in state.labels_loaded_types || "all" in state.labels_loaded_types
+        if (folder_nodes.isEmpty() && (state.is_loading || (!folders_settled && state.error == null))) {
+            skeleton_card_list(rows = 4)
         } else if (folder_nodes.isEmpty() && state.error != null) {
             load_failed_card(state.error) {
                 vm.load_labels(folder_type = "folder")
@@ -1715,7 +1718,7 @@ fun ApiKeysScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
         on_refresh = { vm.join_launched { vm.load_api_keys() } },
     ) {
         if (state.is_loading && state.api_keys.isEmpty()) {
-            settings_pending_spinner()
+            settings_page_skeleton(rows = 2)
         } else if (state.api_keys.isEmpty() && state.error != null) {
             load_failed_card(state.error) { vm.load_api_keys() }
         } else if (state.api_keys.isEmpty()) {
@@ -1735,7 +1738,10 @@ fun ApiKeysScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                         icon = TablerIcons.Plug,
                         on_click = null,
                         trailing = {
-                            AsterGhostButton(label = stringResource(R.string.revoke), onClick = { pending_revoke = k.id })
+                            org.astermail.android.design.components.AsterCompactDestructiveButton(
+                                label = stringResource(R.string.revoke),
+                                onClick = { pending_revoke = k.id },
+                            )
                         },
                     )
                     if (idx < state.api_keys.lastIndex) settings_row_gap(modifier = Modifier)
@@ -1871,7 +1877,7 @@ fun FamilyScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
                 state.subscription_error ?: stringResource(R.string.subscription_load_failed_body),
             ) { vm.load_subscription(force = true) }
         } else if (sub == null) {
-            settings_pending_spinner()
+            settings_hero_skeleton(bar = true)
         } else if (is_family) {
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 if (!play_install) {
@@ -2003,12 +2009,7 @@ fun KidsReservedScreen(on_back: () -> Unit) {
         }
 
         if (state.is_loading && state.reserved_addresses.isEmpty()) {
-            Box(
-                modifier = androidx.compose.ui.Modifier.fillMaxWidth().padding(AsterSpacing.xxl),
-                contentAlignment = Alignment.Center,
-            ) {
-                settings_load_spinner()
-            }
+            skeleton_card_list(rows = 3)
         } else if (state.reserved_addresses.isEmpty()) {
             AsterCard(modifier = androidx.compose.ui.Modifier.fillMaxWidth()) {
                 detail_row(
@@ -2149,7 +2150,7 @@ fun LanguageScreen(on_back: () -> Unit, on_open: (id: String) -> Unit = {}) {
 
     detail_scaffold(title = stringResource(R.string.language), on_back = on_back) {
         if (prefs == null) {
-            settings_pending_spinner()
+            settings_page_skeleton(rows = 6)
         } else {
             section_label(stringResource(R.string.display_language))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
