@@ -85,6 +85,10 @@ class SessionKeyStore(context: Context? = null) {
 
     private val storage_legacy_retired_pins = HashMap<String, List<String>>()
 
+    private val vault_generation_floor_file = KeyPinFile(pin_context, vault_generation_floor_prefs_name)
+
+    private val vault_generation_floors = HashMap<String, Long>()
+
     private val scheduled_untagged_snapshots = HashMap<String, ScheduledUntaggedSnapshot>()
 
     private val legacy_folder_kdf_pin_prefs: SharedPreferences? =
@@ -994,6 +998,32 @@ class SessionKeyStore(context: Context? = null) {
         if (!saved && pin_context != null) android.util.Log.w("SessionKeyStore", "retirement pin kept in memory only")
     }
 
+    fun vault_generation_floor(): Long = synchronized(lock) { vault_generation_floor_locked() }
+
+    fun raise_vault_generation_floor(generation: Long) {
+        if (generation <= 0L) return
+        synchronized(lock) {
+            val owner_id = user_id?.takeIf { it.isNotBlank() } ?: return
+            if (generation <= vault_generation_floor_locked()) return
+            vault_generation_floors[owner_id] = generation
+            vault_generation_floor_file.readable()
+            val saved = runCatching {
+                vault_generation_floor_file.prefs?.edit()?.putLong(owner_id, generation)?.commit() == true
+            }.getOrDefault(false)
+            if (!saved && pin_context != null) android.util.Log.w("SessionKeyStore", "vault generation floor kept in memory only")
+        }
+    }
+
+    private fun vault_generation_floor_locked(): Long {
+        val owner_id = user_id?.takeIf { it.isNotBlank() } ?: return 0L
+        vault_generation_floors[owner_id]?.let { return it }
+        if (!vault_generation_floor_file.readable()) return 0L
+        val saved = runCatching { vault_generation_floor_file.prefs?.getLong(owner_id, 0L) }.getOrNull() ?: 0L
+        val floor = saved.coerceAtLeast(0L)
+        vault_generation_floors[owner_id] = floor
+        return floor
+    }
+
     fun put_prekey_seal(key: ByteArray?, migrated: Boolean) {
         synchronized(lock) {
             val editor = prefs?.edit()
@@ -1152,6 +1182,7 @@ class SessionKeyStore(context: Context? = null) {
         const val folder_key_pins_prefs_name = "aster_folder_key_pins_secure"
         const val scheduled_untagged_prefs_name = "aster_scheduled_untagged_secure"
         const val storage_legacy_retired_prefs_name = "aster_storage_legacy_retired_secure"
+        const val vault_generation_floor_prefs_name = "aster_vault_generation_floor_secure"
         private const val legacy_folder_kdf_pins_prefs_name = "folder_kdf_pins"
         const val max_folder_key_pin = 2
         private const val key_session_key = "session_key"

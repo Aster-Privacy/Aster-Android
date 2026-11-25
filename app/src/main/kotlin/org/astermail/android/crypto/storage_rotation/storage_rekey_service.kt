@@ -166,6 +166,8 @@ fun absorb_vault_markers(store: SessionKeyStore, vault: JSONObject) {
 }
 
 fun absorb_rotated_vault(store: SessionKeyStore, vault: JSONObject, sealed: SealedVault) {
+    if (is_rolled_back_vault(vault, store.vault_generation_floor())) return
+    store.raise_vault_generation_floor(vault_generation(vault))
     store.put_encrypted_vault(sealed.encrypted_vault, sealed.vault_nonce, sealed.kdf_iterations)
     absorb_retired_marker(store, vault)
     absorb_vault_markers(store, vault)
@@ -295,6 +297,7 @@ fun session_vault_updater(
         if (!sealed.from_server) StorageRekeyService.note_vault_keys(vault)
     },
     local_keys = { local_storage_keys(store) },
+    generation_floor = { store.vault_generation_floor() },
 )
 
 @Singleton
@@ -615,6 +618,7 @@ class StorageRekeyService @Inject constructor(
         },
         local_keys = { local_storage_keys(session_key_store) },
         upgrade_on_rotation = true,
+        generation_floor = { session_key_store.vault_generation_floor() },
     )
 
     fun is_unlocked(): Boolean {

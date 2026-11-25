@@ -111,12 +111,19 @@ object StorageWriteKey {
     }
 
     fun select_write_key(data_kek: ByteArray?): ByteArray? {
-        if (data_kek != null && data_kek.size == KEY_LENGTH) return data_kek
+        if (data_kek != null && data_kek.size == KEY_LENGTH && !is_public_mail_kek(data_kek)) return data_kek
         data_kek?.fill(0)
         return null
     }
 
-    fun write_key(store: SessionKeyStore): ByteArray? = select_write_key(store.get_data_kek())
+    fun write_key(store: SessionKeyStore): ByteArray? {
+        val key = select_write_key(store.get_data_kek()) ?: return null
+        if (is_login_proof(store, key) || retired_key_hash(key) in store.retired_storage_key_hashes()) {
+            key.fill(0)
+            return null
+        }
+        return key
+    }
 
     fun password_read_keys(
         passphrase: ByteArray?,

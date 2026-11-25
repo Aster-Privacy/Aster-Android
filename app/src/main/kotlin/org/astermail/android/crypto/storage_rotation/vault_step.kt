@@ -63,9 +63,10 @@ class StorageVaultRotator(
     private val now: () -> String = { Instant.now().toString() },
     local_keys: () -> LocalStorageKeys = { LocalStorageKeys.NONE },
     upgrade_on_rotation: Boolean = false,
+    generation_floor: () -> Long = { 0L },
 ) {
     private val updater =
-        VaultUpdater(api, codec, user_id, lock, on_vault_changed, now, local_keys, upgrade_on_rotation)
+        VaultUpdater(api, codec, user_id, lock, on_vault_changed, now, local_keys, upgrade_on_rotation, generation_floor)
 
     suspend fun fetch_snapshot(): ServerVaultSnapshot? = updater.fetch_snapshot()
 

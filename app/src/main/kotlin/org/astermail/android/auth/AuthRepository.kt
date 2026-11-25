@@ -1891,10 +1891,17 @@ class AuthRepository @Inject constructor(
 
             val vault_obj = org.json.JSONObject(String(vault_plain, Charsets.UTF_8))
             vault_plain.fill(0)
+            val generation_floor = session_key_store.vault_generation_floor()
+            if (org.astermail.android.crypto.storage_rotation.is_rolled_back_vault(vault_obj, generation_floor)) {
+                current_password_bytes.fill(0)
+                new_password_bytes.fill(0)
+                throw ApiError.NetworkError
+            }
             prepare_password_change_vault(
                 vault_obj,
                 org.astermail.android.crypto.storage_rotation.local_storage_keys(session_key_store),
                 java.time.Instant.now().toString(),
+                generation_floor,
             )
 
             val sent_mail_conversion = password_change_sent_mail.convert_before_change(
@@ -2696,6 +2703,15 @@ class AuthRepository @Inject constructor(
     }
 
     private fun absorb_data_kek(vault_obj: org.json.JSONObject) {
+        val generation = org.astermail.android.crypto.storage_rotation.vault_generation(vault_obj)
+        if (org.astermail.android.crypto.storage_rotation.is_rolled_back_vault(
+                vault_obj,
+                session_key_store.vault_generation_floor(),
+            )
+        ) {
+            return
+        }
+        session_key_store.raise_vault_generation_floor(generation)
         absorb_prekey_seal(vault_obj)
         session_key_store.put_storage_kdf_version(read_storage_kdf_version(vault_obj))
         org.astermail.android.crypto.storage_rotation.absorb_vault_markers(session_key_store, vault_obj)
