@@ -301,27 +301,27 @@ internal fun storage_segments(stats: MailUserStatsResponse): List<storage_segmen
     val palette = current_storage_palette()
     return listOf(
         storage_segment(
-            stringResource(R.string.folder_inbox), distribution.inbox, palette.blue,
+            stringResource(R.string.folder_inbox), distribution.inbox, palette.slots[0],
             "inbox", TablerIcons.Inbox,
         ),
         storage_segment(
-            stringResource(R.string.archived), distribution.archived, palette.violet,
+            stringResource(R.string.archived), distribution.archived, palette.slots[1],
             "archive", TablerIcons.Archive,
         ),
         storage_segment(
-            stringResource(R.string.sent), distribution.sent, palette.teal,
+            stringResource(R.string.sent), distribution.sent, palette.slots[2],
             "sent", TablerIcons.Send.auto_mirrored(),
         ),
         storage_segment(
-            stringResource(R.string.folder_drafts), distribution.drafts, palette.amber,
+            stringResource(R.string.folder_drafts), distribution.drafts, palette.slots[3],
             "drafts", TablerIcons.FileText,
         ),
         storage_segment(
-            stringResource(R.string.folder_spam), distribution.spam, palette.rose,
+            stringResource(R.string.folder_spam), distribution.spam, palette.slots[4],
             "spam", TablerIcons.AlertOctagon,
         ),
         storage_segment(
-            stringResource(R.string.folder_trash), distribution.trash, palette.fuchsia,
+            stringResource(R.string.folder_trash), distribution.trash, palette.slots[5],
             "trash", TablerIcons.Trash,
         ),
     )
