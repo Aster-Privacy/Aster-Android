@@ -24,6 +24,7 @@ package org.astermail.android.mail
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -93,7 +94,7 @@ class StartupPrefetchTest {
         val prefetch = StartupPrefetch<String, Int>(this, UnconfinedTestDispatcher(testScheduler))
         val gate = CompletableDeferred<Int>()
         prefetch.start("inbox") { gate.await() }
-        val result = kotlinx.coroutines.async { prefetch.take("inbox") }
+        val result = async { prefetch.take("inbox") }
         gate.complete(9)
         assertEquals(9, result.await())
     }
