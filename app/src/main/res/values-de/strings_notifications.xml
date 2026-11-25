@@ -32,4 +32,5 @@
     <string name="persistent_push_autostart_title">Automatischen Start erlauben</string>
     <string name="persistent_push_autostart_subtitle">Manche Telefone schließen Hintergrundverbindungen. Erlauben Sie Aster Mail in den Systemeinstellungen den automatischen Start und deaktivieren Sie alle Akkubeschränkungen.</string>
     <string name="notif_delivery_section">Zustellung</string>
+    <string name="notif_action_unlock_required">Entsperren Sie Ihr Gerät und versuchen Sie es dann erneut.</string>
 </resources>

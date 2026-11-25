@@ -32,4 +32,5 @@
     <string name="persistent_push_autostart_title">Allow automatic startup</string>
     <string name="persistent_push_autostart_subtitle">Some phones close background connections. In system settings, allow Aster Mail to start automatically and turn off any battery restrictions.</string>
     <string name="notif_delivery_section">Delivery</string>
+    <string name="notif_action_unlock_required">Unlock your device, and then try again.</string>
 </resources>

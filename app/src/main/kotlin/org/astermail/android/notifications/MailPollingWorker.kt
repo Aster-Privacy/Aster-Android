@@ -1334,7 +1334,12 @@ class MailPollingWorker(
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                     ),
                 )
-                add_message_actions(context, builder, item_id, message_id, code)
+                val actions_auth = NotificationActionAuthPolicy.requires_auth(
+                    active_mail_notification_count(context, message_id),
+                )
+                add_message_actions(context, builder, item_id, message_id, code, actions_auth)
+                builder.extras.putBoolean(EXTRA_ACTIONS_AUTH, actions_auth)
+                builder.extras.putBoolean(EXTRA_HAS_COPY_CODE, code != null)
                 if (is_valid_notified_item_id(item_id)) {
                     builder.extras.putString(EXTRA_NOTIFIED_ITEM_ID, item_id)
                     builder.extras.putString(EXTRA_NOTIFIED_ACCOUNT, current_account_tag(context))
@@ -1391,6 +1396,7 @@ class MailPollingWorker(
             item_id: String,
             message_id: Int,
             code: String?,
+            actions_auth: Boolean,
         ) {
             if (code != null) add_copy_code_action(context, builder, code, message_id)
             val actions = listOf(
@@ -1425,7 +1431,7 @@ class MailPollingWorker(
                 builder.addAction(
                     NotificationCompat.Action.Builder(icon, localized(context).getString(label), pending)
                         .setShowsUserInterface(false)
-                        .setAuthenticationRequired(true)
+                        .setAuthenticationRequired(actions_auth)
                         .build(),
                 )
             }
@@ -1460,6 +1466,74 @@ class MailPollingWorker(
         }
 
         private const val MAX_VISIBLE_ACTIONS = 3
+        private const val EXTRA_ACTIONS_AUTH = "org.astermail.android.actions_auth"
+        private const val EXTRA_HAS_COPY_CODE = "org.astermail.android.has_copy_code"
+
+        fun actions_posted_with_auth(context: Context, notification_id: Int): Boolean {
+            if (notification_id == 0) return false
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                ?: return false
+            return runCatching {
+                manager.activeNotifications
+                    .firstOrNull { it.id == notification_id }
+                    ?.notification
+                    ?.extras
+                    ?.getBoolean(EXTRA_ACTIONS_AUTH, true)
+                    ?: false
+            }.getOrDefault(false)
+        }
+
+        fun require_unlock_for_actions(context: Context, tapped_id: Int) {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+            refresh_action_auth(manager, after_locked_tap = true, first = tapped_id)
+        }
+
+        private fun is_mail_notification_id(id: Int): Boolean = id >= MESSAGE_ID_BASE || id == NOTIFICATION_ID
+
+        private fun refresh_action_auth(
+            manager: NotificationManager,
+            excluded: Set<Int> = emptySet(),
+            just_posted: Int = 0,
+            after_locked_tap: Boolean = false,
+            first: Int = 0,
+        ) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+            runCatching {
+                val active = manager.activeNotifications
+                    .filter { is_mail_notification_id(it.id) && it.id !in excluded }
+                val ids = active.map { it.id }.toMutableSet()
+                if (just_posted != 0) ids.add(just_posted)
+                val carrying = active
+                    .filter { it.id != just_posted && it.notification.extras.containsKey(EXTRA_ACTIONS_AUTH) }
+                    .associateBy { it.id }
+                val plan = NotificationActionAuthPolicy.reposts(
+                    carrying.mapValues { it.value.notification.extras.getBoolean(EXTRA_ACTIONS_AUTH) },
+                    ids.size,
+                    after_locked_tap,
+                )
+                NotificationActionAuthPolicy.repost_order(plan.keys.toList(), first).forEach { id ->
+                    val sbn = carrying[id] ?: return@forEach
+                    val auth = plan.getValue(id)
+                    runCatching {
+                        manager.notify(sbn.tag, sbn.id, with_action_auth(sbn.notification, auth))
+                    }
+                }
+            }
+        }
+
+        @androidx.annotation.RequiresApi(Build.VERSION_CODES.S)
+        private fun with_action_auth(source: android.app.Notification, auth: Boolean): android.app.Notification {
+            val copy = source.clone()
+            val keeps_auth_first = source.extras.getBoolean(EXTRA_HAS_COPY_CODE, false)
+            copy.actions = source.actions?.mapIndexed { index, action ->
+                android.app.Notification.Action.Builder(action)
+                    .setAuthenticationRequired(auth || (keeps_auth_first && index == 0))
+                    .build()
+            }?.toTypedArray()
+            copy.extras.putBoolean(EXTRA_ACTIONS_AUTH, auth)
+            copy.flags = copy.flags or android.app.Notification.FLAG_ONLY_ALERT_ONCE
+            return copy
+        }
         private const val ACTION_REQUEST_STRIDE = 8
         private const val COPY_CODE_REQUEST_OFFSET = 3
         private const val DISMISS_REQUEST_OFFSET = 7
@@ -1496,6 +1570,8 @@ class MailPollingWorker(
         }
 
         private fun post_group_summary(context: Context, manager: NotificationManagerCompat, just_posted_id: Int) {
+            (context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager)
+                ?.let { refresh_action_auth(it, just_posted = just_posted_id) }
             if (!should_post_group_summary(active_mail_notification_count(context, just_posted_id))) {
                 manager.cancel(SUMMARY_NOTIFICATION_ID)
                 return
@@ -1905,7 +1981,9 @@ class MailPollingWorker(
             if (!has_remaining_message) {
                 manager.cancel(SUMMARY_NOTIFICATION_ID)
                 manager.cancel(NOTIFICATION_ID)
+                return
             }
+            refresh_action_auth(manager, excluded = just_cancelled)
         }
 
         private fun can_post(context: Context): Boolean {

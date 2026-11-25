@@ -21,9 +21,11 @@
 
 package org.astermail.android.notifications
 
+import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.widget.Toast
 import org.astermail.android.R
 import org.astermail.android.ui.common.show_copy_failed_toast
@@ -41,6 +43,7 @@ class MailNotificationActionReceiver : BroadcastReceiver() {
             return
         }
         if (intent.action == ACTION_COPY_CODE) {
+            if (gate(context, 0, posted_with_auth = true) != NotificationActionGate.Apply) return
             copy_code(context, intent.getStringExtra(EXTRA_CODE))
             return
         }
@@ -52,6 +55,10 @@ class MailNotificationActionReceiver : BroadcastReceiver() {
             else -> return
         }
         val notification_id = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
+        val posted_with_auth = runCatching {
+            MailPollingWorker.actions_posted_with_auth(context, notification_id)
+        }.getOrDefault(false)
+        if (gate(context, notification_id, posted_with_auth) != NotificationActionGate.Apply) return
         runCatching {
             if (notification_id != 0) {
                 MailPollingWorker.cancel_notification_id(context, notification_id)
@@ -61,6 +68,23 @@ class MailNotificationActionReceiver : BroadcastReceiver() {
         }
         runCatching { MailPollingWorker.mark_item_notified(context, item_id) }
         MailNotificationActionWorker.enqueue(context, item_id, action)
+    }
+
+    private fun gate(context: Context, notification_id: Int, posted_with_auth: Boolean): NotificationActionGate {
+        val device_locked = runCatching {
+            (context.getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager)?.isDeviceLocked
+        }.getOrNull() ?: true
+        val gate = NotificationActionAuthPolicy.gate(device_locked, posted_with_auth, Build.VERSION.SDK_INT)
+        if (gate == NotificationActionGate.RequireUnlock) {
+            runCatching { MailPollingWorker.require_unlock_for_actions(context, notification_id) }
+        }
+        if (gate != NotificationActionGate.Apply) {
+            val local = org.astermail.android.settings.app_language.wrap(context)
+            runCatching {
+                Toast.makeText(context, local.getString(R.string.notif_action_unlock_required), Toast.LENGTH_SHORT).show()
+            }
+        }
+        return gate
     }
 
     private fun copy_code(context: Context, code: String?) {

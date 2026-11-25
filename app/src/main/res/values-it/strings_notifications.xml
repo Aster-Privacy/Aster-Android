@@ -32,4 +32,5 @@
     <string name="persistent_push_autostart_title">Consenti l\'avvio automatico</string>
     <string name="persistent_push_autostart_subtitle">Alcuni telefoni chiudono le connessioni in background. Nelle impostazioni di sistema, consenti ad Aster Mail di avviarsi automaticamente e disattiva le restrizioni della batteria.</string>
     <string name="notif_delivery_section">Recapito</string>
+    <string name="notif_action_unlock_required">Sblocca il dispositivo, poi riprova.</string>
 </resources>
