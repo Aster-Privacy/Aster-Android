@@ -23,6 +23,8 @@ package org.astermail.android.mail
 
 private const val MAX_CSS_PRELUDE_LENGTH = 400
 
+private const val MAX_CSS_NESTING_DEPTH = 16
+
 private const val CSS_TAG_NAMES =
     "html|body|table|tbody|thead|tfoot|tr|td|th|div|span|p|a|img|h[1-6]|ul|ol|li|blockquote|pre|code|" +
         "b|i|u|s|em|strong|font|center|hr|br|section|article|header|footer|nav|main|aside|button|input|" +
@@ -73,24 +75,25 @@ fun has_leading_css(text: String): Boolean = leading_css_end(text) > 0
 
 private fun leading_css_end(text: String): Int {
     if (text.indexOf('{') < 0 && text.indexOf(';') < 0) return -1
-    return css_rules_end(text, 0, false)
+    return css_rules_end(text, 0, false, 0)
 }
 
-private fun css_rules_end(text: String, start: Int, keyframes: Boolean): Int {
+private fun css_rules_end(text: String, start: Int, keyframes: Boolean, depth: Int): Int {
     var pos = start
     var committed = -1
     while (true) {
         pos = skip_css_trivia(text, pos)
         if (pos >= text.length) return committed
-        val next = parse_css_rule(text, pos, keyframes) ?: return committed
+        val next = parse_css_rule(text, pos, keyframes, depth) ?: return committed
         pos = next
         committed = next
     }
 }
 
-private fun is_css_stylesheet(text: String, keyframes: Boolean): Boolean {
+private fun is_css_stylesheet(text: String, keyframes: Boolean, depth: Int): Boolean {
+    if (depth > MAX_CSS_NESTING_DEPTH) return false
     if (text.isBlank()) return true
-    val end = css_rules_end(text, 0, keyframes)
+    val end = css_rules_end(text, 0, keyframes, depth)
     return end > 0 && skip_css_trivia(text, end) >= text.length
 }
 
@@ -112,8 +115,8 @@ private fun skip_css_trivia(text: String, start: Int): Int {
     return pos
 }
 
-private fun parse_css_rule(text: String, pos: Int, keyframes: Boolean): Int? {
-    if (text[pos] == '@') return parse_css_at_rule(text, pos)
+private fun parse_css_rule(text: String, pos: Int, keyframes: Boolean, depth: Int): Int? {
+    if (text[pos] == '@') return parse_css_at_rule(text, pos, depth)
     val open = text.indexOf('{', pos)
     if (open < 0 || open - pos > MAX_CSS_PRELUDE_LENGTH) return null
     val prelude = text.substring(pos, open)
@@ -125,7 +128,7 @@ private fun parse_css_rule(text: String, pos: Int, keyframes: Boolean): Int? {
     return close + 1
 }
 
-private fun parse_css_at_rule(text: String, pos: Int): Int? {
+private fun parse_css_at_rule(text: String, pos: Int, depth: Int): Int? {
     var prelude_start = pos + 1
     while (prelude_start < text.length && (text[prelude_start].isLetter() || text[prelude_start] == '-')) {
         prelude_start++
@@ -155,8 +158,8 @@ private fun parse_css_at_rule(text: String, pos: Int): Int? {
     if (close < 0) return null
     val inner = text.substring(open + 1, close)
     val valid = when {
-        is_grouping -> is_css_stylesheet(inner, false)
-        is_keyframes -> is_css_stylesheet(inner, true)
+        is_grouping -> is_css_stylesheet(inner, false, depth + 1)
+        is_keyframes -> is_css_stylesheet(inner, true, depth + 1)
         else -> looks_like_css_declarations(inner)
     }
     return if (valid) close + 1 else null

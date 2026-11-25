@@ -82,20 +82,22 @@ private val COLOR_DECLARATION =
 private val STYLE_RULE_BODY = Regex("\\{([^{}]*)\\}")
 private val BACKGROUND_COLOR_DECLARATION =
     Regex("background(?:-color)?\\s*:\\s*([^;}\"'<]+)", RegexOption.IGNORE_CASE)
-private val BACKGROUND_IMAGE_DECLARATION =
-    Regex("background(?:-image)?\\s*:[^;}\"'<]*url\\s*\\(", RegexOption.IGNORE_CASE)
+private val BACKGROUND_IMAGE_PROPERTY =
+    Regex("background(?:-image)?\\s*+:", RegexOption.IGNORE_CASE)
+private val URL_OPENING = Regex("url\\s*+\\(", RegexOption.IGNORE_CASE)
+private const val DECLARATION_VALUE_END = ";}\"'<"
 private val BACKGROUND_IMAGE_VALUE =
     Regex("background-image\\s*:\\s*([^;}\"'<]*)", RegexOption.IGNORE_CASE)
 private val NO_BACKGROUND_IMAGE =
     Regex("^(?:none|initial|unset|inherit|revert|revert-layer)?$", RegexOption.IGNORE_CASE)
 private val IMPORTANT_FLAG = Regex("!\\s*important", RegexOption.IGNORE_CASE)
-private val STYLE_RULE = Regex("([^{}]+)\\{([^{}]*)\\}")
+private val STYLE_RULE = Regex("(?<![^{}])([^{}]+)\\{([^{}]*)\\}")
 private val BACKGROUND_SOURCE = Regex(
     "background(?:-color)?\\s*:\\s*([^;}\"'<]+)|bgcolor\\s*=\\s*[\"']?([^\"'\\s>]+)",
     RegexOption.IGNORE_CASE,
 )
 private val COLOR_TOKEN = Regex(
-    "#[0-9a-f]{3,8}\\b|(?:rgb|hsl)a?\\([^)]*\\)|(?<![-\\w])(?:" +
+    "#[0-9a-f]{3,8}\\b|(?:rgb|hsl)a?\\([^)]{0,128}\\)|(?<![-\\w])(?:" +
         LIGHT_NAMED_COLOR_LUMINANCE.keys.joinToString("|") + ")(?![-\\w])",
     RegexOption.IGNORE_CASE,
 )
@@ -175,8 +177,21 @@ internal fun reads_too_dark_on_dark(raw: String): Boolean {
     return value < DARK_INK_LUMINANCE_LIMIT
 }
 
+private fun declares_background_image_url(css: String): Boolean {
+    var from = 0
+    while (from < css.length) {
+        val property = BACKGROUND_IMAGE_PROPERTY.find(css, from) ?: return false
+        val value_start = property.range.last + 1
+        var value_end = value_start
+        while (value_end < css.length && css[value_end] !in DECLARATION_VALUE_END) value_end++
+        if (URL_OPENING.toPattern().matcher(css).region(value_start, value_end).find()) return true
+        from = maxOf(value_end, property.range.first + 1)
+    }
+    return false
+}
+
 internal fun declares_background_image(css: String): Boolean {
-    if (BACKGROUND_IMAGE_DECLARATION.containsMatchIn(css)) return true
+    if (declares_background_image_url(css)) return true
     return BACKGROUND_IMAGE_VALUE.findAll(css).any { match ->
         !NO_BACKGROUND_IMAGE.matches(IMPORTANT_FLAG.replace(match.groupValues[1], "").trim())
     }
@@ -218,7 +233,7 @@ private fun declared_background(element: org.jsoup.nodes.Element): String? {
     if (attribute.isNotEmpty()) return attribute
     val style = element.attr("style")
     if (style.isEmpty()) return null
-    if (BACKGROUND_IMAGE_DECLARATION.containsMatchIn(style)) return null
+    if (declares_background_image_url(style)) return null
     val match = BACKGROUND_COLOR_DECLARATION.find(style) ?: return null
     return match.groupValues[1].trim().removeSuffix("!important").trim()
 }
@@ -306,22 +321,22 @@ internal fun image_paper_css(): String {
         "$plain_link,$plain_link *{color:$PAPER_LINK!important}"
 }
 
-private fun mark_stylesheet_background_images(doc: org.jsoup.nodes.Document, css: String): Boolean {
+private fun mark_stylesheet_background_images(doc: org.jsoup.nodes.Document): Boolean {
+    val groups = doc.select("style").asSequence().flatMap { sheet ->
+        STYLE_RULE.findAll(sheet.data())
+            .filter { declares_background_image(it.groupValues[2]) }
+            .map { it.groupValues[1] }
+    }
     var marked = false
-    for (rule in STYLE_RULE.findAll(css)) {
-        if (!declares_background_image(rule.groupValues[2])) continue
-        for (part in rule.groupValues[1].split(',')) {
-            val selector = part.trim()
-            if (selector.isEmpty() || selector.startsWith("@") || selector.contains("::")) continue
-            val matches = try {
-                doc.body().select(selector)
-            } catch (_: org.jsoup.select.Selector.SelectorParseException) {
-                continue
-            }
-            for (element in matches) {
-                element.attr(BACKGROUND_IMAGE_ATTRIBUTE, "1")
-                marked = true
-            }
+    for (selector in mail_selectors(groups)) {
+        val matches = try {
+            doc.body().select(selector)
+        } catch (_: org.jsoup.select.Selector.SelectorParseException) {
+            continue
+        }
+        for (element in matches) {
+            element.attr(BACKGROUND_IMAGE_ATTRIBUTE, "1")
+            marked = true
         }
     }
     return marked
@@ -350,9 +365,7 @@ internal fun lighten_dark_stylesheet_text(body: String): String = try {
     val doc = org.jsoup.Jsoup.parseBodyFragment(body)
     doc.outputSettings(org.jsoup.nodes.Document.OutputSettings().prettyPrint(false))
     var changed = false
-    for (sheet in doc.select("style")) {
-        if (mark_stylesheet_background_images(doc, sheet.data())) changed = true
-    }
+    if (mark_stylesheet_background_images(doc)) changed = true
     if (mark_image_paper(doc)) changed = true
     if (lighten_style_blocks(doc)) changed = true
     if (changed) doc.body().html() else body
@@ -369,9 +382,7 @@ internal fun lighten_dark_email_text(body: String): String = try {
         element.attr(BACKGROUND_IMAGE_ATTRIBUTE, "1")
         changed = true
     }
-    for (sheet in doc.select("style")) {
-        if (mark_stylesheet_background_images(doc, sheet.data())) changed = true
-    }
+    if (mark_stylesheet_background_images(doc)) changed = true
     if (mark_image_paper(doc)) changed = true
     for (element in doc.select("[bgcolor],[style]")) {
         val background = declared_background(element) ?: continue

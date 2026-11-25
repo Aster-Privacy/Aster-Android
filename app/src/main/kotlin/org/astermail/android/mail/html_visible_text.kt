@@ -115,6 +115,7 @@ private fun strip_element_blocks(html: String, names: Set<String>): String {
     if (html.isEmpty() || html.indexOf('<') < 0) return html
 
     val out = StringBuilder(html.length)
+    val unclosed_after = HashMap<String, Int>()
     var i = 0
 
     while (i < html.length) {
@@ -147,7 +148,13 @@ private fun strip_element_blocks(html: String, names: Set<String>): String {
 
         if (!is_close && name.isNotEmpty() && name in names) {
             out.append(' ')
-            val close = index_of_closing_tag(html, name, tag_end + 1)
+            val unclosed_from = unclosed_after[name]
+            val close = if (unclosed_from != null && tag_end + 1 >= unclosed_from) {
+                -1
+            } else {
+                index_of_closing_tag(html, name, tag_end + 1)
+            }
+            if (close < 0) unclosed_after[name] = minOf(unclosed_from ?: Int.MAX_VALUE, tag_end + 1)
 
             if (close >= 0) {
                 val close_end = index_of_tag_end(html, close + 2)

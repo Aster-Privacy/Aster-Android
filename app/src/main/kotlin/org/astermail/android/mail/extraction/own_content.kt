@@ -42,14 +42,14 @@ private val forwarded_marker = Regex(
 )
 
 private val inline_quote_markers = listOf(
-    Regex("(?:^|\\s)On\\s[^\\n]{4,300}?\\s[Ww]rote\\s*:"),
+    Regex("(?:^|\\s)On\\s[^\\n]{4,300}?\\s[Ww]rote\\s{0,64}+:"),
     Regex("(?:^|\\s)Am\\s[^\\n]{4,300}?\\sschrieb\\b[^\\n]{0,200}?:"),
     Regex(
-        "-{2,}\\s*(?:Original Message|Ursprüngliche Nachricht|Message d'origine|Mensaje original)\\s*-{2,}",
+        "(?<!-)-{2,}+\\s*+(?:Original Message|Ursprüngliche Nachricht|Message d'origine|Mensaje original)\\s*+-{2}",
         RegexOption.IGNORE_CASE,
     ),
     Regex(
-        "(?:^|\\s)(?:From|Von|De)\\s*:\\s*\\S[^\\n]{0,200}?\\s(?:Sent|Date|Gesendet|Datum|Envoyé|Enviado|Fecha)\\s*:",
+        "(?:^|\\s)(?:From|Von|De)\\s*+:\\s*+\\S[^\\n]{0,200}?\\s(?:Sent|Date|Gesendet|Datum|Envoyé|Enviado|Fecha)\\s{0,64}+:",
     ),
 )
 

@@ -131,6 +131,24 @@ class QuoteDetectionTest {
         assertTrue(has_reply_text_before(listOf("Thanks", "x"), 1))
     }
 
+    @Test(timeout = 2_000)
+    fun a_very_long_separator_line_is_checked_quickly() {
+        assertTrue(is_separator_text("-".repeat(200_000)))
+        assertTrue(is_separator_text("= ".repeat(100_000)))
+        assertFalse(is_separator_text("-".repeat(200_000) + "x"))
+    }
+
+    @Test
+    fun separator_lines_are_still_recognized() {
+        assertTrue(is_separator_text("________"))
+        assertTrue(is_separator_text("- - - - - - - -  "))
+        assertTrue(is_separator_text("—————=====\u2028"))
+        assertFalse(is_separator_text("-------"))
+        assertFalse(is_separator_text(" --------"))
+        assertFalse(is_separator_text("--------x"))
+        assertFalse(is_separator_text(""))
+    }
+
     @Test
     fun normalizes_non_breaking_spaces() {
         assertTrue(is_attribution_text(normalize_quote_line(" On Tue, Oct 6, 2026 Someone wrote: ")))

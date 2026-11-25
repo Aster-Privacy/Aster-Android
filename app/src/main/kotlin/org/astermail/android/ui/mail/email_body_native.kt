@@ -65,7 +65,7 @@ private const val SPACER_CONTENT = "img, hr, table, video, audio, iframe, object
 private val QUICK_LINK_HINT = Regex("://|www\\.|@", RegexOption.IGNORE_CASE)
 
 private val LINK_CANDIDATE = Regex(
-    "(?<![\\w@/.-])(?:(https?://|www\\.)[^\\s<>\"'`]+|([A-Za-z0-9._%+-]+@[A-Za-z0-9]" +
+    "(?<![\\w@/.%+-])(?:(https?://|www\\.)[^\\s<>\"'`]+|([A-Za-z0-9._%+-]+@[A-Za-z0-9]" +
         "(?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*\\.[A-Za-z]{2,}))",
     RegexOption.IGNORE_CASE,
 )
@@ -73,8 +73,6 @@ private val LINK_CANDIDATE = Regex(
 private val TRAILING_PUNCTUATION = setOf('.', ',', ':', ';', '!', '?', '\'', '"', '*', '_', '~')
 
 private val BRACKET_OPENERS = mapOf(')' to '(', ']' to '[', '}' to '{')
-
-private val HTML_ENTITY_TAIL = Regex("&#?[A-Za-z0-9]+;$")
 
 private val WATERMARK_MARKER = Regex("(^|[\\s> ])(Secured by Aster Mail)", RegexOption.IGNORE_CASE)
 
@@ -200,9 +198,7 @@ private val ZERO_FONT_SIZE =
 
 private val FONT_SIZE_DECLARATION = Regex("""(?<![a-z-])font-size\s*:""", RegexOption.IGNORE_CASE)
 
-private val CSS_COMMENT = Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL)
-
-private val CSS_RULE = Regex("""([^{}@]+)\{([^{}]*)\}""")
+private val CSS_RULE = Regex("""(?<![^{}@])([^{}@]+)\{([^{}]*)\}""")
 
 private const val STYLE_REVEAL =
     "display:revert !important;visibility:visible !important;opacity:1 !important;" +
@@ -236,27 +232,31 @@ private fun strip_nested_blocks(css: String): String {
     return out.toString()
 }
 
-private fun stylesheet_hidden_elements(root: Element): List<Element> {
+private fun stylesheet_hidden_elements(root: Element): Set<Element> {
+    val hidden: MutableSet<Element> = java.util.Collections.newSetFromMap(java.util.IdentityHashMap())
     val css = root.select("style").joinToString(" ") { it.data() }
-    if (css.isBlank()) return emptyList()
-    val flat = strip_nested_blocks(CSS_COMMENT.replace(css, ""))
-    return CSS_RULE.findAll(flat)
-        .filter { HIDING_DECLARATION.containsMatchIn(it.groupValues[2]) }
-        .flatMap { rule ->
-            rule.groupValues[1].split(',').map { it.trim() }.filter { it.isNotEmpty() }.asSequence()
+    if (css.isBlank()) return hidden
+    val flat = strip_nested_blocks(strip_css_block_comments(css))
+    val selectors = mail_selectors(
+        CSS_RULE.findAll(flat)
+            .filter { HIDING_DECLARATION.containsMatchIn(it.groupValues[2]) }
+            .map { it.groupValues[1] },
+    )
+    for (selector in selectors) {
+        val matches = runCatching { root.select(selector).toList() }.getOrDefault(emptyList())
+        for (element in matches) {
+            if (element.tagName().lowercase() != "style") hidden.add(element)
         }
-        .flatMap { selector -> runCatching { root.select(selector).toList() }.getOrDefault(emptyList()).asSequence() }
-        .filter { it.tagName().lowercase() != "style" }
-        .distinct()
-        .toList()
+    }
+    return hidden
 }
 
-private fun is_hidden(node: Node, sheet_hidden: List<Element>, is_text: Boolean): Boolean {
+private fun is_hidden(node: Node, sheet_hidden: Set<Element>, is_text: Boolean): Boolean {
     var sized = false
     var current: Node? = node
     while (current != null) {
         if (current is Element) {
-            if (sheet_hidden.any { it === current }) return true
+            if (current in sheet_hidden) return true
             val style = current.attr("style")
             if (SUBTREE_HIDING_DECLARATION.containsMatchIn(style)) return true
             if (ZERO_FONT_SIZE.containsMatchIn(style)) {
@@ -295,27 +295,41 @@ internal data class detected_link(val start: Int, val end: Int, val text: String
 
 private fun count_char(value: String, needle: Char): Int = value.count { it == needle }
 
+private fun is_entity_char(c: Char): Boolean = c in 'A'..'Z' || c in 'a'..'z' || c in '0'..'9'
+
+private fun entity_tail_start(url: String, end: Int): Int? {
+    var i = end - 1
+    while (i > 0 && is_entity_char(url[i - 1])) i--
+    if (i == end - 1) return null
+    if (i >= 1 && url[i - 1] == '&') return i - 1
+    if (i >= 2 && url[i - 1] == '#' && url[i - 2] == '&') return i - 2
+    return null
+}
+
 private fun trim_url_tail(raw: String): String {
-    var url = raw
-    while (url.isNotEmpty()) {
-        val last = url[url.length - 1]
+    var end = raw.length
+    val closer_counts = BRACKET_OPENERS.keys.associateWith { count_char(raw, it) }.toMutableMap()
+    val opener_counts = BRACKET_OPENERS.values.associateWith { count_char(raw, it) }
+    while (end > 0) {
+        val last = raw[end - 1]
         if (last == ';') {
-            val entity = HTML_ENTITY_TAIL.find(url)
-            url = if (entity != null) url.substring(0, entity.range.first) else url.dropLast(1)
+            end = entity_tail_start(raw, end) ?: (end - 1)
             continue
         }
         if (last in TRAILING_PUNCTUATION) {
-            url = url.dropLast(1)
+            end--
             continue
         }
         val opener = BRACKET_OPENERS[last]
-        if (opener != null && count_char(url, last) > count_char(url, opener)) {
-            url = url.dropLast(1)
+        val closers = closer_counts[last]
+        if (opener != null && closers != null && closers > opener_counts.getValue(opener)) {
+            closer_counts[last] = closers - 1
+            end--
             continue
         }
         break
     }
-    return url
+    return raw.substring(0, end)
 }
 
 private fun has_host(url: String, offset: Int): Boolean {

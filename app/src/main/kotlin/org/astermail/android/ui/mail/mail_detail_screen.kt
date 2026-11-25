@@ -225,6 +225,7 @@ import org.astermail.android.mail.MailViewModel
 import org.astermail.android.mail.can_move_to_inbox
 import org.astermail.android.mail.body_starts_with
 import org.astermail.android.mail.group_reaction_chips
+import org.astermail.android.mail.replace_short_tags
 import org.astermail.android.mail.strip_non_rendered_blocks
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.translation.TranslationDownloadPolicy
@@ -240,7 +241,7 @@ import org.astermail.android.ui.common.page_surface
 private val placeholder_body_height = 240.dp
 private const val thread_draft_remove_ms = 260L
 
-private val body_tag_regex = Regex("<[^>]{0,4000}>")
+private const val body_tag_max_length = 4000
 private val body_image_tag_regex = Regex("<img", RegexOption.IGNORE_CASE)
 
 private val FITTED_VIEWPORT_WIDTH = Regex("name=\"viewport\" content=\"width=([0-9]{3,4})")
@@ -252,7 +253,7 @@ private val MEASURE_PROBE_HEIGHT = 24.dp
 
 private fun estimated_body_height(html: String, width_dp: Int): androidx.compose.ui.unit.Dp {
     val sample = if (html.length > 40000) html.substring(0, 40000) else html
-    val text_length = body_tag_regex.replace(sample, " ").trim().length
+    val text_length = replace_short_tags(sample, " ", body_tag_max_length).trim().length
     val chars_per_line = (width_dp / 7).coerceAtLeast(24)
     val lines = (text_length + chars_per_line - 1) / chars_per_line + 2
     val images = body_image_tag_regex.findAll(sample).count().coerceAtMost(4)

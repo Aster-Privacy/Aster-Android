@@ -22,6 +22,7 @@ package org.astermail.android.mail.extraction
 
 import org.astermail.android.mail.html_to_plain_text
 import org.astermail.android.mail.looks_like_html_body
+import org.astermail.android.mail.replace_tags
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.max
@@ -63,12 +64,12 @@ private const val id_marker = "(?:#|no\\.?|num(?:ber)?|id)"
 private const val id_value = "([A-Za-z0-9](?:[\\w-]|\\.(?=[\\w-])){3,29})"
 
 private fun labelled_id(label: String, marker: String = id_marker): Regex =
-    Regex("\\b" + label + "\\s*" + marker + "\\s*[:#]?\\s*" + id_value, RegexOption.IGNORE_CASE)
+    Regex("\\b" + label + "\\s*+" + marker + "\\s*+[:#]?\\s*+" + id_value, RegexOption.IGNORE_CASE)
 
 private val order_id_patterns = listOf(
-    Regex("\\border[:\\s]+([0-9]{3}-[0-9]{7}-[0-9]{7})\\b", RegexOption.IGNORE_CASE),
+    Regex("\\border[:\\s]++([0-9]{3}-[0-9]{7}-[0-9]{7})\\b", RegexOption.IGNORE_CASE),
     labelled_id("order"),
-    Regex("\\border\\s*[:#]\\s*" + id_value, RegexOption.IGNORE_CASE),
+    Regex("\\border\\s*+[:#]\\s*+" + id_value, RegexOption.IGNORE_CASE),
     labelled_id("confirmation", "(?:#|no\\.?|num(?:ber)?|code)"),
     labelled_id("invoice"),
     labelled_id("receipt"),
@@ -79,7 +80,7 @@ private val confirmation_number_pattern = labelled_id("confirmation", "(?:#|no\\
 private val transaction_id_pattern = labelled_id("transaction")
 
 internal fun money_after(label: String): Regex =
-    Regex(label + "\\s*[:=-]?\\s*-?\\s*(" + money_token + ")", RegexOption.IGNORE_CASE)
+    Regex(label + "\\s*+[:=-]?\\s*+-?\\s*+(" + money_token + ")", RegexOption.IGNORE_CASE)
 
 private val trailing_punctuation_regex = Regex("[.,;:]+$")
 private val any_digit_regex = Regex("[0-9]")
@@ -137,22 +138,32 @@ internal fun extract_date(text: String, patterns: List<Regex>): String? {
     return null
 }
 
-private class item_pattern(val regex: Regex, val price_is_line_total: Boolean)
+private class item_pattern(val regex: Regex, val price_is_line_total: Boolean, val scan_by_line: Boolean = false)
 
 private val required_money: String =
     "(?:" + currency_token + ")" + money_gap + number_body + "(?:" + money_gap + "(?:" + currency_token + "))?" +
         "|" + number_body + money_gap + "(?:" + currency_token + ")"
 
 private val item_patterns = listOf(
-    item_pattern(Regex("""(\d+)\s*x\s+(.+?)\s*[-–]\s*(""" + money_token + ")", RegexOption.IGNORE_CASE), false),
-    item_pattern(Regex("""(.+?)\s*\(Qty:\s*(\d+)\)\s*(""" + money_token + ")", RegexOption.IGNORE_CASE), false),
     item_pattern(
-        Regex("""Item:\s*(.+?)(?:\s*Qty:\s*(\d+))?\s*Price:\s*(""" + money_token + ")", RegexOption.IGNORE_CASE),
+        Regex("""(?<!\d)(\d++)\s*+x\s++(.{1,199}?)\s{0,64}+[-–]\s*+(""" + money_token + ")", RegexOption.IGNORE_CASE),
+        false,
+    ),
+    item_pattern(
+        Regex("""(.+?)\s{0,64}+\(Qty:\s*+(\d++)\)\s*+(""" + money_token + ")", RegexOption.IGNORE_CASE),
+        false,
+        scan_by_line = true,
+    ),
+    item_pattern(
+        Regex(
+            """Item:\s*+(.{1,199}?)(?:\s{0,64}+Qty:\s*+(\d++))?\s{0,64}+Price:\s*+(""" + money_token + ")",
+            RegexOption.IGNORE_CASE,
+        ),
         false,
     ),
     item_pattern(
         Regex(
-            """(?:^|\n)[ \t]*([^\n\$€£¥₹]{2,160}?)\s+[×x]\s*(\d{1,3})\s+(""" + required_money + """)[ \t]*(?=\n|$)""",
+            """(?:^|\n)[ \t]*+([^\n\$€£¥₹]{2,160}?)\s{1,16}+[×x]\s*+(\d{1,3})\s++(""" + required_money + """)[ \t]*+(?=\n|$)""",
             RegexOption.IGNORE_CASE,
         ),
         true,
@@ -162,10 +173,30 @@ private val item_patterns = listOf(
 private val all_digits_regex = Regex("^\\d+$")
 private val item_summary_word = Regex("\\b(?:sub\\s?total|total|amount|tax|vat|shipping|discount)\\b", RegexOption.IGNORE_CASE)
 
+private val dot_line_breaks = charArrayOf('\n', '\r', '\u0085', '\u2028', '\u2029')
+
+private fun find_line_matches(regex: Regex, text: String): List<MatchResult> {
+    val matches = ArrayList<MatchResult>()
+    var pos = 0
+    while (pos < text.length) {
+        val match = regex.matchAt(text, pos)
+        if (match == null) {
+            val line_break = text.indexOfAny(dot_line_breaks, pos)
+            if (line_break < 0) break
+            pos = line_break + 1
+            continue
+        }
+        matches.add(match)
+        pos = match.range.last + 1
+    }
+    return matches
+}
+
 private fun extract_items_from_body(body: String, context: currency_context, locale: Locale): List<ExtractedItem> {
     val items = ArrayList<ExtractedItem>()
     for (pattern in item_patterns) {
-        for (match in pattern.regex.findAll(body)) {
+        val matches = if (pattern.scan_by_line) find_line_matches(pattern.regex, body) else pattern.regex.findAll(body).toList()
+        for (match in matches) {
             val qty_or_name = match.groups[1]?.value.orEmpty()
             val name_or_qty = match.groups[2]?.value.orEmpty()
             val price_str = match.groups[3]?.value.orEmpty()
@@ -320,7 +351,7 @@ internal fun extract_merchant_name(from_email: String, from_name: String): Strin
     merchant_from_sender(from_email, from_name)
 
 private val forwarded_from_pattern = Regex(
-    "(?:^|\\n)[ \\t>*]*(?:from|von|de|da|van)\\s*:\\s*\\*{0,2}\\s*([^\\n<]{0,80}?)\\s*<?([\\w.+-]+@[\\w-]+(?:\\.[\\w-]+)+)>?",
+    "(?:^|\\n)[ \\t>*]*(?:from|von|de|da|van)\\s*+:\\s*+\\*{0,2}\\s*+([^\\n<]{0,80}?)\\s*+<?([\\w.+-]++@[\\w-]+(?:\\.[\\w-]+)+)>?",
     RegexOption.IGNORE_CASE,
 )
 private val forwarded_subject_pattern = Regex(
@@ -415,16 +446,37 @@ private val receipt_link_text = Regex(
     "^(?:view|download|see|open|print)\\s+(?:your\\s+|the\\s+|my\\s+)?(?:receipt|invoice|order)\\b",
     RegexOption.IGNORE_CASE,
 )
-private val anchor_pattern = Regex(
-    "<a\\b[^>]*?href\\s*=\\s*[\"']([^\"']+)[\"'][^>]*>([\\s\\S]*?)</a>",
-    RegexOption.IGNORE_CASE,
-)
+private val anchor_href_regex = Regex("href\\s*=\\s*[\"']([^\"']+)[\"']", RegexOption.IGNORE_CASE)
 private val bare_https_url = Regex("https://[^\\s<>\"']+")
 private val bare_url_trailing_junk = Regex("[),.;'\"\\]]+$")
-private val html_tag_regex = Regex("<[^>]+>")
 
 private const val receipt_url_max_length = 2048
 private const val receipt_markup_scan_length = 200_000
+
+private fun anchor_links(markup: String): List<Pair<String, String>> {
+    val links = ArrayList<Pair<String, String>>()
+    var from = 0
+    while (true) {
+        val open = markup.indexOf("<a", from, ignoreCase = true)
+        if (open < 0) return links
+        val name_end = open + 2
+        if (name_end < markup.length && (markup[name_end] == '_' || markup[name_end].isLetterOrDigit())) {
+            from = open + 1
+            continue
+        }
+        val tag_end = markup.indexOf('>', name_end)
+        if (tag_end < 0) return links
+        val href = anchor_href_regex.find(markup.substring(name_end, tag_end))
+        if (href == null) {
+            from = tag_end + 1
+            continue
+        }
+        val close = markup.indexOf("</a>", tag_end + 1, ignoreCase = true)
+        if (close < 0) return links
+        links.add(href.groupValues[1] to markup.substring(tag_end + 1, close))
+        from = close + 4
+    }
+}
 
 internal fun safe_https_url(raw: String): java.net.URI? {
     val decoded = decode_basic_entities(raw).trim()
@@ -463,10 +515,10 @@ fun extract_receipt_url(body: String, html: String?, sender_emails: List<String?
     val markup = (html?.takeIf { it.isNotEmpty() } ?: body.takeIf { looks_like_html_body(body) })
         ?.take(receipt_markup_scan_length)
     if (markup != null) {
-        for (match in anchor_pattern.findAll(markup)) {
-            val uri = safe_https_url(match.groupValues[1]) ?: continue
+        for ((href, inner) in anchor_links(markup)) {
+            val uri = safe_https_url(href) ?: continue
             if (is_allowlisted_receipt_url(uri)) return uri.toString()
-            val text = decode_basic_entities(match.groupValues[2].replace(html_tag_regex, " "))
+            val text = decode_basic_entities(replace_tags(inner, " "))
                 .replace(whitespace_run_regex, " ")
                 .trim()
             if (!receipt_link_text.containsMatchIn(text)) continue
@@ -495,7 +547,7 @@ private val subtotal_patterns = listOf(
     money_after("\\bitems?\\s+total\\b"),
 )
 
-private const val tax_rate = "(?:\\s*\\(?\\d{1,2}(?:[.,]\\d+)?\\s*%\\)?)?"
+private const val tax_rate = "(?:\\s*+\\(?\\d{1,2}(?:[.,]\\d++)?\\s*+%\\)?)?"
 
 private val tax_patterns = listOf(
     money_after("\\b(?:sales\\s+)?tax(?:es)?\\b" + tax_rate),
@@ -512,7 +564,7 @@ private val discount_patterns = listOf(
     money_after("\\bdiscounts?\\b"),
     money_after("\\bsavings?\\b"),
     money_after("\\bcoupon\\b"),
-    money_after("\\bpromo(?:tion)?\\s*(?:code)?\\s*(?:applied)?"),
+    money_after("\\bpromo(?:tion)?\\s*+(?:code)?\\s*+(?:applied)?"),
 )
 
 private val card_last_four_regex = Regex("(?:card\\s+)?ending\\s+(?:in\\s+)?[*x]?(\\d{4})", RegexOption.IGNORE_CASE)
@@ -697,7 +749,7 @@ fun extract_order_url(body: String, html: String?): String? {
 }
 
 private val strong_purchase_indicators = listOf(
-    Regex("\\border\\s*(?:#|no\\.?|num(?:ber)?|id)\\s*[:#]?\\s*[A-Za-z0-9]*[0-9]", RegexOption.IGNORE_CASE),
+    Regex("\\border\\s*+(?:#|no\\.?|num(?:ber)?|id)\\s*+[:#]?\\s*+[A-Za-z0-9]*[0-9]", RegexOption.IGNORE_CASE),
     Regex("purchase\\s+(?:confirmation|complete|receipt)", RegexOption.IGNORE_CASE),
     Regex("thanks?\\s+(?:you\\s+)?for\\s+(?:your\\s+)?(?:[A-Za-z.]+\\s+){0,2}(?:order|purchase|booking)\\b", RegexOption.IGNORE_CASE),
     Regex("receipt\\s+(?:for|from)", RegexOption.IGNORE_CASE),

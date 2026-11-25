@@ -163,4 +163,27 @@ class MimeParserTest {
 
         assertEquals("price = 5 dollars", MimeParser.parse(raw).text)
     }
+
+    @Test(timeout = 2_000)
+    fun many_folded_header_lines_finish_quickly() {
+        val raw = "Subject: a\r\n" + " folded\r\n".repeat(60_000) +
+            "Content-Type: text/plain\r\n\r\nHello"
+
+        assertEquals("Hello", MimeParser.parse(raw).text)
+    }
+
+    @Test
+    fun folded_header_values_are_still_joined() {
+        val raw = "Content-Type: text/html;\r\n" +
+            "\tcharset=utf-8\r\n" +
+            "Content-Transfer-Encoding:\r\n" +
+            "  quoted-printable\r\n" +
+            "\r\n" +
+            "<p>caf=C3=A9</p>"
+
+        val result = MimeParser.parse(raw)
+
+        assertNull(result.text)
+        assertEquals("<p>caf\u00e9</p>", result.html)
+    }
 }
