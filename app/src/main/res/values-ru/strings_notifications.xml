@@ -32,4 +32,5 @@
     <string name="persistent_push_autostart_title">Разрешить автозапуск</string>
     <string name="persistent_push_autostart_subtitle">Некоторые телефоны закрывают фоновые подключения. В настройках системы разрешите Aster Mail запускаться автоматически и отключите ограничения батареи.</string>
     <string name="notif_delivery_section">Доставка</string>
+    <string name="notif_action_unlock_required">Разблокируйте устройство и повторите попытку.</string>
 </resources>

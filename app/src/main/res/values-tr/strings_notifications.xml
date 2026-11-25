@@ -32,4 +32,5 @@
     <string name="persistent_push_autostart_title">Otomatik başlatmaya izin ver</string>
     <string name="persistent_push_autostart_subtitle">Bazı telefonlar arka plan bağlantılarını kapatır. Sistem ayarlarında Aster Mail\'in otomatik başlamasına izin verin ve pil kısıtlamalarını kapatın.</string>
     <string name="notif_delivery_section">Teslimat</string>
+    <string name="notif_action_unlock_required">Cihazınızın kilidini açın ve tekrar deneyin.</string>
 </resources>

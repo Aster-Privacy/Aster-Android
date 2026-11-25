@@ -32,4 +32,5 @@
     <string name="persistent_push_autostart_title">अपने आप शुरू होने दें</string>
     <string name="persistent_push_autostart_subtitle">कुछ फ़ोन बैकग्राउंड कनेक्शन बंद कर देते हैं। सिस्टम सेटिंग में Aster Mail को अपने आप शुरू होने दें और बैटरी प्रतिबंध बंद करें।</string>
     <string name="notif_delivery_section">डिलीवरी</string>
+    <string name="notif_action_unlock_required">अपना डिवाइस अनलॉक करें, फिर दोबारा कोशिश करें।</string>
 </resources>
