@@ -118,6 +118,7 @@ private const val PUBLISHED_PGP_KEY_LOOKUP_BACKOFF_MS = 750L
 private const val RECOVERY_BACKUP_RETRY_DELAY_MS = 1_200L
 private const val ACCOUNT_SLOT_TIMEOUT_MS = 10_000L
 private const val ACCOUNT_SLOT_RELEASE_TIMEOUT_MS = 3_000L
+private const val SIGN_OUT_REQUEST_TIMEOUT_MS = 5_000L
 
 class GuardLoginCredentials(
     val password_bytes: ByteArray,
@@ -1107,22 +1108,6 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    private suspend fun release_account_slot_with_current_tokens() {
-        val access = token_store.access_token?.takeIf { it.isNotEmpty() } ?: return
-        val client = runCatching {
-            scoped_session_client(access, token_store.refresh_token, api_client.get_csrf())
-        }.getOrNull() ?: return
-        try {
-            withContext(NonCancellable) {
-                withTimeoutOrNull(ACCOUNT_SLOT_RELEASE_TIMEOUT_MS) {
-                    runCatching { org.astermail.android.api.billing.BillingApiImpl(client).unlink_account_device() }
-                }
-            }
-        } finally {
-            runCatching { client.close() }
-        }
-    }
-
     private suspend fun reject_new_session(client: ApiClient, previous_user_id: String?) {
         withContext(NonCancellable) {
             runCatching {
@@ -2103,12 +2088,12 @@ class AuthRepository @Inject constructor(
         Unit
     }
 
-    suspend fun logout(): Result<Unit> = sign_out_internal(remove_account = true)
+    suspend fun logout(): Result<Unit> = sign_out(remove_account = true)
 
     suspend fun force_sign_out(expected_account_id: String? = null): Result<Unit> {
         val previous_id = session_key_store.get_user_id()
         if (expected_account_id != null && !same_account(expected_account_id, previous_id)) return Result.success(Unit)
-        val result = sign_out_internal(remove_account = false, expected_account_id = expected_account_id)
+        val result = sign_out(remove_account = false, expected_account_id = expected_account_id)
         if (!_is_signed_in.value) {
             _session_expired.value = true
         } else {
@@ -2117,47 +2102,98 @@ class AuthRepository @Inject constructor(
         return result
     }
 
-    suspend fun logout_all(): Result<Unit> = runCatching {
-        var remaining = account_store.count() + 1
-        while (remaining-- > 0) {
-            sign_out_internal(remove_account = true)
-            if (!_is_signed_in.value) break
+    suspend fun logout_all(): Result<Unit> = withContext(NonCancellable) {
+        runCatching {
+            var remaining = account_store.count() + 1
+            while (remaining-- > 0) {
+                sign_out(remove_account = true)
+                if (!_is_signed_in.value) break
+            }
+            runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, null) }
+            _active_account_id.value = null
+            _is_signed_in.value = false
         }
-        runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, null) }
-        _active_account_id.value = null
-        _is_signed_in.value = false
+    }
+
+    private suspend fun sign_out(
+        remove_account: Boolean,
+        expected_account_id: String? = null,
+    ): Result<Unit> = run_sign_out(
+        wipe = { sign_out_internal(remove_account, expected_account_id) },
+        notify_server = { tokens -> notify_server_of_sign_out(tokens, remove_account) },
+    )
+
+    private fun sign_out_client(tokens: SignOutTokens): ApiClient {
+        var current = io.ktor.client.plugins.auth.providers.BearerTokens(tokens.access, tokens.refresh)
+        lateinit var client: ApiClient
+        val provider = object : org.astermail.android.api.TokenProvider {
+            override suspend fun load(): io.ktor.client.plugins.auth.providers.BearerTokens = current
+            override suspend fun refresh(): io.ktor.client.plugins.auth.providers.BearerTokens? {
+                val presented = current.refreshToken ?: return null
+                val response = try {
+                    org.astermail.android.api.auth.AuthApiImpl(client).refresh(presented)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Throwable) {
+                    return null
+                }
+                current = io.ktor.client.plugins.auth.providers.BearerTokens(
+                    response.access_token,
+                    response.refresh_token ?: presented,
+                )
+                return current
+            }
+            override suspend fun clear() {}
+        }
+        client = ApiClient(
+            base_url = org.astermail.android.api.BuildConfig.API_BASE_URL,
+            token_provider = provider,
+            initial_csrf = tokens.csrf,
+            allow_cleartext_for_test = org.astermail.android.api.BuildConfig.API_BASE_URL.startsWith("http://"),
+            device_id = org.astermail.android.api.DeviceIdStore.get(context),
+        )
+        return client
+    }
+
+    private suspend fun notify_server_of_sign_out(tokens: SignOutTokens, remove_account: Boolean) {
+        val client = sign_out_client(tokens)
+        try {
+            val unlink_timeout = if (remove_account) SIGN_OUT_REQUEST_TIMEOUT_MS else ACCOUNT_SLOT_RELEASE_TIMEOUT_MS
+            runCatching {
+                withTimeoutOrNull(unlink_timeout) {
+                    org.astermail.android.api.billing.BillingApiImpl(client).unlink_account_device()
+                }
+            }
+            runCatching {
+                withTimeoutOrNull(SIGN_OUT_REQUEST_TIMEOUT_MS) {
+                    org.astermail.android.api.auth.AuthApiImpl(client).logout()
+                }
+            }
+        } finally {
+            runCatching { client.close() }
+        }
     }
 
     @OptIn(coil.annotation.ExperimentalCoilApi::class)
     private suspend fun sign_out_internal(
         remove_account: Boolean,
         expected_account_id: String? = null,
-    ): Result<Unit> = runCatching {
+    ): SignOutTokens? {
         val current_id = session_key_store.get_user_id()
-        if (expected_account_id != null && !same_account(expected_account_id, current_id)) return@runCatching
+        if (expected_account_id != null && !same_account(expected_account_id, current_id)) return null
         val current_email = session_key_store.get_user_email()
         if (remove_account) {
             current_email?.let { runCatching { trusted_device_store.clear(it) } }
-            try {
-                withTimeoutOrNull(5_000L) {
-                    org.astermail.android.api.billing.BillingApiImpl(api_client).unlink_account_device()
-                }
-            } catch (e: Throwable) {
-                if (e is CancellationException) throw e
-            }
-        } else {
-            release_account_slot_with_current_tokens()
         }
-        try {
-            withTimeoutOrNull(5_000L) {
-                auth_api.logout()
-            }
-        } catch (e: Throwable) {
-            if (e is CancellationException) throw e
-        }
+        var tokens: SignOutTokens? = null
         val cleared = SessionRefreshGate.mutex.withLock {
             if (session_key_store.get_user_id() != current_id) return@withLock false
-            seed_login_salt_record_from_session()
+            tokens = runCatching {
+                token_store.access_token?.takeIf { it.isNotEmpty() }?.let { access ->
+                    SignOutTokens(access, token_store.refresh_token, api_client.get_csrf())
+                }
+            }.getOrNull()
+            runCatching { seed_login_salt_record_from_session() }
             runCatching { token_store.clear() }
             runCatching { api_client.clear_csrf() }
             runCatching { api_client.invalidate_bearer_cache() }
@@ -2165,7 +2201,7 @@ class AuthRepository @Inject constructor(
             runCatching { storage_rekey_service.forget_session() }
             true
         }
-        if (!cleared) return@runCatching
+        if (!cleared) return null
         runCatching { org.astermail.android.notifications.PersistentPushService.stop(context) }
         runCatching { org.astermail.android.folders.folder_lock_store.lock_all() }
         runCatching { mail_repository.clear_account_data() }
@@ -2233,10 +2269,11 @@ class AuthRepository @Inject constructor(
                 runCatching { org.astermail.android.ui.drawer.sidebar_show_all_store.clear(context, current_id) }
             }
         }
-        if (restore_first_candidate(current_id)) return@runCatching
+        if (restore_first_candidate(current_id)) return tokens
         _active_account_id.value = null
         _is_signed_in.value = false
         runCatching { app_lock_store.get().forget_after_last_sign_out() }
+        return tokens
     }
 
     private fun forget_guard_device(account_id: String) {
@@ -2917,76 +2954,79 @@ class AuthRepository @Inject constructor(
                 totp_code = totp_code?.takeIf { it.isNotBlank() },
             ),
         )
-        val current_id = session_key_store.get_user_id()
-        val current_email = session_key_store.get_user_email()
-        on_pin_thread {
-            runCatching {
-                login_pins.unpin(LoginProof.account_pin_keys(current_id, current_email))
-                login_pins.unpin_v3_for_account(current_id, LoginProof.account_pin_keys(null, current_email))
+        withContext(NonCancellable) {
+            val current_id = session_key_store.get_user_id()
+            val current_email = session_key_store.get_user_email()
+            on_pin_thread {
+                runCatching {
+                    login_pins.unpin(LoginProof.account_pin_keys(current_id, current_email))
+                    login_pins.unpin_v3_for_account(current_id, LoginProof.account_pin_keys(null, current_email))
+                }
+                runCatching { login_salt_records.remove(login_record_keys(null, current_email)) }
             }
-            runCatching { login_salt_records.remove(login_record_keys(null, current_email)) }
+            SessionRefreshGate.mutex.withLock {
+                token_store.clear()
+                api_client.clear_csrf()
+                api_client.invalidate_bearer_cache()
+                session_key_store.clear()
+            }
+            org.astermail.android.folders.folder_lock_store.lock_all()
+            mail_repository.clear_account_data()
+            runCatching { current_id?.let { mail_repository.forget_own_authored(it) } }
+            runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
+            runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
+            runCatching { org.astermail.android.ui.mail.evict_email_image_cache() }
+            runCatching { wipe_decrypted_caches(context.cacheDir) }
+            runCatching { theme_store.clear() }
+            runCatching { org.astermail.android.ui.theme.custom_theme_image.delete(context) }
+            runCatching { offer_preferences_store.reset() }
+            runCatching { org.astermail.android.ui.compose.compose_seed_store.clear(context) }
+            runCatching { org.astermail.android.notifications.MutedFolderSync.reset(context) }
+            runCatching { org.astermail.android.notifications.QuietHoursSync.reset(context) }
+            runCatching { org.astermail.android.imports.ExternalAccountHealthStore.reset(context) }
+            cancel_all_notifications()
+            runCatching {
+                val loader = coil.Coil.imageLoader(context)
+                loader.memoryCache?.clear()
+                loader.diskCache?.clear()
+            }
+            runCatching {
+                org.astermail.android.mail.AsterProfileResolverHolder.shared?.clear()
+                org.astermail.android.mail.OwnAddressAvatars.clear()
+                org.astermail.android.security.SenderTrustStore.clear()
+                org.astermail.android.contacts.ContactPhotoDirectory.clear()
+                org.astermail.android.notifications.NotificationAvatars.clear()
+            }
+            database.decrypted_mail_dao().clear_all()
+            database.folder_row_dao().clear_all()
+            database.message_body_dao().clear_all()
+            database.message_body_index_dao().clear_all()
+            database.thread_snapshot_dao().clear_all()
+            current_email?.let { trusted_device_store.clear(it) }
+            if (current_id != null) {
+                runCatching { forget_deleted_account_device_recovery(context, current_id) }
+                runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, current_id) }
+                runCatching { mail_repository.clear_pending_actions(current_id) }
+                runCatching { database.contact_cache_dao().clear_for_account(current_id) }
+                runCatching { database.contact_group_cache_dao().clear_for_account(current_id) }
+                val outbox_ids = runCatching {
+                    database.pending_send_dao().get_for_account(current_id).map { it.id }
+                }.getOrDefault(emptyList())
+                runCatching { database.pending_send_dao().clear_for_account(current_id) }
+                runCatching { wipe_outbox_attachments(context.filesDir, outbox_ids) }
+                runCatching { forget_guard_device(current_id) }
+                account_store.remove(current_id)
+                runCatching { session_snapshot_store.remove(current_id) }
+            }
+            runCatching {
+                wipe_orphaned_outbox_attachments(context.filesDir, database.pending_send_dao().get_all().map { it.id })
+            }
+            if (!restore_first_candidate(current_id)) {
+                _active_account_id.value = null
+                _is_signed_in.value = false
+                runCatching { app_lock_store.get().forget_after_last_sign_out() }
+            }
         }
-        SessionRefreshGate.mutex.withLock {
-            token_store.clear()
-            api_client.clear_csrf()
-            api_client.invalidate_bearer_cache()
-            session_key_store.clear()
-        }
-        org.astermail.android.folders.folder_lock_store.lock_all()
-        mail_repository.clear_account_data()
-        runCatching { current_id?.let { mail_repository.forget_own_authored(it) } }
-        runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
-        runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
-        runCatching { org.astermail.android.ui.mail.evict_email_image_cache() }
-        runCatching { wipe_decrypted_caches(context.cacheDir) }
-        runCatching { theme_store.clear() }
-        runCatching { org.astermail.android.ui.theme.custom_theme_image.delete(context) }
-        runCatching { offer_preferences_store.reset() }
-        runCatching { org.astermail.android.ui.compose.compose_seed_store.clear(context) }
-        runCatching { org.astermail.android.notifications.MutedFolderSync.reset(context) }
-        runCatching { org.astermail.android.notifications.QuietHoursSync.reset(context) }
-        runCatching { org.astermail.android.imports.ExternalAccountHealthStore.reset(context) }
-        cancel_all_notifications()
-        runCatching {
-            val loader = coil.Coil.imageLoader(context)
-            loader.memoryCache?.clear()
-            loader.diskCache?.clear()
-        }
-        runCatching {
-            org.astermail.android.mail.AsterProfileResolverHolder.shared?.clear()
-            org.astermail.android.mail.OwnAddressAvatars.clear()
-            org.astermail.android.security.SenderTrustStore.clear()
-            org.astermail.android.contacts.ContactPhotoDirectory.clear()
-            org.astermail.android.notifications.NotificationAvatars.clear()
-        }
-        database.decrypted_mail_dao().clear_all()
-        database.folder_row_dao().clear_all()
-        database.message_body_dao().clear_all()
-        database.message_body_index_dao().clear_all()
-        database.thread_snapshot_dao().clear_all()
-        current_email?.let { trusted_device_store.clear(it) }
-        if (current_id != null) {
-            runCatching { forget_deleted_account_device_recovery(context, current_id) }
-            runCatching { org.astermail.android.mail.clear_folder_cache_stats(context, current_id) }
-            runCatching { mail_repository.clear_pending_actions(current_id) }
-            runCatching { database.contact_cache_dao().clear_for_account(current_id) }
-            runCatching { database.contact_group_cache_dao().clear_for_account(current_id) }
-            val outbox_ids = runCatching {
-                database.pending_send_dao().get_for_account(current_id).map { it.id }
-            }.getOrDefault(emptyList())
-            runCatching { database.pending_send_dao().clear_for_account(current_id) }
-            runCatching { wipe_outbox_attachments(context.filesDir, outbox_ids) }
-            runCatching { forget_guard_device(current_id) }
-            account_store.remove(current_id)
-            runCatching { session_snapshot_store.remove(current_id) }
-        }
-        runCatching {
-            wipe_orphaned_outbox_attachments(context.filesDir, database.pending_send_dao().get_all().map { it.id })
-        }
-        if (restore_first_candidate(current_id)) return@runCatching
-        _active_account_id.value = null
-        _is_signed_in.value = false
-        runCatching { app_lock_store.get().forget_after_last_sign_out() }
     }
 
     fun cached_password_hash_b64(): String? {
