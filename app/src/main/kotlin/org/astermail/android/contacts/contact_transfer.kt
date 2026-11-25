@@ -289,7 +289,20 @@ fun contact_to_vcard(contact: Contact): String {
     }
     if (contact.company.isNotBlank()) push("ORG:${escape_vcard(contact.company)}")
     if (contact.title.isNotBlank()) push("TITLE:${escape_vcard(contact.title)}")
-    if (contact.birthday.isNotBlank()) push("BDAY:${escape_vcard(ContactDates.vcard_value(contact.birthday, false))}")
+    val events = contact.event_entries()
+    val birthday_value = birthday_from_events(events).ifEmpty { contact.birthday }
+    if (birthday_value.isNotBlank()) push("BDAY:${escape_vcard(ContactDates.vcard_value(birthday_value, false))}")
+    for (event in events) {
+        when (event.kind) {
+            ContactEventKind.BIRTHDAY -> Unit
+            ContactEventKind.ANNIVERSARY -> push("ANNIVERSARY:${escape_vcard(event.date)}")
+            ContactEventKind.CUSTOM -> {
+                item += 1
+                push("item$item.X-ABDATE:${escape_vcard(event.date)}")
+                push("item$item.X-ABLabel:${escape_vcard(event.label)}")
+            }
+        }
+    }
 
     for (postal in contact.address_entries()) {
         val (type_param, label) = vcard_type_for(postal.type, postal.label, ADDRESS_TYPE_PARAMS)
@@ -413,6 +426,8 @@ private fun resolve_type(types: List<String>, ab_label: String?, kind: VcardKind
 
 private class PendingEntry(val group: String, val value: String, val types: List<String>)
 
+private class PendingDate(val group: String, val key: String, val value: String)
+
 private class PendingPostal(val group: String, val postal: ContactPostal, val types: List<String>)
 
 fun contacts_to_vcard(contacts: List<Contact>): String =
@@ -429,6 +444,7 @@ fun parse_vcards(raw_text: String): List<Contact> {
     var ab_labels = mutableMapOf<String, String>()
     var relations = mutableListOf<PendingRelation>()
     var socials = mutableListOf<PendingSocial>()
+    var dates = mutableListOf<PendingDate>()
 
     fun flush() {
         val fields = current ?: return
@@ -464,6 +480,9 @@ fun parse_vcards(raw_text: String): List<Contact> {
             }
         }
         val typed_socials = merge_socials(emptyList(), resolved_socials)
+        val typed_events = normalize_events(
+            dates.mapNotNull { event_from_vcard(it.key, it.value, label_for(it.group)) },
+        )
         val first_email = typed_emails.firstOrNull()?.value.orEmpty()
         val name = fields["name"].orEmpty().ifBlank { first_email }
         if (name.isBlank() && first_email.isBlank()) return
@@ -493,6 +512,7 @@ fun parse_vcards(raw_text: String): List<Contact> {
                 groups = groups.toList(),
                 relations = typed_relations.takeIf { it.isNotEmpty() },
                 social_networks = typed_socials.takeIf { it.isNotEmpty() },
+                events = typed_events.takeIf { it.any { event -> event.kind != ContactEventKind.BIRTHDAY } },
             ).with_typed_fields(typed_emails, typed_phones, typed_addresses),
         )
     }
@@ -508,6 +528,7 @@ fun parse_vcards(raw_text: String): List<Contact> {
             ab_labels = mutableMapOf()
             relations = mutableListOf()
             socials = mutableListOf()
+            dates = mutableListOf()
             continue
         }
         if (trimmed.equals("END:VCARD", ignoreCase = true)) {
@@ -550,6 +571,13 @@ fun parse_vcards(raw_text: String): List<Contact> {
             "BDAY" -> fields["birthday"] = ContactDates.normalize(
                 value,
                 param_value(parsed.params, "X-APPLE-OMIT-YEAR").ifBlank { null },
+            )
+            "ANNIVERSARY", "X-ABDATE" -> dates.add(
+                PendingDate(
+                    parsed.group,
+                    parsed.key,
+                    ContactDates.normalize(value, param_value(parsed.params, "X-APPLE-OMIT-YEAR").ifBlank { null }),
+                ),
             )
             "ADR" -> {
                 val parts = split_vcard_value(parsed.value)
@@ -626,13 +654,23 @@ private fun escape_csv(value: String): String {
 fun contacts_to_csv(contacts: List<Contact>): String {
     val contact_relations = contacts.map { normalize_relations(it.relations.orEmpty()) }
     val relation_columns = contact_relations.maxOfOrNull { it.size } ?: 0
-    val headers = CSV_HEADERS + (1..relation_columns).flatMap { listOf("Relation $it - Label", "Relation $it - Value") }
+    val contact_events = contacts.map { contact -> contact.event_entries() }
+    val extra_events = contact_events.map { list -> list.filter { it.kind != ContactEventKind.BIRTHDAY } }
+    val event_columns = extra_events.maxOfOrNull { it.size } ?: 0
+    val headers = CSV_HEADERS +
+        (1..relation_columns).flatMap { listOf("Relation $it - Label", "Relation $it - Value") } +
+        (1..event_columns).flatMap { listOf("Event $it - Label", "Event $it - Value") }
     val rows = contacts.mapIndexed { index, contact ->
         val (first, last) = split_name(contact.name)
         val relation_cells = (0 until relation_columns).flatMap { slot ->
             val relation = contact_relations[index].getOrNull(slot)
             if (relation == null) listOf("", "") else listOf(relation_csv_label(relation), relation.value)
         }
+        val event_cells = (0 until event_columns).flatMap { slot ->
+            val event = extra_events[index].getOrNull(slot)
+            if (event == null) listOf("", "") else listOf(event_csv_label(event), event.date)
+        }
+        val birthday_cell = birthday_from_events(contact_events[index]).ifEmpty { contact.birthday }
         listOf(
             first,
             last,
@@ -646,10 +684,10 @@ fun contacts_to_csv(contacts: List<Contact>): String {
             contact.postal_code,
             contact.country,
             contact.website,
-            contact.birthday,
+            birthday_cell,
             contact.notes,
             if (contact.is_favorite) "true" else "false",
-        ) + relation_cells
+        ) + relation_cells + event_cells
     }
     return (
         listOf(headers.joinToString(",") { escape_csv(it) }) +

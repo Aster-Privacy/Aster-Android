@@ -1264,7 +1264,7 @@ class ContactsRepository @Inject constructor(
                 ?: throw IllegalStateException("no storage key opened the contact")
             val json_str = String(decrypted, Charsets.UTF_8)
             decrypted.fill(0)
-            parse_contact_json(item.id, json_str)
+            parse_contact_json(item.id, json_str)?.copy(created_at = item.created_at.orEmpty())
         } catch (_: Throwable) {
             try {
                 decrypt_contact_identity_fallback(item)
@@ -1310,7 +1310,7 @@ class ContactsRepository @Inject constructor(
         } ?: return null
         val json_str = String(plaintext, Charsets.UTF_8)
         plaintext.fill(0)
-        return parse_contact_json(item.id, json_str)
+        return parse_contact_json(item.id, json_str)?.copy(created_at = item.created_at.orEmpty())
     }
 
     private fun decrypt_with_candidates(
@@ -1659,7 +1659,11 @@ class ContactsRepository @Inject constructor(
                     addresses = card.addresses.map {
                         ContactPostal(it.street, it.city, it.state, it.postal_code, it.country, it.type, it.label)
                     },
-                ).copy(relations = decode_contact_relations(obj), social_networks = decode_contact_socials(obj))
+                ).copy(
+                    relations = decode_contact_relations(obj),
+                    social_networks = decode_contact_socials(obj),
+                    events = decode_contact_events(obj),
+                )
             }
         } catch (_: Throwable) {
             null
@@ -1695,7 +1699,11 @@ class ContactsRepository @Inject constructor(
         if (contact.linkedin.isNotBlank()) social.put("linkedin", contact.linkedin) else social.remove("linkedin")
         if (social.length() > 0) obj.put("social_links", social) else obj.remove("social_links")
 
-        if (contact.birthday.isNotBlank()) obj.put("birthday", contact.birthday) else obj.remove("birthday")
+        val events_written = contact.events != null || obj.has(EVENTS_KEY)
+        val event_entries = if (events_written) contact.event_entries() else emptyList()
+        if (events_written) write_contact_events(obj, event_entries)
+        val birthday_value = birthday_from_events(event_entries).ifEmpty { contact.birthday }
+        if (birthday_value.isNotBlank()) obj.put("birthday", birthday_value) else obj.remove("birthday")
         write_contact_relations(obj, contact.relations)
         write_contact_socials(obj, contact.social_networks)
         if (contact.notes.isNotBlank()) obj.put("notes", contact.notes) else obj.remove("notes")

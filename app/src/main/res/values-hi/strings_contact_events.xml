@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_events">इवेंट</string>
+    <string name="contact_event_anniversary">सालगिरह</string>
+    <string name="contact_add_event">इवेंट जोड़ें</string>
+    <string name="contact_remove_event">इवेंट हटाएं</string>
+    <string name="contact_event_type">इवेंट का प्रकार</string>
+    <string name="contact_event_year_range">%1$d से %2$d तक का वर्ष डालें</string>
+    <string name="contacts_add_to_favorites">पसंदीदा में जोड़ें</string>
+    <string name="contacts_remove_from_favorites">पसंदीदा से हटाएं</string>
+    <string name="contacts_favorites_failed">पसंदीदा अपडेट नहीं हो सके. फिर से कोशिश करें.</string>
+    <string name="contacts_recently_added">हाल ही में जोड़े गए</string>
+    <string name="contacts_today">आज</string>
+</resources>

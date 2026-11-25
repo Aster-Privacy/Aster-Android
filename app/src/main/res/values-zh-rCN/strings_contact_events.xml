@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_events">事件</string>
+    <string name="contact_event_anniversary">纪念日</string>
+    <string name="contact_add_event">添加事件</string>
+    <string name="contact_remove_event">移除事件</string>
+    <string name="contact_event_type">事件类型</string>
+    <string name="contact_event_year_range">请输入 %1$d 到 %2$d 之间的年份</string>
+    <string name="contacts_add_to_favorites">添加到收藏</string>
+    <string name="contacts_remove_from_favorites">从收藏中移除</string>
+    <string name="contacts_favorites_failed">无法更新收藏。请重试。</string>
+    <string name="contacts_recently_added">最近添加</string>
+    <string name="contacts_today">今天</string>
+</resources>

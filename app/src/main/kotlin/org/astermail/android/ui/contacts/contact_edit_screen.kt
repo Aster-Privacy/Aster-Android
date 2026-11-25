@@ -77,6 +77,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import org.astermail.android.contacts.ContactEventKind
 import org.astermail.android.contacts.ContactsViewModel
 import org.astermail.android.contacts.encode_contact_photo
 import androidx.compose.ui.res.stringResource
@@ -141,7 +142,10 @@ fun ContactEditScreen(
     }
     var company by rememberSaveable { mutableStateOf(source?.company.orEmpty()) }
     var title by rememberSaveable { mutableStateOf(source?.title.orEmpty()) }
-    var birthday by rememberSaveable { mutableStateOf(source?.birthday.orEmpty()) }
+    var events by rememberSaveable(stateSaver = editable_event_list_saver) {
+        mutableStateOf(initial_event_rows(source))
+    }
+    var events_touched by rememberSaveable { mutableStateOf(false) }
     var website by rememberSaveable { mutableStateOf(source?.website.orEmpty()) }
     var twitter by rememberSaveable { mutableStateOf(source?.twitter.orEmpty()) }
     var linkedin by rememberSaveable { mutableStateOf(source?.linkedin.orEmpty()) }
@@ -169,7 +173,8 @@ fun ContactEditScreen(
             postals = initial_postal_rows(source)
             company = source.company
             title = source.title
-            birthday = source.birthday
+            events = initial_event_rows(source)
+            events_touched = false
             website = source.website
             twitter = source.twitter
             linkedin = source.linkedin
@@ -245,7 +250,8 @@ fun ContactEditScreen(
                         email = "",
                         company = company,
                         title = title,
-                        birthday = birthday,
+                        birthday = source?.birthday.orEmpty(),
+                        events = source?.events,
                         website = website,
                         twitter = twitter,
                         linkedin = linkedin,
@@ -261,7 +267,7 @@ fun ContactEditScreen(
                         emails = emails.map { it.to_entry() },
                         phones = phones.map { it.to_entry() },
                         addresses = postals.map { it.to_postal() },
-                    )
+                    ).let { if (events_touched) apply_event_edits(it, source, events) else it }
                     save_requested = true
                     vm.save_contact(contact, contact_id)
                 },
@@ -363,7 +369,6 @@ fun ContactEditScreen(
 
             FormSection(icon = TablerIcons.User, title = stringResource(R.string.personal)) {
                 FormField(stringResource(R.string.name), name, keyboard_capitalization = KeyboardCapitalization.Words) { name = it }
-                ContactBirthdayField(stringResource(R.string.birthday), birthday, on_change = { birthday = it })
             }
 
             FormSection(icon = TablerIcons.Mail, title = stringResource(R.string.email)) {
@@ -398,6 +403,16 @@ fun ContactEditScreen(
 
             FormSection(icon = TablerIcons.MapPin, title = stringResource(R.string.address)) {
                 ContactPostalRows(postals = postals, on_change = { postals = it })
+            }
+
+            FormSection(icon = TablerIcons.Calendar, title = stringResource(R.string.contact_events)) {
+                ContactEventRows(
+                    events = events,
+                    on_change = {
+                        events = it
+                        events_touched = true
+                    },
+                )
             }
 
             FormSection(icon = TablerIcons.Link, title = stringResource(R.string.social)) {
@@ -532,6 +547,16 @@ private fun initial_postal_rows(source: Contact?): List<EditablePostal> =
 
 private fun initial_relation_rows(source: Contact?): List<EditableRelation> =
     source?.relations.orEmpty().map { EditableRelation.of(it) }
+
+private fun initial_event_rows(source: Contact?): List<EditableEvent> =
+    source?.event_entries().orEmpty().map { EditableEvent.of(it) }
+
+internal fun apply_event_edits(contact: Contact, source: Contact?, rows: List<EditableEvent>): Contact {
+    val updated = contact.with_events(rows.map { it.to_event() })
+    val legacy = source?.birthday.orEmpty()
+    val unrepresented = legacy.isNotBlank() && source?.event_entries().orEmpty().none { it.kind == ContactEventKind.BIRTHDAY }
+    return if (updated.birthday.isEmpty() && unrepresented) updated.copy(birthday = legacy) else updated
+}
 
 private fun initial_social_rows(source: Contact?): List<EditableSocial> =
     source?.social_networks.orEmpty().map { EditableSocial.of(it) }
