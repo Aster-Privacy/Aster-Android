@@ -40,7 +40,9 @@ import org.astermail.android.api.keys.ConvertAttachmentMetaRequest
 import org.astermail.android.api.keys.ConvertSentEnvelopeRequest
 import org.astermail.android.api.keys.KeysApi
 import org.astermail.android.api.mail.AttachmentListResponse
+import org.astermail.android.api.mail.AttachmentMetaItem
 import org.astermail.android.api.mail.AttachmentResponse
+import org.astermail.android.api.mail.ImportedPasswordMetaPage
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.mail.MailItem
 import org.astermail.android.api.mail.MailItemsListResponse
@@ -92,6 +94,8 @@ class AccountDataConversionTest {
     private var pages: MutableList<MailItemsListResponse> = mutableListOf()
     private var listing_hook: suspend () -> Unit = {}
     private var attachments: MutableMap<String, List<AttachmentResponse>> = mutableMapOf()
+    private var imported_pages: MutableList<ImportedPasswordMetaPage> = mutableListOf()
+    private val imported_cursors = mutableListOf<String?>()
     private var sent_result = ConversionWriteResult.CONVERTED
     private var has_preferences_key = false
     private var stored_preferences: VersionedEncryptedPreferences? = null
@@ -160,6 +164,10 @@ class AccountDataConversionTest {
         }
 
         mail_api = mockk(relaxed = true)
+        coEvery { mail_api.list_imported_password_meta(any(), any()) } answers {
+            imported_pages.getOrNull(imported_cursors.size)
+                .also { imported_cursors.add(firstArg()) } ?: ImportedPasswordMetaPage()
+        }
         coEvery { mail_api.list_encrypted_items(any(), any(), any()) } coAnswers {
             listing_cursors.add(secondArg())
             listing_hook()
@@ -438,6 +446,41 @@ class AccountDataConversionTest {
         )
         assertTrue(progress.contains(ConversionProgressRequest(sent_mail_done = true)))
     }
+
+    @Test
+    fun converts_password_sealed_attachment_details_on_imported_mail() = runBlocking {
+        status = status_of(remaining_attachments = 2)
+        imported_pages = mutableListOf(
+            ImportedPasswordMetaPage(
+                attachments = listOf(imported_row("imp-1", password_envelope(meta_json))),
+                next_cursor = "imp-1",
+            ),
+            ImportedPasswordMetaPage(
+                attachments = listOf(imported_row("imp-2", password_envelope(meta_json.replace("plan.pdf", "scan.pdf")))),
+            ),
+        )
+
+        val summary = conversion.run("account-1")!!
+
+        assertEquals(2, summary.converted)
+        assertEquals(listOf(null, "imp-1"), imported_cursors)
+        assertEquals(listOf("imp-1", "imp-2"), attachment_writes.map { it.first })
+        assertEquals(
+            listOf("plan.pdf", "scan.pdf"),
+            attachment_writes.map {
+                AccountDataConversion.parse_object(open_sealed(it.second.encrypted_meta)!!)!!["filename"].toString().trim('"')
+            },
+        )
+        assertTrue(progress.contains(ConversionProgressRequest(sent_mail_done = true)))
+    }
+
+    private fun imported_row(id: String, encrypted_meta: String) = AttachmentMetaItem(
+        id = id,
+        mail_item_id = "imported-$id",
+        encrypted_meta = encrypted_meta,
+        meta_nonce = legacy_nonce(),
+        size_bytes = 10,
+    )
 
     @Test
     fun never_reseals_attachment_meta_that_opens_only_in_plain_text_or_unsigned() = runBlocking {

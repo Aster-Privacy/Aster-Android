@@ -59,6 +59,12 @@ data class UpdateAttachmentMetaRequest(
 )
 
 @Serializable
+data class ImportedPasswordMetaPage(
+    val attachments: List<AttachmentMetaItem> = emptyList(),
+    val next_cursor: String? = null,
+)
+
+@Serializable
 data class AttachmentListResponse(
     val attachments: List<AttachmentResponse> = emptyList(),
 )

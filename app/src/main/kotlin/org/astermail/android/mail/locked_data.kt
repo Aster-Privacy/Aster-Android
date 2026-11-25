@@ -265,7 +265,7 @@ class LockedDataService internal constructor(
             val converted = recover_with_conversion(account_id, password)
             if (converted != null) return converted.converted to (converted.failed > 0)
             val summary = reseal_sent_mail(old, current)
-            locked_counts.write(account_id, summary.unreadable)
+            locked_counts.write(account_id, summary.locked_after_reseal())
             return summary.rewritten to (summary.failed > 0)
         } finally {
             old.fill(0)

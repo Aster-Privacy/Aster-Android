@@ -27,6 +27,7 @@ import java.util.Base64
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import org.astermail.android.api.mail.AttachmentMetaItem
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.mail.MailItem
 import org.astermail.android.api.mail.UpdateAttachmentMetaRequest
@@ -40,7 +41,10 @@ data class SentMailResealSummary(
     val rewritten: Int = 0,
     val unreadable: Int = 0,
     val failed: Int = 0,
-)
+    val locked_attachments: Int = 0,
+) {
+    fun locked_after_reseal(): Int = unreadable + locked_attachments
+}
 
 object SentMailResealCrypto {
     private const val SALT_LENGTH = 16
@@ -146,7 +150,75 @@ class SentMailResealer @Inject constructor(
             cursor = page.next_cursor
             if (!page.has_more || cursor == null) break
         }
+        return reseal_imported_attachments(old_passphrase, new_passphrase, summary, on_progress)
+    }
+
+    private suspend fun reseal_imported_attachments(
+        old_passphrase: ByteArray,
+        new_passphrase: ByteArray,
+        start: SentMailResealSummary,
+        on_progress: ((SentMailResealSummary) -> Unit)?,
+    ): SentMailResealSummary {
+        var summary = start
+        var after: String? = null
+        while (true) {
+            val page = try {
+                retry(3) { mail_api.list_imported_password_meta(after, PAGE_SIZE) }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Throwable) {
+                return summary.copy(failed = summary.failed + 1)
+            }
+            for (row in page.attachments) {
+                summary = when (reseal_imported_row(row, old_passphrase, new_passphrase)) {
+                    Outcome.REWRITTEN -> summary.copy(rewritten = summary.rewritten + 1)
+                    Outcome.UNREADABLE -> summary.copy(locked_attachments = summary.locked_attachments + 1)
+                    Outcome.FAILED -> summary.copy(failed = summary.failed + 1)
+                    Outcome.SKIPPED -> summary
+                }
+                on_progress?.invoke(summary)
+            }
+            after = page.next_cursor
+            if (after.isNullOrEmpty() || page.attachments.isEmpty()) break
+        }
         return summary
+    }
+
+    private suspend fun reseal_imported_row(
+        row: AttachmentMetaItem,
+        old_passphrase: ByteArray,
+        new_passphrase: ByteArray,
+    ): Outcome {
+        val sealed = row.encrypted_meta
+        if (sealed.isEmpty() || SentMailResealCrypto.is_pgp_armored_b64(sealed)) return Outcome.SKIPPED
+        if (opens_as_level2(sealed)) return Outcome.SKIPPED
+        val plaintext = SentMailResealCrypto.open(sealed, old_passphrase, ::is_login_salt)
+        if (plaintext == null) {
+            return if (SentMailResealCrypto.opens_with(sealed, new_passphrase, ::is_login_salt)) {
+                Outcome.SKIPPED
+            } else {
+                Outcome.UNREADABLE
+            }
+        }
+        val (resealed, resealed_nonce) = try {
+            reseal_plaintext(plaintext, new_passphrase, null)
+        } finally {
+            plaintext.fill(0)
+        }
+        return try {
+            mail_api.update_attachment_meta(
+                row.id,
+                UpdateAttachmentMetaRequest(
+                    encrypted_meta = resealed,
+                    meta_nonce = SentMailResealCrypto.resealed_meta_nonce_b64(resealed_nonce, row.meta_nonce),
+                ),
+            )
+            Outcome.REWRITTEN
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            Outcome.FAILED
+        }
     }
 
     private suspend fun list_sent_page(cursor: String?) = retry(3) {
