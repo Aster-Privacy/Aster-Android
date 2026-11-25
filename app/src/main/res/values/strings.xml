@@ -3721,10 +3721,14 @@
     <string name="color_brightness">Brightness</string>
     <string name="hex_color">Hex color</string>
     <string name="alias_sending_tab">Sending</string>
-    <string name="alias_sending_disabled_title">Sending disabled aliases</string>
-    <string name="alias_sending_disabled_description">Turn off sending for an alias to stop mail from going out from it. The alias still receives mail.</string>
     <string name="alias_sending_empty">You have no aliases or domain addresses yet.</string>
-    <string name="alias_sending_no_match">No aliases match your search.</string>
+    <string name="sending_addresses_title">Sending addresses</string>
+    <string name="sending_addresses_description">Turn off sending for an address to stop mail from going out from it. The address still receives mail.</string>
+    <string name="sending_addresses_search">Search addresses</string>
+    <string name="sending_addresses_no_match">No addresses match your search.</string>
+    <string name="sending_addresses_all_off">Sending is off for every address, so you can\'t send mail. To send again, turn sending back on for at least one address.</string>
+    <string name="sending_address_ghost_alias">Ghost alias</string>
+    <string name="compose_sender_unresolved">Couldn\'t confirm which address to send from. Try sending again.</string>
     <string name="alias_sending_allowed">Sending allowed</string>
     <string name="alias_sending_disabled">Sending disabled</string>
     <string name="alias_sending_allow_a11y">Allow sending from %1$s</string>

@@ -9210,7 +9210,8 @@ private fun send_failure_banner(reason: String?) {
                 fontSize = 12.sp,
                 lineHeight = 17.sp,
             )
-            val detail = reason?.trim().orEmpty()
+            val detail = org.astermail.android.send_failure_detail_res(reason)?.let { stringResource(it) }
+                ?: reason?.trim().orEmpty()
             if (detail.isNotEmpty()) {
                 Spacer(Modifier.height(6.dp))
                 Text(

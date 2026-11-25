@@ -3724,10 +3724,14 @@
     <string name="color_brightness">Jasność</string>
     <string name="hex_color">Kolor szesnastkowy</string>
     <string name="alias_sending_tab">Wysyłanie</string>
-    <string name="alias_sending_disabled_title">Aliasy z wyłączonym wysyłaniem</string>
-    <string name="alias_sending_disabled_description">Wyłącz wysyłanie dla aliasu, aby nie wychodziła z niego żadna poczta. Alias nadal odbiera pocztę.</string>
     <string name="alias_sending_empty">Nie masz jeszcze aliasów ani adresów domenowych.</string>
-    <string name="alias_sending_no_match">Żaden alias nie pasuje do wyszukiwania.</string>
+    <string name="sending_addresses_title">Adresy wysyłania</string>
+    <string name="sending_addresses_description">Wyłącz wysyłanie dla adresu, aby nie wychodziła z niego żadna poczta. Adres nadal odbiera pocztę.</string>
+    <string name="sending_addresses_search">Szukaj adresów</string>
+    <string name="sending_addresses_no_match">Żaden adres nie pasuje do wyszukiwania.</string>
+    <string name="sending_addresses_all_off">Wysyłanie jest wyłączone dla wszystkich adresów, więc nie możesz wysyłać poczty. Aby znów wysyłać, włącz wysyłanie dla co najmniej jednego adresu.</string>
+    <string name="sending_address_ghost_alias">Alias widmo</string>
+    <string name="compose_sender_unresolved">Nie udało się potwierdzić adresu nadawcy. Spróbuj wysłać ponownie.</string>
     <string name="alias_sending_allowed">Wysyłanie dozwolone</string>
     <string name="alias_sending_disabled">Wysyłanie wyłączone</string>
     <string name="alias_sending_allow_a11y">Zezwól na wysyłanie z %1$s</string>

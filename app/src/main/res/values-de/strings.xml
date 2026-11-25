@@ -3671,10 +3671,14 @@
     <string name="color_brightness">Helligkeit</string>
     <string name="hex_color">Hex-Farbe</string>
     <string name="alias_sending_tab">Senden</string>
-    <string name="alias_sending_disabled_title">Aliasse mit deaktiviertem Senden</string>
-    <string name="alias_sending_disabled_description">Deaktivieren Sie das Senden für einen Alias, damit keine E-Mails mehr von ihm versendet werden. Der Alias empfängt weiterhin E-Mails.</string>
     <string name="alias_sending_empty">Sie haben noch keine Aliasse oder Domainadressen.</string>
-    <string name="alias_sending_no_match">Keine Aliasse entsprechen Ihrer Suche.</string>
+    <string name="sending_addresses_title">Absenderadressen</string>
+    <string name="sending_addresses_description">Deaktivieren Sie das Senden für eine Adresse, damit keine E-Mails mehr von ihr versendet werden. Die Adresse empfängt weiterhin E-Mails.</string>
+    <string name="sending_addresses_search">Adressen suchen</string>
+    <string name="sending_addresses_no_match">Keine Adressen entsprechen Ihrer Suche.</string>
+    <string name="sending_addresses_all_off">Das Senden ist für alle Adressen deaktiviert, daher können Sie keine E-Mails senden. Um wieder zu senden, aktivieren Sie das Senden für mindestens eine Adresse.</string>
+    <string name="sending_address_ghost_alias">Ghost-Alias</string>
+    <string name="compose_sender_unresolved">Die Absenderadresse konnte nicht bestätigt werden. Versuchen Sie es erneut.</string>
     <string name="alias_sending_allowed">Senden erlaubt</string>
     <string name="alias_sending_disabled">Senden deaktiviert</string>
     <string name="alias_sending_allow_a11y">Senden von %1$s erlauben</string>

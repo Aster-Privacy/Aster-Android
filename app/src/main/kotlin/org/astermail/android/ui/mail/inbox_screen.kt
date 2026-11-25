@@ -4411,7 +4411,7 @@ internal fun scheduled_actions_sheet(
                 if (item.raw_item.send_status == "failed") {
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        text = stringResource(R.string.scheduled_send_failed),
+                        text = stringResource(org.astermail.android.scheduled_failure_string_res(item.raw_item.send_error)),
                         color = colors.danger,
                         fontSize = 13.sp,
                     )

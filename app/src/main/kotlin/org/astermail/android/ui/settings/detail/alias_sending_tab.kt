@@ -22,18 +22,23 @@
 package org.astermail.android.ui.settings.detail
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,86 +53,155 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.astermail.android.R
+import org.astermail.android.api.settings.sending_block_kind_primary
 import org.astermail.android.design.AsterMaterial
+import org.astermail.android.design.AsterRadius
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.acrylic
 import org.astermail.android.design.components.AsterSwitch
 import org.astermail.android.design.island_surface_color
 import org.astermail.android.settings.SettingsUiState
 import org.astermail.android.settings.SettingsViewModel
+import org.astermail.android.ui.compose.every_sending_address_disabled
+import org.astermail.android.ui.compose.filter_sending_block_rows
 import org.astermail.android.ui.compose.sending_block_row
 import org.astermail.android.ui.compose.sending_block_rows
 
 @Composable
-internal fun ColumnScope.alias_sending_tab(
+internal fun alias_sending_tab(
     vm: SettingsViewModel,
     state: SettingsUiState,
 ) {
-    val colors = AsterMaterial.colors
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
+    val primary_address = state.user?.email
     val all_rows = remember(
+        primary_address,
+        state.sending_blocked_primary,
         state.aliases,
+        state.ghost_aliases,
         state.custom_domain_addresses,
         state.sending_blocked_alias_ids,
         state.sending_blocked_domain_address_ids,
     ) {
         sending_block_rows(
-            state.aliases,
-            state.custom_domain_addresses,
-            state.sending_blocked_alias_ids,
-            state.sending_blocked_domain_address_ids,
+            primary_address = primary_address,
+            primary_blocked = state.sending_blocked_primary,
+            aliases = state.aliases,
+            ghost_aliases = state.ghost_aliases,
+            domain_addresses = state.custom_domain_addresses,
+            blocked_alias_ids = state.sending_blocked_alias_ids,
+            blocked_domain_address_ids = state.sending_blocked_domain_address_ids,
         )
     }
-    val rows = remember(all_rows, query) {
-        sending_block_rows(
-            state.aliases,
-            state.custom_domain_addresses,
-            state.sending_blocked_alias_ids,
-            state.sending_blocked_domain_address_ids,
-            query,
-        )
-    }
+    val ghost_ids = remember(state.ghost_aliases) { state.ghost_aliases.mapTo(mutableSetOf()) { it.id } }
+    alias_sending_list(
+        all_rows = all_rows,
+        ghost_ids = ghost_ids,
+        loaded = state.sending_blocks_loaded,
+        pending_ids = state.sending_block_pending_ids,
+        query = query,
+        on_query_change = { query = it },
+        on_toggle = { row, allowed -> vm.set_sending_disabled(row.kind, row.id, !allowed) },
+    )
+}
 
-    Text(
-        text = stringResource(R.string.alias_sending_disabled_title),
-        color = colors.text_primary,
-        fontSize = 16.sp,
-        fontWeight = FontWeight.SemiBold,
-    )
-    v_gap(AsterSpacing.xs)
-    Text(
-        text = stringResource(R.string.alias_sending_disabled_description),
-        color = colors.text_muted,
-        fontSize = 13.sp,
-        lineHeight = 18.sp,
-    )
-    v_gap(AsterSpacing.sm)
-    if (all_rows.isNotEmpty()) {
-        org.astermail.android.ui.common.list_search_bar(
-            query = query,
-            on_query_change = { query = it },
-            placeholder = stringResource(R.string.search_aliases),
-            test_tag = "alias_sending_search",
-        )
-        v_gap(AsterSpacing.sm)
-    }
-    when {
-        all_rows.isEmpty() -> sending_empty_text(stringResource(R.string.alias_sending_empty))
-        rows.isEmpty() -> sending_empty_text(stringResource(R.string.alias_sending_no_match))
-        else -> {
-            val last_index = rows.lastIndex
-            rows.forEachIndexed { idx, row ->
-                sending_block_item(
-                    row = row,
-                    idx = idx,
-                    last_index = last_index,
-                    pending = row.id in state.sending_block_pending_ids,
-                    on_toggle = { allowed -> vm.set_sending_disabled(row.kind, row.id, !allowed) },
+@Composable
+internal fun alias_sending_list(
+    all_rows: List<sending_block_row>,
+    ghost_ids: Set<String>,
+    loaded: Boolean,
+    pending_ids: Set<String>,
+    query: String,
+    on_query_change: (String) -> Unit,
+    on_toggle: (sending_block_row, Boolean) -> Unit,
+) {
+    val colors = AsterMaterial.colors
+    val rows = remember(all_rows, query) { filter_sending_block_rows(all_rows, query) }
+    val all_off = loaded && every_sending_address_disabled(all_rows)
+    val last_index = rows.lastIndex
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("alias_sending_list"),
+        contentPadding = PaddingValues(start = AsterSpacing.lg, end = AsterSpacing.lg, bottom = AsterSpacing.lg),
+    ) {
+        item(key = "header") {
+            Column {
+                Text(
+                    text = stringResource(R.string.sending_addresses_title),
+                    color = colors.text_primary,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
                 )
-                if (idx != last_index) Spacer(Modifier.height(2.dp))
+                v_gap(AsterSpacing.xs)
+                Text(
+                    text = stringResource(R.string.sending_addresses_description),
+                    color = colors.text_muted,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                )
+                v_gap(AsterSpacing.sm)
+                if (all_off) {
+                    sending_all_off_notice()
+                    v_gap(AsterSpacing.sm)
+                }
+                if (all_rows.isNotEmpty()) {
+                    org.astermail.android.ui.common.list_search_bar(
+                        query = query,
+                        on_query_change = on_query_change,
+                        placeholder = stringResource(R.string.sending_addresses_search),
+                        test_tag = "alias_sending_search",
+                    )
+                    v_gap(AsterSpacing.sm)
+                }
+            }
+        }
+        when {
+            all_rows.isEmpty() -> item(key = "empty") {
+                sending_empty_text(stringResource(R.string.alias_sending_empty))
+            }
+            rows.isEmpty() -> item(key = "no_match") {
+                sending_empty_text(stringResource(R.string.sending_addresses_no_match))
+            }
+            else -> itemsIndexed(rows, key = { _, row -> row.kind + ":" + row.id }) { idx, row ->
+                val subtitle = when {
+                    row.kind == sending_block_kind_primary -> stringResource(R.string.primary_account)
+                    row.id in ghost_ids -> stringResource(R.string.sending_address_ghost_alias)
+                    else -> row.display_name
+                }
+                Column {
+                    sending_block_item(
+                        row = row,
+                        subtitle = subtitle,
+                        idx = idx,
+                        last_index = last_index,
+                        pending = row.id in pending_ids,
+                        on_toggle = { allowed -> on_toggle(row, allowed) },
+                    )
+                    if (idx != last_index) Spacer(Modifier.height(2.dp))
+                }
             }
         }
     }
+}
+
+@Composable
+private fun sending_all_off_notice() {
+    val colors = AsterMaterial.colors
+    val shape = RoundedCornerShape(AsterRadius.island)
+    Text(
+        text = stringResource(R.string.sending_addresses_all_off),
+        color = colors.danger,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .acrylic(colors, shape, island_surface_color(colors))
+            .padding(horizontal = AsterSpacing.lg, vertical = AsterSpacing.md)
+            .testTag("alias_sending_all_off"),
+    )
 }
 
 @Composable
@@ -148,6 +222,7 @@ private fun sending_empty_text(text: String) {
 @Composable
 private fun sending_block_item(
     row: sending_block_row,
+    subtitle: String,
     idx: Int,
     last_index: Int,
     pending: Boolean,
@@ -175,9 +250,9 @@ private fun sending_block_item(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (row.display_name.isNotBlank()) {
+            if (subtitle.isNotBlank()) {
                 Text(
-                    text = row.display_name,
+                    text = subtitle,
                     color = colors.text_secondary,
                     fontSize = 12.sp,
                     maxLines = 1,

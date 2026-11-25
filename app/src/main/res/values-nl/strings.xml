@@ -3670,10 +3670,14 @@
     <string name="color_brightness">Helderheid</string>
     <string name="hex_color">Hexkleur</string>
     <string name="alias_sending_tab">Verzenden</string>
-    <string name="alias_sending_disabled_title">Aliassen met verzenden uitgeschakeld</string>
-    <string name="alias_sending_disabled_description">Schakel verzenden uit voor een alias om te voorkomen dat er mail vanaf wordt verstuurd. De alias blijft mail ontvangen.</string>
     <string name="alias_sending_empty">Je hebt nog geen aliassen of domeinadressen.</string>
-    <string name="alias_sending_no_match">Geen aliassen komen overeen met je zoekopdracht.</string>
+    <string name="sending_addresses_title">Verzendadressen</string>
+    <string name="sending_addresses_description">Schakel verzenden uit voor een adres om te voorkomen dat er mail vanaf wordt verstuurd. Het adres blijft mail ontvangen.</string>
+    <string name="sending_addresses_search">Adressen zoeken</string>
+    <string name="sending_addresses_no_match">Geen adressen komen overeen met je zoekopdracht.</string>
+    <string name="sending_addresses_all_off">Verzenden staat uit voor elk adres, dus je kunt geen mail versturen. Schakel verzenden voor minstens één adres weer in om opnieuw te versturen.</string>
+    <string name="sending_address_ghost_alias">Ghost-alias</string>
+    <string name="compose_sender_unresolved">Kan niet bevestigen vanaf welk adres je verzendt. Probeer opnieuw te verzenden.</string>
     <string name="alias_sending_allowed">Verzenden toegestaan</string>
     <string name="alias_sending_disabled">Verzenden uitgeschakeld</string>
     <string name="alias_sending_allow_a11y">Verzenden vanaf %1$s toestaan</string>

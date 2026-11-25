@@ -3777,10 +3777,14 @@
     <string name="color_brightness">السطوع</string>
     <string name="hex_color">لون سداسي عشري</string>
     <string name="alias_sending_tab">الإرسال</string>
-    <string name="alias_sending_disabled_title">الأسماء المستعارة المعطّل إرسالها</string>
-    <string name="alias_sending_disabled_description">أوقف الإرسال لاسم مستعار حتى لا تخرج منه أي رسائل. يظل الاسم المستعار يستقبل البريد.</string>
     <string name="alias_sending_empty">ليس لديك أسماء مستعارة أو عناوين نطاق بعد.</string>
-    <string name="alias_sending_no_match">لا توجد أسماء مستعارة تطابق بحثك.</string>
+    <string name="sending_addresses_title">عناوين الإرسال</string>
+    <string name="sending_addresses_description">أوقف الإرسال لعنوان حتى لا تخرج منه أي رسائل. يظل العنوان يستقبل البريد.</string>
+    <string name="sending_addresses_search">ابحث في العناوين</string>
+    <string name="sending_addresses_no_match">لا توجد عناوين تطابق بحثك.</string>
+    <string name="sending_addresses_all_off">الإرسال متوقف لكل العناوين، لذا لا يمكنك إرسال البريد. لتتمكن من الإرسال مرة أخرى، شغّل الإرسال لعنوان واحد على الأقل.</string>
+    <string name="sending_address_ghost_alias">اسم مستعار مؤقت</string>
+    <string name="compose_sender_unresolved">تعذّر تأكيد العنوان الذي سيتم الإرسال منه. حاول الإرسال مرة أخرى.</string>
     <string name="alias_sending_allowed">الإرسال مسموح</string>
     <string name="alias_sending_disabled">الإرسال معطّل</string>
     <string name="alias_sending_allow_a11y">السماح بالإرسال من %1$s</string>

@@ -84,6 +84,7 @@ data class ScheduledSummary(
     val status: String = "pending",
     val created_at: String? = null,
     val is_external: Boolean = false,
+    val failure_reason: String? = null,
 )
 
 @Serializable
