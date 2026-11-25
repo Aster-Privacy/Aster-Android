@@ -3758,4 +3758,6 @@
     <string name="search_match_previous">이전 일치 항목</string>
     <string name="search_match_next">다음 일치 항목</string>
     <string name="search_match_clear">강조 표시 지우기</string>
+    <string name="pending_send_failed">이 메시지를 보낼 수 없습니다.</string>
+    <string name="pending_send_waiting">연결을 기다리는 중입니다. 다시 온라인 상태가 되면 이 메시지가 전송됩니다.</string>
 </resources>

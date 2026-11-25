@@ -524,7 +524,20 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         is_trashed = msg.is_trashed,
         e2e_verified = msg.e2e_verified,
         own_sealed = msg.own_sealed,
+        attachments = optimistic_message_attachments(msg),
     )
+}
+
+internal fun optimistic_message_attachments(msg: org.astermail.android.mail.ThreadMessageDecrypted): List<MessageAttachment> {
+    val pending_id = org.astermail.android.mail.optimistic_send_pending_id(msg.id) ?: return emptyList()
+    return msg.draft_attachments.mapIndexed { index, file ->
+        MessageAttachment(
+            id = org.astermail.android.mail.optimistic_attachment_id(pending_id, index),
+            filename = file.name,
+            content_type = file.mime_type,
+            size_bytes = file.size_bytes,
+        )
+    }
 }
 
 private const val PGP_ARMOR_MARKER = "-----BEGIN PGP"

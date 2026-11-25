@@ -3858,4 +3858,6 @@
     <string name="search_match_previous">Предыдущее совпадение</string>
     <string name="search_match_next">Следующее совпадение</string>
     <string name="search_match_clear">Убрать выделение</string>
+    <string name="pending_send_failed">Не удалось отправить это сообщение.</string>
+    <string name="pending_send_waiting">Ожидание подключения. Сообщение будет отправлено, когда вы снова будете в сети.</string>
 </resources>

@@ -3816,4 +3816,6 @@
     <string name="search_match_previous">Corrispondenza precedente</string>
     <string name="search_match_next">Corrispondenza successiva</string>
     <string name="search_match_clear">Rimuovi evidenziazione</string>
+    <string name="pending_send_failed">Impossibile inviare questo messaggio.</string>
+    <string name="pending_send_waiting">In attesa di connessione. Questo messaggio verrà inviato appena si riconnetterà.</string>
 </resources>

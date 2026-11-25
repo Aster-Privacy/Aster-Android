@@ -3817,4 +3817,6 @@
     <string name="search_match_previous">Coincidencia anterior</string>
     <string name="search_match_next">Coincidencia siguiente</string>
     <string name="search_match_clear">Quitar resaltado</string>
+    <string name="pending_send_failed">No se pudo enviar este mensaje.</string>
+    <string name="pending_send_waiting">Esperando conexión. Este mensaje se enviará cuando vuelvas a conectarte.</string>
 </resources>
