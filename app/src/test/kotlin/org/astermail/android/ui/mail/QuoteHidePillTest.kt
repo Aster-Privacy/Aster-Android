@@ -45,7 +45,7 @@ class QuoteHidePillTest {
         )
         assertFalse(out.contains("planted.invalid"))
         val pills = Regex("class=\"aster-quote-(?:close|cover)\"").findAll(out).count()
-        val real = Regex("href=\"asterquote:close\"").findAll(out).count()
+        val real = Regex("href=\"asterquote:close:\\d+\"").findAll(out).count()
         assertEquals(pills, real)
     }
 }

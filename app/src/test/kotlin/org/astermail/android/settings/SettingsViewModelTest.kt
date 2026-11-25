@@ -1600,14 +1600,14 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `load_sessions error sets error message`() = runTest {
+    fun `load_sessions error marks sessions load failed`() = runTest {
         coEvery { settings_api.list_sessions() } throws ApiError.UnknownError("network error")
 
         vm.load_sessions()
         advanceUntilIdle()
 
-        assertFalse(vm.state.value.is_loading)
-        assertEquals("network error", vm.state.value.error)
+        assertFalse(vm.state.value.sessions_loading)
+        assertTrue(vm.state.value.sessions_load_failed)
         assertTrue(vm.state.value.sessions.isEmpty())
     }
 
@@ -4763,10 +4763,10 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `load_sessions sets is_loading true during request`() = runTest {
+    fun `load_sessions sets sessions_loading true during request`() = runTest {
         var loading_during_request = false
         coEvery { settings_api.list_sessions() } coAnswers {
-            loading_during_request = vm.state.value.is_loading
+            loading_during_request = vm.state.value.sessions_loading
             SessionListResponse(emptyList())
         }
 
@@ -4774,7 +4774,8 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertTrue(loading_during_request)
-        assertFalse(vm.state.value.is_loading)
+        assertFalse(vm.state.value.sessions_loading)
+        assertTrue(vm.state.value.sessions_loaded)
     }
 
     @Test
