@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 data class OfferPreferencesUiState(
     val enabled: Boolean = true,
     val available: Boolean = false,
+    val settled: Boolean = false,
     val save_failed: Boolean = false,
 )
 
@@ -43,11 +44,13 @@ class OfferPreferencesViewModel @Inject constructor(
     private val store: OfferPreferencesStore,
 ) : ViewModel() {
     private val save_failed = MutableStateFlow(false)
+    private val settled = MutableStateFlow(store.state.value.loaded)
 
-    val state: StateFlow<OfferPreferencesUiState> = combine(store.state, save_failed) { preferences, failed ->
+    val state: StateFlow<OfferPreferencesUiState> = combine(store.state, save_failed, settled) { preferences, failed, load_settled ->
         OfferPreferencesUiState(
             enabled = preferences.enabled,
             available = preferences.loaded,
+            settled = load_settled || preferences.loaded,
             save_failed = failed,
         )
     }.stateIn(
@@ -56,11 +59,18 @@ class OfferPreferencesViewModel @Inject constructor(
         OfferPreferencesUiState(
             enabled = store.state.value.enabled,
             available = store.state.value.loaded,
+            settled = store.state.value.loaded,
         ),
     )
 
     fun load() {
-        viewModelScope.launch { store.load() }
+        viewModelScope.launch {
+            try {
+                store.load()
+            } finally {
+                settled.value = true
+            }
+        }
     }
 
     fun set_enabled(enabled: Boolean) {

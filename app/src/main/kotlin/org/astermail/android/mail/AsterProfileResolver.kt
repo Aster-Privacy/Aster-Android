@@ -32,6 +32,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -78,6 +79,8 @@ internal fun decode_profile_store(text: String): Map<String, PublicProfile> =
         )
     }.getOrDefault(emptyMap())
         .filterKeys { it.contains('@') && is_aster_domain(it.substringAfter('@')) }
+
+private const val MAX_PROFILE_LOOKUP_BATCH = 50
 
 fun is_aster_domain(domain: String): Boolean = ASTER_DOMAINS.contains(domain.lowercase(java.util.Locale.ROOT))
 
@@ -188,6 +191,29 @@ class AsterProfileResolver @Inject constructor(
         }
     }
 
+    suspend fun resolve_picture(email: String): String? {
+        val lower = email.trim().lowercase(java.util.Locale.ROOT)
+        resolve_pictures(listOf(lower))
+        return _profiles.value[lower]?.profile_picture?.takeIf { it.isNotBlank() }
+    }
+
+    suspend fun resolve_pictures(emails: Collection<String>) {
+        val wanted = emails.asSequence()
+            .map { it.trim().lowercase(java.util.Locale.ROOT) }
+            .filter { it.contains('@') && is_aster_domain(it.substringAfter('@', "")) }
+            .distinct()
+            .filter { _profiles.value[it]?.profile_picture.isNullOrBlank() && !recently_resolved(it) }
+            .take(MAX_PROFILE_LOOKUP_BATCH)
+            .toList()
+        if (wanted.isEmpty()) return
+        val fetched = auth_api.batch_profiles(wanted).profiles
+        _profiles.updateAndGet { current ->
+            current + wanted.associateWith { merge_profiles(current[it], fetched[it]) }
+        }
+        val now = System.currentTimeMillis()
+        for (email in wanted) resolved_at[email] = now
+    }
+
     fun request_all(emails: Collection<String>) {
         if (!org.astermail.android.api.network.should_prefetch_sender_profiles(
                 org.astermail.android.api.network.low_network_state.active(),
@@ -232,7 +258,7 @@ class AsterProfileResolver @Inject constructor(
             flush_job = null
         }
         if (to_query.isEmpty()) return
-        for (chunk in to_query.chunked(50)) {
+        for (chunk in to_query.chunked(MAX_PROFILE_LOOKUP_BATCH)) {
             try {
                 val resp = auth_api.batch_profiles(chunk)
                 val current = _profiles.value.toMutableMap()

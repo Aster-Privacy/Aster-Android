@@ -72,13 +72,7 @@ import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.mirror_in_rtl
-
-private val segment_inbox = Color(0xFF3B82F6)
-private val segment_archived = Color(0xFF22C55E)
-private val segment_sent = Color(0xFF8B5CF6)
-private val segment_drafts = Color(0xFFF59E0B)
-private val segment_spam = Color(0xFFF97316)
-private val segment_trash = Color(0xFFEF4444)
+import org.astermail.android.design.current_storage_palette
 
 internal data class storage_segment(
     val label: String,
@@ -174,7 +168,7 @@ internal fun legend_row(segment: storage_segment, total: Int, on_open: () -> Uni
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = segment.color,
+                    tint = colors.text_secondary,
                     modifier = Modifier.size(22.dp),
                 )
             } else {
@@ -194,11 +188,22 @@ internal fun legend_row(segment: storage_segment, total: Int, on_open: () -> Uni
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
             )
-            Text(
-                text = stringResource(R.string.storage_share_of_mail, share_label),
-                color = colors.text_muted,
-                fontSize = 12.sp,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (segment.count > 0) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(segment.color),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                }
+                Text(
+                    text = stringResource(R.string.storage_share_of_mail, share_label),
+                    color = colors.text_muted,
+                    fontSize = 12.sp,
+                )
+            }
         }
         Text(
             text = format_count(segment.count),
@@ -222,14 +227,13 @@ internal fun storage_usage_bar(
     fraction: Float,
     fallback_color: Color,
 ) {
-    val colors = AsterMaterial.colors
     val visible = segments.filter { it.count > 0 }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(12.dp)
             .clip(RoundedCornerShape(999.dp))
-            .background(colors.text_primary.copy(alpha = progress_track_alpha))
+            .background(current_storage_palette().track)
             .testTag("storage_usage_bar"),
     ) {
         if (fraction > 0f) {
@@ -296,29 +300,30 @@ internal fun storage_legend(segments: List<storage_segment>) {
 @Composable
 internal fun storage_segments(stats: MailUserStatsResponse): List<storage_segment> {
     val distribution = compute_distribution(stats)
+    val palette = current_storage_palette()
     return listOf(
         storage_segment(
-            stringResource(R.string.folder_inbox), distribution.inbox, segment_inbox,
+            stringResource(R.string.folder_inbox), distribution.inbox, palette.slots[0],
             "inbox", TablerIcons.Inbox,
         ),
         storage_segment(
-            stringResource(R.string.archived), distribution.archived, segment_archived,
+            stringResource(R.string.archived), distribution.archived, palette.slots[1],
             "archive", TablerIcons.Archive,
         ),
         storage_segment(
-            stringResource(R.string.sent), distribution.sent, segment_sent,
+            stringResource(R.string.sent), distribution.sent, palette.slots[2],
             "sent", TablerIcons.Send.auto_mirrored(),
         ),
         storage_segment(
-            stringResource(R.string.folder_drafts), distribution.drafts, segment_drafts,
+            stringResource(R.string.folder_drafts), distribution.drafts, palette.slots[3],
             "drafts", TablerIcons.FileText,
         ),
         storage_segment(
-            stringResource(R.string.folder_spam), distribution.spam, segment_spam,
+            stringResource(R.string.folder_spam), distribution.spam, palette.slots[4],
             "spam", TablerIcons.AlertOctagon,
         ),
         storage_segment(
-            stringResource(R.string.folder_trash), distribution.trash, segment_trash,
+            stringResource(R.string.folder_trash), distribution.trash, palette.slots[5],
             "trash", TablerIcons.Trash,
         ),
     )
@@ -473,7 +478,7 @@ internal fun storage_cleanup_section(
         if (trash_count > 0) {
             cleanup_row(
                 icon = TablerIcons.Trash,
-                tint = segment_trash,
+                tint = colors.text_secondary,
                 title = trash_label,
                 subtitle = stringResource(R.string.storage_trash_hint),
                 count = trash_count,
@@ -487,7 +492,7 @@ internal fun storage_cleanup_section(
         if (spam_count > 0) {
             cleanup_row(
                 icon = TablerIcons.AlertOctagon,
-                tint = segment_spam,
+                tint = colors.text_secondary,
                 title = spam_label,
                 subtitle = stringResource(R.string.storage_spam_hint),
                 count = spam_count,

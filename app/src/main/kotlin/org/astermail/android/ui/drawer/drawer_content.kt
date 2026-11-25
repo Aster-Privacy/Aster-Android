@@ -326,6 +326,8 @@ fun DrawerContent(
     initial_labels_collapsed: Boolean = false,
     initial_aliases_collapsed: Boolean = false,
     initial_categories_collapsed: Boolean = false,
+    initial_folders_show_all: Boolean = false,
+    initial_aliases_show_all: Boolean = false,
     preferences_loaded: Boolean = false,
     totp_enabled: Boolean = false,
     purge_locked_folder_default: Boolean = false,
@@ -360,9 +362,23 @@ fun DrawerContent(
     var categories_expanded by rememberSaveable {
         mutableStateOf(!sidebar_prefs.getBoolean(key_categories_collapsed, false))
     }
-    var aliases_show_all by remember { mutableStateOf(false) }
+    var stored_aliases_show_all by remember(current_account_id) {
+        mutableStateOf(sidebar_show_all_store.load(sidebar_prefs_context, sidebar_show_all_section.aliases, current_account_id))
+    }
+    var stored_folders_show_all by remember(current_account_id) {
+        mutableStateOf(sidebar_show_all_store.load(sidebar_prefs_context, sidebar_show_all_section.folders, current_account_id))
+    }
+    val aliases_show_all = stored_aliases_show_all ?: initial_aliases_show_all
     val aliases_collapsed_count = 5
-    var folders_show_all by rememberSaveable { mutableStateOf(false) }
+    val folders_show_all = stored_folders_show_all ?: initial_folders_show_all
+    val set_show_all: (sidebar_show_all_section, Boolean) -> Unit = { section, show_all ->
+        when (section) {
+            sidebar_show_all_section.folders -> stored_folders_show_all = show_all
+            sidebar_show_all_section.aliases -> stored_aliases_show_all = show_all
+        }
+        sidebar_show_all_store.save(sidebar_prefs_context, section, current_account_id, show_all)
+        on_sidebar_toggle(section.sync_key, show_all)
+    }
     var expanded_folder_tokens by remember(current_account_id) {
         mutableStateOf(folder_expansion_store.load(sidebar_prefs_context, current_account_id))
     }
@@ -742,7 +758,7 @@ fun DrawerContent(
                                                     pluralStringResource(R.plurals.show_n_more_folders, remaining, remaining)
                                                 },
                                                 expanded = folders_show_all,
-                                                on_click = { folders_show_all = !folders_show_all },
+                                                on_click = { set_show_all(sidebar_show_all_section.folders, !folders_show_all) },
                                             )
                                         }
                                     }
@@ -887,7 +903,7 @@ fun DrawerContent(
                                                     pluralStringResource(R.plurals.show_n_more_aliases, remaining, remaining)
                                                 },
                                                 expanded = aliases_show_all,
-                                                on_click = { aliases_show_all = !aliases_show_all },
+                                                on_click = { set_show_all(sidebar_show_all_section.aliases, !aliases_show_all) },
                                             )
                                         }
                                     }

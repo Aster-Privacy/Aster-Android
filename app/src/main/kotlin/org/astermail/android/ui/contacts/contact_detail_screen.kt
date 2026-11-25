@@ -99,6 +99,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
+import org.astermail.android.contacts.ContactEventKind
 import org.astermail.android.design.SquircleShape
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterDuration
@@ -493,9 +494,21 @@ fun ContactDetailScreen(
                 }
             }
 
-            if (contact.birthday.isNotBlank()) {
-                detail_section(stringResource(R.string.birthday)) {
-                    DetailRow(stringResource(R.string.date), contact_date_label(contact.birthday))
+            val event_rows = remember(contact.events, contact.birthday) { contact.event_entries() }
+            val raw_birthday = contact.birthday.takeIf { raw ->
+                raw.isNotBlank() && event_rows.none { it.kind == ContactEventKind.BIRTHDAY }
+            }
+            if (event_rows.isNotEmpty() || raw_birthday != null) {
+                val event_names = event_kind_names()
+                detail_section(stringResource(R.string.contact_events)) {
+                    event_rows.forEachIndexed { index, event ->
+                        if (index > 0) detail_row_divider()
+                        DetailRow(event_display_name(event, event_names), contact_date_label(event.date))
+                    }
+                    if (raw_birthday != null) {
+                        if (event_rows.isNotEmpty()) detail_row_divider()
+                        DetailRow(stringResource(R.string.birthday), contact_date_label(raw_birthday))
+                    }
                 }
             }
 

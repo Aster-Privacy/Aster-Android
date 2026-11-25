@@ -104,7 +104,8 @@ fun NotificationsScreen(
     val prefs = state.preferences
     val context = LocalContext.current
     val time_picker_theme = picker_theme_res()
-    val quiet_hours_locked = plan_vm.is_feature_locked("has_quiet_hours") && !plan_state.is_loading
+    val quiet_hours_locked = plan_state.limits != null && plan_vm.is_feature_locked("has_quiet_hours")
+    val plan_pending = plan_state.limits == null && plan_state.is_loading
 
     LaunchedEffect(Unit) { vm.load_preferences() }
     LaunchedEffect(Unit) { vm.load_product_updates() }
@@ -133,21 +134,14 @@ fun NotificationsScreen(
     var persistent_push by remember {
         mutableStateOf(org.astermail.android.notifications.PersistentPushService.is_enabled(context))
     }
-    fun read_battery_exempt(): Boolean = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        val pm = context.getSystemService(android.content.Context.POWER_SERVICE) as? PowerManager
-        pm?.isIgnoringBatteryOptimizations(context.packageName) == true
-    } else {
-        true
-    }
-    val is_battery_exempt = remember { mutableStateOf(read_battery_exempt()) }
+    val is_battery_exempt = remember { mutableStateOf(battery_exempt_now(context)) }
     val notifications_allowed = remember {
         mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled())
     }
     fun refresh_battery_exempt() {
-        is_battery_exempt.value = read_battery_exempt()
+        is_battery_exempt.value = battery_exempt_now(context)
         notifications_allowed.value = NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
-    LaunchedEffect(Unit) { refresh_battery_exempt() }
     val lifecycle_owner = LocalLifecycleOwner.current
     androidx.compose.runtime.DisposableEffect(lifecycle_owner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -298,6 +292,14 @@ fun NotificationsScreen(
         preferences_save_error_banner()
         if (prefs == null || !state.preferences_authoritative) {
             preferences_load_placeholder()
+        } else if (!notifications_screen_ready(
+                preferences_ready = true,
+                product_updates_settled = state.product_updates_settled,
+                offers_settled = !org.astermail.android.BuildConfig.SPECIAL_OFFER || offer_prefs.settled,
+                plan_pending = plan_pending,
+            )
+        ) {
+            settings_pending_spinner()
         } else {
             section_label(stringResource(R.string.channels))
             AsterCard(modifier = Modifier.fillMaxWidth()) {
@@ -503,4 +505,17 @@ fun NotificationsScreen(
         }
         v_gap(AsterSpacing.xxl)
     }
+}
+
+internal fun notifications_screen_ready(
+    preferences_ready: Boolean,
+    product_updates_settled: Boolean,
+    offers_settled: Boolean,
+    plan_pending: Boolean,
+): Boolean = preferences_ready && product_updates_settled && offers_settled && !plan_pending
+
+private fun battery_exempt_now(context: android.content.Context): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true
+    val pm = context.getSystemService(android.content.Context.POWER_SERVICE) as? PowerManager
+    return pm?.isIgnoringBatteryOptimizations(context.packageName) == true
 }

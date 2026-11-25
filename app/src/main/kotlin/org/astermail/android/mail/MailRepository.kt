@@ -767,6 +767,12 @@ class MailRepository @Inject constructor(
 
     fun keys_settled(): Boolean = session_key_store.keys_settled()
 
+    suspend fun await_decrypt_keys(timeout_ms: Long): Boolean = await_keys_settled(
+        settled = { session_key_store.keys_settled() },
+        locked = { session_key_store.is_locked() },
+        timeout_ms = timeout_ms,
+    )
+
     suspend fun settle_pending_rows(items: List<InboxItem>): Map<String, InboxItem> =
         withContext(Dispatchers.IO) {
             val raw = items.filter(::is_envelope_pending_row)

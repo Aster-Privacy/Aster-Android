@@ -354,6 +354,36 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `product updates stay unsettled until the subscription loads`() = runTest {
+        val response = CompletableDeferred<org.astermail.android.api.preferences.ProductUpdatesResponse>()
+        coEvery { preferences_api.get_product_updates() } coAnswers { response.await() }
+
+        vm.load_product_updates()
+        runCurrent()
+        assertFalse(vm.state.value.product_updates_settled)
+
+        response.complete(org.astermail.android.api.preferences.ProductUpdatesResponse(subscribed = false))
+        advanceUntilIdle()
+
+        val state = vm.state.value
+        assertTrue(state.product_updates_settled)
+        assertTrue(state.product_updates_available)
+        assertFalse(state.product_updates)
+    }
+
+    @Test
+    fun `product updates settle without the row when the load fails`() = runTest {
+        coEvery { preferences_api.get_product_updates() } throws IOException("offline")
+
+        vm.load_product_updates()
+        advanceUntilIdle()
+
+        val state = vm.state.value
+        assertTrue(state.product_updates_settled)
+        assertFalse(state.product_updates_available)
+    }
+
+    @Test
     fun `load_profile fetches user info`() = runTest {
         val user = UserInfo(
             user_id = "u1",

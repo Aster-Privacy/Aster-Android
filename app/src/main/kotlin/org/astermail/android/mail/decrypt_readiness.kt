@@ -115,3 +115,20 @@ fun replace_settled_items(items: List<InboxItem>, settled: Map<String, InboxItem
         }
     }
 }
+
+suspend fun await_keys_settled(
+    settled: () -> Boolean,
+    locked: () -> Boolean,
+    timeout_ms: Long,
+    poll_ms: Long = 100L,
+): Boolean {
+    if (locked()) return false
+    if (settled()) return true
+    return kotlinx.coroutines.withTimeoutOrNull(timeout_ms) {
+        while (!settled()) {
+            if (locked()) return@withTimeoutOrNull false
+            kotlinx.coroutines.delay(poll_ms)
+        }
+        true
+    } ?: false
+}

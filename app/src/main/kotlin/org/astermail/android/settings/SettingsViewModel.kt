@@ -336,6 +336,7 @@ data class SettingsUiState(
     val default_sender_loaded: Boolean = false,
     val product_updates: Boolean = true,
     val product_updates_available: Boolean = false,
+    val product_updates_settled: Boolean = false,
 )
 
 enum class SaveStatus { IDLE, SAVING, SAVED, ERROR }
@@ -820,6 +821,9 @@ class SettingsViewModel @Inject constructor(
         val now = System.currentTimeMillis()
         if (!force && now - last_product_updates_load_ms < PREFERENCES_TTL_MS) return
         last_product_updates_load_ms = now
+        if (!_state.value.product_updates_available) {
+            _state.value = _state.value.copy(product_updates_settled = false)
+        }
         viewModelScope.launch {
             try {
                 val response = preferences_api.get_product_updates()
@@ -831,6 +835,8 @@ class SettingsViewModel @Inject constructor(
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 last_product_updates_load_ms = 0L
                 if (org.astermail.android.BuildConfig.DEBUG) android.util.Log.w("SettingsVM", "load_product_updates", t)
+            } finally {
+                _state.value = _state.value.copy(product_updates_settled = true)
             }
         }
     }
@@ -7577,6 +7583,8 @@ class SettingsViewModel @Inject constructor(
             "sidebar_labels_collapsed" -> current.copy(sidebar_labels_collapsed = value)
             "sidebar_aliases_collapsed" -> current.copy(sidebar_aliases_collapsed = value)
             "sidebar_categories_collapsed" -> current.copy(sidebar_categories_collapsed = value)
+            "sidebar_folders_show_all" -> current.copy(sidebar_folders_show_all = value)
+            "sidebar_aliases_show_all" -> current.copy(sidebar_aliases_show_all = value)
             else -> return
         }
         _state.value = _state.value.copy(preferences = updated)

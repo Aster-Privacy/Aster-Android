@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_events">الأحداث</string>
+    <string name="contact_event_anniversary">ذكرى سنوية</string>
+    <string name="contact_add_event">إضافة حدث</string>
+    <string name="contact_remove_event">إزالة الحدث</string>
+    <string name="contact_event_type">نوع الحدث</string>
+    <string name="contact_event_year_range">أدخل سنة من %1$d إلى %2$d</string>
+    <string name="contacts_add_to_favorites">إضافة إلى المفضلة</string>
+    <string name="contacts_remove_from_favorites">إزالة من المفضلة</string>
+    <string name="contacts_favorites_failed">تعذّر تحديث المفضلة. حاول مرة أخرى.</string>
+    <string name="contacts_recently_added">أُضيفت مؤخرًا</string>
+    <string name="contacts_today">اليوم</string>
+</resources>

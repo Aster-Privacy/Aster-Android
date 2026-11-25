@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contact_events">События</string>
+    <string name="contact_event_anniversary">Годовщина</string>
+    <string name="contact_add_event">Добавить событие</string>
+    <string name="contact_remove_event">Удалить событие</string>
+    <string name="contact_event_type">Тип события</string>
+    <string name="contact_event_year_range">Введите год от %1$d до %2$d</string>
+    <string name="contacts_add_to_favorites">Добавить в избранное</string>
+    <string name="contacts_remove_from_favorites">Удалить из избранного</string>
+    <string name="contacts_favorites_failed">Не удалось обновить избранное. Повторите попытку.</string>
+    <string name="contacts_recently_added">Недавно добавленные</string>
+    <string name="contacts_today">Сегодня</string>
+</resources>

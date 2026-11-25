@@ -690,6 +690,7 @@ private fun build_csv_contact(
 
     var birthday = singles["birthday"].orEmpty()
     val date_entries = mutableListOf<Pair<String, String>>()
+    val csv_events = mutableListOf<ContactEvent>()
     for (slot in events.values) {
         val label = clean_label(slot.label ?: slot.implied_type)
         for (date in slot.values) {
@@ -698,8 +699,10 @@ private fun build_csv_contact(
                 continue
             }
             date_entries.add(date to mapped_type(DATE_TYPES, listOf(label), "other"))
+            event_from_csv(slot.label ?: slot.implied_type.orEmpty(), date)?.let { csv_events.add(it) }
         }
     }
+    val clean_events = normalize_events(csv_events)
 
     val related_people = mutableListOf<ContactRelation>()
     for (slot in relations.values) {
@@ -781,6 +784,7 @@ private fun build_csv_contact(
         groups = group_names,
         raw_json = if (raw.length() > 0) raw.toString() else "",
         relations = clean_relations.takeIf { it.isNotEmpty() },
+        events = clean_events.takeIf { it.isNotEmpty() },
     ).with_typed_fields(
         emails = ordered_emails.map { (value, type) -> ContactEntry(value, type) },
         phones = ordered_phones.map { (value, type) -> ContactEntry(value, type) },

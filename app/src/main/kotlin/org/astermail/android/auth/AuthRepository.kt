@@ -2230,6 +2230,7 @@ class AuthRepository @Inject constructor(
             if (remove_account) runCatching { account_store.remove(current_id) }
             if (remove_account) {
                 runCatching { org.astermail.android.ui.drawer.folder_expansion_store.clear(context, current_id) }
+                runCatching { org.astermail.android.ui.drawer.sidebar_show_all_store.clear(context, current_id) }
             }
         }
         if (restore_first_candidate(current_id)) return@runCatching

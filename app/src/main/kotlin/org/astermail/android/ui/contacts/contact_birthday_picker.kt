@@ -86,18 +86,22 @@ internal fun ContactBirthdayField(
     value: String,
     on_change: (String) -> Unit,
     modifier: Modifier = Modifier,
+    year_range: IntRange? = null,
+    show_label: Boolean = true,
 ) {
     val colors = AsterMaterial.colors
     var show_picker by rememberSaveable { mutableStateOf(false) }
     val display = contact_date_label(value)
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            color = colors.text_secondary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-        )
-        Spacer(Modifier.height(6.dp))
+        if (show_label) {
+            Text(
+                text = label,
+                color = colors.text_secondary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Spacer(Modifier.height(6.dp))
+        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -120,6 +124,7 @@ internal fun ContactBirthdayField(
         ContactBirthdayDialog(
             initial = value,
             title = label,
+            year_range = year_range,
             on_dismiss = { show_picker = false },
             on_save = {
                 on_change(it)
@@ -135,6 +140,7 @@ private fun ContactBirthdayDialog(
     title: String,
     on_dismiss: () -> Unit,
     on_save: (String) -> Unit,
+    year_range: IntRange? = null,
 ) {
     val parts = remember(initial) { ContactDates.parse(initial) }
     var month by rememberSaveable { mutableIntStateOf(parts?.month ?: 0) }
@@ -142,9 +148,10 @@ private fun ContactBirthdayDialog(
     var year_text by rememberSaveable { mutableStateOf(parts?.year?.toString().orEmpty()) }
     val year_result = ContactDates.picker_year(year_text)
     val year = year_result.getOrNull()
+    val year_out_of_range = year != null && year_range != null && year !in year_range
     val max_day = if (month == 0) 31 else ContactDates.days_in_month(year, month)
     val clamped_day = if (day > max_day) 0 else day
-    val result = if (month == 0 || clamped_day == 0) null else ContactDates.from_picker(month, clamped_day, year_text)
+    val result = if (month == 0 || clamped_day == 0 || year_out_of_range) null else ContactDates.from_picker(month, clamped_day, year_text)
     val locale = LocalConfiguration.current.locales[0]
     val month_names = remember(locale) {
         Month.values().map { it.getDisplayName(TextStyle.SHORT_STANDALONE, locale) }
@@ -176,7 +183,12 @@ private fun ContactBirthdayDialog(
                     onValueChange = { text -> year_text = text.filter { it in '0'..'9' }.take(4) },
                     label = stringResource(R.string.contact_birthday_year_optional),
                     helper_text = stringResource(R.string.contact_birthday_year_hint),
-                    error_text = if (year_result.isFailure) stringResource(R.string.contact_birthday_year_invalid) else null,
+                    error_text = when {
+                        year_result.isFailure -> stringResource(R.string.contact_birthday_year_invalid)
+                        year_out_of_range && year_range != null ->
+                            stringResource(R.string.contact_event_year_range, year_range.first, year_range.last)
+                        else -> null
+                    },
                     keyboard_options = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
                 )
             }

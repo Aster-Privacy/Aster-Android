@@ -360,6 +360,7 @@ fun AsterTheme(
     CompositionLocalProvider(
         local_aster_colors provides semantic,
         local_dyslexia_font provides dyslexia_font,
+        local_high_contrast provides high_contrast,
     ) {
         MaterialTheme(
             colorScheme = color_scheme,
