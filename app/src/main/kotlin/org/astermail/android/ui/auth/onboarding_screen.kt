@@ -167,9 +167,10 @@ fun OnboardingScreen(
                     color = colors.text_tertiary,
                     fontSize = 15.sp,
                     modifier = Modifier
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(percent = 50))
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
+                            indication = androidx.compose.material3.ripple(),
                             onClick = on_skip,
                         )
                         .padding(horizontal = 12.dp, vertical = 10.dp),

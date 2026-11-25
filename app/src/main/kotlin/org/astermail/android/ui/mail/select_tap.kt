@@ -23,6 +23,8 @@ package org.astermail.android.ui.mail
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
@@ -37,6 +39,7 @@ import androidx.compose.ui.semantics.semantics
 fun Modifier.select_tap(
     click_label: String,
     on_tap: () -> Unit,
+    interaction_source: MutableInteractionSource? = null,
 ): Modifier {
     val current_tap = rememberUpdatedState(on_tap)
     return this
@@ -47,13 +50,15 @@ fun Modifier.select_tap(
                 true
             }
         }
-        .pointerInput(Unit) {
+        .pointerInput(interaction_source) {
             val slop = viewConfiguration.touchSlop
             awaitEachGesture {
                 val down = awaitFirstDown(
                     requireUnconsumed = false,
                     pass = PointerEventPass.Initial,
                 )
+                val press = PressInteraction.Press(down.position)
+                interaction_source?.tryEmit(press)
                 var moved = false
                 var released = false
                 while (true) {
@@ -68,7 +73,12 @@ fun Modifier.select_tap(
                         break
                     }
                 }
-                if (released && !moved) current_tap.value()
+                if (released && !moved) {
+                    interaction_source?.tryEmit(PressInteraction.Release(press))
+                    current_tap.value()
+                } else {
+                    interaction_source?.tryEmit(PressInteraction.Cancel(press))
+                }
             }
         }
 }

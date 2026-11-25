@@ -230,7 +230,11 @@ fun EmailRow(
             .semantics { stateDescription = read_state_label }
             .then(
                 if (select_mode) {
-                    Modifier.select_tap(click_label = select_tap_label, on_tap = on_click)
+                    Modifier.select_tap(
+                        click_label = select_tap_label,
+                        on_tap = on_click,
+                        interaction_source = interaction_source,
+                    )
                 } else {
                     Modifier
                 },
@@ -245,7 +249,7 @@ fun EmailRow(
             .drawBehind { drawRect(row_bg.value) }
             .then(
                 if (select_mode) {
-                    Modifier
+                    Modifier.indication(interaction_source, androidx.compose.material3.ripple())
                 } else {
                     Modifier
                         .row_tap_guard(tap_guard, refresh_engaged)
@@ -591,7 +595,11 @@ fun ThreadInboxRow(
             .fillMaxWidth()
             .then(
                 if (select_mode) {
-                    Modifier.select_tap(click_label = select_tap_label, on_tap = on_click)
+                    Modifier.select_tap(
+                        click_label = select_tap_label,
+                        on_tap = on_click,
+                        interaction_source = interaction_source,
+                    )
                 } else {
                     Modifier
                 },
@@ -614,7 +622,7 @@ fun ThreadInboxRow(
             }
             .then(
                 if (select_mode) {
-                    Modifier
+                    Modifier.indication(interaction_source, androidx.compose.material3.ripple())
                 } else {
                     Modifier
                         .row_tap_guard(tap_guard, refresh_engaged)

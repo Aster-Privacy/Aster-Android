@@ -201,7 +201,7 @@ fun star_toggle_icon(
                 .combinedClickable(
                     hapticFeedbackEnabled = false,
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
+                    indication = androidx.compose.material3.ripple(),
                     onClick = onClick,
                     onLongClick = {
                         if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
