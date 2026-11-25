@@ -221,8 +221,13 @@ object StorageModule {
     }
 
     private fun mark_database_opened(meta: SharedPreferences, database_file: java.io.File?) {
-        runCatching { meta.edit().putBoolean(key_sqlcipher_migrated, true).commit() }
-        runCatching { meta.edit().putInt(key_db_open_failures, 0).commit() }
+        val migrated = runCatching { meta.getBoolean(key_sqlcipher_migrated, false) }.getOrDefault(false)
+        val failures = runCatching { meta.getInt(key_db_open_failures, 0) }.getOrDefault(-1)
+        if (!migrated || failures != 0) {
+            runCatching {
+                meta.edit().putBoolean(key_sqlcipher_migrated, true).putInt(key_db_open_failures, 0).commit()
+            }
+        }
         database_file?.let { file -> runCatching { discard_set_aside_database(file) } }
     }
 

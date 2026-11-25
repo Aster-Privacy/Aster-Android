@@ -2455,6 +2455,10 @@ fun InboxScreen(
                 androidx.compose.runtime.SideEffect {
                     if (first_frame_ready) org.astermail.android.ui.common.first_frame_gate.mark_ready()
                 }
+                androidx.activity.compose.ReportDrawnWhen {
+                    !skeleton_now && !rows_deriving && skeleton_phase == SkeletonPhase.content &&
+                        state_matches_folder && (threads.isNotEmpty() || !inbox_state.is_loading)
+                }
                 val handoff = Modifier.skeleton_handoff(skeleton_phase)
                 val row_geometry = remember_row_geometry(skeleton_geometry_of(settings_state.preferences))
                 val record_row_height = remember_row_height_recorder()

@@ -183,6 +183,8 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         runCatching { org.astermail.android.ui.common.apply_app_night_mode(this) }
         start_secure_prefs_warm()
         start_text_pattern_warm()
+        start_category_patterns_warm()
+        runCatching { start_inbox_prefetch() }
         org.astermail.android.ui.theme.custom_theme_image.init(this)
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             runCatching { org.astermail.android.ui.theme.theme_manifest.load_cached(this@AsterApplication) }
@@ -267,6 +269,19 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
                     .get()
             }
         }.apply { name = "aster-db-open" }.start()
+    }
+
+    private fun start_category_patterns_warm() {
+        Thread {
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND)
+            runCatching { org.astermail.android.mail.warm_category_patterns() }
+        }.apply { name = "aster-category-warm" }.start()
+    }
+
+    private fun start_inbox_prefetch() {
+        EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
+            .folder_cache_store()
+            .prefetch(org.astermail.android.mail.launch_folder_inbox)
     }
 
     private fun start_deferred_startup() {
@@ -383,6 +398,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         fun account_store(): org.astermail.android.storage.AccountStore
         fun session_key_store(): org.astermail.android.storage.SessionKeyStore
         fun database(): dagger.Lazy<org.astermail.android.storage.search.AsterDatabase>
+        fun folder_cache_store(): org.astermail.android.mail.FolderCacheStore
         fun aster_profile_resolver(): org.astermail.android.mail.AsterProfileResolver
         fun contacts_repository(): dagger.Lazy<org.astermail.android.contacts.ContactsRepository>
         fun labels_api(): org.astermail.android.api.labels.LabelsApi

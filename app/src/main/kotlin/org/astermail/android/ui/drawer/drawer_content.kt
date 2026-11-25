@@ -2449,21 +2449,23 @@ internal fun workspace_switcher_sheet(
                             fontSize = 13.sp,
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            modifier = Modifier.clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                            ) {
-                                if (current_display_email.isNotBlank()) {
-                                    copy_action(
-                                        email_clip_label,
-                                        current_display_email,
-                                        org.astermail.android.ui.common.copied_toast_text(
-                                            copy_toast_context,
+                            modifier = Modifier
+                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = androidx.compose.material3.ripple(),
+                                ) {
+                                    if (current_display_email.isNotBlank()) {
+                                        copy_action(
+                                            email_clip_label,
                                             current_display_email,
-                                        ),
-                                    )
-                                }
-                            },
+                                            org.astermail.android.ui.common.copied_toast_text(
+                                                copy_toast_context,
+                                                current_display_email,
+                                            ),
+                                        )
+                                    }
+                                },
                         )
                     }
                 }

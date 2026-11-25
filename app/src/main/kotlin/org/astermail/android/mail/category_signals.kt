@@ -1063,138 +1063,160 @@ val BULK_SENDER_LOCALPARTS: Set<String> = setOf(
     "otp",
 )
 
-val PROMOTIONS_SUBJECT_PATTERNS: List<Regex> = listOf(
-    Regex("""\b\d{1,3}\s*%\s*off\b""", RegexOption.IGNORE_CASE),
-    Regex("""\b\d{1,3}\s*%\s*(?:back|cash\s*back)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bsale\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bdeal(s)?\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bdiscount(s)?\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bcoupon(s)?\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bpromo(?:\s*code)?\b""", RegexOption.IGNORE_CASE),
-    Regex("""\boffer(s)?\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bsave\s+(?:up\s+to\s+)?\$?\d""", RegexOption.IGNORE_CASE),
-    Regex("""\blimited\s+time\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bblack\s+friday\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bcyber\s+monday\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bflash\s+sale\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bfree\s+shipping\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bnew\s+arrivals?\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bexclusive\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bclearance\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bdon'?t\s+miss\b""", RegexOption.IGNORE_CASE),
-    Regex("""\blast\s+chance\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bact\s+now\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bshop\s+now\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bbuy\s+(?:now|one)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bbogo\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bmembers?\s+only\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bearly\s+access\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bgiveaway\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bbest\s+(?:price|deal)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\blowest\s+price\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bhot\s+deal\b""", RegexOption.IGNORE_CASE),
-    Regex("""\btoday\s+only\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bends\s+(?:tonight|soon|today)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bweekend\s+sale\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bsubscribe\s+and\s+save\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bfinal\s+hours\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bdoorbuster\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bhurry\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bwhile\s+supplies\s+last\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bonly\s+\$\d""", RegexOption.IGNORE_CASE),
-    Regex("""\bfree\s+gift\b""", RegexOption.IGNORE_CASE),
-    Regex("""\brewards?\s+(?:points|await)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bvip\s+(?:access|sale)\b""", RegexOption.IGNORE_CASE),
-)
+private val promotions_subject_patterns_holder: Lazy<List<Regex>> = lazy {
+    listOf(
+        Regex("""\b\d{1,3}\s*%\s*off\b""", RegexOption.IGNORE_CASE),
+        Regex("""\b\d{1,3}\s*%\s*(?:back|cash\s*back)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bsale\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bdeal(s)?\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bdiscount(s)?\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bcoupon(s)?\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bpromo(?:\s*code)?\b""", RegexOption.IGNORE_CASE),
+        Regex("""\boffer(s)?\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bsave\s+(?:up\s+to\s+)?\$?\d""", RegexOption.IGNORE_CASE),
+        Regex("""\blimited\s+time\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bblack\s+friday\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bcyber\s+monday\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bflash\s+sale\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bfree\s+shipping\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bnew\s+arrivals?\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bexclusive\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bclearance\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bdon'?t\s+miss\b""", RegexOption.IGNORE_CASE),
+        Regex("""\blast\s+chance\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bact\s+now\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bshop\s+now\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bbuy\s+(?:now|one)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bbogo\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bmembers?\s+only\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bearly\s+access\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bgiveaway\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bbest\s+(?:price|deal)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\blowest\s+price\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bhot\s+deal\b""", RegexOption.IGNORE_CASE),
+        Regex("""\btoday\s+only\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bends\s+(?:tonight|soon|today)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bweekend\s+sale\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bsubscribe\s+and\s+save\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bfinal\s+hours\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bdoorbuster\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bhurry\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bwhile\s+supplies\s+last\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bonly\s+\$\d""", RegexOption.IGNORE_CASE),
+        Regex("""\bfree\s+gift\b""", RegexOption.IGNORE_CASE),
+        Regex("""\brewards?\s+(?:points|await)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bvip\s+(?:access|sale)\b""", RegexOption.IGNORE_CASE),
+    )
+}
 
-val EMOJI_SUBJECT_PATTERN: Regex = Regex("""[\x{1F300}-\x{1FAFF}]""")
+val PROMOTIONS_SUBJECT_PATTERNS: List<Regex> by promotions_subject_patterns_holder
 
-val UPDATES_SUBJECT_PATTERNS: List<Regex> = listOf(
-    Regex("""\border(?:\s*#|\s+(?:confirm|number|placed|update))""", RegexOption.IGNORE_CASE),
-    Regex("""\byour\s+order\b""", RegexOption.IGNORE_CASE),
-    Regex("""\breceipt\b""", RegexOption.IGNORE_CASE),
-    Regex("""\binvoice\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bpayment\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bshipped\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bshipping\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bout\s+for\s+delivery\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bdelivered\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bdelivery\b""", RegexOption.IGNORE_CASE),
-    Regex("""\btracking\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bconfirm(ation|ed)?\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bbooking\b""", RegexOption.IGNORE_CASE),
-    Regex("""\breservation\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bitinerary\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bboarding\s+pass\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bcheck[\s-]?in\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bappointment\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bstatement\b""", RegexOption.IGNORE_CASE),
-    Regex("""\brenewal\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bsecurity\s+(?:alert|code|notification)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bnew\s+(?:sign[\s-]?in|login|device)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bverif(?:y|ication)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bone[\s-]?time\s+(?:code|password|passcode)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\botp\b""", RegexOption.IGNORE_CASE),
-    Regex("""\byour\s+code\s+is\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bpassword\s+(?:reset|changed)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\b2fa\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bsign[\s-]?in\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bsubscription\s+(?:renew|expir)""", RegexOption.IGNORE_CASE),
-    Regex("""\baccount\s+(?:update|notice|alert)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bterms\s+of\s+service\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bprivacy\s+policy\b""", RegexOption.IGNORE_CASE),
-)
+private val emoji_subject_pattern_holder: Lazy<Regex> = lazy { Regex("""[\x{1F300}-\x{1FAFF}]""") }
 
-val FINANCE_SUBJECT_PATTERNS: List<Regex> = listOf(
-    Regex("""\b(?:interest|base|savings|bank|borrowing)\s+rates?\b""", RegexOption.IGNORE_CASE),
-    Regex("""\brate\s+(?:change|changes|cut|cuts|rise|rises|increase|decrease)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bpension\b""", RegexOption.IGNORE_CASE),
-    Regex("""\byour\s+statement\b""", RegexOption.IGNORE_CASE),
-    Regex("""\baccount\s+balance\b""", RegexOption.IGNORE_CASE),
-    Regex("""\btransaction\s+(?:alert|declined|approved)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bpayment\s+(?:received|sent|due|failed)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bautopay\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bdirect\s+deposit\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bwire\s+transfer\b""", RegexOption.IGNORE_CASE),
-    Regex("""\btax\s+(?:document|form|refund)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bcredit\s+score\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bfraud\s+alert\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bsuspicious\s+(?:activity|charge)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\blow\s+balance\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bportfolio\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bdividend\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bmortgage\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bloan\s+(?:payment|approved)\b""", RegexOption.IGNORE_CASE),
-)
+val EMOJI_SUBJECT_PATTERN: Regex by emoji_subject_pattern_holder
 
-val TRAVEL_SUBJECT_PATTERNS: List<Regex> = listOf(
-    Regex("""\bflight\s+(?:confirmation|itinerary|change|delay|cancell?ed)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bcheck[\s-]?in\s+(?:now|open|reminder)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bboarding\s+pass\b""", RegexOption.IGNORE_CASE),
-    Regex("""\byour\s+trip\b""", RegexOption.IGNORE_CASE),
-    Regex("""\byour\s+reservation\b""", RegexOption.IGNORE_CASE),
-    Regex("""\byour\s+stay\b""", RegexOption.IGNORE_CASE),
-    Regex("""\brental\s+car\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bgate\s+change\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bdeparture\b""", RegexOption.IGNORE_CASE),
-    Regex("""\barrival\b""", RegexOption.IGNORE_CASE),
-    Regex("""\byour\s+ride\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bdriver\s+(?:is\s+on\s+the\s+way|assigned)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\byour\s+order\s+is\s+on\s+its\s+way\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bfood\s+delivery\b""", RegexOption.IGNORE_CASE),
-)
+private val updates_subject_patterns_holder: Lazy<List<Regex>> = lazy {
+    listOf(
+        Regex("""\border(?:\s*#|\s+(?:confirm|number|placed|update))""", RegexOption.IGNORE_CASE),
+        Regex("""\byour\s+order\b""", RegexOption.IGNORE_CASE),
+        Regex("""\breceipt\b""", RegexOption.IGNORE_CASE),
+        Regex("""\binvoice\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bpayment\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bshipped\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bshipping\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bout\s+for\s+delivery\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bdelivered\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bdelivery\b""", RegexOption.IGNORE_CASE),
+        Regex("""\btracking\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bconfirm(ation|ed)?\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bbooking\b""", RegexOption.IGNORE_CASE),
+        Regex("""\breservation\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bitinerary\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bboarding\s+pass\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bcheck[\s-]?in\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bappointment\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bstatement\b""", RegexOption.IGNORE_CASE),
+        Regex("""\brenewal\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bsecurity\s+(?:alert|code|notification)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bnew\s+(?:sign[\s-]?in|login|device)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bverif(?:y|ication)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bone[\s-]?time\s+(?:code|password|passcode)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\botp\b""", RegexOption.IGNORE_CASE),
+        Regex("""\byour\s+code\s+is\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bpassword\s+(?:reset|changed)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\b2fa\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bsign[\s-]?in\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bsubscription\s+(?:renew|expir)""", RegexOption.IGNORE_CASE),
+        Regex("""\baccount\s+(?:update|notice|alert)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bterms\s+of\s+service\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bprivacy\s+policy\b""", RegexOption.IGNORE_CASE),
+    )
+}
 
-val SHOPPING_SUBJECT_PATTERNS: List<Regex> = listOf(
-    Regex("""\brefund\s+(?:issued|processed)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\breturn\s+(?:label|confirmation)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bprice\s+drop\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bback\s+in\s+stock\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bstill\s+in\s+your\s+cart\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bcart\s+is\s+waiting\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bwishlist\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bcoupon\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bpromo\s+code\b""", RegexOption.IGNORE_CASE),
-)
+val UPDATES_SUBJECT_PATTERNS: List<Regex> by updates_subject_patterns_holder
+
+private val finance_subject_patterns_holder: Lazy<List<Regex>> = lazy {
+    listOf(
+        Regex("""\b(?:interest|base|savings|bank|borrowing)\s+rates?\b""", RegexOption.IGNORE_CASE),
+        Regex("""\brate\s+(?:change|changes|cut|cuts|rise|rises|increase|decrease)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bpension\b""", RegexOption.IGNORE_CASE),
+        Regex("""\byour\s+statement\b""", RegexOption.IGNORE_CASE),
+        Regex("""\baccount\s+balance\b""", RegexOption.IGNORE_CASE),
+        Regex("""\btransaction\s+(?:alert|declined|approved)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bpayment\s+(?:received|sent|due|failed)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bautopay\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bdirect\s+deposit\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bwire\s+transfer\b""", RegexOption.IGNORE_CASE),
+        Regex("""\btax\s+(?:document|form|refund)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bcredit\s+score\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bfraud\s+alert\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bsuspicious\s+(?:activity|charge)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\blow\s+balance\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bportfolio\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bdividend\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bmortgage\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bloan\s+(?:payment|approved)\b""", RegexOption.IGNORE_CASE),
+    )
+}
+
+val FINANCE_SUBJECT_PATTERNS: List<Regex> by finance_subject_patterns_holder
+
+private val travel_subject_patterns_holder: Lazy<List<Regex>> = lazy {
+    listOf(
+        Regex("""\bflight\s+(?:confirmation|itinerary|change|delay|cancell?ed)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bcheck[\s-]?in\s+(?:now|open|reminder)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bboarding\s+pass\b""", RegexOption.IGNORE_CASE),
+        Regex("""\byour\s+trip\b""", RegexOption.IGNORE_CASE),
+        Regex("""\byour\s+reservation\b""", RegexOption.IGNORE_CASE),
+        Regex("""\byour\s+stay\b""", RegexOption.IGNORE_CASE),
+        Regex("""\brental\s+car\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bgate\s+change\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bdeparture\b""", RegexOption.IGNORE_CASE),
+        Regex("""\barrival\b""", RegexOption.IGNORE_CASE),
+        Regex("""\byour\s+ride\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bdriver\s+(?:is\s+on\s+the\s+way|assigned)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\byour\s+order\s+is\s+on\s+its\s+way\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bfood\s+delivery\b""", RegexOption.IGNORE_CASE),
+    )
+}
+
+val TRAVEL_SUBJECT_PATTERNS: List<Regex> by travel_subject_patterns_holder
+
+private val shopping_subject_patterns_holder: Lazy<List<Regex>> = lazy {
+    listOf(
+        Regex("""\brefund\s+(?:issued|processed)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\breturn\s+(?:label|confirmation)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bprice\s+drop\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bback\s+in\s+stock\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bstill\s+in\s+your\s+cart\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bcart\s+is\s+waiting\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bwishlist\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bcoupon\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bpromo\s+code\b""", RegexOption.IGNORE_CASE),
+    )
+}
+
+val SHOPPING_SUBJECT_PATTERNS: List<Regex> by shopping_subject_patterns_holder
 
 val NEWSLETTER_DOMAIN_SUFFIXES: Set<String> = setOf(
     "substack.com",
@@ -1276,85 +1298,101 @@ val DISCUSSION_SENDER_LOCALPARTS: Set<String> = setOf(
     "developers",
 )
 
-val NEWSLETTER_SUBJECT_PATTERNS: List<Regex> = listOf(
-    Regex("""\bnewsletter\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bissue\s*#?\s*\d+""", RegexOption.IGNORE_CASE),
-    Regex("""\bvol(?:ume)?\.?\s*\d+\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bedition\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bdigest\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bround[\s-]?up\b""", RegexOption.IGNORE_CASE),
-    Regex("""\brecap\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bbulletin\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bbriefing\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bdispatch\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bthis\s+(?:week|month|morning)\s+in\b""", RegexOption.IGNORE_CASE),
-    Regex("""\b(?:weekly|monthly|daily)\s+(?:digest|update|roundup|read|edition|newsletter)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\byour\s+(?:weekly|monthly|daily)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bnew\s+(?:post|story|article|episode)\s+(?:from|by)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bnew\s+from\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bread\s+(?:online|in\s+(?:browser|app))\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bfrom\s+the\s+(?:editor|desk\s+of)\b""", RegexOption.IGNORE_CASE),
-)
+private val newsletter_subject_patterns_holder: Lazy<List<Regex>> = lazy {
+    listOf(
+        Regex("""\bnewsletter\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bissue\s*#?\s*\d+""", RegexOption.IGNORE_CASE),
+        Regex("""\bvol(?:ume)?\.?\s*\d+\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bedition\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bdigest\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bround[\s-]?up\b""", RegexOption.IGNORE_CASE),
+        Regex("""\brecap\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bbulletin\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bbriefing\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bdispatch\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bthis\s+(?:week|month|morning)\s+in\b""", RegexOption.IGNORE_CASE),
+        Regex("""\b(?:weekly|monthly|daily)\s+(?:digest|update|roundup|read|edition|newsletter)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\byour\s+(?:weekly|monthly|daily)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bnew\s+(?:post|story|article|episode)\s+(?:from|by)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bnew\s+from\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bread\s+(?:online|in\s+(?:browser|app))\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bfrom\s+the\s+(?:editor|desk\s+of)\b""", RegexOption.IGNORE_CASE),
+    )
+}
 
-val TRANSACTIONS_SUBJECT_PATTERNS: List<Regex> = listOf(
-    Regex("""\border(?:\s*#|\s+(?:confirm|number|placed|update|received))""", RegexOption.IGNORE_CASE),
-    Regex("""\byour\s+order\b""", RegexOption.IGNORE_CASE),
-    Regex("""\breceipt\b""", RegexOption.IGNORE_CASE),
-    Regex("""\binvoice\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bbill(?:ing)?\s+(?:statement|summary)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bpayment\s+(?:received|sent|due|failed|confirm)""", RegexOption.IGNORE_CASE),
-    Regex("""\bpaid\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bcharged\b""", RegexOption.IGNORE_CASE),
-    Regex("""\brefund(?:ed)?\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bshipped\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bshipping\s+(?:confirm|update|notice)""", RegexOption.IGNORE_CASE),
-    Regex("""\bout\s+for\s+delivery\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bdelivered\b""", RegexOption.IGNORE_CASE),
-    Regex("""\btracking\s+(?:number|info|update)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bpurchase\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bthanks?\s+for\s+your\s+(?:order|purchase|payment)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bsubscription\s+(?:renew|charge|payment)""", RegexOption.IGNORE_CASE),
-    Regex("""\breturn\s+(?:label|confirmation|received)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bpre[\s-]?order\b""", RegexOption.IGNORE_CASE),
-)
+val NEWSLETTER_SUBJECT_PATTERNS: List<Regex> by newsletter_subject_patterns_holder
 
-val PERSON_TO_PERSON_PAYMENT_SUBJECT_PATTERNS: List<Regex> = listOf(
-    Regex("""\be[\s-]?transfer\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bvirement\s+interac\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bsent\s+you\s+(?:money|funds|a\s+payment|an?\s+e[\s-]?transfer|\p{Sc})""", RegexOption.IGNORE_CASE),
-    Regex("""\bpaid\s+you\b""", RegexOption.IGNORE_CASE),
-    Regex("""\byou(?:'ve|\s+have)?\s+(?:got|received)\s+(?:money|funds|\p{Sc})""", RegexOption.IGNORE_CASE),
-    Regex("""\brequest(?:ed|ing|s)?\s+(?:money|funds|\p{Sc}[\d.,]+|a\s+payment)\s+from\s+you\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bvous\s+a\s+envoy""", RegexOption.IGNORE_CASE),
-)
+private val transactions_subject_patterns_holder: Lazy<List<Regex>> = lazy {
+    listOf(
+        Regex("""\border(?:\s*#|\s+(?:confirm|number|placed|update|received))""", RegexOption.IGNORE_CASE),
+        Regex("""\byour\s+order\b""", RegexOption.IGNORE_CASE),
+        Regex("""\breceipt\b""", RegexOption.IGNORE_CASE),
+        Regex("""\binvoice\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bbill(?:ing)?\s+(?:statement|summary)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bpayment\s+(?:received|sent|due|failed|confirm)""", RegexOption.IGNORE_CASE),
+        Regex("""\bpaid\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bcharged\b""", RegexOption.IGNORE_CASE),
+        Regex("""\brefund(?:ed)?\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bshipped\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bshipping\s+(?:confirm|update|notice)""", RegexOption.IGNORE_CASE),
+        Regex("""\bout\s+for\s+delivery\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bdelivered\b""", RegexOption.IGNORE_CASE),
+        Regex("""\btracking\s+(?:number|info|update)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bpurchase\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bthanks?\s+for\s+your\s+(?:order|purchase|payment)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bsubscription\s+(?:renew|charge|payment)""", RegexOption.IGNORE_CASE),
+        Regex("""\breturn\s+(?:label|confirmation|received)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bpre[\s-]?order\b""", RegexOption.IGNORE_CASE),
+    )
+}
 
-val ACCOUNT_ACCESS_SUBJECT_PATTERNS: List<Regex> = listOf(
-    Regex("""\b(?:verification|verify|security|confirmation|confirm|login|log[\s-]?in|sign[\s-]?in|one[\s-]?time|access|authentication|auth|activation|passcode)\s+(?:code|pin|link)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bone[\s-]?time\s+(?:password|passcode)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\botp\b""", RegexOption.IGNORE_CASE),
-    Regex("""\b(?:your\s+)?code\s+is\s*:?\s*\d{4,8}\b""", RegexOption.IGNORE_CASE),
-    Regex("""\b\d{4,8}\s+is\s+your\b""", RegexOption.IGNORE_CASE),
-    Regex("""\buse\s+\d{4,8}\s+to\b""", RegexOption.IGNORE_CASE),
-    Regex("""\b(?:confirm|verify|activate)\s+(?:your\s+|this\s+)?(?:new\s+)?(?:email|e-mail|account|address|email\s+address|sign[\s-]?in|log[\s-]?in|login|identity|device)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\b(?:reset|recover)\s+your\s+password\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bpassword\s+(?:reset|recovery)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\b(?:magic|sign[\s-]?in|log[\s-]?in|login)\s+link\b""", RegexOption.IGNORE_CASE),
-    Regex("""\b(?:mfa|2fa|multi[\s-]?factor|two[\s-]?factor|two[\s-]?step|2[\s-]?step)(?:\s+(?:authentication|verification))?\s+(?:code|request|pin|link|prompt|challenge|approval)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\b(?:sign[\s-]?in|log[\s-]?in|login|authentication|mfa)\s+(?:request|attempt|approval)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bapprove\s+(?:your\s+|this\s+|the\s+|a\s+)?(?:new\s+)?(?:sign[\s-]?in|log[\s-]?in|login)\b""", RegexOption.IGNORE_CASE),
-    Regex("""验证码|驗證碼|校验码|校驗碼|动态码|動態碼|确认码|確認碼|安全码|安全碼|登录码|登入碼"""),
-    Regex("""(?:验证|驗證|确认|確認|激活|啟用)(?:您|你)的(?:帐户|账户|帐号|账号|帳戶|帳號|电子邮件|電子郵件|邮箱|郵箱|邮件地址|郵件地址|登录|登入)"""),
-    Regex("""验证此次登录|驗證此次登入|验证登录|驗證登入|确认登录|確認登入|登录验证|登入驗證|重置密码|重設密碼|密码重置|密碼重設"""),
-    Regex("""認証コード|確認コード|ワンタイムパスワード|パスワードの再設定|パスワードをリセット|メールアドレスの確認"""),
-    Regex("""인증\s*(?:코드|번호)|확인\s*코드|비밀번호\s*재설정"""),
-    Regex("""\bc[oó]digo\s+de\s+(?:verificaci[oó]n|verifica[cç][aã]o|seguridad|seguran[cç]a|acceso|acesso|confirmaci[oó]n|confirma[cç][aã]o|inicio\s+de\s+sesi[oó]n)\b""", RegexOption.IGNORE_CASE),
-    Regex("""\b(?:restablecer|recuperar)\s+(?:tu\s+|su\s+)?contrase[nñ]a\b|\bredefinir\s+(?:a\s+|sua\s+)?senha\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bcode\s+de\s+(?:v[ée]rification|s[ée]curit[ée]|confirmation|connexion)""", RegexOption.IGNORE_CASE),
-    Regex("""\br[ée]initialis(?:er|ation)\s+(?:de\s+)?(?:votre\s+)?mot\s+de\s+passe\b""", RegexOption.IGNORE_CASE),
-    Regex("""\b(?:best[äa]tigungs|verifizierungs|sicherheits|anmelde)code\b|\bpasswort\s+zur[üu]cksetzen\b""", RegexOption.IGNORE_CASE),
-    Regex("""\bcodice\s+di\s+(?:verifica|sicurezza|accesso|conferma)\b""", RegexOption.IGNORE_CASE),
-    Regex("""код\s+(?:подтверждения|проверки|безопасности|доступа|для\s+входа)|сброс\s+пароля|подтвердите\s+(?:ваш|свой|вашу|свою|адрес)""", RegexOption.IGNORE_CASE),
-)
+val TRANSACTIONS_SUBJECT_PATTERNS: List<Regex> by transactions_subject_patterns_holder
+
+private val person_to_person_payment_subject_patterns_holder: Lazy<List<Regex>> = lazy {
+    listOf(
+        Regex("""\be[\s-]?transfer\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bvirement\s+interac\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bsent\s+you\s+(?:money|funds|a\s+payment|an?\s+e[\s-]?transfer|\p{Sc})""", RegexOption.IGNORE_CASE),
+        Regex("""\bpaid\s+you\b""", RegexOption.IGNORE_CASE),
+        Regex("""\byou(?:'ve|\s+have)?\s+(?:got|received)\s+(?:money|funds|\p{Sc})""", RegexOption.IGNORE_CASE),
+        Regex("""\brequest(?:ed|ing|s)?\s+(?:money|funds|\p{Sc}[\d.,]+|a\s+payment)\s+from\s+you\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bvous\s+a\s+envoy""", RegexOption.IGNORE_CASE),
+    )
+}
+
+val PERSON_TO_PERSON_PAYMENT_SUBJECT_PATTERNS: List<Regex> by person_to_person_payment_subject_patterns_holder
+
+private val account_access_subject_patterns_holder: Lazy<List<Regex>> = lazy {
+    listOf(
+        Regex("""\b(?:verification|verify|security|confirmation|confirm|login|log[\s-]?in|sign[\s-]?in|one[\s-]?time|access|authentication|auth|activation|passcode)\s+(?:code|pin|link)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bone[\s-]?time\s+(?:password|passcode)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\botp\b""", RegexOption.IGNORE_CASE),
+        Regex("""\b(?:your\s+)?code\s+is\s*:?\s*\d{4,8}\b""", RegexOption.IGNORE_CASE),
+        Regex("""\b\d{4,8}\s+is\s+your\b""", RegexOption.IGNORE_CASE),
+        Regex("""\buse\s+\d{4,8}\s+to\b""", RegexOption.IGNORE_CASE),
+        Regex("""\b(?:confirm|verify|activate)\s+(?:your\s+|this\s+)?(?:new\s+)?(?:email|e-mail|account|address|email\s+address|sign[\s-]?in|log[\s-]?in|login|identity|device)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\b(?:reset|recover)\s+your\s+password\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bpassword\s+(?:reset|recovery)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\b(?:magic|sign[\s-]?in|log[\s-]?in|login)\s+link\b""", RegexOption.IGNORE_CASE),
+        Regex("""\b(?:mfa|2fa|multi[\s-]?factor|two[\s-]?factor|two[\s-]?step|2[\s-]?step)(?:\s+(?:authentication|verification))?\s+(?:code|request|pin|link|prompt|challenge|approval)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\b(?:sign[\s-]?in|log[\s-]?in|login|authentication|mfa)\s+(?:request|attempt|approval)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bapprove\s+(?:your\s+|this\s+|the\s+|a\s+)?(?:new\s+)?(?:sign[\s-]?in|log[\s-]?in|login)\b""", RegexOption.IGNORE_CASE),
+        Regex("""验证码|驗證碼|校验码|校驗碼|动态码|動態碼|确认码|確認碼|安全码|安全碼|登录码|登入碼"""),
+        Regex("""(?:验证|驗證|确认|確認|激活|啟用)(?:您|你)的(?:帐户|账户|帐号|账号|帳戶|帳號|电子邮件|電子郵件|邮箱|郵箱|邮件地址|郵件地址|登录|登入)"""),
+        Regex("""验证此次登录|驗證此次登入|验证登录|驗證登入|确认登录|確認登入|登录验证|登入驗證|重置密码|重設密碼|密码重置|密碼重設"""),
+        Regex("""認証コード|確認コード|ワンタイムパスワード|パスワードの再設定|パスワードをリセット|メールアドレスの確認"""),
+        Regex("""인증\s*(?:코드|번호)|확인\s*코드|비밀번호\s*재설정"""),
+        Regex("""\bc[oó]digo\s+de\s+(?:verificaci[oó]n|verifica[cç][aã]o|seguridad|seguran[cç]a|acceso|acesso|confirmaci[oó]n|confirma[cç][aã]o|inicio\s+de\s+sesi[oó]n)\b""", RegexOption.IGNORE_CASE),
+        Regex("""\b(?:restablecer|recuperar)\s+(?:tu\s+|su\s+)?contrase[nñ]a\b|\bredefinir\s+(?:a\s+|sua\s+)?senha\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bcode\s+de\s+(?:v[ée]rification|s[ée]curit[ée]|confirmation|connexion)""", RegexOption.IGNORE_CASE),
+        Regex("""\br[ée]initialis(?:er|ation)\s+(?:de\s+)?(?:votre\s+)?mot\s+de\s+passe\b""", RegexOption.IGNORE_CASE),
+        Regex("""\b(?:best[äa]tigungs|verifizierungs|sicherheits|anmelde)code\b|\bpasswort\s+zur[üu]cksetzen\b""", RegexOption.IGNORE_CASE),
+        Regex("""\bcodice\s+di\s+(?:verifica|sicurezza|accesso|conferma)\b""", RegexOption.IGNORE_CASE),
+        Regex("""код\s+(?:подтверждения|проверки|безопасности|доступа|для\s+входа)|сброс\s+пароля|подтвердите\s+(?:ваш|свой|вашу|свою|адрес)""", RegexOption.IGNORE_CASE),
+    )
+}
+
+val ACCOUNT_ACCESS_SUBJECT_PATTERNS: List<Regex> by account_access_subject_patterns_holder
 
 val ACCOUNT_ACCESS_HEADER_NAMES: Set<String> = setOf(
     "x-verify-code",
@@ -1362,3 +1400,22 @@ val ACCOUNT_ACCESS_HEADER_NAMES: Set<String> = setOf(
     "x-signin-verify-code",
     "x-unblock-code",
 )
+
+private val subject_pattern_holders: List<Lazy<Any>> = listOf(
+    promotions_subject_patterns_holder,
+    emoji_subject_pattern_holder,
+    updates_subject_patterns_holder,
+    finance_subject_patterns_holder,
+    travel_subject_patterns_holder,
+    shopping_subject_patterns_holder,
+    newsletter_subject_patterns_holder,
+    transactions_subject_patterns_holder,
+    person_to_person_payment_subject_patterns_holder,
+    account_access_subject_patterns_holder,
+)
+
+fun warm_category_patterns() {
+    subject_pattern_holders.forEach { it.value }
+}
+
+internal fun category_patterns_compiled(): Boolean = subject_pattern_holders.all { it.isInitialized() }

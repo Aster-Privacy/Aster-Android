@@ -51,7 +51,7 @@ fun Modifier.select_tap(
                 true
             }
         }
-        .pointerInput(Unit) {
+        .pointerInput(interaction_source) {
             val slop = viewConfiguration.touchSlop
             awaitEachGesture {
                 val down = awaitFirstDown(
