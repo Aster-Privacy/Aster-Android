@@ -22,6 +22,7 @@
 
 package org.astermail.android.ui.settings
 
+import org.astermail.android.translation.translation_supported
 import org.astermail.android.ui.upgrade.UpgradeLimitKey
 import org.astermail.android.ui.upgrade.UpgradeStore
 import org.junit.Assert.assertEquals
@@ -30,6 +31,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SettingsSearchKeywordTest {
+
+    private val hidden_labels = if (translation_supported) emptySet() else translation_search_titles
 
     private val mail_rules_keywords = settings_search_fixture.candidates
         .first { it.screen_id == "mail_rules" && it.is_screen_title }
@@ -57,7 +60,8 @@ class SettingsSearchKeywordTest {
     fun every_keyword_resource_is_reachable_from_an_entry() {
         val used = settings_search_index.flatMap { settings_keyword_resources(it) }.toSet()
         val declared = settings_screen_keyword_res.values.toSet() + settings_label_keyword_res.values.toSet()
-        assertEquals(declared, used)
+        val shown_labels = settings_label_keyword_res.filterKeys { it !in hidden_labels }
+        assertEquals(settings_screen_keyword_res.values.toSet() + shown_labels.values.toSet(), used)
         val defined = settings_search_fixture.english.keys.filter { it.startsWith("search_keywords_") }.toSet()
         val referenced = declared.map { settings_search_fixture.string_names.getValue(it) }.toSet()
         assertEquals(defined, referenced)
@@ -68,7 +72,7 @@ class SettingsSearchKeywordTest {
         val ids = settings_search_index.filter { it.is_screen_title }.map { it.screen_id }.toSet()
         settings_screen_keyword_res.keys.forEach { assertTrue(it, it in ids) }
         val labels = settings_search_index.map { it.label_res }.toSet()
-        settings_label_keyword_res.keys.forEach {
+        settings_label_keyword_res.keys.filter { it !in hidden_labels }.forEach {
             assertTrue(settings_search_fixture.string_names[it] ?: "$it", it in labels)
         }
     }
