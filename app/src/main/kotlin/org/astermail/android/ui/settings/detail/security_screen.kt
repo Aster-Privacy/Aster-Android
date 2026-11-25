@@ -788,6 +788,11 @@ fun SecurityScreen(
                     },
                 )
                 settings_row_gap()
+                remote_image_cache_rows(
+                    loads_always = org.astermail.android.ui.mail.effective_remote_image_mode(prefs) ==
+                        org.astermail.android.ui.mail.REMOTE_IMAGES_ALWAYS,
+                )
+                settings_row_gap()
                 detail_row(
                     title = stringResource(R.string.block_remote_fonts),
                     subtitle = stringResource(R.string.block_remote_fonts_subtitle),
@@ -1787,6 +1792,61 @@ private fun audit_event_row(
             fontSize = 12.sp,
         )
     }
+}
+
+@Composable
+private fun remote_image_cache_rows(loads_always: Boolean) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val cache = org.astermail.android.ui.mail.remote_image_cache
+    val stored by cache.settings.collectAsState()
+    val initial = remember(context) { cache.current_settings(context) }
+    val current = stored ?: initial
+    val cleared_text = stringResource(R.string.remote_image_cache_cleared)
+    detail_row(
+        title = stringResource(R.string.remote_image_keep_title),
+        subtitle = stringResource(R.string.remote_image_keep_subtitle),
+        icon = TablerIcons.DeviceMobile,
+        trailing = {
+            AsterSwitch(
+                checked = current.keep_images,
+                onCheckedChange = { enabled ->
+                    scope.launch(kotlinx.coroutines.Dispatchers.IO) { cache.set_keep_images(context, enabled) }
+                },
+                modifier = Modifier.testTag("remote_image_keep_switch"),
+            )
+        },
+    )
+    settings_row_gap()
+    val prefetch_available = loads_always && current.keep_images
+    detail_row(
+        title = stringResource(R.string.remote_image_prefetch_title),
+        subtitle = stringResource(
+            if (loads_always) R.string.remote_image_prefetch_subtitle else R.string.remote_image_prefetch_needs_always,
+        ),
+        icon = TablerIcons.Download,
+        muted = !prefetch_available,
+        trailing = {
+            AsterSwitch(
+                checked = prefetch_available && current.prefetch_on_arrival,
+                onCheckedChange = { enabled -> cache.set_prefetch_on_arrival(context, enabled) },
+                enabled = prefetch_available,
+                modifier = Modifier.testTag("remote_image_prefetch_switch"),
+            )
+        },
+    )
+    settings_row_gap()
+    detail_row(
+        title = stringResource(R.string.remote_image_clear_title),
+        subtitle = stringResource(R.string.remote_image_clear_subtitle),
+        icon = TablerIcons.Trash,
+        on_click = {
+            scope.launch {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { cache.clear_all(context) }
+                Toast.makeText(context, cleared_text, Toast.LENGTH_SHORT).show()
+            }
+        },
+    )
 }
 
 @Composable

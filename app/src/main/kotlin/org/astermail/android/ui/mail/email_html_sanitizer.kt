@@ -324,6 +324,11 @@ object EmailHtmlSanitizer {
         return style_dimension_is_big(style, style_width_regex) || style_dimension_is_big(style, style_height_regex)
     }
 
+    fun is_tracker_url(url: String): Boolean {
+        val trimmed = url.trim()
+        return trimmed.isNotEmpty() && tracking_pixel_url_patterns.any { it.containsMatchIn(trimmed) }
+    }
+
     fun is_tracking_pixel(img: Element): Boolean {
         val src = img.attr("src").ifBlank { img.attr("srcset").trim().substringBefore(' ') }
         if (src.isNotBlank() && is_local_image_source(src)) return false

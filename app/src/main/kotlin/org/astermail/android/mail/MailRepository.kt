@@ -1029,15 +1029,38 @@ class MailRepository @Inject constructor(
         runCatching { dao.replace_all(rows + placeholders) }
     }
 
-    suspend fun index_thread_bodies(thread_token: String, expected_ids: Collection<String>): Result<Int> = runCatching {
+    suspend fun index_thread_bodies(
+        thread_token: String,
+        expected_ids: Collection<String>,
+        on_bodies: ((Map<String, String>) -> Unit)? = null,
+    ): Result<Int> = runCatching {
         val response = mail_api.get_thread_messages(thread_token)
         withContext(Dispatchers.IO) {
             val decrypted = response.messages.distinctBy { it.id }.map { msg ->
                 async { decrypt_thread_message(msg) }
             }.awaitAll()
             store_body_index(decrypted, expected_ids)
+            if (on_bodies != null) {
+                val expected = expected_ids.toHashSet()
+                val bodies = decrypted.asSequence()
+                    .filter { it.id in expected }
+                    .filterNot { it.is_undecryptable || it.is_body_pending || it.is_pgp_placeholder }
+                    .mapNotNull { message -> message.body_html?.takeIf { it.isNotBlank() }?.let { message.id to it } }
+                    .toMap()
+                if (bodies.isNotEmpty()) runCatching { on_bodies(bodies) }
+            }
             decrypted.size
         }
+    }
+
+    fun cached_user_preferences(): UserPreferences? {
+        val account_key = session_key_store.get_user_id()?.takeIf { it.isNotBlank() } ?: return null
+        val raw = runCatching {
+            PreferencesCacheStore(context).read(account_key)
+        }.getOrNull() ?: return null
+        return runCatching {
+            cached_custom_categories_json.decodeFromString(UserPreferences.serializer(), raw)
+        }.getOrNull()
     }
 
     private suspend fun store_message_bodies(messages: List<ThreadMessageDecrypted>) {

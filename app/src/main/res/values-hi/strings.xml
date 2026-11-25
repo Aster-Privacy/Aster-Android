@@ -1923,6 +1923,14 @@
     <string name="remote_images_never">कभी लोड न करें</string>
     <string name="remote_images_ask">लोड करने से पहले पूछें</string>
     <string name="remote_images_always">हमेशा लोड करें</string>
+    <string name="remote_image_keep_title">लोड की गई इमेज इस डिवाइस पर रखें</string>
+    <string name="remote_image_keep_subtitle">आपकी लोड की गई इमेज एन्क्रिप्ट करके सेव करता है, ताकि संदेश दोबारा खोलने पर भेजने वाले को कुछ न भेजा जाए।</string>
+    <string name="remote_image_prefetch_title">मेल आने पर इमेज लोड करें</string>
+    <string name="remote_image_prefetch_subtitle">मेल आने पर इमेज Aster के ज़रिए लाता है, ताकि भेजने वाले यह न जान सकें कि आप उसे कब खोलते हैं। केवल Wi-Fi पर चलता है।</string>
+    <string name="remote_image_prefetch_needs_always">इसका उपयोग करने के लिए, रिमोट इमेज लोडिंग को हमेशा लोड करें पर सेट करें।</string>
+    <string name="remote_image_clear_title">सेव की गई इमेज साफ़ करें</string>
+    <string name="remote_image_clear_subtitle">इस डिवाइस पर सेव की गई इमेज मिटाता है।</string>
+    <string name="remote_image_cache_cleared">सेव की गई इमेज साफ़ कर दी गईं</string>
     <string name="block_remote_images_subtitle_security">ईमेल को बाहरी सर्वर पर रखी छवियां लोड करने से रोकें</string>
     <string name="block_remote_images_info_title">बाहरी छवियां रोकें</string>
     <string name="block_remote_images_info_desc">ईमेल बाहरी सर्वर से तस्वीरें लोड कर सकती हैं। लोड होने पर प्रेषक के सर्वर को आपका IP दिखता है और पता चल जाता है कि आपने संदेश खोला। यह उन तस्वीरों को लोड होने से रोकता है।</string>

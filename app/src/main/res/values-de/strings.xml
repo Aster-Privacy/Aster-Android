@@ -2027,6 +2027,14 @@
     <string name="remote_images_never">Nie laden</string>
     <string name="remote_images_ask">Vor dem Laden fragen</string>
     <string name="remote_images_always">Immer laden</string>
+    <string name="remote_image_keep_title">Geladene Bilder auf diesem Gerät behalten</string>
+    <string name="remote_image_keep_subtitle">Speichert geladene Bilder verschlüsselt, damit beim erneuten Öffnen der Nachricht nichts an den Absender gesendet wird.</string>
+    <string name="remote_image_prefetch_title">Bilder beim Eingang von E-Mails laden</string>
+    <string name="remote_image_prefetch_subtitle">Ruft Bilder über Aster ab, sobald E-Mails eingehen, sodass Absender nicht erkennen, wann du sie öffnest. Läuft nur über WLAN.</string>
+    <string name="remote_image_prefetch_needs_always">Stelle dazu das Laden externer Bilder auf „Immer laden“.</string>
+    <string name="remote_image_clear_title">Gespeicherte Bilder löschen</string>
+    <string name="remote_image_clear_subtitle">Löscht die auf diesem Gerät gespeicherten Bilder.</string>
+    <string name="remote_image_cache_cleared">Gespeicherte Bilder gelöscht</string>
     <string name="block_remote_images_subtitle_security">Verhindern, dass E-Mails Bilder von externen Servern laden</string>
     <string name="block_remote_images_info_title">Externe Bilder blockieren</string>
     <string name="block_remote_images_info_desc">E-Mails können Bilder von fremden Servern laden. Beim Laden sieht der Server des Absenders Ihre IP-Adresse und weiß, dass Sie die Nachricht geöffnet haben. Diese Option verhindert das Laden solcher Bilder.</string>
