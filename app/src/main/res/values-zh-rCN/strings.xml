@@ -3653,10 +3653,14 @@
     <string name="color_brightness">亮度</string>
     <string name="hex_color">十六进制颜色</string>
     <string name="alias_sending_tab">发送</string>
-    <string name="alias_sending_disabled_title">已停用发送的别名</string>
-    <string name="alias_sending_disabled_description">关闭某个别名的发送功能后，将不会再从该别名发出邮件。该别名仍会接收邮件。</string>
     <string name="alias_sending_empty">你还没有别名或域名地址。</string>
-    <string name="alias_sending_no_match">没有与搜索匹配的别名。</string>
+    <string name="sending_addresses_title">发送地址</string>
+    <string name="sending_addresses_description">关闭某个地址的发送功能后，将不会再从该地址发出邮件。该地址仍会接收邮件。</string>
+    <string name="sending_addresses_search">搜索地址</string>
+    <string name="sending_addresses_no_match">没有与搜索匹配的地址。</string>
+    <string name="sending_addresses_all_off">所有地址的发送功能均已关闭，因此你无法发送邮件。要重新发送，请至少为一个地址开启发送。</string>
+    <string name="sending_address_ghost_alias">幽灵别名</string>
+    <string name="compose_sender_unresolved">无法确认要从哪个地址发送。请重新发送。</string>
     <string name="alias_sending_allowed">允许发送</string>
     <string name="alias_sending_disabled">已停用发送</string>
     <string name="alias_sending_allow_a11y">允许从 %1$s 发送</string>

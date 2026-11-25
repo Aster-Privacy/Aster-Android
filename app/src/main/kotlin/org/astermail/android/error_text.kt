@@ -140,6 +140,13 @@ fun server_code_string_res(code: String): Int? = when (code) {
     else -> null
 }
 
+fun scheduled_failure_string_res(reason: String?): Int =
+    reason?.trim()?.takeIf { it == "ALIAS_SENDING_DISABLED" }?.let { R.string.error_alias_sending_disabled }
+        ?: R.string.scheduled_send_failed
+
+fun send_failure_detail_res(reason: String?): Int? =
+    reason?.trim()?.takeIf { it == "ALIAS_SENDING_DISABLED" }?.let { R.string.error_alias_sending_disabled }
+
 fun is_username_taken(t: Throwable): Boolean =
     t is ApiError.Conflict && t.code == USERNAME_IN_USE_CODE
 

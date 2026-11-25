@@ -3570,10 +3570,14 @@
     <string name="color_brightness">चमक</string>
     <string name="hex_color">हेक्स रंग</string>
     <string name="alias_sending_tab">भेजना</string>
-    <string name="alias_sending_disabled_title">भेजना बंद किए गए उपनाम</string>
-    <string name="alias_sending_disabled_description">किसी उपनाम से मेल जाने से रोकने के लिए उसका भेजना बंद करें। उपनाम पर मेल आना जारी रहता है।</string>
     <string name="alias_sending_empty">आपके पास अभी कोई उपनाम या डोमेन पता नहीं है।</string>
-    <string name="alias_sending_no_match">आपकी खोज से कोई उपनाम मेल नहीं खाता।</string>
+    <string name="sending_addresses_title">भेजने वाले पते</string>
+    <string name="sending_addresses_description">किसी पते से मेल जाने से रोकने के लिए उसका भेजना बंद करें। उस पते पर मेल आना जारी रहता है।</string>
+    <string name="sending_addresses_search">पते खोजें</string>
+    <string name="sending_addresses_no_match">आपकी खोज से कोई पता मेल नहीं खाता।</string>
+    <string name="sending_addresses_all_off">सभी पतों के लिए भेजना बंद है, इसलिए आप मेल नहीं भेज सकते। फिर से भेजने के लिए, कम से कम एक पते के लिए भेजना चालू करें।</string>
+    <string name="sending_address_ghost_alias">घोस्ट उपनाम</string>
+    <string name="compose_sender_unresolved">यह पुष्टि नहीं हो सकी कि किस पते से भेजना है। फिर से भेजने की कोशिश करें।</string>
     <string name="alias_sending_allowed">भेजने की अनुमति है</string>
     <string name="alias_sending_disabled">भेजना बंद है</string>
     <string name="alias_sending_allow_a11y">%1$s से भेजने की अनुमति दें</string>

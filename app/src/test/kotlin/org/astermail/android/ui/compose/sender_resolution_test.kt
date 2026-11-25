@@ -202,29 +202,146 @@ class sender_resolution_test {
         assertFalse(sender_mismatch(false, true, "shop@d.com", primary))
     }
 
+    private val ghost = org.astermail.android.api.ghost.GhostAlias(
+        id = "g1",
+        domain = "realiased.me",
+        decrypted_address = "quiet.fox@realiased.me",
+    )
+
     @Test
-    fun sending_rows_list_aliases_and_domain_addresses_with_search() {
+    fun sending_rows_list_every_sendable_address_with_primary_first() {
         val aliases = listOf(
             AliasInfo(id = "a1", encrypted_local_part = "shop", domain = "astermail.org"),
             AliasInfo(id = "a2", encrypted_local_part = "news", domain = "aster.cx"),
             AliasInfo(id = "a3", domain = "astermail.org", decryption_failed = true),
         )
-        val domain = listOf(CustomDomainAddressInfo(id = "d1", domain_name = "d.com", encrypted_local_part = "hi"))
-        val rows = sending_block_rows(aliases, domain, setOf("a2"), emptySet())
-        assertEquals(listOf("hi@d.com", "news@aster.cx", "shop@astermail.org"), rows.map { it.address })
-        assertTrue(rows.first { it.id == "a2" }.sending_disabled)
-        assertEquals("domain_address", rows.first { it.id == "d1" }.kind)
-        assertEquals(
-            listOf("shop@astermail.org"),
-            sending_block_rows(aliases, domain, emptySet(), emptySet(), "SHO").map { it.address },
+        val domain = listOf(
+            CustomDomainAddressInfo(id = "d1", domain_name = "d.com", encrypted_local_part = "hi"),
+            CustomDomainAddressInfo(id = "d2", domain_name = "d.com", decryption_failed = true),
         )
+        val undecrypted_ghost = org.astermail.android.api.ghost.GhostAlias(id = "g2", domain = "realiased.me")
+        val rows = sending_block_rows(
+            primary_address = primary,
+            primary_blocked = true,
+            aliases = aliases,
+            ghost_aliases = listOf(ghost, undecrypted_ghost),
+            domain_addresses = domain,
+            blocked_alias_ids = setOf("a2", "g1"),
+            blocked_domain_address_ids = emptySet(),
+        )
+        assertEquals(
+            listOf(primary, "hi@d.com", "news@aster.cx", "quiet.fox@realiased.me", "shop@astermail.org"),
+            rows.map { it.address },
+        )
+        assertEquals("primary", rows.first().kind)
+        assertTrue(rows.first().sending_disabled)
+        assertTrue(rows.first { it.id == "a2" }.sending_disabled)
+        assertTrue(rows.first { it.id == "g1" }.sending_disabled)
+        assertEquals("alias", rows.first { it.id == "g1" }.kind)
+        assertEquals("domain_address", rows.first { it.id == "d1" }.kind)
+        assertFalse(rows.first { it.id == "a1" }.sending_disabled)
     }
 
     @Test
-    fun disabled_sender_keys_match_any_spelling() {
+    fun sending_rows_search_matches_primary_and_ghost_aliases() {
+        val rows = sending_block_rows(
+            primary_address = primary,
+            primary_blocked = false,
+            aliases = listOf(AliasInfo(id = "a1", encrypted_local_part = "shop", domain = "astermail.org")),
+            ghost_aliases = listOf(ghost),
+            domain_addresses = emptyList(),
+            blocked_alias_ids = emptySet(),
+            blocked_domain_address_ids = emptySet(),
+        )
+        assertEquals(listOf(primary), filter_sending_block_rows(rows, " ME@ ").map { it.address })
+        assertEquals(listOf("quiet.fox@realiased.me"), filter_sending_block_rows(rows, "fox").map { it.address })
+        assertEquals(3, filter_sending_block_rows(rows, "").size)
+    }
+
+    @Test
+    fun ghost_alias_already_listed_as_alias_is_not_repeated() {
+        val rows = sending_block_rows(
+            primary_address = null,
+            primary_blocked = false,
+            aliases = listOf(AliasInfo(id = "g1", encrypted_local_part = "quiet.fox", domain = "realiased.me")),
+            ghost_aliases = listOf(ghost),
+            domain_addresses = emptyList(),
+            blocked_alias_ids = emptySet(),
+            blocked_domain_address_ids = emptySet(),
+        )
+        assertEquals(listOf("g1"), rows.map { it.id })
+    }
+
+    @Test
+    fun sending_rows_scale_to_hundreds_of_addresses() {
+        val aliases = (0 until 600).map { AliasInfo(id = "a$it", encrypted_local_part = "box$it", domain = "astermail.org") }
+        val rows = sending_block_rows(primary, false, aliases, emptyList(), emptyList(), setOf("a599"), emptySet())
+        assertEquals(601, rows.size)
+        assertEquals(primary, rows.first().address)
+        assertTrue(rows.first { it.id == "a599" }.sending_disabled)
+        assertEquals(11, filter_sending_block_rows(rows, "box59").size)
+    }
+
+    @Test
+    fun all_off_notice_only_when_every_address_is_disabled() {
+        val aliases = listOf(AliasInfo(id = "a1", encrypted_local_part = "shop", domain = "astermail.org"))
+        val all_off = sending_block_rows(primary, true, aliases, emptyList(), emptyList(), setOf("a1"), emptySet())
+        val one_on = sending_block_rows(primary, false, aliases, emptyList(), emptyList(), setOf("a1"), emptySet())
+        assertTrue(every_sending_address_disabled(all_off))
+        assertFalse(every_sending_address_disabled(one_on))
+        assertFalse(every_sending_address_disabled(emptyList()))
+    }
+
+    @Test
+    fun blocked_primary_and_ghost_alias_cannot_be_sent_from() {
+        val keys = sending_disabled_addresses(
+            primary_address = primary,
+            primary_blocked = true,
+            aliases = emptyList(),
+            ghost_aliases = listOf(ghost),
+            domain_addresses = emptyList(),
+            blocked_alias_ids = setOf("g1"),
+            blocked_domain_address_ids = emptySet(),
+        )
+        assertTrue(is_sending_disabled_sender("Me@AsterMail.org", keys))
+        assertTrue(is_sending_disabled_sender("quietfox@realiased.me", keys))
+        assertFalse(is_sending_disabled_sender("other@astermail.org", keys))
+    }
+
+    @Test
+    fun disabled_sender_keys_match_the_server_normalization() {
         val aliases = listOf(AliasInfo(id = "a1", encrypted_local_part = "john.smith", domain = "astermail.org"))
-        val keys = sending_disabled_addresses(aliases, emptyList(), setOf("a1"), emptySet())
+        val domain = listOf(CustomDomainAddressInfo(id = "d1", domain_name = "d.com", encrypted_local_part = "sales.team"))
+        val keys = sending_disabled_addresses(null, false, aliases, emptyList(), domain, setOf("a1"), setOf("d1"))
         assertTrue(is_sending_disabled_sender("JohnSmith@astermail.org", keys))
+        assertTrue(is_sending_disabled_sender("john.smith+news@astermail.org", keys))
+        assertTrue(is_sending_disabled_sender("Sales Team <salesteam@D.com>", keys))
+        assertTrue(is_sending_disabled_sender("sales.team+q4@d.com", keys))
         assertFalse(is_sending_disabled_sender(primary, keys))
+        assertFalse(is_sending_disabled_sender("", keys))
+    }
+
+    @Test
+    fun primary_is_blocked_only_when_the_server_says_so() {
+        val keys = sending_disabled_addresses(primary, false, emptyList(), emptyList(), emptyList(), emptySet(), emptySet())
+        assertFalse(is_sending_disabled_sender(primary, keys))
+    }
+
+    @Test
+    fun send_gate_queues_blocks_then_requires_mismatch_confirmation() {
+        assertEquals(send_gate_action.queue, send_gate(true, false, false, false))
+        assertEquals(send_gate_action.blocked, send_gate(true, true, true, true))
+        assertEquals(send_gate_action.blocked, send_gate(false, false, true, false))
+        assertEquals(send_gate_action.confirm_mismatch, send_gate(false, false, false, true))
+        assertEquals(send_gate_action.confirm_mismatch, send_gate(true, true, false, true))
+        assertEquals(send_gate_action.proceed, send_gate(false, false, false, false))
+    }
+
+    @Test
+    fun a_queued_fast_send_still_stops_at_the_mismatch() {
+        assertEquals(send_gate_action.queue, send_gate(true, false, false, false))
+        assertEquals(queued_send_action.fire, queued_send_step(1_000L, 1_200L, pending = false))
+        val mismatch = sender_mismatch(true, true, "shop@d.com", primary)
+        assertEquals(send_gate_action.confirm_mismatch, send_gate(false, false, false, mismatch))
     }
 }

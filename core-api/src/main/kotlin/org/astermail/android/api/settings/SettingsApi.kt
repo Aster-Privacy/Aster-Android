@@ -507,6 +507,7 @@ data class UpdateAliasPreferencesRequest(
 
 @Serializable
 data class SendingBlocksResponse(
+    val primary: Boolean = false,
     val alias_ids: List<String> = emptyList(),
     val domain_address_ids: List<String> = emptyList(),
 )
@@ -514,7 +515,7 @@ data class SendingBlocksResponse(
 @Serializable
 data class SendingBlockChange(
     val kind: String,
-    val id: String,
+    val id: String? = null,
     val sending_disabled: Boolean,
 )
 
@@ -523,6 +524,7 @@ data class UpdateSendingBlocksRequest(
     val changes: List<SendingBlockChange>,
 )
 
+const val sending_block_kind_primary = "primary"
 const val sending_block_kind_alias = "alias"
 const val sending_block_kind_domain_address = "domain_address"
 

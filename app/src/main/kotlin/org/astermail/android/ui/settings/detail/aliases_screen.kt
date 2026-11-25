@@ -225,6 +225,8 @@ fun AliasesScreen(
             2 -> vm.load_ghost_aliases()
             3 -> vm.load_alias_preferences()
             4 -> {
+                vm.load_profile()
+                vm.load_ghost_aliases()
                 vm.load_custom_domain_addresses()
                 vm.load_sending_blocks()
             }
@@ -386,9 +388,7 @@ fun AliasesScreen(
                         premium_domains_allowed = premium_domains_allowed,
                     )
                 }
-                4 -> tab_scroll {
-                    alias_sending_tab(vm = vm, state = state)
-                }
+                4 -> alias_sending_tab(vm = vm, state = state)
             }
         }
     }

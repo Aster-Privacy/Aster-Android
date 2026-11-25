@@ -271,6 +271,7 @@ data class SettingsUiState(
     val custom_domain_addresses_settled: Boolean = false,
     val sending_blocked_alias_ids: Set<String> = emptySet(),
     val sending_blocked_domain_address_ids: Set<String> = emptySet(),
+    val sending_blocked_primary: Boolean = false,
     val sending_blocks_loaded: Boolean = false,
     val sending_block_pending_ids: Set<String> = emptySet(),
     val expanded_alias_ids: Set<String> = emptySet(),
@@ -1984,6 +1985,7 @@ class SettingsViewModel @Inject constructor(
             s.copy(
                 sending_blocked_alias_ids = response.alias_ids.toSet(),
                 sending_blocked_domain_address_ids = response.domain_address_ids.toSet(),
+                sending_blocked_primary = response.primary,
                 sending_blocks_loaded = true,
             )
         }
@@ -1991,8 +1993,10 @@ class SettingsViewModel @Inject constructor(
 
     fun set_sending_disabled(kind: String, id: String, disabled: Boolean) {
         if (id in _state.value.sending_block_pending_ids) return
+        val is_primary = kind == org.astermail.android.api.settings.sending_block_kind_primary
         val previous_aliases = _state.value.sending_blocked_alias_ids
         val previous_domain = _state.value.sending_blocked_domain_address_ids
+        val previous_primary = _state.value.sending_blocked_primary
         _state.update { s ->
             val toggle: (Set<String>) -> Set<String> = { ids -> if (disabled) ids + id else ids - id }
             s.copy(
@@ -2006,6 +2010,7 @@ class SettingsViewModel @Inject constructor(
                 } else {
                     s.sending_blocked_domain_address_ids
                 },
+                sending_blocked_primary = if (is_primary) disabled else s.sending_blocked_primary,
                 sending_block_pending_ids = s.sending_block_pending_ids + id,
             )
         }
@@ -2016,7 +2021,7 @@ class SettingsViewModel @Inject constructor(
                         changes = listOf(
                             org.astermail.android.api.settings.SendingBlockChange(
                                 kind = kind,
-                                id = id,
+                                id = if (is_primary) null else id,
                                 sending_disabled = disabled,
                             ),
                         ),
@@ -2030,6 +2035,7 @@ class SettingsViewModel @Inject constructor(
                     s.copy(
                         sending_blocked_alias_ids = previous_aliases,
                         sending_blocked_domain_address_ids = previous_domain,
+                        sending_blocked_primary = previous_primary,
                         sending_block_pending_ids = s.sending_block_pending_ids - id,
                         action_result = context.getString(R.string.alias_sending_update_failed),
                     )

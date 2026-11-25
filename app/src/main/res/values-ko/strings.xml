@@ -3653,10 +3653,14 @@
     <string name="color_brightness">밝기</string>
     <string name="hex_color">16진수 색상</string>
     <string name="alias_sending_tab">보내기</string>
-    <string name="alias_sending_disabled_title">보내기가 꺼진 별칭</string>
-    <string name="alias_sending_disabled_description">별칭의 보내기를 끄면 해당 별칭에서 메일이 발송되지 않습니다. 별칭은 계속 메일을 받습니다.</string>
     <string name="alias_sending_empty">아직 별칭이나 도메인 주소가 없습니다.</string>
-    <string name="alias_sending_no_match">검색과 일치하는 별칭이 없습니다.</string>
+    <string name="sending_addresses_title">보내는 주소</string>
+    <string name="sending_addresses_description">주소의 보내기를 끄면 해당 주소에서 메일이 발송되지 않습니다. 주소는 계속 메일을 받습니다.</string>
+    <string name="sending_addresses_search">주소 검색</string>
+    <string name="sending_addresses_no_match">검색과 일치하는 주소가 없습니다.</string>
+    <string name="sending_addresses_all_off">모든 주소에서 보내기가 꺼져 있어 메일을 보낼 수 없습니다. 다시 보내려면 하나 이상의 주소에서 보내기를 켜세요.</string>
+    <string name="sending_address_ghost_alias">고스트 별칭</string>
+    <string name="compose_sender_unresolved">보낼 주소를 확인하지 못했습니다. 다시 보내 보세요.</string>
     <string name="alias_sending_allowed">보내기 허용됨</string>
     <string name="alias_sending_disabled">보내기 꺼짐</string>
     <string name="alias_sending_allow_a11y">%1$s에서 보내기 허용</string>

@@ -3704,10 +3704,14 @@
     <string name="color_brightness">Brillo</string>
     <string name="hex_color">Color hexadecimal</string>
     <string name="alias_sending_tab">Envío</string>
-    <string name="alias_sending_disabled_title">Alias con envío desactivado</string>
-    <string name="alias_sending_disabled_description">Desactiva el envío de un alias para que no salga correo desde él. El alias sigue recibiendo correo.</string>
     <string name="alias_sending_empty">Todavía no tienes alias ni direcciones de dominio.</string>
-    <string name="alias_sending_no_match">Ningún alias coincide con tu búsqueda.</string>
+    <string name="sending_addresses_title">Direcciones de envío</string>
+    <string name="sending_addresses_description">Desactiva el envío de una dirección para que no salga correo desde ella. La dirección sigue recibiendo correo.</string>
+    <string name="sending_addresses_search">Buscar direcciones</string>
+    <string name="sending_addresses_no_match">Ninguna dirección coincide con tu búsqueda.</string>
+    <string name="sending_addresses_all_off">El envío está desactivado en todas las direcciones, así que no puedes enviar correo. Para volver a enviar, activa el envío en al menos una dirección.</string>
+    <string name="sending_address_ghost_alias">Alias fantasma</string>
+    <string name="compose_sender_unresolved">No se pudo confirmar desde qué dirección enviar. Vuelve a intentarlo.</string>
     <string name="alias_sending_allowed">Envío permitido</string>
     <string name="alias_sending_disabled">Envío desactivado</string>
     <string name="alias_sending_allow_a11y">Permitir el envío desde %1$s</string>

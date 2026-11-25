@@ -3678,10 +3678,14 @@
     <string name="color_brightness">Parlaklık</string>
     <string name="hex_color">Onaltılık renk</string>
     <string name="alias_sending_tab">Gönderme</string>
-    <string name="alias_sending_disabled_title">Gönderimi kapalı takma adlar</string>
-    <string name="alias_sending_disabled_description">Bir takma addan e-posta gönderilmesini durdurmak için gönderimi kapatın. Takma ad e-posta almaya devam eder.</string>
     <string name="alias_sending_empty">Henüz takma adınız veya alan adı adresiniz yok.</string>
-    <string name="alias_sending_no_match">Aramanızla eşleşen takma ad yok.</string>
+    <string name="sending_addresses_title">Gönderim adresleri</string>
+    <string name="sending_addresses_description">Bir adresten e-posta gönderilmesini durdurmak için gönderimi kapatın. Adres e-posta almaya devam eder.</string>
+    <string name="sending_addresses_search">Adreslerde ara</string>
+    <string name="sending_addresses_no_match">Aramanızla eşleşen adres yok.</string>
+    <string name="sending_addresses_all_off">Tüm adresler için gönderim kapalı, bu yüzden e-posta gönderemezsiniz. Yeniden göndermek için en az bir adreste gönderimi açın.</string>
+    <string name="sending_address_ghost_alias">Hayalet takma ad</string>
+    <string name="compose_sender_unresolved">Hangi adresten gönderileceği doğrulanamadı. Yeniden göndermeyi deneyin.</string>
     <string name="alias_sending_allowed">Gönderime izin verildi</string>
     <string name="alias_sending_disabled">Gönderim kapalı</string>
     <string name="alias_sending_allow_a11y">%1$s adresinden gönderime izin ver</string>

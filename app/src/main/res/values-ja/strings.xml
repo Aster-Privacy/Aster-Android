@@ -3660,10 +3660,14 @@
     <string name="color_brightness">明るさ</string>
     <string name="hex_color">16進カラー</string>
     <string name="alias_sending_tab">送信</string>
-    <string name="alias_sending_disabled_title">送信が無効なエイリアス</string>
-    <string name="alias_sending_disabled_description">エイリアスの送信をオフにすると、そのエイリアスからメールが送信されなくなります。受信は引き続き行われます。</string>
     <string name="alias_sending_empty">エイリアスまたはドメインアドレスはまだありません。</string>
-    <string name="alias_sending_no_match">検索に一致するエイリアスはありません。</string>
+    <string name="sending_addresses_title">送信アドレス</string>
+    <string name="sending_addresses_description">アドレスの送信をオフにすると、そのアドレスからメールが送信されなくなります。受信は引き続き行われます。</string>
+    <string name="sending_addresses_search">アドレスを検索</string>
+    <string name="sending_addresses_no_match">検索に一致するアドレスはありません。</string>
+    <string name="sending_addresses_all_off">すべてのアドレスで送信がオフになっているため、メールを送信できません。再び送信するには、少なくとも1つのアドレスで送信をオンにしてください。</string>
+    <string name="sending_address_ghost_alias">ゴーストエイリアス</string>
+    <string name="compose_sender_unresolved">送信元アドレスを確認できませんでした。もう一度送信してください。</string>
     <string name="alias_sending_allowed">送信可能</string>
     <string name="alias_sending_disabled">送信無効</string>
     <string name="alias_sending_allow_a11y">%1$s からの送信を許可</string>
