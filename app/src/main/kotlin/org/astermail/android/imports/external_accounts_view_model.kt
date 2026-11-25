@@ -181,6 +181,10 @@ class ExternalAccountsViewModel @Inject constructor(
                         integrity_hash = encrypted.integrity_hash,
                     ))
                 }
+                if (!is_expected_authorize_url(provider, response.authorize_url)) {
+                    _state.value = _state.value.copy(connecting_provider = null, error = ExternalAccountsError.OAUTH_FAILED)
+                    return@launch
+                }
                 _state.value = _state.value.copy(authorize_url = response.authorize_url)
             } catch (c: kotlinx.coroutines.CancellationException) {
                 throw c
