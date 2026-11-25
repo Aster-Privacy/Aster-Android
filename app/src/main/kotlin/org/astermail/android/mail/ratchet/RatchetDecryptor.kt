@@ -373,7 +373,6 @@ class RatchetDecryptor @Inject constructor(
             var decrypt_error: Throwable? = null
             var chained = false
             var bootstrap_claim: BootstrapClaim? = null
-            var unadopted_plaintext: String? = null
 
             if (state != null) {
                 try {
@@ -427,26 +426,6 @@ class RatchetDecryptor @Inject constructor(
                         tried,
                         matched_address,
                     )
-                }
-                if (recovered == null) {
-                    val reused = decrypt_with_key_sets(
-                        conversation_id,
-                        envelope.sender_identity_key,
-                        recipient,
-                        mutableSetOf(),
-                        matched_address,
-                        allow_reused_pq_prekey = true,
-                    )
-                    if (reused != null) {
-                        val claim = identity_pins.claim_bootstrap(
-                            sender_email,
-                            envelope.sender_identity_key,
-                            recipient,
-                            message_id,
-                        )
-                        if (claim == BootstrapClaim.REPLAYED) throw ReplayedOpeningException()
-                        unadopted_plaintext = reused.second
-                    }
                 }
                 if (recovered != null) {
                     val claim = identity_pins.claim_bootstrap(
@@ -529,10 +508,6 @@ class RatchetDecryptor @Inject constructor(
                         binding = binding,
                     )
                     return@with_lock final_recovery.plaintext
-                }
-                unadopted_plaintext?.let { opened ->
-                    cache_plaintext(message_id, opened, sender_unauthenticated = true, binding = binding)
-                    return@with_lock opened
                 }
                 decrypt_error?.let { throw it }
                 return@with_lock null
@@ -881,6 +856,16 @@ class RatchetDecryptor @Inject constructor(
         if (recipient.pq_ciphertext == null || key_id == X3dh.PQ_IDENTITY_KEY_ID) return
         runCatching { identity_pins.record_pq_prekey_consumed(key_id, ephemeral) }
         runCatching { session_key_store.remove_pq_secret(key_id) }
+        drop_server_pq_secret(key_id)
+    }
+
+    private suspend fun drop_server_pq_secret(key_id: Int) {
+        try {
+            ratchet_api.delete_pq_secret(key_id)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+        }
     }
 
     private suspend fun consume_ec_one_time_prekey(recipient: RatchetRecipientData) {
@@ -1163,7 +1148,6 @@ class RatchetDecryptor @Inject constructor(
         recipient: RatchetRecipientData,
         tried: MutableSet<String>,
         own_address: String? = null,
-        allow_reused_pq_prekey: Boolean = false,
     ): Pair<RatchetState, String>? {
         val key_sets = order_receiver_key_sets(receiver_key_sets(own_address), recipient)
         if (org.astermail.android.BuildConfig.DEBUG) {
@@ -1173,7 +1157,7 @@ class RatchetDecryptor @Inject constructor(
             val tag = receiver_key_set_tag(keys.identity_public_b64, keys.identity_jwk, keys.signed_prekey_public_b64)
             if (!tried.add(tag)) continue
             val candidates = try {
-                bootstrap(conversation_id, sender_identity_key_b64, recipient, keys, allow_reused_pq_prekey)
+                bootstrap(conversation_id, sender_identity_key_b64, recipient, keys)
             } catch (c: kotlinx.coroutines.CancellationException) {
                 throw c
             } catch (t: Throwable) {
@@ -1229,7 +1213,6 @@ class RatchetDecryptor @Inject constructor(
         sender_identity_key_b64: String,
         recipient: RatchetRecipientData,
         keys: ReceiverKeySet,
-        allow_reused_pq_prekey: Boolean = false,
     ): List<RatchetState> {
         val ephemeral_b64 = recipient.ephemeral_key ?: return emptyList()
         val offered_x3dh_version = recipient.x3dh_v ?: 1
@@ -1252,10 +1235,12 @@ class RatchetDecryptor @Inject constructor(
 
         if (pq_ciphertext != null && pq_key_id != null && !from_identity) {
             val consumer = runCatching { identity_pins.pq_prekey_consumer(pq_key_id) }.getOrNull()
-            if (!allow_reused_pq_prekey && !RatchetIdentityPinRules.pq_prekey_accepts(consumer, ephemeral_b64)) {
+            if (!RatchetIdentityPinRules.pq_prekey_accepts(consumer, ephemeral_b64)) {
                 if (org.astermail.android.BuildConfig.DEBUG) {
                     android.util.Log.w("AsterRatchet", "refusing a reused one-time pq prekey")
                 }
+                runCatching { session_key_store.remove_pq_secret(pq_key_id) }
+                drop_server_pq_secret(pq_key_id)
                 return emptyList()
             }
         }
