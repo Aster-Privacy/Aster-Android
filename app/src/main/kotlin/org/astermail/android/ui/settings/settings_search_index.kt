@@ -356,6 +356,8 @@ private val all_settings_search_index: List<settings_index_entry> = listOf(
     settings_index_entry("identity_key", R.string.encryption_title, R.string.info_wkd_title, false),
     settings_index_entry("identity_key", R.string.encryption_title, R.string.publish_to_keyservers, false),
     settings_index_entry("identity_key", R.string.encryption_title, R.string.publish_to_keyservers_sub, false),
+    settings_index_entry("identity_key", R.string.encryption_title, R.string.alias_pgp_title, false),
+    settings_index_entry("identity_key", R.string.encryption_title, R.string.alias_pgp_sub, false),
     settings_index_entry("identity_key", R.string.encryption_title, R.string.info_keyservers_title, false),
     settings_index_entry("identity_key", R.string.encryption_title, R.string.export_private_key_dialog_title, false),
     settings_index_entry("identity_key", R.string.encryption_title, R.string.export_private_key_message, false),
