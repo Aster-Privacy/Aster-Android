@@ -87,8 +87,16 @@ fun is_weak_storage_vault(
     decode: (String) -> ByteArray,
 ): Boolean {
     if (vault_obj.optString("data_kek", "").isBlank()) return true
-    if (vault_obj.opt("data_kek_random") == true) return false
-    val stored = decode_vault_storage_key(vault_obj, decode) ?: return true
+    val stored = decode_vault_storage_key(vault_obj, decode)
+    if (stored != null && StorageWriteKey.is_public_mail_kek(stored)) {
+        stored.fill(0)
+        return true
+    }
+    if (vault_obj.opt("data_kek_random") == true) {
+        stored?.fill(0)
+        return false
+    }
+    if (stored == null) return true
     var matches = false
     for (candidate in password_keys) {
         if (candidate.size == stored.size && constant_time_equal(stored, candidate)) matches = true

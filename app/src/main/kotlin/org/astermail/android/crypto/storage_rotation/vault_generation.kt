@@ -40,6 +40,14 @@ fun stamp_vault_generation(next: JSONObject, vararg sources: JSONObject?): JSONO
     return next
 }
 
+fun is_rolled_back_vault(vault: JSONObject?, floor: Long): Boolean {
+    val generation = vault_generation(vault)
+    return generation > 0L && generation < floor
+}
+
+fun generation_floor_source(floor: Long): JSONObject? =
+    floor.takeIf { it in 1..MAX_SAFE_GENERATION }?.let { JSONObject().put(VAULT_GENERATION_FIELD, it) }
+
 private const val MAX_SERVER_WRITE_COUNT = 1L shl 40
 
 fun server_write_count_floor(count: Long?): JSONObject? =

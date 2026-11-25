@@ -83,6 +83,17 @@ class ExternalAccountCryptoTest {
         ))
     }
 
+    @Test
+    fun refuses_records_that_only_open_under_a_public_constant() {
+        val constant = org.astermail.android.crypto.StorageWriteKey.public_mail_kek_raws().first()
+        val payload = encrypt_account_data(account, constant)
+
+        assertNull(decrypt_account_data_with_keys(
+            payload.encrypted_account_data, payload.account_data_nonce, payload.integrity_hash,
+            listOf(ByteArray(32) { 7 }, constant),
+        ))
+    }
+
     private fun assert_storage_key(version: Int, expected_hex: String) {
         val key = CryptoNative.derive_storage_key_for_version("fixture-password".toByteArray(), version)
         val expected = expected_hex.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
