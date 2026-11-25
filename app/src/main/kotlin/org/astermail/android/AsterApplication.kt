@@ -179,6 +179,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         }
         runCatching { org.astermail.android.ui.common.apply_app_night_mode(this) }
         start_secure_prefs_warm()
+        runCatching { start_inbox_prefetch() }
         org.astermail.android.ui.theme.custom_theme_image.init(this)
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             runCatching { org.astermail.android.ui.theme.theme_manifest.load_cached(this@AsterApplication) }
@@ -232,6 +233,12 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
                 org.astermail.android.storage.SecurePrefs.warm(this, secure_prefs_namespaces)
             }
         }.apply { name = "aster-prefs-warm" }.start()
+    }
+
+    private fun start_inbox_prefetch() {
+        EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
+            .folder_cache_store()
+            .prefetch(org.astermail.android.mail.launch_folder_inbox)
     }
 
     private fun start_deferred_startup() {
@@ -352,6 +359,7 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         fun account_store(): org.astermail.android.storage.AccountStore
         fun session_key_store(): org.astermail.android.storage.SessionKeyStore
         fun database(): dagger.Lazy<org.astermail.android.storage.search.AsterDatabase>
+        fun folder_cache_store(): org.astermail.android.mail.FolderCacheStore
         fun aster_profile_resolver(): org.astermail.android.mail.AsterProfileResolver
         fun contacts_repository(): dagger.Lazy<org.astermail.android.contacts.ContactsRepository>
         fun labels_api(): org.astermail.android.api.labels.LabelsApi

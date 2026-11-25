@@ -54,6 +54,15 @@ class FolderCacheStore @Inject constructor(
 ) {
     private val dao: FolderRowDao by lazy { db_provider.get().folder_row_dao() }
 
+    private val prefetched = StartupPrefetch<String, List<InboxItem>>(
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob()),
+        Dispatchers.IO,
+    )
+
+    fun prefetch(folder: String) {
+        prefetched.start(folder) { read_rows(folder, folder_cache_row_limit) }
+    }
+
     private val meta: android.content.SharedPreferences? by lazy {
         runCatching { context.getSharedPreferences(folder_cache_meta_prefs, android.content.Context.MODE_PRIVATE) }
             .getOrNull()
@@ -96,12 +105,16 @@ class FolderCacheStore @Inject constructor(
         }
     }
 
-    suspend fun rows(folder: String, limit: Int = folder_cache_row_limit): List<InboxItem> =
-        withContext(Dispatchers.IO) {
-            runCatching { dao.rows_for_folder(folder, limit).map { it.to_inbox_item() } }.getOrDefault(emptyList())
-        }
+    suspend fun rows(folder: String, limit: Int = folder_cache_row_limit): List<InboxItem> {
+        if (limit == folder_cache_row_limit) prefetched.take(folder)?.let { return it }
+        return withContext(Dispatchers.IO) { read_rows(folder, limit) }
+    }
+
+    private fun read_rows(folder: String, limit: Int): List<InboxItem> =
+        runCatching { dao.rows_for_folder(folder, limit).map { it.to_inbox_item() } }.getOrDefault(emptyList())
 
     suspend fun save(folder: String, items: List<InboxItem>, cached_at: Long) {
+        prefetched.invalidate(folder)
         withContext(Dispatchers.IO) {
             runCatching {
                 val rows = folder_cache_rows(folder, items, cached_at)
@@ -112,10 +125,12 @@ class FolderCacheStore @Inject constructor(
     }
 
     suspend fun clear_folder(folder: String) {
+        prefetched.invalidate(folder)
         withContext(Dispatchers.IO) { runCatching { dao.clear_folder(folder) } }
     }
 
     suspend fun clear_all() {
+        prefetched.clear()
         withContext(Dispatchers.IO) { runCatching { dao.clear_all() } }
     }
 }
