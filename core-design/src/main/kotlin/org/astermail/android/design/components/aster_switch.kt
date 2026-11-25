@@ -96,17 +96,19 @@ fun AsterSwitch(
             .size(touch_width, touch_height)
             .then(
                 if (onCheckedChange != null) {
-                    Modifier.toggleable(
-                        value = checked,
-                        enabled = enabled,
-                        role = Role.Switch,
-                        interactionSource = interaction,
-                        indication = null,
-                        onValueChange = { value ->
-                            view.aster_perform_haptic(if (value) aster_haptic.toggle_on else aster_haptic.toggle_off)
-                            onCheckedChange(value)
-                        },
-                    )
+                    Modifier
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(percent = 50))
+                        .toggleable(
+                            value = checked,
+                            enabled = enabled,
+                            role = Role.Switch,
+                            interactionSource = interaction,
+                            indication = androidx.compose.material3.ripple(),
+                            onValueChange = { value ->
+                                view.aster_perform_haptic(if (value) aster_haptic.toggle_on else aster_haptic.toggle_off)
+                                onCheckedChange(value)
+                            },
+                        )
                 } else {
                     Modifier
                 }

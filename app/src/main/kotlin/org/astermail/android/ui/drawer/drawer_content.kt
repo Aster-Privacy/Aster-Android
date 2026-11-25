@@ -2186,12 +2186,14 @@ private fun profile_menu_plan_badge(plan_code: String?) {
     org.astermail.android.design.components.AsterPlanTag(
         text = label,
         plan = org.astermail.android.design.components.aster_plan_kind_of(plan_code),
-        modifier = Modifier.clickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = null,
-        ) {
-            org.astermail.android.ui.common.app_toast.show(thanks)
-        },
+        modifier = Modifier
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(percent = 50))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = androidx.compose.material3.ripple(),
+            ) {
+                org.astermail.android.ui.common.app_toast.show(thanks)
+            },
     )
 }
 
@@ -2408,21 +2410,23 @@ internal fun workspace_switcher_sheet(
                             fontSize = 13.sp,
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                            modifier = Modifier.clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                            ) {
-                                if (current_display_email.isNotBlank()) {
-                                    copy_action(
-                                        email_clip_label,
-                                        current_display_email,
-                                        org.astermail.android.ui.common.copied_toast_text(
-                                            copy_toast_context,
+                            modifier = Modifier
+                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = androidx.compose.material3.ripple(),
+                                ) {
+                                    if (current_display_email.isNotBlank()) {
+                                        copy_action(
+                                            email_clip_label,
                                             current_display_email,
-                                        ),
-                                    )
-                                }
-                            },
+                                            org.astermail.android.ui.common.copied_toast_text(
+                                                copy_toast_context,
+                                                current_display_email,
+                                            ),
+                                        )
+                                    }
+                                },
                         )
                     }
                 }

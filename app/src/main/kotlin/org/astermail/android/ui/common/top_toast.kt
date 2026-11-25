@@ -275,7 +275,7 @@ private fun toast_card(
         .then(if (colors.is_dark) Modifier else Modifier.border(1.dp, colors.border_secondary, shape))
         .clickable(
             interactionSource = remember { MutableInteractionSource() },
-            indication = null,
+            indication = androidx.compose.material3.ripple(),
         ) {
             if (latest.on_tap != null) finish { it.on_tap?.invoke() }
         }
