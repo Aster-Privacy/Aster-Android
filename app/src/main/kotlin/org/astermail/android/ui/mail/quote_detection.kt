@@ -97,7 +97,9 @@ private val ORIGINAL_MESSAGE = Regex(
     RegexOption.IGNORE_CASE,
 )
 
-private val SEPARATOR_LINE = Regex("""^(?:[_\-=—]\s*){8,}$""")
+private const val SEPARATOR_MARKS = "_-=—"
+private const val SEPARATOR_SPACE = " \t\n\u000B\u000C\r"
+private const val SEPARATOR_MIN_MARKS = 8
 
 private val MARKER_LINE = Regex("""^-{2,}\s*(?:Original Message|Forwarded message)\s*-{2,}$""", RegexOption.IGNORE_CASE)
 
@@ -120,7 +122,19 @@ internal fun is_attribution_text(text: String): Boolean {
     return ATTRIBUTION_DETAIL.containsMatchIn(text)
 }
 
-internal fun is_separator_text(text: String): Boolean = SEPARATOR_LINE.containsMatchIn(text)
+internal fun is_separator_text(text: String): Boolean {
+    val body = if (text.isNotEmpty() && text.last() in "\u0085\u2028\u2029") text.dropLast(1) else text
+    if (body.isEmpty() || body[0] !in SEPARATOR_MARKS) return false
+    var marks = 0
+    for (c in body) {
+        when (c) {
+            in SEPARATOR_MARKS -> marks++
+            in SEPARATOR_SPACE -> Unit
+            else -> return false
+        }
+    }
+    return marks >= SEPARATOR_MIN_MARKS
+}
 
 internal fun is_boilerplate_text(text: String): Boolean {
     if (text.isEmpty() || is_separator_text(text)) return true
