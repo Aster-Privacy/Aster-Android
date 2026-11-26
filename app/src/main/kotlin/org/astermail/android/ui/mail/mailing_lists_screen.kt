@@ -301,31 +301,28 @@ fun MailingListsScreen(
         return key.takeIf { it in latest_visible_ids.value }
     }
 
-    fun subscription_index_at_offset(y: Float): Int? {
-        val id = subscription_id_at_offset(y) ?: return null
-        val idx = latest_visible.value.indexOfFirst { it.id == id }
-        return if (idx >= 0) idx else null
-    }
-
-    val drag_anchor_index = remember { mutableIntStateOf(-1) }
-    val drag_last_index = remember { mutableIntStateOf(-1) }
+    val drag_anchor_id = remember { mutableStateOf<String?>(null) }
+    val drag_last_id = remember { mutableStateOf<String?>(null) }
+    val drag_last_rows = remember { mutableStateOf<Any?>(null) }
     val drag_pre_selected = remember { mutableStateListOf<String>() }
     val drag_pointer_y = remember { mutableFloatStateOf(-1f) }
     val drag_viewport_height = remember { mutableFloatStateOf(0f) }
     var drag_selecting by remember { mutableStateOf(false) }
 
     fun apply_drag_selection(y: Float) {
-        val anchor = drag_anchor_index.intValue
-        if (anchor < 0) return
-        val idx = subscription_index_at_offset(y) ?: return
-        if (idx == drag_last_index.intValue) return
-        drag_last_index.intValue = idx
+        val anchor_id = drag_anchor_id.value ?: return
+        val current_id = subscription_id_at_offset(y) ?: return
+        val rows = latest_visible.value
+        if (current_id == drag_last_id.value && rows === drag_last_rows.value) return
+        val anchor = rows.indexOfFirst { it.id == anchor_id }
+        val idx = rows.indexOfFirst { it.id == current_id }
+        if (anchor < 0 || idx < 0) return
+        drag_last_id.value = current_id
+        drag_last_rows.value = rows
         val lo = minOf(anchor, idx)
         val hi = maxOf(anchor, idx)
         val target = LinkedHashSet(drag_pre_selected)
-        for (i in lo..hi) {
-            latest_visible.value.getOrNull(i)?.id?.let { target.add(it) }
-        }
+        for (i in lo..hi) target.add(rows[i].id)
         if (target.size != selected_ids.size || !target.containsAll(selected_ids)) {
             if (haptic_enabled) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
             selected_ids = target
@@ -415,10 +412,10 @@ fun MailingListsScreen(
                                 if (selected_ids.isEmpty()) continue
                                 if ((change.position - down.position).getDistance() < drag_start_slop) continue
                                 if (!drag_started) {
-                                    val anchor_index = latest_visible.value.indexOfFirst { it.id == anchor_id }
-                                    if (anchor_index < 0) continue
-                                    drag_anchor_index.intValue = anchor_index
-                                    drag_last_index.intValue = anchor_index
+                                    if (latest_visible.value.none { it.id == anchor_id }) continue
+                                    drag_anchor_id.value = anchor_id
+                                    drag_last_id.value = anchor_id
+                                    drag_last_rows.value = latest_visible.value
                                     drag_pre_selected.clear()
                                     drag_pre_selected.addAll(selected_ids)
                                     drag_viewport_height.floatValue = size.height.toFloat()
@@ -432,8 +429,9 @@ fun MailingListsScreen(
                         } finally {
                             drag_selecting = false
                             drag_pointer_y.floatValue = -1f
-                            drag_anchor_index.intValue = -1
-                            drag_last_index.intValue = -1
+                            drag_anchor_id.value = null
+                            drag_last_id.value = null
+                            drag_last_rows.value = null
                             drag_pre_selected.clear()
                         }
                     }
