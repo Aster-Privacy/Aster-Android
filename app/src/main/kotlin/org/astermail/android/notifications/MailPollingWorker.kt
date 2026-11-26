@@ -188,7 +188,7 @@ class MailPollingWorker(
         val suppressed_by_quiet_hours = has_pending_new_mail && is_quiet_hours_now(context)
         var deferred = false
         if (has_pending_new_mail && !suppressed_by_quiet_hours) {
-            deferred = !notifier.notify_for_new_mail(arrived)
+            deferred = !notifier.notify_for_new_mail(arrived, inbox_arrivals = unread_arrivals)
             if (!deferred) {
                 prefs.edit().putInt(KEY_LAST_NOTIFIED_COUNT, new_unread).apply()
             }
@@ -255,8 +255,14 @@ class MailPollingWorker(
         var posted_this_run = false
         private set
 
-        suspend fun notify_for_new_mail(arrived: Int, fetch_limit: Int = arrived.coerceIn(1, 5)): Boolean {
+        suspend fun notify_for_new_mail(
+            arrived: Int,
+            fetch_limit: Int = arrived.coerceIn(1, 5),
+            inbox_arrivals: Int = arrived,
+        ): Boolean {
             if (!is_notify_new_email(context) && !is_notify_replies(context)) return true
+            var eligible_count: Int? = null
+            fun generic_count(): Int = generic_notification_count(inbox_arrivals, eligible_count, fetch_limit)
             val throttled = message_notified_recently(context)
             val floor_ms = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .getLong(KEY_BASELINE_MS, 0L)
@@ -276,13 +282,13 @@ class MailPollingWorker(
             val mute_filters_active = has_mute_filters(muted_categories, muted_folder_tokens(context))
             if (content_hidden && !mute_filters_active) {
                 if (throttled) return false
-                posted_this_run = show_generic(context, arrived)
+                posted_this_run = show_generic(context, generic_count())
                 return true
             }
             val repo = entry?.mail_repository()
             if (repo == null) {
                 if (throttled) return false
-                posted_this_run = show_generic(context, arrived, silent = mute_filters_active)
+                posted_this_run = show_generic(context, generic_count(), silent = mute_filters_active)
                 return true
             }
             runCatching { repo.ensure_custom_categories_loaded() }
@@ -351,6 +357,7 @@ class MailPollingWorker(
                         if (candidate != null) break
                     }
                 }
+                if (fetched_any_page) eligible_count = maxOf(eligible_count ?: 0, candidates.size)
 
                 val retry = if (candidate == null) {
                     UnreadableRetry.None
@@ -393,7 +400,7 @@ class MailPollingWorker(
             ) {
                 val neutral_silent = message_alert_silent(throttled, true, muted_categories)
                 if (content_hidden) {
-                    val posted = show_generic(context, arrived, silent = neutral_silent)
+                    val posted = show_generic(context, generic_count(), silent = neutral_silent)
                     if (!posted) release_item_notification(context, neutral.id)
                     posted_this_run = posted
                     return posted || !throttled
@@ -411,15 +418,15 @@ class MailPollingWorker(
             if (fresh == null || resolved_sender.isNullOrBlank()) {
                 if (throttled) return false
                 when (fallback_alert(fetched_any_page, protected_pending, mute_filters_active)) {
-                    FallbackAlert.Audible -> posted_this_run = show_generic(context, arrived)
-                    FallbackAlert.Silent -> posted_this_run = show_generic(context, arrived, silent = true)
+                    FallbackAlert.Audible -> posted_this_run = show_generic(context, generic_count())
+                    FallbackAlert.Silent -> posted_this_run = show_generic(context, generic_count(), silent = true)
                     FallbackAlert.None -> Unit
                 }
                 return true
             }
             val silent = message_alert_silent(throttled, fresh.is_undecryptable, muted_categories)
             if (content_hidden) {
-                val posted = show_generic(context, arrived, silent = silent)
+                val posted = show_generic(context, generic_count(), silent = silent)
                 if (!posted) release_item_notification(context, fresh.id)
                 posted_this_run = posted
                 return posted || !throttled
@@ -911,6 +918,16 @@ class MailPollingWorker(
             fetched_any_page -> FallbackAlert.None
             mute_filters_active -> FallbackAlert.Silent
             else -> FallbackAlert.Audible
+        }
+
+        fun generic_notification_count(inbox_arrivals: Int, eligible: Int?, page_limit: Int): Int {
+            val inbox_new = inbox_arrivals.coerceAtLeast(0)
+            val counted = when {
+                eligible == null -> inbox_new
+                eligible >= page_limit -> maxOf(eligible, inbox_new)
+                else -> eligible
+            }
+            return counted.coerceAtLeast(1)
         }
 
         const val UNREADABLE_RETRY_ATTEMPTS = 4
