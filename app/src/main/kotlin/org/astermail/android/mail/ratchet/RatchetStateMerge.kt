@@ -51,15 +51,46 @@ object RatchetStateMerge {
             .toMutableList()
     }
 
-    private fun consumed_locally(local: RatchetState, key: SkippedMessageKey, local_ids: Set<String>): Boolean =
+    private fun consumed_key_id(key: ConsumedMessageKey): String =
+        "${key.dh_public}:${key.message_number}"
+
+    private fun merge_consumed_keys(
+        local: RatchetState,
+        remote: RatchetState,
+        remote_versioned: Boolean,
+    ): MutableList<ConsumedMessageKey> {
+        val by_id = linkedMapOf<String, ConsumedMessageKey>()
+        val sources = if (remote_versioned) {
+            remote.consumed_message_keys + local.consumed_message_keys
+        } else {
+            local.consumed_message_keys
+        }
+        for (key in sources) {
+            val id = consumed_key_id(key)
+            by_id.remove(id)
+            by_id[id] = key
+        }
+        return by_id.values.toList()
+            .takeLast(DoubleRatchet.max_consumed_message_keys)
+            .toMutableList()
+    }
+
+    private fun consumed_on_current_chain(local: RatchetState, key: SkippedMessageKey, local_ids: Set<String>): Boolean =
         local.chain_key_recv != null &&
             key.dh_public == local.dh_remote_public &&
             key.message_number < local.recv_message_number &&
             skipped_key_id(key) !in local_ids
 
-    private fun remote_keys_still_pending(local: RatchetState, remote: RatchetState): List<SkippedMessageKey> {
+    private fun remote_keys_still_pending(
+        local: RatchetState,
+        remote: RatchetState,
+        consumed: List<ConsumedMessageKey>,
+    ): List<SkippedMessageKey> {
         val local_ids = local.skipped_message_keys.mapTo(HashSet()) { skipped_key_id(it) }
-        return remote.skipped_message_keys.filterNot { consumed_locally(local, it, local_ids) }
+        val consumed_ids = consumed.mapTo(HashSet()) { consumed_key_id(it) }
+        return remote.skipped_message_keys.filterNot {
+            skipped_key_id(it) in consumed_ids || consumed_on_current_chain(local, it, local_ids)
+        }
     }
 
     fun shares_epoch(a: RatchetState, b: RatchetState): Boolean =
@@ -99,7 +130,8 @@ object RatchetStateMerge {
     fun merge(local: RatchetState, remote: RatchetState, remote_versioned: Boolean = true): RatchetState {
         if (local.conversation_id != remote.conversation_id) return local
 
-        val skipped = merge_skipped_keys(local.skipped_message_keys, remote_keys_still_pending(local, remote))
+        val consumed = merge_consumed_keys(local, remote, remote_versioned)
+        val skipped = merge_skipped_keys(local.skipped_message_keys, remote_keys_still_pending(local, remote, consumed))
         val local_skipped = merge_skipped_keys(local.skipped_message_keys, emptyList())
         val updated_at = maxOf(local.updated_at, remote.updated_at)
 
@@ -111,6 +143,7 @@ object RatchetStateMerge {
                 updated_at = updated_at,
                 remote_identity_key = local.remote_identity_key ?: remote.remote_identity_key,
                 header_bound = local.header_bound || remote.header_bound,
+                consumed_message_keys = consumed,
             )
         }
 
@@ -135,6 +168,7 @@ object RatchetStateMerge {
             skipped_message_keys = merged_skipped,
             updated_at = updated_at,
             header_bound = local.header_bound || remote.header_bound,
+            consumed_message_keys = consumed,
         )
     }
 
@@ -142,6 +176,7 @@ object RatchetStateMerge {
         if (local.conversation_id != remote.conversation_id) return local
         return local.copy(
             skipped_message_keys = merge_skipped_keys(local.skipped_message_keys, emptyList()),
+            consumed_message_keys = local.consumed_message_keys.toMutableList(),
         )
     }
 
