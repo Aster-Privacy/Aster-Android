@@ -1530,6 +1530,17 @@ fun MailDetailScreen(
                 local_body_view_holder provides body_holder,
                 org.astermail.android.ui.search.local_search_highlight provides search_controller?.session,
             ) {
+            val applied_tag_tokens = remember(api_item, inbox_state_for_folder.items) {
+                org.astermail.android.labels.conversation_tag_tokens(
+                    api_item?.as_conversation_member(),
+                    inbox_state_for_folder.items.map { it.as_conversation_member() },
+                )
+            }
+            val applied_tags = remember(applied_tag_tokens, settings_state.tags) {
+                applied_tag_tokens.mapNotNull { token ->
+                    settings_state.tags.find { it.tag_token == token }
+                }.filter { it.encrypted_name.isNotBlank() }
+            }
             if (email != null) LazyColumn(
                 state = list_state,
                 modifier = Modifier
@@ -1542,21 +1553,9 @@ fun MailDetailScreen(
                 item(key = "subject_header") {
                     var subject_expanded by remember(subject_text) { mutableStateOf(false) }
                     var subject_truncated by remember(subject_text) { mutableStateOf(false) }
-                    val applied_tag_tokens = remember(api_item, inbox_state_for_folder.items) {
-                        org.astermail.android.labels.conversation_tag_tokens(
-                            api_item?.as_conversation_member(),
-                            inbox_state_for_folder.items.map { it.as_conversation_member() },
-                        )
-                    }
-                    val settings_state_now by settings_vm.state.collectAsStateWithLifecycle()
-                    val applied_tags = remember(applied_tag_tokens, settings_state_now.tags) {
-                        applied_tag_tokens.mapNotNull { token ->
-                            settings_state_now.tags.find { it.tag_token == token }
-                        }.filter { it.encrypted_name.isNotBlank() }
-                    }
                     val folder_chip = detail_folder_chip_for(
                         item = api_item,
-                        folders = settings_state_now.labels,
+                        folders = settings_state.labels,
                         is_spam = is_spam,
                         is_trashed = is_trashed,
                     )
@@ -5893,9 +5892,10 @@ private fun collapsed_message(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
+                val cleaned_preview = remember(msg.preview, msg.body) { clean_preview_text(msg.preview, msg.body) }
                 Text(
                     text = if (is_undecryptable) stringResource(R.string.e2e_encrypted_message)
-                        else clean_preview_text(msg.preview, msg.body).ifBlank { stringResource(R.string.no_body) },
+                        else cleaned_preview.ifBlank { stringResource(R.string.no_body) },
                     color = colors.text_muted,
                     fontSize = 13.sp,
                     maxLines = 1,
@@ -5906,6 +5906,12 @@ private fun collapsed_message(
     }
 }
 
+private val preview_control_chars = Regex("[\\p{Cntrl}&&[^\n\t]]")
+
+private val preview_markup_runs = Regex("[*_~`#=\\-]{2,}")
+
+private val preview_whitespace = Regex("\\s+")
+
 private fun clean_preview_text(preview: String, body: String): String {
     val source = preview.ifBlank {
         body.lineSequence().map { it.trim() }.firstOrNull { line ->
@@ -5913,9 +5919,9 @@ private fun clean_preview_text(preview: String, body: String): String {
         }.orEmpty()
     }
     val collapsed = source
-        .replace(Regex("[\\p{Cntrl}&&[^\n\t]]"), "")
-        .replace(Regex("[*_~`#=\\-]{2,}"), " ")
-        .replace(Regex("\\s+"), " ")
+        .replace(preview_control_chars, "")
+        .replace(preview_markup_runs, " ")
+        .replace(preview_whitespace, " ")
         .trim()
     return collapsed
 }
