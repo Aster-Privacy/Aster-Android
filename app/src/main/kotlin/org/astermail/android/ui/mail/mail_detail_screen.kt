@@ -6934,8 +6934,6 @@ internal object web_view_support {
     @Volatile
     private var known_available = false
 
-    private val warm_started = java.util.concurrent.atomic.AtomicBoolean(false)
-
     fun is_available(ctx: android.content.Context): Boolean {
         if (known_available) return true
         val available = runCatching {
@@ -6943,15 +6941,6 @@ internal object web_view_support {
         }.isSuccess
         if (available) known_available = true
         return available
-    }
-
-    fun warm_in_background(ctx: android.content.Context) {
-        if (known_available || !warm_started.compareAndSet(false, true)) return
-        val app = ctx.applicationContext
-        Thread {
-            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND)
-            runCatching { is_available(app) }
-        }.apply { name = "aster-webview-warm" }.start()
     }
 }
 

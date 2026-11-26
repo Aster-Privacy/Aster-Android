@@ -1,7 +1,8 @@
 Bug fixes and improvements:
 
-- Messages open right away with the subject and sender in place, not a blank screen.
+- Aster Mail opens faster, and your inbox no longer pauses after launch.
+- New-mail notifications arrive reliably and show verification codes again.
+- Messages open right away with the subject and sender in place.
 - Long conversations open at the newest message instead of partway through.
-- Scrolling your inbox, threads, and contacts is smoother and no longer stutters.
+- Scrolling your inbox, threads, and contacts is smoother.
 - Search opens cleanly, and the selection count no longer flickers as you drag.
-- Pages and panels open faster and slide in from the right place.

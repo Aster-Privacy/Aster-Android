@@ -144,31 +144,33 @@ private val required_money: String =
     "(?:" + currency_token + ")" + money_gap + number_body + "(?:" + money_gap + "(?:" + currency_token + "))?" +
         "|" + number_body + money_gap + "(?:" + currency_token + ")"
 
-private val item_patterns = listOf(
-    item_pattern(
-        Regex("""(?<!\d)(\d++)\s*+x\s++(.{1,199}?)\s{0,64}+[-–]\s*+(""" + money_token + ")", RegexOption.IGNORE_CASE),
-        false,
-    ),
-    item_pattern(
-        Regex("""(.+?)\s{0,64}+\(Qty:\s*+(\d++)\)\s*+(""" + money_token + ")", RegexOption.IGNORE_CASE),
-        false,
-        scan_by_line = true,
-    ),
-    item_pattern(
-        Regex(
-            """Item:\s*+(.{1,199}?)(?:\s{0,64}+Qty:\s*+(\d++))?\s{0,64}+Price:\s*+(""" + money_token + ")",
-            RegexOption.IGNORE_CASE,
+private val item_patterns by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    listOf(
+        item_pattern(
+            Regex("""(?<!\d)(\d++)\s*+x\s++(.{1,199}?)\s{0,64}+[-–]\s*+(""" + money_token + ")", RegexOption.IGNORE_CASE),
+            false,
         ),
-        false,
-    ),
-    item_pattern(
-        Regex(
-            """(?:^|\n)[ \t]*+([^\n\$€£¥₹]{2,160}?)\s{1,16}+[×x]\s*+(\d{1,3})\s++(""" + required_money + """)[ \t]*+(?=\n|$)""",
-            RegexOption.IGNORE_CASE,
+        item_pattern(
+            Regex("""(.+?)\s{0,64}+\(Qty:\s*+(\d++)\)\s*+(""" + money_token + ")", RegexOption.IGNORE_CASE),
+            false,
+            scan_by_line = true,
         ),
-        true,
-    ),
-)
+        item_pattern(
+            Regex(
+                """Item:\s*+(.{1,199}?)(?:\s{0,64}+Qty:\s*+(\d++))?\s{0,64}+Price:\s*+(""" + money_token + ")",
+                RegexOption.IGNORE_CASE,
+            ),
+            false,
+        ),
+        item_pattern(
+            Regex(
+                """(?:^|\n)[ \t]*+([^\n\$€£¥₹]{2,160}?)\s{1,16}+[×x]\s*+(\d{1,3})\s++(""" + required_money + """)[ \t]*+(?=\n|$)""",
+                RegexOption.IGNORE_CASE,
+            ),
+            true,
+        ),
+    )
+}
 
 private val all_digits_regex = Regex("^\\d+$")
 private val item_summary_word = Regex("\\b(?:sub\\s?total|total|amount|tax|vat|shipping|discount)\\b", RegexOption.IGNORE_CASE)
@@ -533,39 +535,49 @@ fun extract_receipt_url(body: String, html: String?, sender_emails: List<String?
     return null
 }
 
-private val total_patterns = listOf(
-    money_after("grand\\s+total"),
-    money_after("order\\s+total"),
-    money_after("purchase\\s+total"),
-    money_after("total\\s+charged"),
-    money_after("amount\\s+(?:paid|charged|due)"),
-    money_after("\\btotals?\\b"),
-)
+private val total_patterns by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    listOf(
+        money_after("grand\\s+total"),
+        money_after("order\\s+total"),
+        money_after("purchase\\s+total"),
+        money_after("total\\s+charged"),
+        money_after("amount\\s+(?:paid|charged|due)"),
+        money_after("\\btotals?\\b"),
+    )
+}
 
-private val subtotal_patterns = listOf(
-    money_after("\\bsub\\s?total\\b"),
-    money_after("\\bitems?\\s+total\\b"),
-)
+private val subtotal_patterns by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    listOf(
+        money_after("\\bsub\\s?total\\b"),
+        money_after("\\bitems?\\s+total\\b"),
+    )
+}
 
 private const val tax_rate = "(?:\\s*+\\(?\\d{1,2}(?:[.,]\\d++)?\\s*+%\\)?)?"
 
-private val tax_patterns = listOf(
-    money_after("\\b(?:sales\\s+)?tax(?:es)?\\b" + tax_rate),
-    money_after("\\bvat\\b" + tax_rate),
-    money_after("\\bgst\\b" + tax_rate),
-)
+private val tax_patterns by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    listOf(
+        money_after("\\b(?:sales\\s+)?tax(?:es)?\\b" + tax_rate),
+        money_after("\\bvat\\b" + tax_rate),
+        money_after("\\bgst\\b" + tax_rate),
+    )
+}
 
-private val shipping_cost_patterns = listOf(
-    money_after("\\bshipping(?:\\s*(?:&|and)\\s*handling)?\\b"),
-    money_after("\\bdelivery\\s+fee\\b"),
-)
+private val shipping_cost_patterns by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    listOf(
+        money_after("\\bshipping(?:\\s*(?:&|and)\\s*handling)?\\b"),
+        money_after("\\bdelivery\\s+fee\\b"),
+    )
+}
 
-private val discount_patterns = listOf(
-    money_after("\\bdiscounts?\\b"),
-    money_after("\\bsavings?\\b"),
-    money_after("\\bcoupon\\b"),
-    money_after("\\bpromo(?:tion)?\\s*+(?:code)?\\s*+(?:applied)?"),
-)
+private val discount_patterns by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    listOf(
+        money_after("\\bdiscounts?\\b"),
+        money_after("\\bsavings?\\b"),
+        money_after("\\bcoupon\\b"),
+        money_after("\\bpromo(?:tion)?\\s*+(?:code)?\\s*+(?:applied)?"),
+    )
+}
 
 private val card_last_four_regex = Regex("(?:card\\s+)?ending\\s+(?:in\\s+)?[*x]?(\\d{4})", RegexOption.IGNORE_CASE)
 private val payment_method_regex =
@@ -761,11 +773,7 @@ private val strong_purchase_indicators = listOf(
 )
 
 private val supporting_purchase_indicators = listOf(
-    money_after("\\border\\s+total\\b"),
-    money_after("\\bgrand\\s+total\\b"),
-    money_after("\\bamount\\s+(?:paid|charged|due)\\b"),
-    money_after("\\bsub\\s?total\\b"),
-    money_after("\\btotals?\\b"),
+    money_after("(?:\\border\\s+total\\b|\\bgrand\\s+total\\b|\\bamount\\s+(?:paid|charged|due)\\b|\\bsub\\s?total\\b|\\btotals?\\b)"),
     card_last_four_regex,
 )
 

@@ -1314,7 +1314,7 @@ fun InboxScreen(
                     rows = rows,
                 ),
             )
-            val hints_added = prime_inbox_order_hints(
+            val hints_added = inbox_order_patterns_ready && prime_inbox_order_hints(
                 tab_rows_for(rows, categories_enabled, hint_category).map { it.newest },
                 INBOX_HINT_PRIME_ROWS,
             )

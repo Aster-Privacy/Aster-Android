@@ -101,11 +101,11 @@ private val symbol_alternation: String = symbol_currencies.keys
                 else -> "\\" + c
             }
         }.joinToString("")
-        if (key.first().isLetter()) "(?<![\\p{L}])$body(?![\\p{L}])" else if (key.last().isLetter()) "$body(?![\\p{L}])" else body
+        if (key.first().isLetter()) "(?<!(?-i:[\\p{L}]))$body(?!(?-i:[\\p{L}]))" else if (key.last().isLetter()) "$body(?!(?-i:[\\p{L}]))" else body
     }
 
 private val code_alternation: String =
-    "(?<![\\p{L}])(?:" + iso_currency_codes.sorted().joinToString("|") + ")(?![\\p{L}])"
+    "(?<!(?-i:[\\p{L}]))(?:" + iso_currency_codes.sorted().joinToString("|") + ")(?!(?-i:[\\p{L}]))"
 
 internal const val number_body =
     "(?<![0-9])(?:[0-9]{1,2}(?:,[0-9]{2}){1,8},[0-9]{3}(?:\\.[0-9]{1,2})?" +

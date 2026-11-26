@@ -81,6 +81,22 @@ private val inbox_order_unknown = inbox_order_lookup(known = false, hint = null)
 
 private val inbox_order_none = inbox_order_lookup(known = true, hint = null)
 
+@Volatile
+internal var inbox_order_patterns_ready: Boolean = false
+    private set
+
+internal fun warm_inbox_order_patterns() {
+    detect_inbox_order_hint(
+        "Your order has shipped",
+        "Order #123-4567890-1234567 shipped, arriving Monday. Track your package.",
+    )
+    detect_inbox_order_hint(
+        "Your receipt",
+        "Thank you for your purchase. Order total: \$10.00, subtotal \$9.00, tax \$1.00",
+    )
+    inbox_order_patterns_ready = true
+}
+
 internal fun detect_inbox_order_hint(subject: String, full_preview: String): inbox_order_hint? {
     if (subject.isBlank() && full_preview.isBlank()) return null
     val preview = own_preview_text(subject, full_preview)

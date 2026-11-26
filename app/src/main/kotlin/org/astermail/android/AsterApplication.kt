@@ -32,6 +32,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.HiltAndroidApp
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -43,13 +44,13 @@ import org.astermail.android.storage.TokenStore
 
 private val secure_prefs_namespaces = listOf(
     "aster_tokens_v1",
-    "aster_session_keys_v1",
-    org.astermail.android.storage.SessionKeyStore.mail_legacy_retired_prefs_name,
-    org.astermail.android.storage.SessionKeyStore.folder_key_pins_prefs_name,
     "aster_accounts_v1",
+    "aster_session_keys_v1",
     "aster_app_lock",
     "aster_db_meta",
     "aster_session_snapshots_v1",
+    org.astermail.android.storage.SessionKeyStore.mail_legacy_retired_prefs_name,
+    org.astermail.android.storage.SessionKeyStore.folder_key_pins_prefs_name,
     "aster_trusted_devices_v1",
     "aster_preferences_cache",
     "aster_ratchet_state_v1",
@@ -215,10 +216,13 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
             resolver.attach_store(noBackupFilesDir)
             org.astermail.android.mail.AsterProfileResolverHolder.shared = resolver
         }
-        runCatching {
-            EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
-                .ratchet_vault_flush_triggers()
-                .start()
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            org.astermail.android.storage.SecurePrefs.warm_complete.first { it }
+            runCatching {
+                EntryPointAccessors.fromApplication(this@AsterApplication, ImageLoaderEntryPoint::class.java)
+                    .ratchet_vault_flush_triggers()
+                    .start()
+            }
         }
         runCatching {
             val contacts_repository = EntryPointAccessors
@@ -253,16 +257,9 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
 
     private fun start_text_pattern_warm() {
         Thread({
-            runCatching {
-                org.astermail.android.ui.mail.detect_inbox_order_hint(
-                    "Your order receipt has shipped",
-                    "Order #123-4567890-1234567 total: \$10.00 shipped, arriving Monday",
-                )
-            }
-        }, "aster-pattern-warm").apply {
-            priority = Thread.NORM_PRIORITY
-            start()
-        }
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND)
+            runCatching { org.astermail.android.ui.mail.warm_inbox_order_patterns() }
+        }, "aster-pattern-warm").start()
     }
 
     private fun start_secure_prefs_warm() {
@@ -312,6 +309,13 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         start_database_open()
         Thread {
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND)
+            runCatching {
+                kotlinx.coroutines.runBlocking {
+                    kotlinx.coroutines.withTimeoutOrNull(5_000) {
+                        org.astermail.android.storage.SecurePrefs.warm_complete.first { it }
+                    }
+                }
+            }
             runCatching { prime_profile_resolver() }
             runCatching { report_previous_exits() }
             runCatching { org.astermail.android.util.purge_sensitive_export_files(this) }
