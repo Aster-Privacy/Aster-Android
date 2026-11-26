@@ -67,6 +67,17 @@ private val deferred_secure_prefs_namespaces = listOf(
     "aster_outbox_file_key",
 )
 
+private val warm_ui_prefs_names = listOf(
+    "aster_plan",
+    org.astermail.android.ui.mail.STORAGE_NUDGE_PREFS,
+    "aster_onboarding",
+    "aster_toolbar",
+    "aster_inbox_skeleton_geometry",
+    "aster_sidebar",
+    "aster_ui_metrics",
+    "aster_favicon_misses",
+)
+
 @HiltAndroidApp
 class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Configuration.Provider {
 
@@ -198,7 +209,6 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
             resolver.attach_store(noBackupFilesDir)
             org.astermail.android.mail.AsterProfileResolverHolder.shared = resolver
         }
-        runCatching { org.astermail.android.ui.mail.favicon_miss_store.attach(this) }
         runCatching {
             EntryPointAccessors.fromApplication(this, ImageLoaderEntryPoint::class.java)
                 .ratchet_vault_flush_triggers()
@@ -251,6 +261,8 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
 
     private fun start_secure_prefs_warm() {
         Thread {
+            warm_ui_prefs()
+            runCatching { org.astermail.android.ui.mail.favicon_miss_store.attach(this) }
             runCatching {
                 org.astermail.android.storage.SecurePrefs.warm(
                     this,
@@ -259,6 +271,12 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
                 )
             }
         }.apply { name = "aster-prefs-warm" }.start()
+    }
+
+    private fun warm_ui_prefs() {
+        for (name in warm_ui_prefs_names) {
+            runCatching { getSharedPreferences(name, MODE_PRIVATE).all }
+        }
     }
 
     private fun start_database_open() {
