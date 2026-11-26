@@ -51,7 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.astermail.android.R
@@ -227,14 +227,19 @@ internal fun avatar_shows_initials(loaded: Boolean, failed: Boolean, wait_expire
 
 @Composable
 private fun remember_avatar_wait_expired(key: Any?, active: Boolean): Boolean {
-    var expired by remember(key) { mutableStateOf(false) }
-    LaunchedEffect(key, active) {
-        if (!active || expired) return@LaunchedEffect
-        kotlinx.coroutines.delay(AVATAR_PENDING_MAX_MS)
-        expired = true
+    val expired_state = remember(key) { mutableStateOf(false) }
+    if (active && !expired_state.value) {
+        LaunchedEffect(key) {
+            kotlinx.coroutines.delay(AVATAR_PENDING_MAX_MS)
+            expired_state.value = true
+        }
     }
-    return expired
+    return expired_state.value
 }
+
+@Composable
+private fun remember_avatar_colors(email: String, name: String, profile_color: String?): Pair<Color, Color> =
+    remember(email, name, profile_color) { avatar_colors_for(avatar_key_for(email, name), profile_color) }
 
 @Composable
 private fun Modifier.avatar_fill(loaded: Boolean, loaded_color: Color, show_initials: Boolean, initials_color: Color): Modifier {
@@ -265,7 +270,7 @@ fun SenderAvatar(
     plain: Boolean = false,
 ) {
     if (plain) {
-        val (plain_bg, plain_fg) = avatar_colors_for(avatar_key_for(email, name), null)
+        val (plain_bg, plain_fg) = remember_avatar_colors(email, name, null)
         initials_circle(name, email, plain_bg, plain_fg, size, modifier)
         return
     }
@@ -279,11 +284,11 @@ fun SenderAvatar(
     val context = LocalContext.current
     val low_network = org.astermail.android.network.low_network_active()
     val remote_avatars_allowed = org.astermail.android.api.network.should_load_remote_avatar(low_network)
-    val own_avatars by OwnAddressAvatars.entries.collectAsStateWithLifecycle()
+    val own_avatars = own_address_avatar_entries()
     val own_picture = remember(email, own_avatars) { OwnAddressAvatars.get(email) }
     val resolved_profile_picture = profile_picture_url?.takeIf { it.isNotBlank() } ?: own_picture
     if (!resolved_profile_picture.isNullOrBlank() && remote_avatars_allowed) {
-        val (bg_fb, fg_fb) = avatar_colors_for(avatar_key_for(email, name), profile_color)
+        val (bg_fb, fg_fb) = remember_avatar_colors(email, name, profile_color)
         var loaded_pp by remember(resolved_profile_picture) {
             mutableStateOf(avatar_already_cached(context, resolved_profile_picture))
         }
@@ -332,7 +337,7 @@ fun SenderAvatar(
         return
     }
 
-    val (bg, fg) = avatar_colors_for(avatar_key_for(email, name), profile_color)
+    val (bg, fg) = remember_avatar_colors(email, name, profile_color)
     val domain = remember(email) { extract_domain(email) }
     val root_domain = remember(domain) { inbox_logo_root_domain(domain) }
 
@@ -379,10 +384,11 @@ fun SenderAvatar(
     val is_dark = AsterMaterial.colors.is_dark
     val logo_inset = if (loaded && logo_contrast_backdrop(logo_tone, is_dark) != null) size * logo_backdrop_inset else 0.dp
 
-    LaunchedEffect(url, pending_attempt) {
-        if (pending_attempt <= attempt) return@LaunchedEffect
-        kotlinx.coroutines.delay(FAVICON_RETRY_BASE_DELAY_MS * pending_attempt)
-        attempt = pending_attempt
+    if (pending_attempt > attempt) {
+        LaunchedEffect(url, pending_attempt) {
+            kotlinx.coroutines.delay(FAVICON_RETRY_BASE_DELAY_MS * pending_attempt)
+            attempt = pending_attempt
+        }
     }
 
     Box(
@@ -437,7 +443,7 @@ fun SenderAvatar(
 
 @Composable
 private fun remember_contact_photo(email: String): ImageBitmap? {
-    val version by ContactPhotoDirectory.version.collectAsStateWithLifecycle()
+    val version = contact_photo_directory_version()
     var photo by remember(email) { mutableStateOf(ContactPhotoDirectory.cached(email)) }
     LaunchedEffect(email, version) {
         photo = ContactPhotoDirectory.photo_for(email)
@@ -541,22 +547,9 @@ private fun AsterDomainAvatar(
         }
     }
 
-    val fallback_profiles = remember { MutableStateFlow(emptyMap<String, PublicProfile?>()) }
-    val profiles_flow = resolver?.profiles ?: fallback_profiles
-    val own_profile_flow = remember(profiles_flow, lower_email) {
-        profiles_flow
-            .map { it[lower_email] }
-            .distinctUntilChanged()
-    }
-    val profile by own_profile_flow.collectAsStateWithLifecycle(
-        initialValue = profiles_flow.value[lower_email],
-    )
-    val known_flow = remember(profiles_flow, lower_email) {
-        profiles_flow.map { it.containsKey(lower_email) }.distinctUntilChanged()
-    }
-    val profile_known by known_flow.collectAsStateWithLifecycle(
-        initialValue = profiles_flow.value.containsKey(lower_email),
-    )
+    val profile_entry = remember_profile_entry(resolver?.profiles, lower_email)
+    val profile = profile_entry.profile
+    val profile_known = profile_entry.known
     val profile_wait_expired = remember_avatar_wait_expired(lower_email, active = !profile_known)
 
     val resolved_pic = profile?.profile_picture
@@ -564,7 +557,7 @@ private fun AsterDomainAvatar(
         ?.takeIf { org.astermail.android.api.network.should_load_remote_avatar(low_network) }
     val chosen_profile_color = profile_color?.takeIf { it.isNotEmpty() }
         ?: profile?.profile_color?.takeIf { use_peer_profile_color }
-    val (aster_bg, aster_fg) = avatar_colors_for(avatar_key_for(email, name), chosen_profile_color)
+    val (aster_bg, aster_fg) = remember_avatar_colors(email, name, chosen_profile_color)
     if (resolved_pic != null) {
         var loaded by remember(resolved_pic) {
             mutableStateOf(avatar_already_cached(context, resolved_pic))
@@ -623,6 +616,31 @@ private fun AsterDomainAvatar(
         return
     }
     initials_circle(name, email, aster_bg, aster_fg, size, modifier)
+}
+
+@androidx.compose.runtime.Immutable
+private data class AvatarProfileEntry(val profile: PublicProfile?, val known: Boolean)
+
+private val unknown_avatar_profile = AvatarProfileEntry(profile = null, known = false)
+
+private fun avatar_profile_entry(profiles: Map<String, PublicProfile?>, lower_email: String): AvatarProfileEntry =
+    if (profiles.containsKey(lower_email)) AvatarProfileEntry(profiles[lower_email], known = true) else unknown_avatar_profile
+
+@Composable
+private fun remember_profile_entry(
+    profiles_flow: StateFlow<Map<String, PublicProfile?>>?,
+    lower_email: String,
+): AvatarProfileEntry {
+    if (profiles_flow == null) return unknown_avatar_profile
+    val entry_flow = remember(profiles_flow, lower_email) {
+        profiles_flow
+            .map { avatar_profile_entry(it, lower_email) }
+            .distinctUntilChanged()
+    }
+    val entry by entry_flow.collectAsStateWithLifecycle(
+        initialValue = avatar_profile_entry(profiles_flow.value, lower_email),
+    )
+    return entry
 }
 
 @Composable
