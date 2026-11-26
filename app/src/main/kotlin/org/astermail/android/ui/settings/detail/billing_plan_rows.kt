@@ -362,8 +362,16 @@ internal fun billing_compare_view(
 ) {
     val colors = AsterMaterial.colors
     val light_bars = colors.bg_primary.luminance() > 0.5f
+    val compare_anim_ms = if (aster_reduce_motion()) 0 else org.astermail.android.ui.common.nav_anim_duration_ms
+    val compare_visible = remember {
+        androidx.compose.animation.core.MutableTransitionState(false).apply { targetState = true }
+    }
+    val request_dismiss: () -> Unit = { compare_visible.targetState = false }
+    LaunchedEffect(compare_visible.currentState, compare_visible.targetState) {
+        if (!compare_visible.targetState && !compare_visible.currentState) on_dismiss()
+    }
     Dialog(
-        onDismissRequest = on_dismiss,
+        onDismissRequest = request_dismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
         org.astermail.android.design.components.aster_popup_window_effect(
@@ -372,6 +380,11 @@ internal fun billing_compare_view(
             full_window = true,
         )
         Box(modifier = Modifier.fillMaxSize()) {
+        androidx.compose.animation.AnimatedVisibility(
+            visibleState = compare_visible,
+            enter = org.astermail.android.ui.common.nav_sheet_enter(compare_anim_ms),
+            exit = org.astermail.android.ui.common.nav_sheet_exit(compare_anim_ms),
+        ) {
         billing_compare_content(
             feed = feed,
             options = individual_options + family_options,
@@ -383,8 +396,9 @@ internal fun billing_compare_view(
             busy = busy,
             on_choose = on_choose,
             on_see_pricing = on_see_pricing,
-            on_dismiss = on_dismiss,
+            on_dismiss = request_dismiss,
         )
+        }
         org.astermail.android.ui.common.app_toast_host(nested = true)
         }
     }

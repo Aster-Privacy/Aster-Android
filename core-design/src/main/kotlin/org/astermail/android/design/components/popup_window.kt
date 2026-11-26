@@ -105,6 +105,7 @@ fun prepare_popup_window(
     window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
     window.setDimAmount(0f)
     if (full_window) {
+        window.setWindowAnimations(0)
         window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
     }
     WindowCompat.setDecorFitsSystemWindows(window, false)

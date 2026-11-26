@@ -1051,8 +1051,10 @@ private fun AsterNavHost() {
 
     val nav_pop_enter: androidx.compose.animation.AnimatedContentTransitionScope<androidx.navigation.NavBackStackEntry>.() -> EnterTransition = {
         val initial = initialState.destination.route
-        if (initial?.startsWith("compose") == true || is_search_route(initial)) {
+        if (initial?.startsWith("compose") == true) {
             androidx.compose.animation.EnterTransition.None
+        } else if (is_search_route(initial)) {
+            org.astermail.android.ui.common.nav_search_under_enter(nav_back_duration)
         } else {
             nav_backward_enter(nav_back_duration)
         }
@@ -1061,7 +1063,7 @@ private fun AsterNavHost() {
         if (targetState.destination.route?.startsWith("compose") == true) {
             androidx.compose.animation.ExitTransition.None
         } else if (is_search_route(initialState.destination.route)) {
-            nav_search_exit(nav_duration)
+            nav_search_exit(nav_back_duration)
         } else {
             nav_backward_exit(nav_back_duration)
         }
@@ -1091,8 +1093,10 @@ private fun AsterNavHost() {
         },
         exitTransition = {
             val target = targetState.destination.route
-            if (target?.startsWith("compose") == true || is_detail_swipe(targetState) || is_search_route(target)) {
+            if (target?.startsWith("compose") == true || is_detail_swipe(targetState)) {
                 androidx.compose.animation.ExitTransition.None
+            } else if (is_search_route(target)) {
+                org.astermail.android.ui.common.nav_search_under_exit(nav_duration)
             } else {
                 nav_forward_exit(nav_duration)
             }
@@ -1101,8 +1105,10 @@ private fun AsterNavHost() {
         popExitTransition = nav_pop_exit,
         predictivePopEnterTransition = {
             val initial = initialState.destination.route
-            if (initial?.startsWith("compose") == true || is_search_route(initial)) {
+            if (initial?.startsWith("compose") == true) {
                 androidx.compose.animation.EnterTransition.None
+            } else if (is_search_route(initial)) {
+                org.astermail.android.ui.common.nav_search_under_enter(nav_duration)
             } else {
                 nav_predictive_pop_enter(nav_duration)
             }
@@ -1112,6 +1118,8 @@ private fun AsterNavHost() {
                 nav_sheet_exit(nav_duration)
             } else if (targetState.destination.route?.startsWith("compose") == true) {
                 androidx.compose.animation.ExitTransition.None
+            } else if (is_search_route(initialState.destination.route)) {
+                nav_search_exit(nav_duration)
             } else {
                 nav_predictive_pop_exit(nav_duration)
             }
