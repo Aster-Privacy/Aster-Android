@@ -74,6 +74,12 @@ data class SkippedMessageKey(
 )
 
 @Serializable
+data class ConsumedMessageKey(
+    val dh_public: String,
+    val message_number: Int,
+)
+
+@Serializable
 data class RatchetDhKeyPair(
     val public_key: String,
     val secret_key: String,
@@ -111,6 +117,7 @@ data class RatchetState(
     var bootstrap: BootstrapData? = null,
     var remote_identity_key: String? = null,
     var header_bound: Boolean = false,
+    val consumed_message_keys: MutableList<ConsumedMessageKey> = mutableListOf(),
 )
 
 data class RatchetIdentity(

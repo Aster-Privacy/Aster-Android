@@ -1018,6 +1018,7 @@
     <string name="payment_method_removed">تمت إزالة طريقة الدفع</string>
     <string name="session_expired_sign_in">انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.</string>
     <string name="vault_open_failed_notice">تعذّر فتح مفاتيحك على هذا الجهاز، لذلك قد لا تُفتح بعض الرسائل هنا. لإصلاح مفاتيحك، سجّل الدخول إلى Aster Mail على الويب، ثم سجّل الدخول على هذا الجهاز مرة أخرى.</string>
+    <string name="storage_key_update_pending_notice">تعذّر على Aster Mail إكمال تحديث المفتاح الذي يحمي بياناتك المحفوظة. لا تزال تغييراتك تُحفظ، ويواصل Aster Mail المحاولة في الخلفية.</string>
     <string name="could_not_start_checkout">تعذر بدء عملية الدفع</string>
     <string name="could_not_open_portal">تعذر فتح بوابة الفوترة</string>
     <string name="cancel_failed">تعذر إلغاء الاشتراك</string>

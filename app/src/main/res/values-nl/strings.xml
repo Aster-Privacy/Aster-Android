@@ -1018,6 +1018,7 @@
     <string name="payment_method_removed">Betaalmethode verwijderd</string>
     <string name="session_expired_sign_in">Je sessie is verlopen. Log opnieuw in.</string>
     <string name="vault_open_failed_notice">Je sleutels konden op dit apparaat niet worden ontgrendeld, dus sommige e-mails kunnen hier mogelijk niet worden geopend. Als je je sleutels wilt herstellen, log je in bij Aster Mail op het web en log je daarna opnieuw in op dit apparaat.</string>
+    <string name="storage_key_update_pending_notice">Aster Mail kon het bijwerken van de sleutel die je opgeslagen gegevens beschermt niet voltooien. Je wijzigingen worden nog steeds opgeslagen en Aster Mail blijft het op de achtergrond proberen.</string>
     <string name="could_not_start_checkout">Afrekenen kon niet worden gestart</string>
     <string name="could_not_open_portal">Factureringsportaal kon niet worden geopend</string>
     <string name="cancel_failed">Abonnement kon niet worden opgezegd</string>

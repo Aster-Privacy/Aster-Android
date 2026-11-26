@@ -103,13 +103,11 @@ fun vault_recovery_codes(vault: JSONObject): List<String> {
     return (0 until array.length()).mapNotNull { i -> array.optString(i, "").takeIf { it.isNotBlank() } }
 }
 
-fun refresh_backup_body(built: JsonObject, expected_vault_sha256: String): JsonObject =
+fun refresh_backup_body(built: JsonObject, expected_vault_sha256: String?): JsonObject =
     JsonObject(
         built.filterKeys { it !in REFRESH_FORBIDDEN_FIELDS } +
-            mapOf(
-                "refresh_only" to JsonPrimitive(true),
-                "expected_vault_sha256" to JsonPrimitive(expected_vault_sha256),
-            ),
+            mapOf("refresh_only" to JsonPrimitive(true)) +
+            listOfNotNull(expected_vault_sha256?.let { "expected_vault_sha256" to JsonPrimitive(it) }),
     )
 
 fun stamp_refreshed_backup(vault: JSONObject, built: JsonObject): VaultEdit {

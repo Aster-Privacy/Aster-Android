@@ -1019,6 +1019,7 @@
     <string name="payment_method_removed">Método de pago eliminado</string>
     <string name="session_expired_sign_in">Tu sesión ha caducado. Inicia sesión de nuevo.</string>
     <string name="vault_open_failed_notice">No se pudieron desbloquear tus claves en este dispositivo, por lo que es posible que algunos correos no se abran aquí. Para reparar tus claves, inicia sesión en Aster Mail en la web y, después, vuelve a iniciar sesión en este dispositivo.</string>
+    <string name="storage_key_update_pending_notice">Aster Mail no pudo terminar de actualizar la clave que protege tus datos guardados. Tus cambios se siguen guardando y Aster Mail sigue intentándolo en segundo plano.</string>
     <string name="could_not_start_checkout">No se pudo iniciar el proceso de pago</string>
     <string name="could_not_open_portal">No se pudo abrir el portal de facturación</string>
     <string name="cancel_failed">No se pudo cancelar la suscripción</string>

@@ -2192,6 +2192,7 @@ class AuthRepository @Inject constructor(
         if (remove_account) {
             current_email?.let { runCatching { trusted_device_store.clear(it) } }
         }
+        org.astermail.android.crypto.storage_rotation.StorageKeyPendingNotice.reset()
         var tokens: SignOutTokens? = null
         val cleared = SessionRefreshGate.mutex.withLock {
             if (session_key_store.get_user_id() != current_id) return@withLock false

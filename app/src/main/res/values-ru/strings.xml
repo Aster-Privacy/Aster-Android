@@ -1018,6 +1018,7 @@
     <string name="payment_method_removed">Способ оплаты удалён</string>
     <string name="session_expired_sign_in">Сеанс истёк. Войдите снова.</string>
     <string name="vault_open_failed_notice">Не удалось разблокировать ваши ключи на этом устройстве, поэтому некоторые письма могут здесь не открыться. Чтобы восстановить ключи, войдите в Aster Mail в браузере, а затем снова войдите на этом устройстве.</string>
+    <string name="storage_key_update_pending_notice">Aster Mail не удалось завершить обновление ключа, который защищает ваши сохраненные данные. Изменения по-прежнему сохраняются, а Aster Mail продолжает попытки в фоновом режиме.</string>
     <string name="could_not_start_checkout">Не удалось перейти к оплате</string>
     <string name="could_not_open_portal">Не удалось открыть портал оплаты</string>
     <string name="cancel_failed">Не удалось отменить подписку</string>
