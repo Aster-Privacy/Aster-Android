@@ -2143,8 +2143,8 @@
     <string name="alias_sender_format_at">Bij</string>
     <string name="alias_unsubscribe_subtitle">Alias uitschakelen bij uitschrijven</string>
     <string name="alias_disabled_response_info_title">Antwoord bij uitgeschakelde alias</string>
-    <string name="alias_disabled_response_info_desc">Kies wat er gebeurt als iemand mailt naar een alias die je hebt uitgeschakeld.</string>
-    <string name="alias_disabled_response_subtitle">Wat de afzender ziet bij een uitgeschakelde alias</string>
+    <string name="alias_disabled_response_info_desc">Als je kiest voor negeren, krijgt de afzender niets te horen. Mail van een geblokkeerde afzender volgt je blokkeerinstelling, zoals verplaatsen naar Spam, en mail naar een uitgeschakelde alias of een uitgeschakeld adres wordt verwijderd. Als je kiest voor weigeren, wordt de mail geweigerd en krijgt de afzender een melding dat die niet is afgeleverd.</string>
+    <string name="alias_disabled_response_subtitle">Wat er gebeurt als een geblokkeerde afzender je mailt, of als iemand mailt naar een uitgeschakelde alias of een uitgeschakeld adres</string>
     <string name="alias_disabled_response_ignore">Negeren</string>
     <string name="alias_disabled_response_reject">Weigeren</string>
     <string name="alias_delete_behavior_info_title">Verwijderactie</string>

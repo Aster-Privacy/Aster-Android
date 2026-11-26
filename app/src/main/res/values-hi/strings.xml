@@ -2057,8 +2057,8 @@
     <string name="alias_sender_format_at">At</string>
     <string name="alias_unsubscribe_subtitle">सदस्यता छोड़ने पर एलियास बंद करें</string>
     <string name="alias_disabled_response_info_title">बंद एलियास का जवाब</string>
-    <string name="alias_disabled_response_info_desc">चुनें कि जब कोई आपके बंद किए एलियास पर ईमेल करे तो क्या हो।</string>
-    <string name="alias_disabled_response_subtitle">बंद एलियास पर ईमेल करने पर प्रेषक को क्या दिखता है</string>
+    <string name="alias_disabled_response_info_desc">अगर आप अनदेखा करना चुनते हैं, तो प्रेषक को कुछ नहीं बताया जाता। ब्लॉक किए गए प्रेषक का मेल आपकी ब्लॉक सेटिंग के अनुसार चलता है, जैसे स्पैम में जाना, और बंद एलियास या पते पर आया मेल हटा दिया जाता है। अगर आप अस्वीकार करना चुनते हैं, तो मेल अस्वीकार कर दिया जाता है और प्रेषक को सूचना मिलती है कि वह डिलीवर नहीं हुआ।</string>
+    <string name="alias_disabled_response_subtitle">जब कोई ब्लॉक किया गया प्रेषक आपको ईमेल करता है, या कोई बंद एलियास या पते पर ईमेल करता है, तब क्या होता है</string>
     <string name="alias_disabled_response_ignore">अनदेखा करें</string>
     <string name="alias_disabled_response_reject">अस्वीकार करें</string>
     <string name="alias_delete_behavior_info_title">हटाने की कार्रवाई</string>

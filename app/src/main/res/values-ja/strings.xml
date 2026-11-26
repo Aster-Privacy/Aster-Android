@@ -2137,8 +2137,8 @@
     <string name="alias_sender_format_at">所属</string>
     <string name="alias_unsubscribe_subtitle">購読解除時にエイリアスを無効にする</string>
     <string name="alias_disabled_response_info_title">無効なエイリアスへの応答</string>
-    <string name="alias_disabled_response_info_desc">無効にしたエイリアス宛にメールが届いたときの動作を選びます。</string>
-    <string name="alias_disabled_response_subtitle">無効なエイリアスに送った相手に見えるもの</string>
+    <string name="alias_disabled_response_info_desc">無視を選ぶと、送信者には何も通知されません。ブロックした送信者のメールは、迷惑メールへの移動など、ブロック設定に従って処理されます。無効にしたエイリアスやアドレス宛てのメールは破棄されます。拒否を選ぶと、メールは受け取りを拒否され、送信者には配信できなかったことが通知されます。</string>
+    <string name="alias_disabled_response_subtitle">ブロックした送信者からメールが届いたときや、無効にしたエイリアスやアドレスにメールが送られたときの動作です</string>
     <string name="alias_disabled_response_ignore">無視</string>
     <string name="alias_disabled_response_reject">拒否</string>
     <string name="alias_delete_behavior_info_title">削除の動作</string>

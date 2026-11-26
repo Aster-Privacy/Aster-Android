@@ -2137,8 +2137,8 @@
     <string name="alias_sender_format_at">来自</string>
     <string name="alias_unsubscribe_subtitle">退订后停用该别名</string>
     <string name="alias_disabled_response_info_title">已停用别名的回应</string>
-    <string name="alias_disabled_response_info_desc">选择有人向您停用的别名发信时该如何处理。</string>
-    <string name="alias_disabled_response_subtitle">向已停用别名发信的人会看到什么</string>
+    <string name="alias_disabled_response_info_desc">如果选择忽略，发件人不会收到任何通知。已屏蔽发件人的邮件会按照您的屏蔽设置处理，例如移到垃圾邮件；发往已停用别名或地址的邮件会被丢弃。如果选择拒收，邮件会被拒绝，发件人会收到未送达的通知。</string>
+    <string name="alias_disabled_response_subtitle">已屏蔽的发件人给您发邮件，或有人向已停用的别名或地址发邮件时的处理方式</string>
     <string name="alias_disabled_response_ignore">忽略</string>
     <string name="alias_disabled_response_reject">拒收</string>
     <string name="alias_delete_behavior_info_title">删除方式</string>

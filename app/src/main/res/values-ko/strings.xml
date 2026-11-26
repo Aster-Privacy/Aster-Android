@@ -2137,8 +2137,8 @@
     <string name="alias_sender_format_at">소속</string>
     <string name="alias_unsubscribe_subtitle">수신을 거부하면 별칭을 중지</string>
     <string name="alias_disabled_response_info_title">사용 중지된 별칭의 응답</string>
-    <string name="alias_disabled_response_info_desc">중지한 별칭으로 메일이 오면 어떻게 할지 고르세요.</string>
-    <string name="alias_disabled_response_subtitle">중지된 별칭으로 보낸 사람에게 보이는 내용</string>
+    <string name="alias_disabled_response_info_desc">무시를 선택하면 발신자에게 아무것도 알리지 않습니다. 차단한 발신자의 메일은 스팸으로 이동하는 등 차단 설정에 따라 처리되고, 중지된 별칭이나 주소로 온 메일은 삭제됩니다. 거부를 선택하면 메일 수신이 거부되고 발신자는 메일이 전달되지 않았다는 알림을 받습니다.</string>
+    <string name="alias_disabled_response_subtitle">차단한 발신자가 메일을 보내거나 누군가 중지된 별칭 또는 주소로 메일을 보낼 때의 동작입니다</string>
     <string name="alias_disabled_response_ignore">무시</string>
     <string name="alias_disabled_response_reject">거부</string>
     <string name="alias_delete_behavior_info_title">삭제 방식</string>

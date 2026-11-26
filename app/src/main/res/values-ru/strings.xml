@@ -2155,8 +2155,8 @@
     <string name="alias_sender_format_at">В</string>
     <string name="alias_unsubscribe_subtitle">Отключать псевдоним при отписке</string>
     <string name="alias_disabled_response_info_title">Ответ отключённого псевдонима</string>
-    <string name="alias_disabled_response_info_desc">Выберите, что происходит, когда кто-то пишет на отключённый вами псевдоним.</string>
-    <string name="alias_disabled_response_subtitle">Что увидит тот, кто пишет на отключённый псевдоним</string>
+    <string name="alias_disabled_response_info_desc">Если вы выберете игнорирование, отправитель ничего не узнает. Письма заблокированного отправителя обрабатываются по вашей настройке блокировки, например перемещаются в спам, а письма на отключённый псевдоним или адрес удаляются. Если вы выберете отклонение, письмо будет отклонено, и отправитель получит уведомление о том, что оно не доставлено.</string>
+    <string name="alias_disabled_response_subtitle">Что происходит, когда вам пишет заблокированный отправитель или кто-то пишет на отключённый псевдоним или адрес</string>
     <string name="alias_disabled_response_ignore">Игнорировать</string>
     <string name="alias_disabled_response_reject">Отклонять</string>
     <string name="alias_delete_behavior_info_title">Действие при удалении</string>

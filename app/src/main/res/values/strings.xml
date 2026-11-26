@@ -2330,8 +2330,8 @@
     <string name="alias_sender_format_at">At</string>
     <string name="alias_unsubscribe_subtitle">Disable alias when unsubscribed</string>
     <string name="alias_disabled_response_info_title">Disabled Alias Response</string>
-    <string name="alias_disabled_response_info_desc">Choose what happens when someone emails an alias you\'ve disabled.</string>
-    <string name="alias_disabled_response_subtitle">What the sender sees when emailing a disabled alias</string>
+    <string name="alias_disabled_response_info_desc">If you choose to ignore it, the sender isn\'t told anything. Mail from a blocked sender follows your block setting, such as moving to Spam, and mail to a disabled alias or address is dropped. If you choose to reject it, the mail is refused and the sender gets a notice that it wasn\'t delivered.</string>
+    <string name="alias_disabled_response_subtitle">What happens when a blocked sender emails you, or someone emails a disabled alias or address</string>
     <string name="alias_disabled_response_ignore">Ignore</string>
     <string name="alias_disabled_response_reject">Reject</string>
     <string name="alias_delete_behavior_info_title">Delete Action</string>
