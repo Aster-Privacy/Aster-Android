@@ -2217,6 +2217,7 @@ class AuthRepository @Inject constructor(
         runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
         runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
         runCatching { org.astermail.android.ui.mail.evict_email_image_cache() }
+        runCatching { org.astermail.android.ui.mail.clear_inbox_memory_caches() }
         runCatching { org.astermail.android.ui.mail.remote_image_cache.clear_account(context, current_id) }
         runCatching { wipe_decrypted_caches(context.cacheDir) }
         runCatching { org.astermail.android.billing.AttachmentLimits.reset() }
@@ -2995,6 +2996,7 @@ class AuthRepository @Inject constructor(
             runCatching { current_id?.let { identity_pins.get().clear_account(it) } }
             runCatching { org.astermail.android.util.purge_sensitive_export_files(context, 0L) }
             runCatching { org.astermail.android.ui.mail.evict_email_image_cache() }
+            runCatching { org.astermail.android.ui.mail.clear_inbox_memory_caches() }
             runCatching { org.astermail.android.ui.mail.remote_image_cache.clear_account(context, current_id) }
             runCatching { wipe_decrypted_caches(context.cacheDir) }
             runCatching { theme_store.clear() }

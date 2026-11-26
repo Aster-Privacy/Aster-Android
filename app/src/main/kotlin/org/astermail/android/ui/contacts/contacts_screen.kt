@@ -50,7 +50,6 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.withFrameNanos
@@ -365,30 +364,34 @@ fun ContactsScreen(
     val contact_haptics_enabled = org.astermail.android.ui.theme.local_accessibility.current.haptic_enabled
     val contact_haptics = LocalHapticFeedback.current
     val contact_density = LocalDensity.current
-    val drag_anchor_index = remember { mutableIntStateOf(-1) }
-    val drag_last_index = remember { mutableIntStateOf(-1) }
+    val drag_anchor_id = remember { mutableStateOf<String?>(null) }
+    val drag_last_id = remember { mutableStateOf<String?>(null) }
+    val drag_last_order = remember { mutableStateOf<List<String>?>(null) }
     val drag_pre_selected = remember { mutableStateListOf<String>() }
     val drag_pointer_y = remember { mutableFloatStateOf(-1f) }
     val drag_viewport_height = remember { mutableFloatStateOf(0f) }
     var drag_selecting by remember { mutableStateOf(false) }
 
-    fun contact_index_at_offset(y: Float): Int? {
+    fun contact_id_at_offset(y: Float): String? {
         val info = contacts_list_state.layoutInfo
         val item_y = y + info.viewportStartOffset
         val entry = info.visibleItemsInfo.firstOrNull { entry ->
             item_y >= entry.offset && item_y < entry.offset + entry.size
         } ?: return null
         val key = entry.key as? String ?: return null
-        return latest_drag_index.value[key]
+        return key.takeIf { it in latest_drag_index.value }
     }
 
     fun apply_contact_drag_selection(y: Float) {
-        val anchor = drag_anchor_index.intValue
-        if (anchor < 0) return
-        val idx = contact_index_at_offset(y) ?: return
-        if (idx == drag_last_index.intValue) return
-        drag_last_index.intValue = idx
+        val anchor_id = drag_anchor_id.value ?: return
+        val current_id = contact_id_at_offset(y) ?: return
         val order = latest_drag_order.value
+        if (current_id == drag_last_id.value && order === drag_last_order.value) return
+        val index = latest_drag_index.value
+        val anchor = index[anchor_id] ?: return
+        val idx = index[current_id] ?: return
+        drag_last_id.value = current_id
+        drag_last_order.value = order
         val target = LinkedHashSet<String>(drag_pre_selected)
         for (i in minOf(anchor, idx)..maxOf(anchor, idx)) {
             order.getOrNull(i)?.let { target.add(it) }
@@ -854,8 +857,8 @@ fun ContactsScreen(
                                             requireUnconsumed = false,
                                             pass = PointerEventPass.Initial,
                                         )
-                                        val anchor_index = contact_index_at_offset(down.position.y)
-                                        if (anchor_index == null) return@awaitEachGesture
+                                        val anchor_id = contact_id_at_offset(down.position.y)
+                                        if (anchor_id == null) return@awaitEachGesture
                                         var long_pressed = false
                                         var aborted = false
                                         try {
@@ -888,8 +891,10 @@ fun ContactsScreen(
                                                 if (!has_selection) continue
                                                 if ((change.position - down.position).getDistance() < drag_start_slop) continue
                                                 if (!drag_started) {
-                                                    drag_anchor_index.intValue = anchor_index
-                                                    drag_last_index.intValue = anchor_index
+                                                    if (anchor_id !in latest_drag_index.value) continue
+                                                    drag_anchor_id.value = anchor_id
+                                                    drag_last_id.value = anchor_id
+                                                    drag_last_order.value = latest_drag_order.value
                                                     drag_pre_selected.clear()
                                                     drag_pre_selected.addAll(latest_selected_ids.value)
                                                     drag_viewport_height.floatValue = size.height.toFloat()
@@ -902,8 +907,9 @@ fun ContactsScreen(
                                         } finally {
                                             drag_selecting = false
                                             drag_pointer_y.floatValue = -1f
-                                            drag_anchor_index.intValue = -1
-                                            drag_last_index.intValue = -1
+                                            drag_anchor_id.value = null
+                                            drag_last_id.value = null
+                                            drag_last_order.value = null
                                             drag_pre_selected.clear()
                                         }
                                     }
@@ -929,7 +935,7 @@ fun ContactsScreen(
                                         section_letter_header(letter = letter, is_first_group = group_index == 0)
                                     }
                                 }
-                                itemsIndexed(group, key = { _, c -> c.id }) { index, c ->
+                                itemsIndexed(group, key = { _, c -> c.id }, contentType = { _, _ -> "contact_row" }) { index, c ->
                                     Box(modifier = if (query.isBlank()) Modifier.animateItem() else Modifier) {
                                     ContactRow(
                                         contact = c,
@@ -1407,7 +1413,7 @@ private fun trash_pane(
             modifier = Modifier.lazy_top_fade(trash_list_state),
             contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = 88.dp + bottom_inset),
         ) {
-            itemsIndexed(contacts, key = { _, c -> c.id }) { index, contact ->
+            itemsIndexed(contacts, key = { _, c -> c.id }, contentType = { _, _ -> "contact_row" }) { index, contact ->
                 Row(
                     modifier = contact_card_modifier(
                         is_first = index == 0,
@@ -1509,7 +1515,7 @@ private fun groups_pane(
         modifier = modifier.lazy_top_fade(groups_list_state),
         contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = 88.dp + bottom_inset),
     ) {
-        itemsIndexed(groups, key = { _, group -> group.id }) { index, group ->
+        itemsIndexed(groups, key = { _, group -> group.id }, contentType = { _, _ -> "contact_group_row" }) { index, group ->
             val count = count_of(group)
             val members_label = context.resources.getQuantityString(
                 R.plurals.group_members_plural,

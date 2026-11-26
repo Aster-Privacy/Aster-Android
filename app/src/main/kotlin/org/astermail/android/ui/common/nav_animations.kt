@@ -53,6 +53,10 @@ private val nav_fade_in_easing =
     aster_threshold_easing(AsterEasing.emphasized_decelerate, 0.08f, 0.6f)
 private val nav_sheet_fade_in_easing = aster_threshold_easing(LinearEasing, 0f, 0.3f)
 private val nav_predictive_fade_out_easing = aster_threshold_easing(LinearEasing, 0.8f, 1f)
+private val nav_through_out_easing =
+    aster_threshold_easing(AsterEasing.emphasized, 0f, AsterMotionSpec.fade_through_threshold)
+private val nav_through_in_easing =
+    aster_threshold_easing(AsterEasing.emphasized, AsterMotionSpec.fade_through_threshold, 1f)
 
 private fun default_slide_px(): Int = (nav_slide_dp * Resources.getSystem().displayMetrics.density).toInt()
 
@@ -124,10 +128,20 @@ fun nav_predictive_pop_enter(duration: Int = nav_anim_backward_ms, offset_px: In
 
 fun nav_search_enter(duration: Int = nav_anim_forward_ms): EnterTransition {
     if (duration == 0) return aster_fade_in(true)
-    return fadeIn(animationSpec = tween(durationMillis = duration, easing = AsterEasing.emphasized_decelerate))
+    return fadeIn(animationSpec = tween(durationMillis = duration, easing = nav_through_in_easing))
 }
 
 fun nav_search_exit(duration: Int = nav_anim_backward_ms): ExitTransition {
     if (duration == 0) return aster_fade_out(true)
-    return fadeOut(animationSpec = tween(durationMillis = nav_sheet_exit_ms, easing = AsterEasing.emphasized_accelerate))
+    return fadeOut(animationSpec = tween(durationMillis = duration, easing = nav_through_out_easing))
+}
+
+fun nav_search_under_enter(duration: Int = nav_anim_backward_ms): EnterTransition {
+    if (duration == 0) return aster_fade_in(true)
+    return fadeIn(animationSpec = tween(durationMillis = duration, easing = nav_through_in_easing))
+}
+
+fun nav_search_under_exit(duration: Int = nav_anim_forward_ms): ExitTransition {
+    if (duration == 0) return aster_fade_out(true)
+    return fadeOut(animationSpec = tween(durationMillis = duration, easing = nav_through_out_easing))
 }

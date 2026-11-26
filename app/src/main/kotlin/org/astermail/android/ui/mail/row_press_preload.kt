@@ -32,13 +32,39 @@ import org.astermail.android.mail.message_preloader
 internal fun press_turned_into_scroll(travel: Offset, touch_slop: Float, consumed_elsewhere: Boolean): Boolean =
     consumed_elsewhere || travel.getDistance() > touch_slop
 
+internal const val press_preload_hold_ms = 90L
+
+internal enum class PressOutcome { held, released, scrolled }
+
 internal fun Modifier.press_preload(item_id: String, enabled: Boolean): Modifier {
     if (!enabled || item_id.isBlank()) return this
     return pointerInput(item_id) {
         awaitEachGesture {
             val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Final)
-            message_preloader.request(item_id)
             val slop = viewConfiguration.touchSlop
+            var outcome = PressOutcome.held
+            withTimeoutOrNull(press_preload_hold_ms) {
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Final)
+                    val change = event.changes.firstOrNull { it.id == down.id }
+                    if (change == null) {
+                        outcome = PressOutcome.scrolled
+                        break
+                    }
+                    if (!change.pressed) {
+                        outcome = PressOutcome.released
+                        break
+                    }
+                    val travel = change.position - down.position
+                    if (press_turned_into_scroll(travel, slop, change.isConsumed && travel != Offset.Zero)) {
+                        outcome = PressOutcome.scrolled
+                        break
+                    }
+                }
+            }
+            if (outcome == PressOutcome.scrolled) return@awaitEachGesture
+            message_preloader.request(item_id)
+            if (outcome == PressOutcome.released) return@awaitEachGesture
             while (true) {
                 val event = awaitPointerEvent(PointerEventPass.Final)
                 val change = event.changes.firstOrNull { it.id == down.id } ?: break

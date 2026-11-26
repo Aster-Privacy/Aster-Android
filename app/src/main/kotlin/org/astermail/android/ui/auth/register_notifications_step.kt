@@ -116,7 +116,7 @@ fun RegisterNotificationsStep(
 
     auth_centered_column {
         Image(
-            painter = painterResource(R.drawable.aster_wordmark),
+            painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_wordmark),
             contentDescription = null,
             modifier = Modifier.height(40.dp),
         )
@@ -175,7 +175,7 @@ private fun notification_preview_card() {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
-            painter = painterResource(R.drawable.aster_logo),
+            painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_logo),
             contentDescription = null,
             modifier = Modifier
                 .size(40.dp)

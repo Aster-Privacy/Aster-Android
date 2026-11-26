@@ -21,6 +21,10 @@
 
 package org.astermail.android.ui.mail
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,7 +40,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.delay
@@ -50,8 +57,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterSpacing
 import org.astermail.android.design.components.shimmer
@@ -89,8 +99,23 @@ private fun detail_skeleton_card(
     )
 }
 
+@Immutable
+data class detail_skeleton_header(
+    val subject: String,
+    val sender_name: String? = null,
+    val sender_email: String? = null,
+)
+
 @Composable
-private fun detail_skeleton_sender_row(state: shimmer_appearance, shape: Shape, avatar: Dp) {
+private fun detail_skeleton_sender_row(
+    state: shimmer_appearance,
+    shape: Shape,
+    avatar: Dp,
+    header: detail_skeleton_header?,
+) {
+    val colors = AsterMaterial.colors
+    val sender_name = header?.sender_name?.takeIf { it.isNotBlank() }
+    val sender_email = header?.sender_email.orEmpty()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -102,15 +127,30 @@ private fun detail_skeleton_sender_row(state: shimmer_appearance, shape: Shape, 
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(modifier = Modifier.size(avatar).shimmer(state, CircleShape))
+        if (sender_name != null) {
+            SenderAvatar(email = sender_email, name = sender_name, size = avatar)
+        } else {
+            Box(modifier = Modifier.size(avatar).shimmer(state, CircleShape))
+        }
         Spacer(Modifier.width(AsterSpacing.md))
         Column(modifier = Modifier.weight(1f)) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.44f)
-                    .height(14.dp)
-                    .shimmer(state, shape),
-            )
+            if (sender_name != null) {
+                Text(
+                    text = sender_name,
+                    color = colors.text_primary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.44f)
+                        .height(14.dp)
+                        .shimmer(state, shape),
+                )
+            }
             Spacer(Modifier.height(6.dp))
             Box(
                 modifier = Modifier
@@ -130,7 +170,11 @@ private fun detail_skeleton_sender_row(state: shimmer_appearance, shape: Shape, 
 }
 
 @Composable
-fun detail_skeleton(modifier: Modifier = Modifier, message_count: Int = 1) {
+fun detail_skeleton(
+    modifier: Modifier = Modifier,
+    message_count: Int = 1,
+    header: detail_skeleton_header? = null,
+) {
     val colors = AsterMaterial.colors
     val card_color = remember(colors) { inbox_card_read_color(colors) }
     val state = shimmer_state()
@@ -148,7 +192,7 @@ fun detail_skeleton(modifier: Modifier = Modifier, message_count: Int = 1) {
           modifier = Modifier
               .fillMaxSize()
               .navigationBarsPadding()
-              .skeleton_reveal(),
+              .then(if (header == null) Modifier.skeleton_reveal() else Modifier),
       ) {
         Column(
             modifier = Modifier
@@ -156,12 +200,25 @@ fun detail_skeleton(modifier: Modifier = Modifier, message_count: Int = 1) {
                 .padding(start = AsterSpacing.lg, end = AsterSpacing.xs)
                 .padding(top = AsterSpacing.sm, bottom = AsterSpacing.md),
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.72f)
-                    .height(20.dp)
-                    .shimmer(state, shape),
-            )
+            val subject = header?.subject?.takeIf { it.isNotBlank() }
+            if (subject != null) {
+                Text(
+                    text = subject,
+                    color = colors.text_primary,
+                    fontSize = detail_subject_text_size,
+                    lineHeight = detail_subject_line_height,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.72f)
+                        .height(20.dp)
+                        .shimmer(state, shape),
+                )
+            }
         }
 
         repeat(collapsed) { index ->
@@ -208,7 +265,7 @@ fun detail_skeleton(modifier: Modifier = Modifier, message_count: Int = 1) {
             is_last = true,
             modifier = Modifier.weight(1f, fill = false),
         ) {
-            detail_skeleton_sender_row(state, shape, 36.dp)
+            detail_skeleton_sender_row(state, shape, if (header?.sender_name.isNullOrBlank()) 36.dp else 40.dp, header)
             skeleton_paragraph(
                 state = state,
                 max_lines = 9,
@@ -231,26 +288,45 @@ fun remember_detail_skeleton_phase(thread_key: String, wanted: Boolean): Skeleto
 
 internal fun detail_content_alpha(revealed: Boolean): Float = if (revealed) 1f else 0f
 
-fun Modifier.detail_content_handoff(thread_key: String, revealed: Boolean): Modifier {
-    val alpha = detail_content_alpha(revealed)
-    return this.graphicsLayer { this.alpha = alpha }
-}
+private const val detail_reveal_fade_ms = 180
 
 @Composable
-fun detail_skeleton_layer(phase: SkeletonPhase, modifier: Modifier = Modifier, message_count: Int = 1) {
-    val wanted = phase == SkeletonPhase.skeleton
-    var due by remember { mutableStateOf(false) }
-    LaunchedEffect(wanted) {
-        if (!wanted) {
-            due = false
-            return@LaunchedEffect
+fun remember_detail_content_alpha(thread_key: String, revealed: Boolean): Animatable<Float, AnimationVector1D> {
+    val alpha = remember(thread_key) { Animatable(detail_content_alpha(revealed)) }
+    LaunchedEffect(thread_key, revealed) {
+        if (revealed) {
+            alpha.animateTo(1f, tween(detail_reveal_fade_ms, easing = LinearOutSlowInEasing))
+        } else {
+            alpha.snapTo(0f)
         }
-        delay(BODY_SKELETON_DELAY_MS)
-        due = true
     }
-    if (wanted && due) {
-        Box(modifier = modifier) {
-            detail_skeleton(message_count = message_count)
+    return alpha
+}
+
+fun Modifier.detail_content_handoff(alpha: () -> Float): Modifier =
+    this.graphicsLayer { this.alpha = alpha() }
+
+@Composable
+fun detail_skeleton_layer(
+    thread_key: String,
+    phase: SkeletonPhase,
+    modifier: Modifier = Modifier,
+    message_count: Int = 1,
+    header: detail_skeleton_header? = null,
+) {
+    val wanted = phase == SkeletonPhase.skeleton
+    val alpha = remember(thread_key) { Animatable(if (wanted) 1f else 0f) }
+    LaunchedEffect(thread_key, wanted) {
+        if (wanted) {
+            alpha.snapTo(1f)
+        } else {
+            alpha.animateTo(0f, tween(detail_reveal_fade_ms, easing = LinearOutSlowInEasing))
+        }
+    }
+    val visible by remember(alpha) { derivedStateOf { alpha.value > 0f } }
+    if (visible) {
+        Box(modifier = modifier.graphicsLayer { this.alpha = alpha.value }) {
+            detail_skeleton(message_count = message_count, header = header)
         }
     }
 }

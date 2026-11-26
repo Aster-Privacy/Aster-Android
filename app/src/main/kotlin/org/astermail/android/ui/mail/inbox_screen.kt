@@ -374,12 +374,48 @@ fun reconcile_email_rows(rows: MutableList<Email>, merged: List<Email>) {
 
 internal data class selection_flag_set(val starred: Boolean, val trashed: Boolean, val read: Boolean)
 
-internal data class inbox_email_result(val folder: String, val emails: List<Email>)
+internal data class inbox_email_result(val folder: String, val emails: List<Email>, val ids_signature: Int)
+
+private class inbox_built_rows(val rows: TabThreadRows, val ids_signature: Int, val hints_added: Boolean)
+
+private const val INBOX_HINT_PRIME_ROWS = 40
 
 internal class inbox_email_cache {
     private var signature: List<Any?>? = null
     private val entries = HashMap<String, Pair<org.astermail.android.mail.InboxItem, Email>>()
     private var last_result: List<Email> = emptyList()
+    private var signed_result: List<Email>? = null
+    private var signed_value = 0
+
+    @Synchronized
+    fun ids_signature_of(emails: List<Email>): Int {
+        if (signed_result === emails) return signed_value
+        val value = email_ids_signature(emails)
+        signed_result = emails
+        signed_value = value
+        return value
+    }
+
+    @Synchronized
+    fun peek(
+        items: List<org.astermail.android.mail.InboxItem>,
+        next_signature: List<Any?>,
+        effective: (org.astermail.android.mail.InboxItem) -> org.astermail.android.mail.InboxItem,
+    ): List<Email>? {
+        if (next_signature != signature) return null
+        val out = ArrayList<Email>(items.size)
+        var unchanged = last_result.size == items.size
+        items.forEachIndexed { index, raw ->
+            val item = effective(raw)
+            val cached = entries[item.id] ?: return null
+            if (cached.first !== item && cached.first != item) return null
+            if (unchanged && last_result[index] !== cached.second) unchanged = false
+            out.add(cached.second)
+        }
+        if (unchanged) return last_result
+        last_result = out
+        return out
+    }
 
     @Synchronized
     fun convert(
@@ -867,15 +903,32 @@ fun InboxScreen(
     }
 
     val is_all_mail_view = is_all_mail_folder(current_folder)
-    val system_folder_chip_names = mapOf(
-        "inbox" to folder_display_name("inbox"),
-        "sent" to folder_display_name("sent"),
-        "drafts" to folder_display_name("drafts"),
-        "archive" to folder_display_name("archive"),
-        "scheduled" to folder_display_name("scheduled"),
-        "trash" to stringResource(R.string.folder_trash),
-        "spam" to stringResource(R.string.folder_spam),
-    )
+    val chip_name_inbox = folder_display_name("inbox")
+    val chip_name_sent = folder_display_name("sent")
+    val chip_name_drafts = folder_display_name("drafts")
+    val chip_name_archive = folder_display_name("archive")
+    val chip_name_scheduled = folder_display_name("scheduled")
+    val chip_name_trash = stringResource(R.string.folder_trash)
+    val chip_name_spam = stringResource(R.string.folder_spam)
+    val system_folder_chip_names = remember(
+        chip_name_inbox,
+        chip_name_sent,
+        chip_name_drafts,
+        chip_name_archive,
+        chip_name_scheduled,
+        chip_name_trash,
+        chip_name_spam,
+    ) {
+        mapOf(
+            "inbox" to chip_name_inbox,
+            "sent" to chip_name_sent,
+            "drafts" to chip_name_drafts,
+            "archive" to chip_name_archive,
+            "scheduled" to chip_name_scheduled,
+            "trash" to chip_name_trash,
+            "spam" to chip_name_spam,
+        )
+    }
     val all_mail_folder_chip: ((org.astermail.android.mail.InboxItem) -> list_folder_chip?)? =
         if (!is_all_mail_view) null else { item ->
             val neutral = Color(0xFF64748B)
@@ -926,13 +979,21 @@ fun InboxScreen(
         }
     val archived_chip_name = stringResource(R.string.archived)
     val state_matches_folder = inbox_state.current_folder == current_folder
-    val api_email_cache = remember { inbox_email_cache() }
+    val api_cache_key = inbox_memory_key(settings_state.user?.user_id?.toString().orEmpty(), current_folder)
+    val api_email_cache = remember(api_cache_key) { inbox_email_cache_store.for_key(api_cache_key) }
     val api_items = inbox_state.items
     val api_tags = settings_state.tags
     val api_labels = settings_state.labels
     val api_attachment_ids = attachment_ids
     val api_hidden_tag_token = current_tag_token(current_folder)
-    val api_signature = listOf<Any?>(api_tags, api_labels, current_folder, archived_chip_name, is_all_mail_view, toast_context)
+    val api_signature = listOf<Any?>(
+        api_tags,
+        api_labels,
+        current_folder,
+        archived_chip_name,
+        is_all_mail_view,
+        System.identityHashCode(toast_context),
+    )
     val api_effective: (org.astermail.android.mail.InboxItem) -> org.astermail.android.mail.InboxItem = {
         if (!it.has_attachments && it.id in api_attachment_ids) it.copy(has_attachments = true) else it
     }
@@ -948,15 +1009,23 @@ fun InboxScreen(
             hidden_tag_token = api_hidden_tag_token,
         )
     }
-    val api_seed = remember(current_folder, state_matches_folder) {
+    val api_seed_cold_allowed = remember { booleanArrayOf(true) }
+    val api_seed = remember(current_folder, state_matches_folder, api_email_cache) {
         if (!state_matches_folder) {
             null
         } else {
-            inbox_email_result(current_folder, api_email_cache.convert(api_items, api_signature, api_effective, api_to_email))
+            val seeded = if (api_seed_cold_allowed[0]) {
+                api_email_cache.convert(api_items, api_signature, api_effective, api_to_email)
+            } else {
+                api_email_cache.peek(api_items, api_signature, api_effective)
+            }
+            seeded?.let { inbox_email_result(current_folder, it, api_email_cache.ids_signature_of(it)) }
         }
     }
+    SideEffect { api_seed_cold_allowed[0] = false }
     val api_produced by androidx.compose.runtime.produceState<inbox_email_result?>(
         api_seed,
+        api_email_cache,
         api_items,
         api_tags,
         api_attachment_ids,
@@ -969,17 +1038,18 @@ fun InboxScreen(
             value = null
             return@produceState
         }
-        val converted = withContext(Dispatchers.Default) {
-            api_email_cache.convert(api_items, api_signature, api_effective, api_to_email)
+        value = withContext(Dispatchers.Default) {
+            val converted = api_email_cache.convert(api_items, api_signature, api_effective, api_to_email)
+            inbox_email_result(api_folder, converted, api_email_cache.ids_signature_of(converted))
         }
-        value = inbox_email_result(api_folder, converted)
     }
-    val api_emails: List<Email>? = when {
+    val api_result: inbox_email_result? = when {
         !state_matches_folder -> null
-        api_produced?.folder == current_folder -> api_produced?.emails
-        api_seed?.folder == current_folder -> api_seed?.emails
+        api_produced?.folder == current_folder -> api_produced
+        api_seed?.folder == current_folder -> api_seed
         else -> null
     }
+    val api_emails: List<Email>? = api_result?.emails
     val emails = remember {
         mutableStateListOf<Email>().apply { api_emails?.let { cached -> addAll(cached) } }
     }
@@ -1088,12 +1158,15 @@ fun InboxScreen(
     val categories_enabled = current_folder == "inbox" &&
         (settings_state.preferences?.inbox_categories_enabled ?: true)
     val active_category = inbox_category
-    val emails_fingerprint_state = remember { mutableIntStateOf(emails_fingerprint_of(emails.toList())) }
+    val emails_fingerprint_state = remember { mutableIntStateOf(0) }
+    val emails_fingerprint_baseline = remember { arrayOf(email_rows_snapshot(emails.toList())) }
     LaunchedEffect(emails) {
-        snapshotFlow { emails.toList() }
-            .collectLatest { snapshot ->
-                val next = withContext(Dispatchers.Default) { emails_fingerprint_of(snapshot) }
-                if (next != emails_fingerprint_state.intValue) emails_fingerprint_state.intValue = next
+        snapshotFlow { email_rows_snapshot(emails.toList()) }
+            .collect { snapshot ->
+                if (snapshot != emails_fingerprint_baseline[0]) {
+                    emails_fingerprint_baseline[0] = snapshot
+                    emails_fingerprint_state.intValue += 1
+                }
             }
     }
     val emails_fingerprint = emails_fingerprint_state.intValue
@@ -1117,11 +1190,12 @@ fun InboxScreen(
             )
         }
     }
+    val label_custom_categories = settings_state.preferences?.custom_categories
+    val label_customs = remember(label_custom_categories) {
+        org.astermail.android.mail.sanitize_custom_categories(label_custom_categories.orEmpty())
+    }
     val active_category_label = if (categories_enabled) {
-        val customs = org.astermail.android.mail.sanitize_custom_categories(
-            settings_state.preferences?.custom_categories.orEmpty(),
-        )
-        org.astermail.android.mail.category_entries(active_tabs, customs)
+        org.astermail.android.mail.category_entries(active_tabs, label_customs)
             .firstOrNull { it.id == active_category }
             ?.label
     } else {
@@ -1148,8 +1222,18 @@ fun InboxScreen(
         if (emails.isEmpty()) {
             TabThreadRows(emptyMap(), emptyMap())
         } else {
-            build_tab_thread_rows(
-                emails = emails.toList(),
+            val source = emails.toList()
+            inbox_tab_rows_store.matching(
+                key = api_cache_key,
+                source = source,
+                categories_enabled = categories_enabled,
+                active_tabs = active_tabs,
+                sort_mode = sort_mode,
+                grouping_enabled = grouping_enabled,
+                cached_participants = cached_participants,
+                count_corrections = count_corrections,
+            ) ?: build_tab_thread_rows(
+                emails = source,
                 categories_enabled = categories_enabled,
                 active_tabs = active_tabs,
                 sort_mode = sort_mode,
@@ -1157,7 +1241,21 @@ fun InboxScreen(
                 sticky_participants = HashMap(sticky_participants),
                 grouping_enabled = grouping_enabled,
                 count_corrections = count_corrections,
-            )
+            ).also { built ->
+                inbox_tab_rows_store.put(
+                    api_cache_key,
+                    inbox_tab_rows_snapshot(
+                        source = source,
+                        categories_enabled = categories_enabled,
+                        active_tabs = active_tabs,
+                        sort_mode = sort_mode,
+                        grouping_enabled = grouping_enabled,
+                        cached_participants = cached_participants,
+                        count_corrections = count_corrections,
+                        rows = built,
+                    ),
+                )
+            }
         }
     }
     var tab_rows by remember { mutableStateOf(initial_tab_rows) }
@@ -1166,12 +1264,15 @@ fun InboxScreen(
         mutableStateOf(tab_rows_for(initial_tab_rows, categories_enabled, active_category).isEmpty())
     }
     var threads_folder by remember { mutableStateOf(current_folder) }
-    var threads_source_ids by remember { mutableStateOf(email_ids_signature(emails)) }
-    val loaded_ids_signature = remember(api_emails) { api_emails?.let { email_ids_signature(it) } }
+    var threads_source_ids by remember {
+        mutableStateOf(api_result?.ids_signature ?: email_ids_signature(emails))
+    }
+    val loaded_ids_signature = api_result?.ids_signature
     val thread_gate = remember { InboxThreadGate() }
     val category_only = thread_gate.observe(current_folder, active_category, emails_fingerprint)
     LaunchedEffect(
         current_folder,
+        api_cache_key,
         emails_fingerprint,
         categories_enabled,
         active_tabs,
@@ -1186,10 +1287,11 @@ fun InboxScreen(
             threads_folder = current_folder
         }
         val snapshot = emails.toList()
-        val snapshot_ids = email_ids_signature(snapshot)
         val sticky_snapshot = HashMap(sticky_participants)
-        val computed = withContext(Dispatchers.Default) {
-            build_tab_thread_rows(
+        val rows_key = api_cache_key
+        val hint_category = active_category
+        val built = withContext(Dispatchers.Default) {
+            val rows = build_tab_thread_rows(
                 emails = snapshot,
                 categories_enabled = categories_enabled,
                 active_tabs = active_tabs,
@@ -1199,12 +1301,32 @@ fun InboxScreen(
                 grouping_enabled = grouping_enabled,
                 count_corrections = count_corrections,
             )
+            inbox_tab_rows_store.put(
+                rows_key,
+                inbox_tab_rows_snapshot(
+                    source = snapshot,
+                    categories_enabled = categories_enabled,
+                    active_tabs = active_tabs,
+                    sort_mode = sort_mode,
+                    grouping_enabled = grouping_enabled,
+                    cached_participants = cached_participants,
+                    count_corrections = count_corrections,
+                    rows = rows,
+                ),
+            )
+            val hints_added = prime_inbox_order_hints(
+                tab_rows_for(rows, categories_enabled, hint_category).map { it.newest },
+                INBOX_HINT_PRIME_ROWS,
+            )
+            inbox_built_rows(rows, email_ids_signature(snapshot), hints_added)
         }
+        val computed = built.rows
         sticky_participants.keys.retainAll(computed.participants.keys)
         sticky_participants.putAll(computed.participants)
         tab_rows = computed
-        threads_source_ids = snapshot_ids
+        threads_source_ids = built.ids_signature
         threads_pending = false
+        if (built.hints_added) inbox_order_hint_version.intValue += 1
     }
 
     val prefs_sort_oldest_first = settings_state.preferences?.let {
@@ -1311,9 +1433,10 @@ fun InboxScreen(
         }
     }
     LaunchedEffect(visible_threads) {
-        withContext(Dispatchers.Default) {
+        val hints_added = withContext(Dispatchers.Default) {
             precompute_inbox_order_hints(visible_threads.map { it.newest })
         }
+        if (hints_added) inbox_order_hint_version.intValue += 1
     }
     val visible_has_unread = remember(visible_threads) { visible_threads.any { it.has_unread } }
     val folder_has_unread = org.astermail.android.mail.mark_all_has_unread(
@@ -1522,7 +1645,10 @@ fun InboxScreen(
             val visible_rows = if (filter_active && threads.isNotEmpty()) {
                 visible_threads.size
             } else if (categories_enabled) {
-                emails_in_category_tab(emails, active_category, active_tabs, grouping_enabled).size
+                val category_snapshot = emails.toList()
+                withContext(Dispatchers.Default) {
+                    emails_in_category_tab(category_snapshot, active_category, active_tabs, grouping_enabled).size
+                }
             } else if (emails.isNotEmpty() && threads.isEmpty()) {
                 MIN_FILLED_ROWS
             } else {
@@ -1711,28 +1837,25 @@ fun InboxScreen(
         return key
     }
 
-    fun thread_index_at_offset(y: Float): Int? {
-        val id = thread_id_at_offset(y) ?: return null
-        val idx = visible_threads.indexOfFirst { it.thread_id == id }
-        return if (idx >= 0) idx else null
-    }
-
     var rows_settled by remember(current_folder) { mutableStateOf(false) }
     LaunchedEffect(current_folder, visible_threads.isEmpty()) {
         if (visible_threads.isEmpty()) return@LaunchedEffect
         androidx.compose.runtime.withFrameNanos { }
         rows_settled = true
     }
-    val row_fade_in_spec = if (rows_settled) {
-        androidx.compose.animation.core.spring<Float>(
-            stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
-        )
-    } else {
-        null
+    val row_fade_in_spec = remember(rows_settled) {
+        if (rows_settled) {
+            androidx.compose.animation.core.spring<Float>(
+                stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
+            )
+        } else {
+            null
+        }
     }
 
-    val drag_anchor_index = remember { androidx.compose.runtime.mutableIntStateOf(-1) }
-    val drag_last_index = remember { androidx.compose.runtime.mutableIntStateOf(-1) }
+    val drag_anchor_id = remember { mutableStateOf<String?>(null) }
+    val drag_last_id = remember { mutableStateOf<String?>(null) }
+    val drag_last_rows = remember { mutableStateOf<List<ThreadRow>?>(null) }
     val drag_pre_selected = remember { mutableStateListOf<String>() }
     val drag_pointer_y = remember { androidx.compose.runtime.mutableFloatStateOf(-1f) }
     val drag_viewport_height = remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
@@ -1748,17 +1871,19 @@ fun InboxScreen(
     }
 
     fun apply_drag_selection(y: Float) {
-        val anchor = drag_anchor_index.intValue
-        if (anchor < 0) return
-        val idx = thread_index_at_offset(y) ?: return
-        if (idx == drag_last_index.intValue) return
-        drag_last_index.intValue = idx
+        val anchor_id = drag_anchor_id.value ?: return
+        val current_id = thread_id_at_offset(y) ?: return
+        val rows = visible_threads
+        if (current_id == drag_last_id.value && rows === drag_last_rows.value) return
+        val anchor = rows.indexOfFirst { it.thread_id == anchor_id }
+        val idx = rows.indexOfFirst { it.thread_id == current_id }
+        if (anchor < 0 || idx < 0) return
+        drag_last_id.value = current_id
+        drag_last_rows.value = rows
         val lo = minOf(anchor, idx)
         val hi = maxOf(anchor, idx)
         val target = LinkedHashSet(drag_pre_selected)
-        for (i in lo..hi) {
-            visible_threads.getOrNull(i)?.thread_id?.let { target.add(it) }
-        }
+        for (i in lo..hi) target.add(rows[i].thread_id)
         if (target.size != selected_ids.size || !target.containsAll(selected_ids)) {
             drag_haptic()
             selected_ids.clear()
@@ -2568,6 +2693,69 @@ fun InboxScreen(
                             )
                         }
                     }
+                    val trashed_swipe_config = remember(hoisted_swipe_config, delete_forever_label_outer) {
+                        val start = org.astermail.android.mail.list_destructive_action(hoisted_swipe_config.start_action, true)
+                        val end = org.astermail.android.mail.list_destructive_action(hoisted_swipe_config.end_action, true)
+                        hoisted_swipe_config.copy(
+                            start_action = start,
+                            start_label = if (start != hoisted_swipe_config.start_action) delete_forever_label_outer else hoisted_swipe_config.start_label,
+                            end_action = end,
+                            end_label = if (end != hoisted_swipe_config.end_action) delete_forever_label_outer else hoisted_swipe_config.end_label,
+                        )
+                    }
+                    val trashed_swipe_applies = current_folder != "trash" && current_folder != "scheduled"
+                    val row_avatar_enabled = !select_mode && current_folder != "scheduled"
+                    val row_list_scrolling = remember(list_state) { { list_state.isScrollInProgress } }
+                    val row_refresh_engaged = remember(pull_state) { { pull_state.distance_fraction > 0f } }
+                    val row_swipe_removes = remember(current_folder) {
+                        { action: String -> swipe_action_removes_row(action, current_folder) }
+                    }
+                    val row_click_handler = rememberUpdatedState<(ThreadRow) -> Unit>({ thread ->
+                        if (select_mode) {
+                            toggle_selection(thread.thread_id)
+                        } else if (current_folder == "scheduled") {
+                            scheduled_sheet_item = inbox_state.items.find { it.id == thread.newest.id }
+                        } else {
+                            on_open_email(thread_open_target_id(thread))
+                        }
+                    })
+                    val row_long_click_handler = rememberUpdatedState<(ThreadRow) -> Unit>({ thread ->
+                        if (select_mode) {
+                            toggle_selection(thread.thread_id)
+                        } else if (current_folder != "scheduled") {
+                            select_mode = true
+                            selected_ids.clear()
+                            selected_ids.add(thread.thread_id)
+                        }
+                    })
+                    val row_avatar_handler = rememberUpdatedState<(ThreadRow) -> Unit>({ thread ->
+                        select_mode = true
+                        selected_ids.clear()
+                        selected_ids.add(thread.thread_id)
+                    })
+                    val row_star_handler = rememberUpdatedState<(ThreadRow) -> Unit>({ thread -> apply_thread_star(thread) })
+                    val row_swipe_handler = rememberUpdatedState<(ThreadRow, String) -> Unit>({ thread, action ->
+                        val ids = emails.filter { (thread_row_covers(it, thread.thread_id, grouping_enabled)) }.map { it.id }
+                        val prefs = settings_state.preferences
+                        val needs_confirm = (action == "archive" && prefs?.confirm_archive == true) ||
+                            (action == "delete" && prefs?.confirm_delete == true) ||
+                            (action == "spam" && prefs?.confirm_spam == true) ||
+                            action == "delete_permanent"
+                        if (needs_confirm) {
+                            confirm_action_pending = action
+                            confirm_item_ids_pending = ids
+                            confirm_thread_id_pending = thread.thread_id
+                        } else {
+                            action_feedback(action)
+                            execute_swipe_action(
+                                action, ids, mail_vm, emails, thread.thread_id, current_folder, grouping_enabled,
+                                on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
+                                on_star_mutation = { mutated -> mutated.forEach { note_star_mutation(it) } },
+                                on_snooze = { snooze_ids -> swipe_snooze_ids = snooze_ids },
+                                on_move_to_folder = { folder_ids -> swipe_folder_ids = folder_ids },
+                            )
+                        }
+                    })
                     LazyColumn(
                         state = list_state,
                         modifier = Modifier
@@ -2618,10 +2806,10 @@ fun InboxScreen(
                                             drag_travel = (change.position - down.position).getDistance()
                                             if (drag_travel < drag_start_slop) continue
                                             if (!drag_started) {
-                                                val anchor_index = visible_threads.indexOfFirst { it.thread_id == anchor_id }
-                                                if (anchor_index < 0) continue
-                                                drag_anchor_index.intValue = anchor_index
-                                                drag_last_index.intValue = anchor_index
+                                                if (visible_threads.none { it.thread_id == anchor_id }) continue
+                                                drag_anchor_id.value = anchor_id
+                                                drag_last_id.value = anchor_id
+                                                drag_last_rows.value = visible_threads
                                                 drag_pre_selected.clear()
                                                 drag_pre_selected.addAll(selected_ids)
                                                 drag_viewport_height.floatValue = size.height.toFloat()
@@ -2635,8 +2823,9 @@ fun InboxScreen(
                                     } finally {
                                         drag_selecting = false
                                         drag_pointer_y.floatValue = -1f
-                                        drag_anchor_index.intValue = -1
-                                        drag_last_index.intValue = -1
+                                        drag_anchor_id.value = null
+                                        drag_last_id.value = null
+                                        drag_last_rows.value = null
                                         drag_pre_selected.clear()
                                     }
                                 }
@@ -2795,118 +2984,51 @@ fun InboxScreen(
                                 derivedStateOf { select_mode && selected_ids.contains(thread.thread_id) }
                             }
                             run {
-                                val swipe_config = if (
-                                    thread.newest.is_trashed && current_folder != "trash" && current_folder != "scheduled"
-                                ) {
-                                    val start = org.astermail.android.mail.list_destructive_action(hoisted_swipe_config.start_action, true)
-                                    val end = org.astermail.android.mail.list_destructive_action(hoisted_swipe_config.end_action, true)
-                                    hoisted_swipe_config.copy(
-                                        start_action = start,
-                                        start_label = if (start != hoisted_swipe_config.start_action) delete_forever_label_outer else hoisted_swipe_config.start_label,
-                                        end_action = end,
-                                        end_label = if (end != hoisted_swipe_config.end_action) delete_forever_label_outer else hoisted_swipe_config.end_label,
-                                    )
+                                val swipe_config = if (thread.newest.is_trashed && trashed_swipe_applies) {
+                                    trashed_swipe_config
                                 } else {
                                     hoisted_swipe_config
                                 }
                                 val swipe_marks_read = thread.thread_id in read_toggle_unread_keys
+                                val start_action = swipe_config.start_action
+                                val end_action = swipe_config.end_action
+                                val row_on_click = remember(thread) { { row_click_handler.value(thread) } }
+                                val row_on_long_click = remember(thread) { { row_long_click_handler.value(thread) } }
+                                val row_on_avatar_click = remember(thread) { { row_avatar_handler.value(thread) } }
+                                val row_on_toggle_star = remember(thread) { { row_star_handler.value(thread) } }
+                                val row_on_swipe_start = remember(thread, start_action) { { row_swipe_handler.value(thread, start_action) } }
+                                val row_on_swipe_end = remember(thread, end_action) { { row_swipe_handler.value(thread, end_action) } }
                                 swipeable_thread_row(
                                     modifier = Modifier
                                         .animateItem(fadeInSpec = row_fade_in_spec)
                                         .onSizeChanged { record_row_height(row_index, it.height) },
-                                    list_scrolling = { list_state.isScrollInProgress },
-                                    refresh_engaged = { pull_state.distance_fraction > 0f },
+                                    list_scrolling = row_list_scrolling,
+                                    refresh_engaged = row_refresh_engaged,
                                     thread = thread,
                                     is_first = row_index == 0,
                                     is_last = row_index == visible_threads.lastIndex && !footer_skeleton_shown,
                                     is_pinned = thread.is_pinned,
                                     is_selected = is_selected,
                                     select_mode = select_mode,
-                                    on_click = {
-                                        if (select_mode) {
-                                            toggle_selection(thread.thread_id)
-                                        } else if (current_folder == "scheduled") {
-                                            scheduled_sheet_item = inbox_state.items.find { it.id == thread.newest.id }
-                                        } else {
-                                            on_open_email(thread_open_target_id(thread))
-                                        }
-                                    },
-                                    on_long_click = {
-                                        if (select_mode) {
-                                            toggle_selection(thread.thread_id)
-                                        } else if (current_folder != "scheduled") {
-                                            select_mode = true
-                                            selected_ids.clear()
-                                            selected_ids.add(thread.thread_id)
-                                        }
-                                    },
-                                    on_avatar_click = if (select_mode || current_folder == "scheduled") {
-                                        null
-                                    } else {
-                                        {
-                                            select_mode = true
-                                            selected_ids.clear()
-                                            selected_ids.add(thread.thread_id)
-                                        }
-                                    },
-                                    on_toggle_star = { apply_thread_star(thread) },
-                                    swipe_start_action = if (select_mode) "none" else swipe_config.start_action,
-                                    swipe_end_action = if (select_mode) "none" else swipe_config.end_action,
-                                    swipe_start_label = read_toggle_swipe_label(swipe_config.start_action, swipe_config.start_label, swipe_marks_read, unread_label_outer),
-                                    swipe_end_label = read_toggle_swipe_label(swipe_config.end_action, swipe_config.end_label, swipe_marks_read, unread_label_outer),
-                                    swipe_start_icon = read_toggle_swipe_icon(swipe_config.start_action, swipe_config.start_icon, swipe_marks_read),
-                                    swipe_end_icon = read_toggle_swipe_icon(swipe_config.end_action, swipe_config.end_icon, swipe_marks_read),
-                                    swipe_start_color = swipe_action_color(swipe_config.start_action, colors),
-                                    swipe_end_color = swipe_action_color(swipe_config.end_action, colors),
-                                    on_swipe_start = {
-                                        val ids = emails.filter { (thread_row_covers(it, thread.thread_id, grouping_enabled)) }.map { it.id }
-                                        val prefs = settings_state.preferences
-                                        val needs_confirm = (swipe_config.start_action == "archive" && prefs?.confirm_archive == true) ||
-                                            (swipe_config.start_action == "delete" && prefs?.confirm_delete == true) ||
-                                            (swipe_config.start_action == "spam" && prefs?.confirm_spam == true) ||
-                                            swipe_config.start_action == "delete_permanent"
-                                        if (needs_confirm) {
-                                            confirm_action_pending = swipe_config.start_action
-                                            confirm_item_ids_pending = ids
-                                            confirm_thread_id_pending = thread.thread_id
-                                        } else {
-                                            action_feedback(swipe_config.start_action)
-                                            execute_swipe_action(
-                                                swipe_config.start_action, ids, mail_vm, emails, thread.thread_id, current_folder, grouping_enabled,
-                                                on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
-                                                on_star_mutation = { mutated -> mutated.forEach { note_star_mutation(it) } },
-                                                on_snooze = { snooze_ids -> swipe_snooze_ids = snooze_ids },
-                                                on_move_to_folder = { folder_ids -> swipe_folder_ids = folder_ids },
-                                            )
-                                        }
-                                    },
-                                    on_swipe_end = {
-                                        val ids = emails.filter { (thread_row_covers(it, thread.thread_id, grouping_enabled)) }.map { it.id }
-                                        val prefs = settings_state.preferences
-                                        val needs_confirm = (swipe_config.end_action == "archive" && prefs?.confirm_archive == true) ||
-                                            (swipe_config.end_action == "delete" && prefs?.confirm_delete == true) ||
-                                            (swipe_config.end_action == "spam" && prefs?.confirm_spam == true) ||
-                                            swipe_config.end_action == "delete_permanent"
-                                        if (needs_confirm) {
-                                            confirm_action_pending = swipe_config.end_action
-                                            confirm_item_ids_pending = ids
-                                            confirm_thread_id_pending = thread.thread_id
-                                        } else {
-                                            action_feedback(swipe_config.end_action)
-                                            execute_swipe_action(
-                                                swipe_config.end_action, ids, mail_vm, emails, thread.thread_id, current_folder, grouping_enabled,
-                                                on_read_mutation = { mutated -> mutated.forEach { note_read_mutation(it) } },
-                                                on_star_mutation = { mutated -> mutated.forEach { note_star_mutation(it) } },
-                                                on_snooze = { snooze_ids -> swipe_snooze_ids = snooze_ids },
-                                                on_move_to_folder = { folder_ids -> swipe_folder_ids = folder_ids },
-                                            )
-                                        }
-                                    },
+                                    on_click = row_on_click,
+                                    on_long_click = row_on_long_click,
+                                    on_avatar_click = if (row_avatar_enabled) row_on_avatar_click else null,
+                                    on_toggle_star = row_on_toggle_star,
+                                    swipe_start_action = if (select_mode) "none" else start_action,
+                                    swipe_end_action = if (select_mode) "none" else end_action,
+                                    swipe_start_label = read_toggle_swipe_label(start_action, swipe_config.start_label, swipe_marks_read, unread_label_outer),
+                                    swipe_end_label = read_toggle_swipe_label(end_action, swipe_config.end_label, swipe_marks_read, unread_label_outer),
+                                    swipe_start_icon = read_toggle_swipe_icon(start_action, swipe_config.start_icon, swipe_marks_read),
+                                    swipe_end_icon = read_toggle_swipe_icon(end_action, swipe_config.end_icon, swipe_marks_read),
+                                    swipe_start_color = swipe_action_color(start_action, colors),
+                                    swipe_end_color = swipe_action_color(end_action, colors),
+                                    on_swipe_start = row_on_swipe_start,
+                                    on_swipe_end = row_on_swipe_end,
                                     haptic_enabled = haptic_enabled,
                                     user_prefs = settings_state.preferences,
                                     cached_geometry = row_geometry,
                                     swipe_reset_token = if (swipe_reset_thread_id == thread.thread_id) swipe_reset_nonce else 0,
-                                    swipe_removes_row = { action -> swipe_action_removes_row(action, current_folder) },
+                                    swipe_removes_row = row_swipe_removes,
                                 )
                             }
                         }
@@ -2960,7 +3082,7 @@ fun InboxScreen(
                                 loaded_items = inbox_state.items.size,
                             )
                         ) {
-                            item(key = "_filtered_load_more") {
+                            item(key = "_filtered_load_more", contentType = "filtered_load_more") {
                                 Column(
                                     modifier = Modifier.fillMaxWidth().animateItem(),
                                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -2986,7 +3108,7 @@ fun InboxScreen(
                             !inbox_state.initial &&
                             visible_threads.isNotEmpty()
                         ) {
-                            item(key = "_no_more") {
+                            item(key = "_no_more", contentType = "no_more") {
                                 Column(
                                     modifier = Modifier.fillMaxWidth().animateItem(),
                                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -3042,6 +3164,7 @@ fun InboxScreen(
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .offset { IntOffset(0, header_offset_px.floatValue.roundToInt()) }
+                .graphicsLayer()
                 .onSizeChanged {
                     if (it.height <= 0) return@onSizeChanged
                     header_height_px = it.height
@@ -4761,12 +4884,14 @@ private fun swipeable_thread_row(
         on_swipe_start = on_swipe_start,
         on_swipe_end = on_swipe_end,
         modifier = modifier,
-        background_shape = inbox_group_shape(is_first, is_last),
-        background_padding = PaddingValues(
-            start = inbox_card_horizontal_margin,
-            end = inbox_card_horizontal_margin,
-            bottom = if (is_last) 0.dp else inbox_group_split,
-        ),
+        background_shape = remember(is_first, is_last) { inbox_group_shape(is_first, is_last) },
+        background_padding = remember(is_last) {
+            PaddingValues(
+                start = inbox_card_horizontal_margin,
+                end = inbox_card_horizontal_margin,
+                bottom = if (is_last) 0.dp else inbox_group_split,
+            )
+        },
         haptic_enabled = haptic_enabled,
         list_scrolling = list_scrolling,
         reset_token = swipe_reset_token,

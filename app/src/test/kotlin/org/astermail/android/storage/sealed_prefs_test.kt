@@ -46,6 +46,25 @@ class sealed_prefs_test {
     }
 
     @Test
+    fun the_sealed_value_check_follows_every_write() {
+        val lock_key = LockSeal.new_lock_key()
+        assertFalse(prefs.has_sealed_values())
+
+        LockKeyHolder.open(lock_key)
+        prefs.edit().putString("passphrase", "correct horse").commit()
+        assertTrue(prefs.has_sealed_values())
+
+        assertTrue(prefs.unseal_all(lock_key))
+        assertFalse(prefs.has_sealed_values())
+
+        assertTrue(prefs.seal_all())
+        assertTrue(prefs.has_sealed_values())
+
+        prefs.edit().clear().apply()
+        assertFalse(prefs.has_sealed_values())
+    }
+
+    @Test
     fun a_secret_written_while_the_lock_key_is_open_is_not_stored_in_the_clear() {
         LockKeyHolder.open(LockSeal.new_lock_key())
         prefs.edit().putString("passphrase", "correct horse").putString("user_id", "u1").commit()

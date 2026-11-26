@@ -346,7 +346,7 @@ internal fun aster_account_badge() {
             Spacer(Modifier.width(if (joins_before) 2.dp else 5.dp))
         }
         Image(
-            painter = painterResource(R.drawable.aster_wordmark),
+            painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_wordmark),
             contentDescription = null,
             contentScale = ContentScale.Fit,
             modifier = Modifier.height(11.dp),

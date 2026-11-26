@@ -377,7 +377,7 @@ internal fun payment_review_dialog(
                                 fontWeight = FontWeight.Medium,
                             )
                             Image(
-                                painter = painterResource(R.drawable.aster_wordmark),
+                                painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_wordmark),
                                 contentDescription = null,
                                 modifier = Modifier.height(16.dp),
                             )

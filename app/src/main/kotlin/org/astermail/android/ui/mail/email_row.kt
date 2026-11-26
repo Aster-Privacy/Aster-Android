@@ -30,6 +30,9 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
 
@@ -78,8 +81,10 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -191,7 +196,7 @@ internal fun inbox_leading_slot(
         },
         label = "avatar_check_reveal",
     )
-    val back_visible = flip.value > 90f
+    val back_visible by remember { derivedStateOf { flip.value > 90f } }
     Box(
         modifier = tap_modifier.graphicsLayer {
             rotationY = flip.value
@@ -238,6 +243,106 @@ private fun inbox_selected_check(
                 },
         )
     }
+}
+
+@Composable
+private fun inbox_row_summary(
+    sender: String,
+    subject: String,
+    preview: String?,
+    time: String,
+    is_pinned: Boolean,
+    has_attachment: Boolean,
+    is_starred: Boolean,
+): String {
+    val pinned_label = stringResource(R.string.pinned)
+    val attachment_label = stringResource(R.string.has_attachment)
+    val starred_label = stringResource(R.string.starred)
+    return remember(sender, subject, preview, time, is_pinned, has_attachment, is_starred, pinned_label, attachment_label, starred_label) {
+        buildString {
+            append(sender)
+            append(", ")
+            append(subject)
+            if (!preview.isNullOrBlank()) {
+                append(", ")
+                append(preview)
+            }
+            append(", ")
+            append(time)
+            if (is_pinned) {
+                append(", ")
+                append(pinned_label)
+            }
+            if (has_attachment) {
+                append(", ")
+                append(attachment_label)
+            }
+            if (is_starred) {
+                append(", ")
+                append(starred_label)
+            }
+        }
+    }
+}
+
+@Composable
+private fun inbox_row_actions(
+    base: List<CustomAccessibilityAction>,
+    is_starred: Boolean,
+    select_mode: Boolean,
+    on_toggle_star: () -> Unit,
+    on_avatar_click: (() -> Unit)?,
+    is_selected: Boolean,
+): List<CustomAccessibilityAction> {
+    val star_label = stringResource(if (is_starred) R.string.unstar else R.string.star)
+    val select_label = stringResource(if (is_selected) R.string.deselect else R.string.select)
+    val current_star = rememberUpdatedState(on_toggle_star)
+    val current_avatar = rememberUpdatedState(on_avatar_click)
+    val has_avatar_action = on_avatar_click != null
+    return remember(base, star_label, select_label, select_mode, has_avatar_action) {
+        if (select_mode) {
+            base
+        } else {
+            buildList {
+                add(CustomAccessibilityAction(star_label) { current_star.value(); true })
+                if (has_avatar_action) {
+                    add(
+                        CustomAccessibilityAction(select_label) {
+                            val action = current_avatar.value
+                            if (action != null) {
+                                action()
+                                true
+                            } else {
+                                false
+                            }
+                        },
+                    )
+                }
+                addAll(base)
+            }
+        }
+    }
+}
+
+private fun Modifier.inbox_row_semantics(
+    summary: String,
+    state: String,
+    click_label: String?,
+    on_click: () -> Unit,
+    on_long_click: () -> Unit,
+    actions: List<CustomAccessibilityAction>,
+): Modifier = clearAndSetSemantics {
+    contentDescription = summary
+    stateDescription = state
+    onClick(label = click_label) {
+        on_click()
+        true
+    }
+    onLongClick {
+        on_long_click()
+        true
+    }
+    if (actions.isNotEmpty()) customActions = actions
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -297,12 +402,37 @@ fun EmailRow(
     val read_state_label = stringResource(
         if (is_unread) R.string.inbox_a11y_state_unread else R.string.inbox_a11y_state_read,
     )
+    val row_subject = email.subject.ifBlank { stringResource(R.string.inbox_no_subject) }
+    val row_summary = inbox_row_summary(
+        sender = shown_sender_name,
+        subject = row_subject,
+        preview = if (show_email_preview) email.preview else null,
+        time = relative_time,
+        is_pinned = is_pinned,
+        has_attachment = email.has_attachment,
+        is_starred = email.is_starred,
+    )
+    val row_actions = inbox_row_actions(
+        base = emptyList(),
+        is_starred = email.is_starred,
+        select_mode = select_mode,
+        on_toggle_star = on_toggle_star,
+        on_avatar_click = null,
+        is_selected = is_selected,
+    )
 
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .inbox_row_semantics(
+                summary = row_summary,
+                state = read_state_label,
+                click_label = if (select_mode) select_tap_label else null,
+                on_click = on_click,
+                on_long_click = on_long_click,
+                actions = row_actions,
+            )
             .press_preload(email.id, enabled = !select_mode)
-            .semantics { stateDescription = read_state_label }
             .then(
                 if (select_mode) {
                     Modifier.select_tap(click_label = select_tap_label, on_tap = on_click, interaction_source = interaction_source)
@@ -465,7 +595,16 @@ fun EmailRow(
                     trailing_controls()
                 }
             }
-            alias_indicator_store.label_for_delivery(email.routing_token, email.received_on)?.let {
+            val alias_label = remember(
+                email.routing_token,
+                email.received_on,
+                alias_indicator_store.enabled,
+                alias_indicator_store.token_labels,
+                alias_indicator_store.labels,
+            ) {
+                alias_indicator_store.label_for_delivery(email.routing_token, email.received_on)
+            }
+            alias_label?.let {
                 Spacer(Modifier.height(4.dp))
                 Row(
                     modifier = Modifier
@@ -662,10 +801,59 @@ fun ThreadInboxRow(
     val read_state_label = stringResource(
         if (is_unread) R.string.inbox_a11y_state_unread else R.string.inbox_a11y_state_read,
     )
+    val others_count = (thread.participants.size - 1).coerceAtLeast(1)
+    val others_template = pluralStringResource(R.plurals.participants_and_others, others_count)
+    val participants_text = remember(
+        thread.thread_id,
+        shown_participants,
+        newest_sender_name,
+        others_template,
+    ) {
+        format_participants(
+            shown_participants,
+            newest_sender_name,
+            others_template = others_template,
+        )
+    }
+    val no_subject_label = stringResource(R.string.inbox_no_subject)
+    val row_context = LocalContext.current
+    val subject_text = remember(email.subject, thread.message_count, no_subject_label, row_context) {
+        val base = email.subject.ifBlank { no_subject_label }
+        if (thread.message_count > 1) {
+            row_context.getString(R.string.inbox_subject_with_count, base, thread.message_count)
+        } else {
+            base
+        }
+    }
+    val row_summary = inbox_row_summary(
+        sender = participants_text,
+        subject = subject_text,
+        preview = if (show_preview) email.preview else null,
+        time = relative_time,
+        is_pinned = is_pinned,
+        has_attachment = thread.has_attachment,
+        is_starred = thread.is_starred,
+    )
+    val row_actions = inbox_row_actions(
+        base = accessibility_actions,
+        is_starred = thread.is_starred,
+        select_mode = select_mode,
+        on_toggle_star = on_toggle_star,
+        on_avatar_click = on_avatar_click,
+        is_selected = is_selected,
+    )
 
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .inbox_row_semantics(
+                summary = row_summary,
+                state = read_state_label,
+                click_label = if (select_mode) select_tap_label else null,
+                on_click = on_click,
+                on_long_click = on_long_click,
+                actions = row_actions,
+            )
             .press_preload(email.id, enabled = !select_mode)
             .then(
                 if (select_mode) {
@@ -686,10 +874,6 @@ fun ThreadInboxRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .semantics {
-                stateDescription = read_state_label
-                if (accessibility_actions.isNotEmpty()) customActions = accessibility_actions
-            }
             .then(
                 if (select_mode) {
                     Modifier.indication(interaction_source, androidx.compose.material3.ripple())
@@ -740,20 +924,6 @@ fun ThreadInboxRow(
             )
         }
         Column(modifier = Modifier.weight(1f)) {
-            val others_count = (thread.participants.size - 1).coerceAtLeast(1)
-            val others_template = pluralStringResource(R.plurals.participants_and_others, others_count)
-            val participants_text = remember(
-                thread.thread_id,
-                shown_participants,
-                newest_sender_name,
-                others_template,
-            ) {
-                format_participants(
-                    shown_participants,
-                    newest_sender_name,
-                    others_template = others_template,
-                )
-            }
             val via_label = if (shown_participants.size <= 1) {
                 custom_forward_via_label(email.display_sender_email, email.sender_email)
             } else {
@@ -819,16 +989,6 @@ fun ThreadInboxRow(
                 }
             }
             Spacer(Modifier.height(metrics.line_gap))
-            val no_subject_label = stringResource(R.string.inbox_no_subject)
-            val row_context = LocalContext.current
-            val subject_text = remember(email.subject, thread.message_count, no_subject_label, row_context) {
-                val base = email.subject.ifBlank { no_subject_label }
-                if (thread.message_count > 1) {
-                    row_context.getString(R.string.inbox_subject_with_count, base, thread.message_count)
-                } else {
-                    base
-                }
-            }
             val has_preview = show_preview && email.preview.isNotBlank()
             val trailing_controls: @Composable () -> Unit = {
                 if (user_prefs?.show_message_size == true && email.size_bytes > 0) {
@@ -867,7 +1027,16 @@ fun ThreadInboxRow(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    alias_indicator_store.label_for_delivery(email.routing_token, email.received_on)?.let {
+                    val alias_label = remember(
+                        email.routing_token,
+                        email.received_on,
+                        alias_indicator_store.enabled,
+                        alias_indicator_store.token_labels,
+                        alias_indicator_store.labels,
+                    ) {
+                        alias_indicator_store.label_for_delivery(email.routing_token, email.received_on)
+                    }
+                    alias_label?.let {
                         Spacer(Modifier.width(6.dp))
                         alias_chip(it, modifier = Modifier.widthIn(max = 148.dp))
                     }
@@ -945,27 +1114,38 @@ fun ThreadInboxRow(
     }
 }
 
+private val inbox_bidi_ltr_style = TextStyle(textDirection = TextDirection.Content, textAlign = TextAlign.Left)
+
+private val inbox_bidi_rtl_style = TextStyle(textDirection = TextDirection.Content, textAlign = TextAlign.Right)
+
 @Composable
-internal fun inbox_bidi_line_style(): TextStyle = TextStyle(
-    textDirection = TextDirection.Content,
-    textAlign = if (LocalLayoutDirection.current == LayoutDirection.Rtl) TextAlign.Right else TextAlign.Left,
-)
+internal fun inbox_bidi_line_style(): TextStyle =
+    if (LocalLayoutDirection.current == LayoutDirection.Rtl) inbox_bidi_rtl_style else inbox_bidi_ltr_style
+
+@Composable
+private fun inbox_line_style(base: TextStyle, font_size: androidx.compose.ui.unit.TextUnit, bidi: Boolean): TextStyle {
+    val line = if (bidi) inbox_bidi_line_style() else null
+    return remember(base, font_size, line) {
+        val sized = base.merge(TextStyle(fontSize = font_size))
+        if (line != null) sized.merge(line) else sized
+    }
+}
 
 @Composable
 internal fun inbox_sender_text_style(): TextStyle =
-    MaterialTheme.typography.bodyLarge.merge(TextStyle(fontSize = 16.sp)).merge(inbox_bidi_line_style())
+    inbox_line_style(MaterialTheme.typography.bodyLarge, 16.sp, bidi = true)
 
 @Composable
 internal fun inbox_time_text_style(): TextStyle =
-    MaterialTheme.typography.labelSmall.merge(TextStyle(fontSize = 13.sp))
+    inbox_line_style(MaterialTheme.typography.labelSmall, 13.sp, bidi = false)
 
 @Composable
 internal fun inbox_subject_text_style(): TextStyle =
-    MaterialTheme.typography.bodyMedium.merge(TextStyle(fontSize = 15.sp)).merge(inbox_bidi_line_style())
+    inbox_line_style(MaterialTheme.typography.bodyMedium, 15.sp, bidi = true)
 
 @Composable
 internal fun inbox_preview_text_style(): TextStyle =
-    MaterialTheme.typography.bodySmall.merge(TextStyle(fontSize = 14.sp)).merge(inbox_bidi_line_style())
+    inbox_line_style(MaterialTheme.typography.bodySmall, 14.sp, bidi = true)
 
 internal val inbox_star_slot_size = 32.dp
 
@@ -1027,12 +1207,24 @@ internal val inbox_group_corner = 18.dp
 internal val inbox_group_inner_corner = 6.dp
 internal val inbox_group_split = 3.dp
 
-internal fun inbox_group_shape(is_first: Boolean, is_last: Boolean): Shape = RoundedCornerShape(
+private fun build_inbox_group_shape(is_first: Boolean, is_last: Boolean): Shape = RoundedCornerShape(
     topStart = if (is_first) inbox_group_corner else inbox_group_inner_corner,
     topEnd = if (is_first) inbox_group_corner else inbox_group_inner_corner,
     bottomStart = if (is_last) inbox_group_corner else inbox_group_inner_corner,
     bottomEnd = if (is_last) inbox_group_corner else inbox_group_inner_corner,
 )
+
+private val inbox_group_shape_single = build_inbox_group_shape(is_first = true, is_last = true)
+private val inbox_group_shape_top = build_inbox_group_shape(is_first = true, is_last = false)
+private val inbox_group_shape_bottom = build_inbox_group_shape(is_first = false, is_last = true)
+private val inbox_group_shape_middle = build_inbox_group_shape(is_first = false, is_last = false)
+
+internal fun inbox_group_shape(is_first: Boolean, is_last: Boolean): Shape = when {
+    is_first && is_last -> inbox_group_shape_single
+    is_first -> inbox_group_shape_top
+    is_last -> inbox_group_shape_bottom
+    else -> inbox_group_shape_middle
+}
 
 private fun shift_lightness(base: Color, delta: Float, saturation_boost: Float): Color {
     val hsl = FloatArray(3)
@@ -1048,7 +1240,18 @@ private fun lightness_of(color: Color): Float {
     return hsl[2]
 }
 
-internal fun inbox_card_read_color(colors: AsterSemanticColors): Color =
+private class CardReadColorEntry(
+    val is_glass: Boolean,
+    val is_dark: Boolean,
+    val bg_primary: Color,
+    val bg_card: Color,
+    val value: Color,
+)
+
+@Volatile
+private var card_read_color_entry: CardReadColorEntry? = null
+
+private fun compute_inbox_card_read_color(colors: AsterSemanticColors): Color =
     if (colors.is_glass) {
         colors.bg_card.copy(alpha = 1f)
     } else if (colors.is_dark) {
@@ -1056,6 +1259,22 @@ internal fun inbox_card_read_color(colors: AsterSemanticColors): Color =
     } else {
         shift_lightness(colors.bg_primary, -0.04f, 1f)
     }
+
+internal fun inbox_card_read_color(colors: AsterSemanticColors): Color {
+    val cached = card_read_color_entry
+    if (
+        cached != null &&
+        cached.is_glass == colors.is_glass &&
+        cached.is_dark == colors.is_dark &&
+        cached.bg_primary == colors.bg_primary &&
+        cached.bg_card == colors.bg_card
+    ) {
+        return cached.value
+    }
+    val value = compute_inbox_card_read_color(colors)
+    card_read_color_entry = CardReadColorEntry(colors.is_glass, colors.is_dark, colors.bg_primary, colors.bg_card, value)
+    return value
+}
 
 internal fun inbox_card_unread_color(colors: AsterSemanticColors): Color =
     inbox_card_read_color(colors)
@@ -1134,7 +1353,9 @@ private fun format_participants(
 
 @Composable
 internal fun custom_forward_via_label(display_sender_email: String?, sender_email: String): String? {
-    val domain = custom_forward_via_domain(display_sender_email, sender_email) ?: return null
+    val domain = remember(display_sender_email, sender_email) {
+        custom_forward_via_domain(display_sender_email, sender_email)
+    } ?: return null
     return stringResource(R.string.forwarded_via_domain, domain)
 }
 
@@ -1226,15 +1447,17 @@ internal fun alias_chip(label: String, modifier: Modifier = Modifier) {
     }
 }
 
+private val label_chip_shape = RoundedCornerShape(4.dp)
+
 @Composable
 private fun label_chip(color: Color, name: String, icon: String, modifier: Modifier = Modifier) {
     val colors = AsterMaterial.colors
-    val icon_vector = if (icon.isNotBlank()) material_icon_from_name(icon) else null
+    val icon_vector = remember(icon) { if (icon.isNotBlank()) material_icon_from_name(icon) else null }
     val has_name = name.isNotBlank()
-    val shape = RoundedCornerShape(4.dp)
+    val shape = label_chip_shape
     val surface = inbox_card_read_color(colors)
-    val background = chip_background(color, surface, colors.is_dark)
-    val content = chip_content(color, background, colors.is_dark)
+    val background = remember(color, surface, colors.is_dark) { chip_background(color, surface, colors.is_dark) }
+    val content = remember(color, background, colors.is_dark) { chip_content(color, background, colors.is_dark) }
     Row(
         modifier = modifier
             .clip(shape)

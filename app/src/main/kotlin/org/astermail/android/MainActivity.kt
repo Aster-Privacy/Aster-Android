@@ -108,12 +108,14 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import org.astermail.android.auth.AuthGateViewModel
 import org.astermail.android.design.AsterMaterial
@@ -252,6 +254,7 @@ class MainActivity :
     override fun onCreate(saved_instance_state: Bundle?) {
         super.onCreate(saved_instance_state)
         enforce_secure_flag()
+        runCatching { org.astermail.android.ui.mail.web_view_support.warm_in_background(applicationContext) }
         LockdownStore.register_listener(applicationContext, lockdown_listener)
         lifecycleScope.launch {
             app_lock_store.config_version.collect { enforce_secure_flag() }
@@ -839,11 +842,11 @@ private fun AsterNavHost() {
         if (ready_before_inbox) org.astermail.android.ui.common.first_frame_gate.mark_ready()
     }
     val nav_controller = rememberNavController()
-    val notification_prompt_route by nav_controller.currentBackStackEntryAsState()
+    val notification_prompt_allowed by remember(nav_controller) {
+        nav_controller.currentBackStackEntryFlow.map { it.destination.route != routes.register }
+    }.collectAsState(initial = false)
     request_notification_permission(
-        should_request = is_signed_in_state && !is_locked &&
-            notification_prompt_route != null &&
-            notification_prompt_route?.destination?.route != routes.register,
+        should_request = is_signed_in_state && !is_locked && notification_prompt_allowed,
     )
     val context = LocalContext.current
     val a11y = local_accessibility.current
@@ -1044,7 +1047,9 @@ private fun AsterNavHost() {
             on_folders_changed = { preferences_sync_vm.reload_labels_from_sync() },
             on_tags_changed = { preferences_sync_vm.reload_tags_from_sync() },
         )
-        val undo_route by nav_controller.currentBackStackEntryAsState()
+        val undo_toast_allowed by remember(nav_controller) {
+            nav_controller.currentBackStackEntryFlow.map { it.destination.route != routes.pending_send_preview }
+        }.collectAsState(initial = true)
         val undo_context = androidx.compose.ui.platform.LocalContext.current
         org.astermail.android.ui.mail.undo_send_events(
             on_restored_draft = { draft_id ->
@@ -1053,15 +1058,17 @@ private fun AsterNavHost() {
                 )
             },
         )
-        if (!is_locked && undo_route?.destination?.route != routes.pending_send_preview) {
+        if (!is_locked && undo_toast_allowed) {
             org.astermail.android.ui.mail.undo_send_toast()
         }
     }
 
     val nav_pop_enter: androidx.compose.animation.AnimatedContentTransitionScope<androidx.navigation.NavBackStackEntry>.() -> EnterTransition = {
         val initial = initialState.destination.route
-        if (initial?.startsWith("compose") == true || is_search_route(initial)) {
+        if (initial?.startsWith("compose") == true) {
             androidx.compose.animation.EnterTransition.None
+        } else if (is_search_route(initial)) {
+            org.astermail.android.ui.common.nav_search_under_enter(nav_back_duration)
         } else {
             nav_backward_enter(nav_back_duration)
         }
@@ -1070,7 +1077,7 @@ private fun AsterNavHost() {
         if (targetState.destination.route?.startsWith("compose") == true) {
             androidx.compose.animation.ExitTransition.None
         } else if (is_search_route(initialState.destination.route)) {
-            nav_search_exit(nav_duration)
+            nav_search_exit(nav_back_duration)
         } else {
             nav_backward_exit(nav_back_duration)
         }
@@ -1100,8 +1107,10 @@ private fun AsterNavHost() {
         },
         exitTransition = {
             val target = targetState.destination.route
-            if (target?.startsWith("compose") == true || is_detail_swipe(targetState) || is_search_route(target)) {
+            if (target?.startsWith("compose") == true || is_detail_swipe(targetState)) {
                 androidx.compose.animation.ExitTransition.None
+            } else if (is_search_route(target)) {
+                org.astermail.android.ui.common.nav_search_under_exit(nav_duration)
             } else {
                 nav_forward_exit(nav_duration)
             }
@@ -1110,8 +1119,10 @@ private fun AsterNavHost() {
         popExitTransition = nav_pop_exit,
         predictivePopEnterTransition = {
             val initial = initialState.destination.route
-            if (initial?.startsWith("compose") == true || is_search_route(initial)) {
+            if (initial?.startsWith("compose") == true) {
                 androidx.compose.animation.EnterTransition.None
+            } else if (is_search_route(initial)) {
+                org.astermail.android.ui.common.nav_search_under_enter(nav_duration)
             } else {
                 nav_predictive_pop_enter(nav_duration)
             }
@@ -1121,6 +1132,8 @@ private fun AsterNavHost() {
                 nav_sheet_exit(nav_duration)
             } else if (targetState.destination.route?.startsWith("compose") == true) {
                 androidx.compose.animation.ExitTransition.None
+            } else if (is_search_route(initialState.destination.route)) {
+                nav_search_exit(nav_duration)
             } else {
                 nav_predictive_pop_exit(nav_duration)
             }
@@ -1340,15 +1353,15 @@ private fun AsterNavHost() {
                     shared_mail_vm.load_more()
                 }
             }
-            val settings_state by shared_settings_vm.state.collectAsStateWithLifecycle()
-            val detail_thread_state by shared_mail_vm.thread_state.collectAsStateWithLifecycle()
             val open_marked = androidx.compose.runtime.saveable.rememberSaveable(email_id) {
                 androidx.compose.runtime.mutableStateOf(false)
             }
-            val open_mark_as_read = settings_state.preferences?.mark_as_read
-            androidx.compose.runtime.LaunchedEffect(email_id, open_mark_as_read) {
+            androidx.compose.runtime.LaunchedEffect(email_id) {
                 if (open_marked.value) return@LaunchedEffect
-                if (open_mark_as_read == null) return@LaunchedEffect
+                val open_mark_as_read = shared_settings_vm.state
+                    .mapNotNull { it.preferences?.mark_as_read }
+                    .first()
+                if (open_marked.value) return@LaunchedEffect
                 open_marked.value = true
                 shared_mail_vm.on_user_opened_mail(email_id, open_mark_as_read)
             }
@@ -1357,23 +1370,28 @@ private fun AsterNavHost() {
                     if (shared_mail_vm.cancel_opened_mail(email_id)) open_marked.value = false
                 }
             }
-            androidx.compose.runtime.LaunchedEffect(detail_thread_state.item?.id, detail_thread_state.is_loading) {
-                if (detail_thread_state.is_loading) return@LaunchedEffect
-                val reveal_id = pending.pending_reveal_email_id.value ?: return@LaunchedEffect
-                val item = detail_thread_state.item ?: return@LaunchedEffect
-                if (item.id != reveal_id || reveal_id != email_id) return@LaunchedEffect
-                pending.pending_reveal_email_id.value = null
-                val tokens = (
-                    item.labels +
-                        listOfNotNull(item.raw_item.folder_token) +
-                        (item.raw_item.folders?.mapNotNull { it.folder_token } ?: emptyList())
-                    ).distinct()
-                if (tokens.isNotEmpty()) {
-                    pending.pending_reveal_folder_tokens.value = tokens
-                }
+            androidx.compose.runtime.LaunchedEffect(email_id) {
+                shared_mail_vm.thread_state
+                    .map { it.item to it.is_loading }
+                    .distinctUntilChanged { a, b -> a.first?.id == b.first?.id && a.second == b.second }
+                    .collect { (item, is_loading) ->
+                        if (is_loading) return@collect
+                        val reveal_id = pending.pending_reveal_email_id.value ?: return@collect
+                        if (item == null) return@collect
+                        if (item.id != reveal_id || reveal_id != email_id) return@collect
+                        pending.pending_reveal_email_id.value = null
+                        val tokens = (
+                            item.labels +
+                                listOfNotNull(item.raw_item.folder_token) +
+                                (item.raw_item.folders?.mapNotNull { it.folder_token } ?: emptyList())
+                            ).distinct()
+                        if (tokens.isNotEmpty()) {
+                            pending.pending_reveal_folder_tokens.value = tokens
+                        }
+                    }
             }
             val advance_after_action: () -> Unit = {
-                val next = when (settings_state.preferences?.auto_advance ?: "Go to next message") {
+                val next = when (shared_settings_vm.state.value.preferences?.auto_advance ?: "Go to next message") {
                     "Go to next message" -> neighbor_id(1)
                     "Go to previous message" -> neighbor_id(-1)
                     else -> null
@@ -1384,15 +1402,15 @@ private fun AsterNavHost() {
                 email_id = email_id,
                 on_back = { pop_entry(nav_controller, entry) },
                 on_reply = { msg_id, ghost ->
-                    org.astermail.android.ui.compose.publish_compose_thread_seed(detail_thread_state)
+                    org.astermail.android.ui.compose.publish_compose_thread_seed(shared_mail_vm.thread_state.value)
                     context.startActivity(ComposeActivity.intent_for(context, reply_to = msg_id, mode = "reply", thread_ghost_email = ghost))
                 },
                 on_reply_all = { msg_id, ghost ->
-                    org.astermail.android.ui.compose.publish_compose_thread_seed(detail_thread_state)
+                    org.astermail.android.ui.compose.publish_compose_thread_seed(shared_mail_vm.thread_state.value)
                     context.startActivity(ComposeActivity.intent_for(context, reply_to = msg_id, mode = "reply_all", thread_ghost_email = ghost))
                 },
                 on_forward = { msg_id, ghost ->
-                    org.astermail.android.ui.compose.publish_compose_thread_seed(detail_thread_state)
+                    org.astermail.android.ui.compose.publish_compose_thread_seed(shared_mail_vm.thread_state.value)
                     context.startActivity(ComposeActivity.intent_for(context, reply_to = msg_id, mode = "forward", thread_ghost_email = ghost))
                 },
                 on_archive = advance_after_action,
@@ -2239,8 +2257,10 @@ composable(routes.settings_detail("family")) {
     }
 
     if (is_signed_in_state) {
-        val offer_route by nav_controller.currentBackStackEntryAsState()
-        if (!is_locked && offer_route?.destination?.route != routes.register) {
+        val offer_allowed by remember(nav_controller) {
+            nav_controller.currentBackStackEntryFlow.map { it.destination.route != routes.register }
+        }.collectAsState(initial = true)
+        if (!is_locked && offer_allowed) {
             if (BuildConfig.SPECIAL_OFFER) org.astermail.android.ui.upgrade.SpecialOfferHost()
         }
     }
@@ -2349,7 +2369,7 @@ private fun aster_launch_splash(modifier: Modifier) {
         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
     ) {
         androidx.compose.foundation.Image(
-            painter = androidx.compose.ui.res.painterResource(R.drawable.aster_wordmark),
+            painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_wordmark),
             contentDescription = null,
             modifier = Modifier.height(22.dp),
         )

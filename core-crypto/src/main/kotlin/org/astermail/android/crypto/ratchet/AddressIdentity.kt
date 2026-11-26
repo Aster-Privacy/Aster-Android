@@ -91,8 +91,21 @@ object AddressIdentity {
 
     private val key_set_cache = HashMap<String, AddressKeySet?>()
 
+    private val derived_key_cache = HashMap<String, DerivedAddressKey>()
+
     fun clear_cache() {
         synchronized(key_set_cache) { key_set_cache.clear() }
+        synchronized(derived_key_cache) { derived_key_cache.clear() }
+    }
+
+    private fun derived_cache_key(account_jwk: String, salt: ByteArray, normalized: String): String {
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        digest.update(salt)
+        digest.update(0)
+        digest.update(account_jwk.toByteArray(Charsets.UTF_8))
+        digest.update(0)
+        digest.update(normalized.toByteArray(Charsets.UTF_8))
+        return RatchetCrypto.b64url_encode(digest.digest())
     }
 
     fun normalize(address: String): String = address.trim().lowercase(java.util.Locale.ROOT)
@@ -132,8 +145,10 @@ object AddressIdentity {
     private fun public_point(scalar: BigInteger): ByteArray =
         curve.g.multiply(scalar).normalize().getEncoded(false)
 
-    fun jwk_for_scalar(scalar_bytes: ByteArray): String {
-        val point = public_point(BigInteger(1, scalar_bytes))
+    fun jwk_for_scalar(scalar_bytes: ByteArray): String =
+        jwk_for_point(scalar_bytes, public_point(BigInteger(1, scalar_bytes)))
+
+    private fun jwk_for_point(scalar_bytes: ByteArray, point: ByteArray): String {
         val d = RatchetCrypto.b64url_encode(scalar_bytes)
         val x = RatchetCrypto.b64url_encode(point.copyOfRange(1, 33))
         val y = RatchetCrypto.b64url_encode(point.copyOfRange(33, 65))
@@ -149,6 +164,17 @@ object AddressIdentity {
     private fun derive_key(account_jwk: String?, address: String, salt: ByteArray): DerivedAddressKey? {
         val normalized = normalize(address)
         if (account_jwk.isNullOrBlank() || normalized.isEmpty()) return null
+        val cache_key = derived_cache_key(account_jwk, salt, normalized)
+        synchronized(derived_key_cache) { derived_key_cache[cache_key]?.let { return it } }
+        val derived = compute_derived_key(account_jwk, normalized, salt) ?: return null
+        synchronized(derived_key_cache) {
+            if (derived_key_cache.size >= KEY_SET_CACHE_LIMIT) derived_key_cache.clear()
+            derived_key_cache[cache_key] = derived
+        }
+        return derived
+    }
+
+    private fun compute_derived_key(account_jwk: String, normalized: String, salt: ByteArray): DerivedAddressKey? {
         var account_scalar: ByteArray? = null
         var seed: ByteArray? = null
         var scalar: ByteArray? = null
@@ -166,9 +192,10 @@ object AddressIdentity {
             val reduced = BigInteger(1, expanded).mod(curve.n.subtract(BigInteger.ONE)).add(BigInteger.ONE)
             val reduced_bytes = fixed(reduced, SCALAR_LEN)
             scalar = reduced_bytes
+            val point = public_point(reduced)
             DerivedAddressKey(
-                identity_jwk = jwk_for_scalar(reduced_bytes),
-                identity_public = RatchetCrypto.b64_encode(public_point(reduced)),
+                identity_jwk = jwk_for_point(reduced_bytes, point),
+                identity_public = RatchetCrypto.b64_encode(point),
             )
         } catch (_: Throwable) {
             null

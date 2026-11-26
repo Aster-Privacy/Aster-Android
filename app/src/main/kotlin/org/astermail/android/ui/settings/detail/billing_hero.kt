@@ -82,7 +82,7 @@ internal enum class billing_hero_status { free, active, ending, attention }
 @Composable
 internal fun billing_wordmark(modifier: Modifier = Modifier) {
     Image(
-        painter = painterResource(R.drawable.aster_wordmark),
+        painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_wordmark),
         contentDescription = null,
         modifier = modifier.height(20.dp),
     )

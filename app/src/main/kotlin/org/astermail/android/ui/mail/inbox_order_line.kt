@@ -34,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,7 +64,7 @@ internal class inbox_order_hint(
     val estimated_delivery: String?,
 )
 
-private const val inbox_order_cache_limit = 512
+private const val inbox_order_cache_limit = 2048
 
 private class inbox_order_cache_entry(val subject: String, val preview: String, val hint: inbox_order_hint?)
 
@@ -71,6 +72,14 @@ private val inbox_order_cache = object : LinkedHashMap<String, inbox_order_cache
     override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, inbox_order_cache_entry>?): Boolean =
         size > inbox_order_cache_limit
 }
+
+internal val inbox_order_hint_version = mutableIntStateOf(0)
+
+internal class inbox_order_lookup(val known: Boolean, val hint: inbox_order_hint?)
+
+private val inbox_order_unknown = inbox_order_lookup(known = false, hint = null)
+
+private val inbox_order_none = inbox_order_lookup(known = true, hint = null)
 
 internal fun detect_inbox_order_hint(subject: String, full_preview: String): inbox_order_hint? {
     if (subject.isBlank() && full_preview.isBlank()) return null
@@ -81,6 +90,15 @@ internal fun detect_inbox_order_hint(subject: String, full_preview: String): inb
     val status = if (shipping) detect_shipping_status(subject, preview) else ShippingStatus.unknown
     val estimated = if (shipping) extract_estimated_delivery(subject + "\n" + preview) else null
     return inbox_order_hint(shipping, status, estimated)
+}
+
+internal fun peek_inbox_order_hint(id: String, subject: String, preview: String): inbox_order_lookup {
+    if (subject.isBlank() && preview.isBlank()) return inbox_order_none
+    synchronized(inbox_order_cache) {
+        val cached = inbox_order_cache[id] ?: return inbox_order_unknown
+        if (cached.subject != subject || cached.preview != preview) return inbox_order_unknown
+        return if (cached.hint == null) inbox_order_none else inbox_order_lookup(known = true, hint = cached.hint)
+    }
 }
 
 internal fun cached_inbox_order_hint(id: String, subject: String, preview: String): inbox_order_hint? {
@@ -95,10 +113,33 @@ internal fun cached_inbox_order_hint(id: String, subject: String, preview: Strin
     return hint
 }
 
-internal suspend fun precompute_inbox_order_hints(emails: List<Email>) {
+private fun prime_inbox_order_hint(email: Email): Boolean {
+    if (peek_inbox_order_hint(email.id, email.subject, email.preview).known) return false
+    cached_inbox_order_hint(email.id, email.subject, email.preview)
+    return true
+}
+
+internal fun prime_inbox_order_hints(emails: List<Email>, limit: Int): Boolean {
+    var added = false
+    val count = minOf(limit, emails.size)
+    for (index in 0 until count) {
+        if (prime_inbox_order_hint(emails[index])) added = true
+    }
+    return added
+}
+
+internal suspend fun precompute_inbox_order_hints(emails: List<Email>): Boolean {
+    var added = false
     for (email in emails) {
         kotlinx.coroutines.yield()
-        cached_inbox_order_hint(email.id, email.subject, email.preview)
+        if (prime_inbox_order_hint(email)) added = true
+    }
+    return added
+}
+
+internal fun clear_inbox_order_hints() {
+    synchronized(inbox_order_cache) {
+        inbox_order_cache.clear()
     }
 }
 
@@ -109,8 +150,16 @@ internal fun inbox_preview_or_order_line(
     preview_color: Color,
     modifier: Modifier = Modifier,
 ) {
-    val hint = remember(email.id, email.subject, email.preview) {
-        cached_inbox_order_hint(email.id, email.subject, email.preview)
+    val first_lookup = remember(email.id, email.subject, email.preview) {
+        peek_inbox_order_hint(email.id, email.subject, email.preview)
+    }
+    val hint = if (first_lookup.known) {
+        first_lookup.hint
+    } else {
+        val version = inbox_order_hint_version.intValue
+        remember(email.id, email.subject, email.preview, version) {
+            peek_inbox_order_hint(email.id, email.subject, email.preview).hint
+        }
     }
     if (hint == null) {
         val highlighted = search_preview_text(preview_text)

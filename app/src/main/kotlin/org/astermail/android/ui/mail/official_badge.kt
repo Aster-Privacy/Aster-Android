@@ -100,7 +100,7 @@ fun official_badge(
     var show_info by remember { mutableStateOf(false) }
     val label = stringResource(R.string.official_sender)
     Image(
-        painter = painterResource(R.drawable.official_badge),
+        painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.official_badge),
         contentDescription = label,
         modifier = modifier
             .size(size)

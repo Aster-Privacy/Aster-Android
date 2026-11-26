@@ -952,28 +952,13 @@ private fun compose_screen_content(
         )
     }
     val body_editor_ref = remember { androidx.compose.runtime.mutableStateOf<RichBodyEditText?>(null) }
-    fun get_body_with_formatting(): String {
-        val et = body_editor_ref.value ?: return body
-        val live = et.text ?: return body
+    fun body_editor_copy(): android.text.SpannableStringBuilder? {
+        val live = body_editor_ref.value?.text ?: return null
         val editable = android.text.SpannableStringBuilder(live)
         android.view.inputmethod.BaseInputConnection.removeComposingSpans(editable)
-        val has_spans = editable.getSpans(0, editable.length, android.text.style.AbsoluteSizeSpan::class.java).isNotEmpty() ||
-            editable.getSpans(0, editable.length, android.text.style.ForegroundColorSpan::class.java).isNotEmpty() ||
-            editable.getSpans(0, editable.length, android.text.style.StyleSpan::class.java).isNotEmpty() ||
-            editable.getSpans(0, editable.length, android.text.style.UnderlineSpan::class.java).isNotEmpty() ||
-            editable.getSpans(0, editable.length, android.text.style.StrikethroughSpan::class.java).isNotEmpty() ||
-            editable.getSpans(0, editable.length, android.text.style.BulletSpan::class.java).isNotEmpty() ||
-            editable.getSpans(0, editable.length, android.text.style.QuoteSpan::class.java).isNotEmpty() ||
-            editable.getSpans(0, editable.length, android.text.style.URLSpan::class.java).isNotEmpty() ||
-            editable.getSpans(0, editable.length, android.text.Annotation::class.java).any { it.key == "aster" && it.value == "hr" }
-        if (!has_spans) return body
-        return render_spanned_html(editable)
+        return editable
     }
-    fun draft_body_with_signature(): String {
-        val raw_formatted = get_body_with_formatting()
-        val formatted = raw_formatted.replace(IMG_MARKER.toString(), "")
-        return draft_html_with_signature(formatted, raw_formatted != body, signature_html)
-    }
+    fun get_body_with_formatting(): String = formatted_body_from(body_editor_copy(), body)
     var initial_to_chips by rememberSaveable { mutableStateOf<List<String>>(emptyList()) }
     var initial_subject by rememberSaveable { mutableStateOf("") }
     var initial_body by rememberSaveable(saver = bounded_text_saver) { mutableStateOf(if (prefill.body.isNotBlank()) "" else body) }
@@ -1210,10 +1195,27 @@ private fun compose_screen_content(
     fun quote_block_for_send(): String? =
         forward_block_for_send() ?: reply_quote_block() ?: draft_quote?.quote_block
 
-    fun draft_body_for_save(): String {
-        val quote_block = quote_block_for_send() ?: return draft_body_with_signature()
-        val base_is_html = get_body_with_formatting() != body || signature_html.isNotBlank()
-        return draft_html_with_forward(draft_body_with_signature(), base_is_html, quote_block)
+    fun assemble_draft_body(editable: android.text.SpannableStringBuilder?, plain_body: String, signature: String): String {
+        val raw_formatted = formatted_body_from(editable, plain_body)
+        val formatted = raw_formatted.replace(IMG_MARKER.toString(), "")
+        val is_rich = raw_formatted != plain_body
+        val with_signature = draft_html_with_signature(formatted, is_rich, signature)
+        val quote_block = quote_block_for_send() ?: return with_signature
+        return draft_html_with_forward(with_signature, is_rich || signature.isNotBlank(), quote_block)
+    }
+
+    fun draft_body_for_save(): String = assemble_draft_body(body_editor_copy(), body, signature_html)
+
+    suspend fun draft_body_for_save_off_main(): String {
+        val editable = body_editor_copy()
+        val state_snapshot = androidx.compose.runtime.snapshots.Snapshot.takeSnapshot()
+        return try {
+            withContext(Dispatchers.Default) {
+                state_snapshot.enter { assemble_draft_body(editable, body, signature_html) }
+            }
+        } finally {
+            state_snapshot.dispose()
+        }
     }
     var is_sending by remember { mutableStateOf(false) }
     var sent by remember { mutableStateOf(false) }
@@ -1654,9 +1656,11 @@ private fun compose_screen_content(
             draft_status = context.getString(R.string.saving)
             val draft_payloads = draft_attachment_payloads(context, attachments, draft_attachment_cache)
             if (!autosave_allowed()) return@launch
+            val draft_body_html = draft_body_for_save_off_main()
+            if (!autosave_allowed()) return@launch
             val result = mail_vm.save_draft(
                 subject = subject,
-                body_html = draft_body_for_save(),
+                body_html = draft_body_html,
                 sender_email = from_alias,
                 to = to_chips,
                 cc = cc_chips,
@@ -1738,11 +1742,11 @@ private fun compose_screen_content(
         val s = et.selectionStart.coerceAtLeast(0)
         val line_start = editable.substring(0, s).lastIndexOf('\n').let { if (it < 0) 0 else it + 1 }
         val text_at_line = editable.substring(line_start, minOf(line_start + 4, editable.length))
-        if (text_at_line.matches(Regex("\\d+\\. .*"))) {
+        if (text_at_line.matches(numbered_list_line_regex)) {
             val dot = text_at_line.indexOf(". ")
             editable.delete(line_start, line_start + dot + 2)
         } else {
-            val existing_numbers = editable.substring(0, line_start).split("\n").count { it.matches(Regex("\\d+\\. .*")) }
+            val existing_numbers = editable.substring(0, line_start).split("\n").count { it.matches(numbered_list_line_regex) }
             editable.insert(line_start, "${existing_numbers + 1}. ")
         }
         schedule_draft_save()
@@ -3911,6 +3915,8 @@ private val compose_mode_options = listOf(
     "forward" to Pair(TablerIcons.MailForward, R.string.forward),
 )
 
+private val numbered_list_line_regex = Regex("\\d+\\. .*")
+
 private val email_chip_regex = Regex("^[^\\s@<>,;]+@[^\\s@<>,;]+\\.[^\\s@<>,;]+$")
 
 private val angle_address_regex = Regex("<([^>]+)>")
@@ -5301,28 +5307,38 @@ private fun apply_body_accent(editor: android.widget.EditText, accent_argb: Int)
     }
 }
 
+private val signature_render_cache = android.util.LruCache<String, CharSequence>(16)
+
+private fun render_signature_html(html: String): CharSequence {
+    signature_render_cache.get(html)?.let { return it }
+    val safe_html = org.astermail.android.ui.mail.EmailHtmlSanitizer.sanitize(
+        html,
+        org.astermail.android.ui.mail.EmailHtmlSanitizer.SanitizeOptions(
+            clean_tracking_links = false,
+            remove_tracking_pixels = false,
+            block_remote_fonts = false,
+            block_remote_css = false,
+        ),
+    )
+    val spanned = androidx.core.text.HtmlCompat.fromHtml(
+        safe_html,
+        androidx.core.text.HtmlCompat.FROM_HTML_MODE_COMPACT,
+    )
+    var end = spanned.length
+    while (end > 0 && spanned[end - 1].isWhitespace()) end--
+    val rendered: CharSequence = android.text.SpannedString(spanned.subSequence(0, end))
+    signature_render_cache.put(html, rendered)
+    return rendered
+}
+
 @Composable
 private fun signature_native_block(html: String) {
     val colors = AsterMaterial.colors
     val text_color_argb = colors.text_primary.toArgb()
     val link_color_argb = colors.accent_blue.toArgb()
-    val rendered = remember(html) {
-        val safe_html = org.astermail.android.ui.mail.EmailHtmlSanitizer.sanitize(
-            html,
-            org.astermail.android.ui.mail.EmailHtmlSanitizer.SanitizeOptions(
-                clean_tracking_links = false,
-                remove_tracking_pixels = false,
-                block_remote_fonts = false,
-                block_remote_css = false,
-            ),
-        )
-        val spanned = androidx.core.text.HtmlCompat.fromHtml(
-            safe_html,
-            androidx.core.text.HtmlCompat.FROM_HTML_MODE_COMPACT,
-        )
-        var end = spanned.length
-        while (end > 0 && spanned[end - 1].isWhitespace()) end--
-        spanned.subSequence(0, end)
+    val rendered_state = produceState<CharSequence?>(initialValue = signature_render_cache.get(html), html) {
+        value = signature_render_cache.get(html)
+            ?: withContext(Dispatchers.Default) { render_signature_html(html) }
     }
     androidx.compose.ui.viewinterop.AndroidView(
         factory = { ctx ->
@@ -5337,7 +5353,8 @@ private fun signature_native_block(html: String) {
         update = { tv ->
             tv.setTextColor(text_color_argb)
             tv.setLinkTextColor(link_color_argb)
-            if (tv.text?.toString() != rendered.toString() || tv.tag != html) {
+            val rendered = rendered_state.value
+            if (rendered != null && (tv.text?.toString() != rendered.toString() || tv.tag != html)) {
                 tv.tag = html
                 tv.text = rendered
             }
@@ -5985,6 +6002,24 @@ private fun render_inline_html(editable: android.text.Editable, start: Int, end:
             if (ch == IMG_MARKER) ch.toString() else escape_html(ch.toString())
         },
     )
+}
+
+private fun has_rich_spans(editable: android.text.Spanned): Boolean {
+    val end = editable.length
+    return editable.getSpans(0, end, android.text.style.AbsoluteSizeSpan::class.java).isNotEmpty() ||
+        editable.getSpans(0, end, android.text.style.ForegroundColorSpan::class.java).isNotEmpty() ||
+        editable.getSpans(0, end, android.text.style.StyleSpan::class.java).isNotEmpty() ||
+        editable.getSpans(0, end, android.text.style.UnderlineSpan::class.java).isNotEmpty() ||
+        editable.getSpans(0, end, android.text.style.StrikethroughSpan::class.java).isNotEmpty() ||
+        editable.getSpans(0, end, android.text.style.BulletSpan::class.java).isNotEmpty() ||
+        editable.getSpans(0, end, android.text.style.QuoteSpan::class.java).isNotEmpty() ||
+        editable.getSpans(0, end, android.text.style.URLSpan::class.java).isNotEmpty() ||
+        editable.getSpans(0, end, android.text.Annotation::class.java).any { it.key == "aster" && it.value == "hr" }
+}
+
+private fun formatted_body_from(editable: android.text.SpannableStringBuilder?, plain_body: String): String {
+    if (editable == null || !has_rich_spans(editable)) return plain_body
+    return render_spanned_html(editable)
 }
 
 private fun render_spanned_html(editable: android.text.Editable): String {

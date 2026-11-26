@@ -1622,25 +1622,27 @@ class SettingsViewModel @Inject constructor(
             try {
                 val response = settings_api.list_all_domain_addresses()
                 val readiness_before = capture_decrypt_readiness(session_key_store)
-                val decrypted = response.addresses.map { addr ->
-                    if (addr.encrypted_local_part.isBlank()) return@map addr
-                    val local_part = try {
-                        decrypt_custom_domain_address_local_part(addr, ::decrypt_alias_field)
-                    } catch (t: Throwable) {
-                        if (t is kotlinx.coroutines.CancellationException) throw t
-                        return@map addr.copy(encrypted_local_part = "", decryption_failed = true)
-                    }
-                    val display_name = addr.encrypted_display_name
-                        ?.takeIf { it.isNotBlank() && !addr.display_name_nonce.isNullOrBlank() }
-                        ?.let {
-                            try {
-                                decrypt_alias_field(it, addr.display_name_nonce.orEmpty())
-                            } catch (t: Throwable) {
-                                if (t is kotlinx.coroutines.CancellationException) throw t
-                                null
-                            }
+                val decrypted = withContext(default_dispatcher) {
+                    response.addresses.map { addr ->
+                        if (addr.encrypted_local_part.isBlank()) return@map addr
+                        val local_part = try {
+                            decrypt_custom_domain_address_local_part(addr, ::decrypt_alias_field)
+                        } catch (t: Throwable) {
+                            if (t is kotlinx.coroutines.CancellationException) throw t
+                            return@map addr.copy(encrypted_local_part = "", decryption_failed = true)
                         }
-                    addr.copy(encrypted_local_part = local_part, encrypted_display_name = display_name)
+                        val display_name = addr.encrypted_display_name
+                            ?.takeIf { it.isNotBlank() && !addr.display_name_nonce.isNullOrBlank() }
+                            ?.let {
+                                try {
+                                    decrypt_alias_field(it, addr.display_name_nonce.orEmpty())
+                                } catch (t: Throwable) {
+                                    if (t is kotlinx.coroutines.CancellationException) throw t
+                                    null
+                                }
+                            }
+                        addr.copy(encrypted_local_part = local_part, encrypted_display_name = display_name)
+                    }
                 }
                 val with_websites = apply_domain_address_websites(
                     addresses = decrypted,

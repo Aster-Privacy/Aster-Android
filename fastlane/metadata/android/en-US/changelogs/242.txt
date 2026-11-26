@@ -1,0 +1,7 @@
+Bug fixes and improvements:
+
+- Messages open right away with the subject and sender in place, not a blank screen.
+- Long conversations open at the newest message instead of partway through.
+- Scrolling your inbox, threads, and contacts is smoother and no longer stutters.
+- Search opens cleanly, and the selection count no longer flickers as you drag.
+- Pages and panels open faster and slide in from the right place.

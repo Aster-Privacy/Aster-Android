@@ -209,6 +209,10 @@ private const val MAX_ATTACHMENT_META_CACHE_SIZE = 200
 
 private const val RATCHET_UNDECRYPTABLE_TTL_MS = 10L * 60L * 1000L
 internal const val RATCHET_PENDING_MARKER = "\u0000aster_ratchet_pending"
+private val thread_decrypt_dispatcher = Dispatchers.IO.limitedParallelism(
+    Runtime.getRuntime().availableProcessors().coerceIn(4, 8),
+)
+
 private const val RATCHET_PREFETCH_CONCURRENCY = 8
 private const val RATCHET_PREFETCH_BUDGET_MS = 1_500L
 private const val RATCHET_BACKFILL_BUDGET_MS = 60_000L
@@ -1041,7 +1045,7 @@ class MailRepository @Inject constructor(
         val response = mail_api.get_thread_messages(thread_token)
         withContext(Dispatchers.IO) {
             val decrypted = response.messages.distinctBy { it.id }.map { msg ->
-                async { decrypt_thread_message(msg) }
+                async(thread_decrypt_dispatcher) { decrypt_thread_message(msg) }
             }.awaitAll()
             store_body_index(decrypted, expected_ids)
             if (on_bodies != null) {
@@ -1072,7 +1076,7 @@ class MailRepository @Inject constructor(
             val response = mail_api.get_thread_messages(thread_token)
             withContext(Dispatchers.Default) {
                 response.messages.distinctBy { it.id }.map { msg ->
-                    async { decrypt_thread_message(msg) }
+                    async(thread_decrypt_dispatcher) { decrypt_thread_message(msg) }
                 }.awaitAll()
             }
         }
@@ -3477,7 +3481,7 @@ class MailRepository @Inject constructor(
         val refilled = refill_thread_envelopes(capped, ::fetch_envelope_single)
         withContext(Dispatchers.IO) {
             val decrypted = refilled.map { msg ->
-                async { decrypt_thread_message(msg) }
+                async(thread_decrypt_dispatcher) { decrypt_thread_message(msg) }
             }.awaitAll()
             val healed = heal_undecryptable_thread_messages(decrypted)
             if (persist) {

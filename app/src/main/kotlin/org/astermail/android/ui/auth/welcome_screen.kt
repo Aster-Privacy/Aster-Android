@@ -101,7 +101,7 @@ fun WelcomeScreen(
             ) {
                 stagger_item(visible, reduce_motion, delay_ms = 0) {
                     Image(
-                        painter = painterResource(id = R.drawable.aster_wordmark),
+                        painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_wordmark),
                         contentDescription = stringResource(R.string.app_name),
                         modifier = Modifier.height(56.dp),
                     )

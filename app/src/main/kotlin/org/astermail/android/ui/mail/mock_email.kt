@@ -276,6 +276,7 @@ data class ThreadMessage(
     val is_trashed: Boolean = false,
     val e2e_verified: Boolean = false,
     val own_sealed: Boolean = false,
+    val body_plain_fallback: String? = null,
 )
 
 val ThreadMessage.is_own_copy: Boolean
@@ -481,10 +482,56 @@ fun thread_message_trust_message(msg: org.astermail.android.mail.ThreadMessageDe
     )
 }
 
-fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypted): ThreadMessage {
+internal class thread_body_parts(
+    val identity: Long,
+    val timestamp: Long,
+    val body_html: String?,
+    val body: String,
+    val preview: String,
+    val body_plain_fallback: String?,
+)
+
+internal fun thread_body_identity(msg: org.astermail.android.mail.ThreadMessageDecrypted): Long {
+    val html = msg.body_html
+    var key = msg.body_text.length.toLong() * 31L + msg.body_text.hashCode().toLong()
+    key = key * 31L + (html?.length ?: -1).toLong()
+    key = key * 31L + (html?.hashCode() ?: 0).toLong()
+    key = key * 31L + (msg.sealed_sent_at ?: msg.timestamp).hashCode().toLong()
+    return key
+}
+
+internal fun thread_body_parts_of(
+    msg: org.astermail.android.mail.ThreadMessageDecrypted,
+    identity: Long = thread_body_identity(msg),
+): thread_body_parts {
     val ts = parse_iso_timestamp(msg.sealed_sent_at ?: msg.timestamp)
     val html = select_display_html(msg.body_text, msg.body_html)
     val display_body = select_display_body(msg.body_text, html)
+    val plain_fallback = if (display_body.isBlank() && !html.isNullOrBlank()) {
+        org.astermail.android.mail.html_to_plain_text(html)
+    } else {
+        null
+    }
+    return thread_body_parts(
+        identity = identity,
+        timestamp = ts,
+        body_html = html,
+        body = display_body,
+        preview = thread_card_preview(html, display_body).clip_units(80),
+        body_plain_fallback = plain_fallback,
+    )
+}
+
+fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypted): ThreadMessage =
+    thread_message_from_parts(msg, thread_body_parts_of(msg))
+
+internal fun thread_message_from_parts(
+    msg: org.astermail.android.mail.ThreadMessageDecrypted,
+    parts: thread_body_parts,
+): ThreadMessage {
+    val ts = parts.timestamp
+    val html = parts.body_html
+    val display_body = parts.body
     return ThreadMessage(
         id = msg.id,
         sender_name = msg.sender_name.ifBlank { msg.sender_email.substringBefore('@') },
@@ -499,7 +546,8 @@ fun thread_message_to_mock(msg: org.astermail.android.mail.ThreadMessageDecrypte
         is_encrypted = msg.is_encrypted,
         trackers_blocked = 0,
         is_read = msg.is_read,
-        preview = thread_card_preview(html, display_body).clip_units(80),
+        preview = parts.preview,
+        body_plain_fallback = parts.body_plain_fallback,
         raw_headers = msg.raw_headers,
         is_undecryptable = msg.is_undecryptable,
         is_sealed_to_missing_keys = msg.is_sealed_to_missing_keys,

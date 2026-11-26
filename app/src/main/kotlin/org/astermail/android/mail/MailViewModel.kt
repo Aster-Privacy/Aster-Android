@@ -2984,11 +2984,13 @@ class MailViewModel @Inject constructor(
         if (item_id.isBlank() || item_id == DEMO_PHISH_ITEM_ID) return
         if (_thread_state.value.item?.id == item_id) return
         if (message_preloader.contains(item_id)) return
-        if (!preload_allowed()) return
-        if (find_item(item_id) == null) return
-        val grouping = repository.is_conversation_grouping_enabled
-        message_preloader.prepare(item_id) {
-            withTimeoutOrNull(thread_open_timeout_ms()) { build_preloaded_thread(item_id, grouping) }
+        viewModelScope.launch(Dispatchers.Default) {
+            if (!preload_allowed()) return@launch
+            if (find_item(item_id) == null) return@launch
+            val grouping = repository.is_conversation_grouping_enabled
+            message_preloader.prepare(item_id) {
+                withTimeoutOrNull(thread_open_timeout_ms()) { build_preloaded_thread(item_id, grouping) }
+            }
         }
     }
 

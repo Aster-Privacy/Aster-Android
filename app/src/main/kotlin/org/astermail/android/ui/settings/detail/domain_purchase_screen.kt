@@ -910,7 +910,7 @@ private fun purchase_summary_card(
     val selected = state.selected ?: return
     val shape = AsterShapes.island
     Image(
-        painter = painterResource(R.drawable.aster_wordmark),
+        painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_wordmark),
         contentDescription = null,
         modifier = Modifier
             .fillMaxWidth()

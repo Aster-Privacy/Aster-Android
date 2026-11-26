@@ -125,7 +125,39 @@ private fun is_neutral_light(label: Color, is_dark: Boolean): Boolean {
     return is_dark && hsl.saturation <= chip_neutral_max_saturation && hsl.lightness >= chip_neutral_min_lightness
 }
 
-internal fun chip_background(label: Color, surface: Color, is_dark: Boolean): Color {
+private data class ChipColorKey(val label: Color, val surface: Color, val is_dark: Boolean)
+
+private const val chip_color_cache_limit = 256
+
+private class ChipColorCache : LinkedHashMap<ChipColorKey, Color>(64, 0.75f, true) {
+    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<ChipColorKey, Color>?): Boolean =
+        size > chip_color_cache_limit
+}
+
+private val chip_background_cache = ChipColorCache()
+private val chip_content_cache = ChipColorCache()
+private val chip_subtle_content_cache = ChipColorCache()
+
+private inline fun cached_chip_color(
+    cache: ChipColorCache,
+    first: Color,
+    second: Color,
+    is_dark: Boolean,
+    compute: () -> Color,
+): Color {
+    val key = ChipColorKey(first, second, is_dark)
+    synchronized(cache) { cache[key] }?.let { return it }
+    val value = compute()
+    synchronized(cache) { cache[key] = value }
+    return value
+}
+
+internal fun chip_background(label: Color, surface: Color, is_dark: Boolean): Color =
+    cached_chip_color(chip_background_cache, label, surface, is_dark) {
+        compute_chip_background(label, surface, is_dark)
+    }
+
+private fun compute_chip_background(label: Color, surface: Color, is_dark: Boolean): Color {
     if (is_neutral_light(label, is_dark)) return mix(surface, label, 0.12f)
     val base = to_hsl(label)
     val saturation = if (base.saturation <= 0.04f) {
@@ -162,7 +194,12 @@ internal fun chip_subtle_background(label: Color, surface: Color, is_dark: Boole
 internal fun chip_subtle_border(label: Color, surface: Color, is_dark: Boolean): Color =
     mix(surface, label, if (is_dark) 0.30f else 0.25f)
 
-internal fun chip_content(label: Color, background: Color, is_dark: Boolean): Color {
+internal fun chip_content(label: Color, background: Color, is_dark: Boolean): Color =
+    cached_chip_color(chip_content_cache, background, background, is_dark) {
+        compute_chip_content(background)
+    }
+
+private fun compute_chip_content(background: Color): Color {
     val ink = readable_ink(background)
     if (contrast_ratio(ink, background) >= chip_min_contrast) return ink
     val white = Color.White
@@ -170,7 +207,12 @@ internal fun chip_content(label: Color, background: Color, is_dark: Boolean): Co
     return if (contrast_ratio(white, background) >= contrast_ratio(black, background)) white else black
 }
 
-internal fun chip_subtle_content(label: Color, background: Color, is_dark: Boolean): Color {
+internal fun chip_subtle_content(label: Color, background: Color, is_dark: Boolean): Color =
+    cached_chip_color(chip_subtle_content_cache, label, background, is_dark) {
+        compute_chip_subtle_content(label, background, is_dark)
+    }
+
+private fun compute_chip_subtle_content(label: Color, background: Color, is_dark: Boolean): Color {
     val solid = label.copy(alpha = 1f)
     if (contrast_ratio(solid, background) >= chip_min_contrast) return solid
     val target = if (relative_luminance(background) < 0.18) Color.White else Color.Black
