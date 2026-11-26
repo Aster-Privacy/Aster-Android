@@ -3795,4 +3795,5 @@
     <string name="search_match_clear">Markeringen wissen</string>
     <string name="pending_send_failed">Dit bericht kan niet worden verstuurd.</string>
     <string name="pending_send_waiting">Wachten op verbinding. Dit bericht wordt verstuurd zodra je weer online bent.</string>
+    <string name="thread_offline_saved_copy">Je bent offline. Dit is de kopie die op dit apparaat is opgeslagen.</string>
 </resources>

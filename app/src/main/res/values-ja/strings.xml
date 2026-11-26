@@ -3770,4 +3770,5 @@
     <string name="search_match_clear">ハイライトを消去</string>
     <string name="pending_send_failed">このメッセージを送信できませんでした。</string>
     <string name="pending_send_waiting">接続を待っています。オンラインに戻るとこのメッセージが送信されます。</string>
+    <string name="thread_offline_saved_copy">オフラインです。これはこのデバイスに保存されているコピーです。</string>
 </resources>

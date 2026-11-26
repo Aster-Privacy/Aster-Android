@@ -3795,4 +3795,5 @@
     <string name="search_match_clear">Vurguları temizle</string>
     <string name="pending_send_failed">Bu ileti gönderilemedi.</string>
     <string name="pending_send_waiting">Bağlantı bekleniyor. Tekrar çevrimiçi olduğunuzda bu ileti gönderilecek.</string>
+    <string name="thread_offline_saved_copy">Çevrimdışısınız. Bu, bu cihazda kayıtlı kopyadır.</string>
 </resources>

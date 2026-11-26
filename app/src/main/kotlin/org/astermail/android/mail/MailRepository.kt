@@ -1921,6 +1921,7 @@ class MailRepository @Inject constructor(
             force_pgp = force_pgp,
             pgp_recipients_json = pgp_recipients.takeIf { it.isNotEmpty() }?.let { outbox_json.encodeToString(it) },
             priority = MailPriorityRules.outgoing(MailPriorityRules.from_wire(priority)),
+            reply_to_id = reply_to_id?.takeIf { it.isNotBlank() },
         )
         pending_send_dao.upsert(row)
         if (clear_undo_canceled(pending_id)) {
@@ -2073,7 +2074,9 @@ class MailRepository @Inject constructor(
     }
 
     private fun restore_optimistic_send(row: PendingSendEntity) {
-        val token = row.thread_token?.takeIf { it.isNotBlank() } ?: return
+        val token = row.thread_token?.takeIf { it.isNotBlank() }
+        val parent = row.reply_to_id?.takeIf { it.isNotBlank() }
+        if (token == null && parent == null) return
         if (optimistic_send_store.get(row.id) != null) return
         fun addresses(raw: String): List<String> =
             runCatching { outbox_json.decodeFromString<List<String>>(raw) }.getOrDefault(emptyList())
@@ -2090,7 +2093,7 @@ class MailRepository @Inject constructor(
                 pending_id = row.id,
                 account_id = row.account_id ?: session_key_store.get_user_id(),
                 thread_token = token,
-                reply_to_id = null,
+                reply_to_id = parent,
                 started_at_ms = row.created_at_ms,
                 send_at_ms = row.fire_at_ms,
                 phase = phase,

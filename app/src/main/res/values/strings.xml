@@ -3848,4 +3848,5 @@
     <string name="search_match_clear">Clear highlights</string>
     <string name="pending_send_failed">Couldn’t send this message.</string>
     <string name="pending_send_waiting">Waiting for a connection. This message sends when you’re back online.</string>
+    <string name="thread_offline_saved_copy">You’re offline. This is the copy saved on this device.</string>
 </resources>
