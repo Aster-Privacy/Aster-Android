@@ -3042,6 +3042,7 @@ fun InboxScreen(
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .offset { IntOffset(0, header_offset_px.floatValue.roundToInt()) }
+                .graphicsLayer()
                 .onSizeChanged {
                     if (it.height <= 0) return@onSizeChanged
                     header_height_px = it.height

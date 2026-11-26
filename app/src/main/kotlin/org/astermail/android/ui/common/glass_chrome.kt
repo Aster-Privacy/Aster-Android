@@ -23,27 +23,23 @@ package org.astermail.android.ui.common
 
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.AsterSemanticColors
 import org.astermail.android.design.in_overlay_window
+import org.astermail.android.design.window_anchored_behind
 import org.astermail.android.ui.theme.draw_theme_window_slice
 import org.astermail.android.ui.theme.remember_active_theme_bitmap
 import org.astermail.android.ui.theme.remember_active_theme_blur
@@ -63,20 +59,18 @@ fun Modifier.glass_chrome(
     solid: Color = chrome_solid_color(colors),
 ): Modifier {
     val overlay = in_overlay_window()
-    if (overlay || !colors.is_glass) return this.drawBehind { drawRect(color = solid, alpha = alpha().coerceIn(0f, 1f)) }
-    if (!colors.is_translucent) return this.drawBehind { drawRect(color = solid, alpha = alpha().coerceIn(0f, 1f)) }
+    if (overlay || !colors.is_glass) return this.solid_chrome(solid, alpha)
+    if (!colors.is_translucent) return this.solid_chrome(solid, alpha)
     val blur = remember_active_theme_blur()
-        ?: return this.drawBehind { drawRect(color = solid, alpha = alpha().coerceIn(0f, 1f)) }
+        ?: return this.solid_chrome(solid, alpha)
     val container = LocalWindowInfo.current.containerSize
-    var origin by remember { mutableStateOf(Offset.Zero) }
     val veil = colors.bg_primary
     val tint = colors.glass_surface(colors.bg_card)
     return this
-        .onGloballyPositioned { if (it.isAttached) origin = it.positionInWindow() }
         .clipToBounds()
-        .drawBehind {
+        .window_anchored_behind { origin ->
             val fade = alpha().coerceIn(0f, 1f)
-            if (fade <= 0f) return@drawBehind
+            if (fade <= 0f) return@window_anchored_behind
             val window = Size(
                 container.width.toFloat(),
                 container.height.toFloat(),
@@ -110,7 +104,12 @@ fun Modifier.glass_chrome(
             }
             if (layered) drawContext.canvas.restore()
         }
+        .graphicsLayer()
 }
+
+private fun Modifier.solid_chrome(solid: Color, alpha: () -> Float): Modifier = this
+    .drawBehind { drawRect(color = solid, alpha = alpha().coerceIn(0f, 1f)) }
+    .graphicsLayer()
 
 @Composable
 fun Modifier.glass_bar(colors: AsterSemanticColors): Modifier {
@@ -121,19 +120,18 @@ fun Modifier.glass_bar(colors: AsterSemanticColors): Modifier {
     if (!colors.is_translucent) return this.background(solid)
     val blur = remember_active_theme_blur() ?: return this.background(solid)
     val container = LocalWindowInfo.current.containerSize
-    var origin by remember { mutableStateOf(Offset.Zero) }
     val veil = colors.bg_primary
     val tint = colors.glass_surface(colors.bg_card)
     return this
-        .onGloballyPositioned { if (it.isAttached) origin = it.positionInWindow() }
         .clipToBounds()
-        .drawBehind {
+        .window_anchored_behind { origin ->
             drawRect(color = solid)
             val window = Size(container.width.toFloat(), container.height.toFloat())
             draw_theme_window_slice(blur, window, origin, FilterQuality.Low)
             drawRect(color = veil.copy(alpha = theme_veil_alpha))
             drawRect(color = tint.copy(alpha = tint.alpha * glass_bar_tint_strength))
         }
+        .graphicsLayer()
 }
 
 @Composable
@@ -142,17 +140,16 @@ fun Modifier.page_punch(colors: AsterSemanticColors): Modifier {
     if (overlay || !colors.is_glass) return this.background(colors.bg_primary)
     val photo = remember_active_theme_bitmap() ?: return this.background(colors.bg_primary)
     val container = LocalWindowInfo.current.containerSize
-    var origin by remember { mutableStateOf(Offset.Zero) }
     val veil = colors.bg_primary
     return this
-        .onGloballyPositioned { if (it.isAttached) origin = it.positionInWindow() }
         .clipToBounds()
-        .drawBehind {
+        .window_anchored_behind { origin ->
             drawRect(color = veil)
             val window = Size(container.width.toFloat(), container.height.toFloat())
             draw_theme_window_slice(photo, window, origin)
             drawRect(color = veil.copy(alpha = theme_veil_alpha))
         }
+        .graphicsLayer()
 }
 
 @Composable

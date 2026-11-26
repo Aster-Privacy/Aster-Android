@@ -52,6 +52,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
@@ -428,7 +429,7 @@ fun Modifier.horizontal_scroll_indicator(
         }
     }
 
-    return drawWithContent {
+    return graphicsLayer().drawWithContent {
         drawContent()
         val current_alpha = alpha.value
         if (current_alpha <= 0f) return@drawWithContent
@@ -487,7 +488,7 @@ fun Modifier.vertical_scroll_indicator(
     if (local_accessibility.current.hide_scrollbars) return this
     val color = AsterMaterial.colors.text_muted.copy(alpha = indicator_alpha)
     val alpha = remember_bar_alpha(state) { state.isScrollInProgress }
-    return drawWithContent {
+    return graphicsLayer().drawWithContent {
         drawContent()
         val current_alpha = alpha.value
         if (current_alpha <= 0f) return@drawWithContent
