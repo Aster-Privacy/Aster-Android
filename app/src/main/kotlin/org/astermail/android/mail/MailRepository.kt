@@ -5703,14 +5703,12 @@ class MailRepository @Inject constructor(
 
     private val vault_inbound_lock = Any()
 
-    private fun cached_vault_inbound_key_sets(): List<InboundRatchetKeySet> {
-        val vault_b64 = session_key_store.get_encrypted_vault()?.first ?: return emptyList()
-        vault_inbound_keys?.takeIf { it.vault_b64 == vault_b64 }?.let { return it.key_sets }
-        if (vault_inbound_failed_b64 == vault_b64) return emptyList()
-        return synchronized(vault_inbound_lock) {
-            runCatching { load_vault_inbound_key_sets() }.getOrNull().orEmpty()
-        }
-    }
+    private fun cached_vault_inbound_key_sets(): List<InboundRatchetKeySet> = runCatching {
+        val vault_b64 = session_key_store.get_encrypted_vault()?.first ?: return@runCatching emptyList()
+        vault_inbound_keys?.takeIf { it.vault_b64 == vault_b64 }?.let { return@runCatching it.key_sets }
+        if (vault_inbound_failed_b64 == vault_b64) return@runCatching emptyList()
+        synchronized(vault_inbound_lock) { load_vault_inbound_key_sets() }
+    }.getOrNull().orEmpty()
 
     private fun load_vault_inbound_key_sets(): List<InboundRatchetKeySet> {
         val vault = session_key_store.get_encrypted_vault() ?: return emptyList()
