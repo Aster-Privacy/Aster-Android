@@ -25,6 +25,8 @@ import android.content.Context
 
 private const val header_prefs_name = "aster_ui_metrics"
 
+private val header_height_memory = java.util.concurrent.ConcurrentHashMap<String, Int>()
+
 private fun header_key(id: String, width_dp: Int, orientation: Int): String =
     "header_" + id + "_" + width_dp + "_" + orientation
 
@@ -33,9 +35,15 @@ fun cached_header_height_px(
     id: String,
     width_dp: Int,
     orientation: Int,
-): Int = context
-    .getSharedPreferences(header_prefs_name, Context.MODE_PRIVATE)
-    .getInt(header_key(id, width_dp, orientation), 0)
+): Int {
+    val key = header_key(id, width_dp, orientation)
+    header_height_memory[key]?.let { return it }
+    val stored = context
+        .getSharedPreferences(header_prefs_name, Context.MODE_PRIVATE)
+        .getInt(key, 0)
+    header_height_memory.putIfAbsent(key, stored)
+    return header_height_memory[key] ?: stored
+}
 
 fun store_header_height_px(
     context: Context,
@@ -45,8 +53,10 @@ fun store_header_height_px(
     height_px: Int,
 ) {
     if (height_px <= 0) return
-    val prefs = context.getSharedPreferences(header_prefs_name, Context.MODE_PRIVATE)
     val key = header_key(id, width_dp, orientation)
-    if (prefs.getInt(key, 0) == height_px) return
+    val previous = header_height_memory.put(key, height_px)
+    if (previous == height_px) return
+    val prefs = context.getSharedPreferences(header_prefs_name, Context.MODE_PRIVATE)
+    if (previous == null && prefs.getInt(key, 0) == height_px) return
     prefs.edit().putInt(key, height_px).apply()
 }
