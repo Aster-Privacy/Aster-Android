@@ -1999,7 +1999,7 @@
     <string name="auto_delete_spam_180">180 Tagen</string>
     <string name="auto_delete_spam_365">365 Tagen</string>
     <string name="auto_delete_trash">Papierkorb automatisch löschen nach</string>
-    <string name="auto_delete_trash_subtitle">E-Mails im Papierkorb, die älter als dieser Zeitraum sind, werden dauerhaft gelöscht.</string>
+    <string name="auto_delete_trash_subtitle">Nachrichten werden diese Zeit nach dem Verschieben in den Papierkorb dauerhaft gelöscht.</string>
     <string name="auto_delete_spam_never">Nie (für immer aufbewahren)</string>
     <string name="emails_per_page">E-Mails pro Seite</string>
     <string name="emails_per_page_subtitle">Anzahl der pro Seite geladenen E-Mails im Posteingang, Archiv und anderen Ordnern</string>

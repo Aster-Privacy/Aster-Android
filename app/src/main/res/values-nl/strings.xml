@@ -1998,7 +1998,7 @@
     <string name="auto_delete_spam_180">180 dagen</string>
     <string name="auto_delete_spam_365">365 dagen</string>
     <string name="auto_delete_trash">Prullenbak automatisch legen na</string>
-    <string name="auto_delete_trash_subtitle">E-mails in de Prullenbak die ouder zijn dan dit worden definitief verwijderd.</string>
+    <string name="auto_delete_trash_subtitle">Berichten worden definitief verwijderd zodra deze periode voorbij is sinds je ze naar de Prullenbak hebt verplaatst.</string>
     <string name="auto_delete_spam_never">Nooit (voor altijd bewaren)</string>
     <string name="emails_per_page">E-mails per pagina</string>
     <string name="emails_per_page_subtitle">Aantal e-mails dat per pagina wordt geladen in Postvak IN, Archief en andere mappen</string>

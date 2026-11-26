@@ -2166,7 +2166,7 @@
     <string name="auto_delete_spam_180">180 days</string>
     <string name="auto_delete_spam_365">365 days</string>
     <string name="auto_delete_trash">Auto-delete trash after</string>
-    <string name="auto_delete_trash_subtitle">Emails in Trash older than this are permanently deleted.</string>
+    <string name="auto_delete_trash_subtitle">Messages are permanently deleted this long after you move them to Trash.</string>
     <string name="auto_delete_spam_never">Never (keep forever)</string>
     <string name="emails_per_page">Emails per page</string>
     <string name="emails_per_page_subtitle">Number of emails loaded per page in Inbox, Archive, and other folders</string>

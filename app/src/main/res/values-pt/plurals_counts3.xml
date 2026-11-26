@@ -41,9 +41,9 @@
         <item quantity="other">Os itens no Spam são eliminados automaticamente após %1$d dias.</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
-        <item quantity="one">Os itens no Lixo são eliminados automaticamente após %1$d dia.</item>
-        <item quantity="many">Os itens no Lixo são eliminados automaticamente após %1$d dias.</item>
-        <item quantity="other">Os itens no Lixo são eliminados automaticamente após %1$d dias.</item>
+        <item quantity="one">As mensagens são eliminadas automaticamente %1$d dia depois de irem para o Lixo.</item>
+        <item quantity="many">As mensagens são eliminadas automaticamente %1$d dias depois de irem para o Lixo.</item>
+        <item quantity="other">As mensagens são eliminadas automaticamente %1$d dias depois de irem para o Lixo.</item>
     </plurals>
     <plurals name="pending_deletion_body_days">
         <item quantity="one">A sua conta será eliminada dentro de %1$d dia. Cancele a eliminação para manter a sua conta e restaurar o acesso ao seu correio e à sua subscrição.</item>

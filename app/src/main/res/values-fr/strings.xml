@@ -1428,7 +1428,7 @@
     <string name="auto_delete_spam_180">180 jours</string>
     <string name="auto_delete_spam_365">365 jours</string>
     <string name="auto_delete_trash">Supprimer automatiquement la corbeille après</string>
-    <string name="auto_delete_trash_subtitle">Les e-mails de la Corbeille plus anciens que cette durée sont définitivement supprimés.</string>
+    <string name="auto_delete_trash_subtitle">Les messages sont définitivement supprimés une fois cette durée écoulée après leur placement dans la Corbeille.</string>
     <string name="auto_delete_spam_never">Jamais (conserver indéfiniment)</string>
     <string name="emails_per_page">E-mails par page</string>
     <string name="emails_per_page_subtitle">Nombre d\'e-mails chargés par page dans la boîte de réception, les archives et les autres dossiers</string>
