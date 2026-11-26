@@ -2095,7 +2095,7 @@
     <string name="alias_default_domain_info_desc">새 별칭은 이 도메인으로 시작합니다. 별칭마다 다른 도메인을 선택할 수 있습니다.</string>
     <string name="alias_default_domain_platform">Aster 도메인</string>
     <string name="alias_default_domain_custom">내 사용자 지정 도메인</string>
-    <string name="alias_disabled_response">사용 중지된 별칭의 응답</string>
+    <string name="alias_disabled_response">차단된 메일에 대한 응답</string>
     <string name="alias_delete_behavior">삭제 방식</string>
     <string name="alias_always_expand">항상 펼치기</string>
     <string name="alias_always_expand_subtitle">별칭 설정 패널을 처음부터 펼친 채로 보여 줍니다</string>
@@ -2136,11 +2136,11 @@
     <string name="alias_sender_format_via">경유</string>
     <string name="alias_sender_format_at">소속</string>
     <string name="alias_unsubscribe_subtitle">수신을 거부하면 별칭을 중지</string>
-    <string name="alias_disabled_response_info_title">사용 중지된 별칭의 응답</string>
+    <string name="alias_disabled_response_info_title">차단된 메일에 대한 응답</string>
     <string name="alias_disabled_response_info_desc">무시를 선택하면 발신자에게 아무것도 알리지 않습니다. 차단한 발신자의 메일은 스팸으로 이동하는 등 차단 설정에 따라 처리되고, 중지된 별칭이나 주소로 온 메일은 삭제됩니다. 거부를 선택하면 메일 수신이 거부되고 발신자는 메일이 전달되지 않았다는 알림을 받습니다.</string>
     <string name="alias_disabled_response_subtitle">차단한 발신자가 메일을 보내거나 누군가 중지된 별칭 또는 주소로 메일을 보낼 때의 동작입니다</string>
-    <string name="alias_disabled_response_ignore">무시</string>
-    <string name="alias_disabled_response_reject">거부</string>
+    <string name="alias_disabled_response_ignore">조용히 무시</string>
+    <string name="alias_disabled_response_reject">거부 (반송)</string>
     <string name="alias_delete_behavior_info_title">삭제 방식</string>
     <string name="alias_delete_behavior_info_desc">삭제한 별칭을 휴지통에 먼저 넣을지, 바로 없앨지 정합니다.</string>
     <string name="alias_delete_behavior_subtitle">휴지통으로 옮기기 또는 바로 삭제</string>

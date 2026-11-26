@@ -2095,7 +2095,7 @@
     <string name="alias_default_domain_info_desc">新しいエイリアスにはこのドメインが使われます。エイリアスごとに別のドメインを選ぶこともできます。</string>
     <string name="alias_default_domain_platform">Aster のドメイン</string>
     <string name="alias_default_domain_custom">カスタムドメイン</string>
-    <string name="alias_disabled_response">無効なエイリアスへの応答</string>
+    <string name="alias_disabled_response">ブロックしたメールへの応答</string>
     <string name="alias_delete_behavior">削除時の動作</string>
     <string name="alias_always_expand">常に展開する</string>
     <string name="alias_always_expand_subtitle">エイリアス設定パネルを最初から開いた状態にします</string>
@@ -2136,11 +2136,11 @@
     <string name="alias_sender_format_via">経由</string>
     <string name="alias_sender_format_at">所属</string>
     <string name="alias_unsubscribe_subtitle">購読解除時にエイリアスを無効にする</string>
-    <string name="alias_disabled_response_info_title">無効なエイリアスへの応答</string>
+    <string name="alias_disabled_response_info_title">ブロックしたメールへの応答</string>
     <string name="alias_disabled_response_info_desc">無視を選ぶと、送信者には何も通知されません。ブロックした送信者のメールは、迷惑メールへの移動など、ブロック設定に従って処理されます。無効にしたエイリアスやアドレス宛てのメールは破棄されます。拒否を選ぶと、メールは受け取りを拒否され、送信者には配信できなかったことが通知されます。</string>
     <string name="alias_disabled_response_subtitle">ブロックした送信者からメールが届いたときや、無効にしたエイリアスやアドレスにメールが送られたときの動作です</string>
-    <string name="alias_disabled_response_ignore">無視</string>
-    <string name="alias_disabled_response_reject">拒否</string>
+    <string name="alias_disabled_response_ignore">無言で無視</string>
+    <string name="alias_disabled_response_reject">拒否（バウンス）</string>
     <string name="alias_delete_behavior_info_title">削除の動作</string>
     <string name="alias_delete_behavior_info_desc">削除したエイリアスをいったんゴミ箱に入れるか、すぐに消すかを決めます。</string>
     <string name="alias_delete_behavior_subtitle">ゴミ箱に入れるか、すぐ削除するか</string>

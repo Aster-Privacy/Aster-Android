@@ -2102,7 +2102,7 @@
     <string name="alias_default_domain_info_desc">Neue Aliase beginnen mit dieser Domain. Für einzelne Aliase können Sie eine andere Domain wählen.</string>
     <string name="alias_default_domain_platform">Aster-Domain</string>
     <string name="alias_default_domain_custom">Ihre eigene Domain</string>
-    <string name="alias_disabled_response">Antwort bei deaktiviertem Alias</string>
+    <string name="alias_disabled_response">Antwort auf blockierte Mails</string>
     <string name="alias_delete_behavior">Löschverhalten</string>
     <string name="alias_always_expand">Immer ausklappen</string>
     <string name="alias_always_expand_subtitle">Zeigt die vollständigen Alias-Einstellungen standardmäßig an</string>
@@ -2143,11 +2143,11 @@
     <string name="alias_sender_format_via">Über</string>
     <string name="alias_sender_format_at">Bei</string>
     <string name="alias_unsubscribe_subtitle">Alias beim Abmelden deaktivieren</string>
-    <string name="alias_disabled_response_info_title">Antwort bei deaktiviertem Alias</string>
+    <string name="alias_disabled_response_info_title">Antwort auf blockierte Mails</string>
     <string name="alias_disabled_response_info_desc">Wenn Sie Ignorieren wählen, erfährt der Absender nichts. E-Mails von blockierten Absendern folgen Ihrer Blockierungseinstellung, etwa dem Verschieben in den Spam, und E-Mails an einen deaktivierten Alias oder eine deaktivierte Adresse werden verworfen. Wenn Sie Ablehnen wählen, wird die E-Mail abgewiesen und der Absender erhält eine Nachricht, dass sie nicht zugestellt wurde.</string>
     <string name="alias_disabled_response_subtitle">Was passiert, wenn Ihnen ein blockierter Absender schreibt oder jemand an einen deaktivierten Alias oder eine deaktivierte Adresse schreibt</string>
-    <string name="alias_disabled_response_ignore">Ignorieren</string>
-    <string name="alias_disabled_response_reject">Abweisen</string>
+    <string name="alias_disabled_response_ignore">Stillschweigend ignorieren</string>
+    <string name="alias_disabled_response_reject">Ablehnen (Bounce)</string>
     <string name="alias_delete_behavior_info_title">Löschaktion</string>
     <string name="alias_delete_behavior_info_desc">Legt fest, ob gelöschte Aliasse zuerst in den Papierkorb wandern oder sofort verschwinden.</string>
     <string name="alias_delete_behavior_subtitle">In den Papierkorb legen oder sofort löschen</string>

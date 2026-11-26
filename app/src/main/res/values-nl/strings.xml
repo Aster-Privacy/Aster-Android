@@ -2101,7 +2101,7 @@
     <string name="alias_default_domain_info_desc">Nieuwe aliassen gebruiken dit domein. Je kunt per alias een ander domein kiezen.</string>
     <string name="alias_default_domain_platform">Aster-domein</string>
     <string name="alias_default_domain_custom">Je eigen domein</string>
-    <string name="alias_disabled_response">Antwoord bij uitgeschakelde alias</string>
+    <string name="alias_disabled_response">Reactie op geblokkeerde e-mail</string>
     <string name="alias_delete_behavior">Verwijdergedrag</string>
     <string name="alias_always_expand">Altijd uitklappen</string>
     <string name="alias_always_expand_subtitle">Toont het volledige aliaspaneel standaard</string>
@@ -2142,11 +2142,11 @@
     <string name="alias_sender_format_via">Via</string>
     <string name="alias_sender_format_at">Bij</string>
     <string name="alias_unsubscribe_subtitle">Alias uitschakelen bij uitschrijven</string>
-    <string name="alias_disabled_response_info_title">Antwoord bij uitgeschakelde alias</string>
+    <string name="alias_disabled_response_info_title">Reactie op geblokkeerde e-mail</string>
     <string name="alias_disabled_response_info_desc">Als je kiest voor negeren, krijgt de afzender niets te horen. Mail van een geblokkeerde afzender volgt je blokkeerinstelling, zoals verplaatsen naar Spam, en mail naar een uitgeschakelde alias of een uitgeschakeld adres wordt verwijderd. Als je kiest voor weigeren, wordt de mail geweigerd en krijgt de afzender een melding dat die niet is afgeleverd.</string>
     <string name="alias_disabled_response_subtitle">Wat er gebeurt als een geblokkeerde afzender je mailt, of als iemand mailt naar een uitgeschakelde alias of een uitgeschakeld adres</string>
-    <string name="alias_disabled_response_ignore">Negeren</string>
-    <string name="alias_disabled_response_reject">Weigeren</string>
+    <string name="alias_disabled_response_ignore">Stilzwijgend negeren</string>
+    <string name="alias_disabled_response_reject">Weigeren (bounce)</string>
     <string name="alias_delete_behavior_info_title">Verwijderactie</string>
     <string name="alias_delete_behavior_info_desc">Bepaalt of verwijderde aliassen eerst naar de prullenbak gaan of meteen weg zijn.</string>
     <string name="alias_delete_behavior_subtitle">Naar de prullenbak of meteen verwijderen</string>

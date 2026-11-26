@@ -2105,7 +2105,7 @@
     <string name="alias_default_domain_info_desc">I nuovi alias partono da questo dominio. Puoi scegliere un dominio diverso per ogni alias.</string>
     <string name="alias_default_domain_platform">Dominio Aster</string>
     <string name="alias_default_domain_custom">Il tuo dominio personalizzato</string>
-    <string name="alias_disabled_response">Risposta dell\'alias disattivato</string>
+    <string name="alias_disabled_response">Risposta alla posta bloccata</string>
     <string name="alias_delete_behavior">Comportamento di eliminazione</string>
     <string name="alias_always_expand">Mostra sempre espanso</string>
     <string name="alias_always_expand_subtitle">Mostra per impostazione predefinita il pannello completo dell\'alias</string>
@@ -2146,11 +2146,11 @@
     <string name="alias_sender_format_via">Tramite</string>
     <string name="alias_sender_format_at">Presso</string>
     <string name="alias_unsubscribe_subtitle">Disattiva l\'alias quando ti disiscrivi</string>
-    <string name="alias_disabled_response_info_title">Risposta dell\'alias disattivato</string>
+    <string name="alias_disabled_response_info_title">Risposta alla posta bloccata</string>
     <string name="alias_disabled_response_info_desc">Se scegli di ignorare, il mittente non viene avvisato. La posta di un mittente bloccato segue la tua impostazione di blocco, come lo spostamento in Spam, e la posta inviata a un alias o a un indirizzo disattivato viene scartata. Se scegli di rifiutare, la posta viene respinta e il mittente riceve un avviso di mancata consegna.</string>
     <string name="alias_disabled_response_subtitle">Cosa succede quando un mittente bloccato ti scrive o quando qualcuno scrive a un alias o a un indirizzo disattivato</string>
-    <string name="alias_disabled_response_ignore">Ignora</string>
-    <string name="alias_disabled_response_reject">Rifiuta</string>
+    <string name="alias_disabled_response_ignore">Ignora silenziosamente</string>
+    <string name="alias_disabled_response_reject">Rifiuta (bounce)</string>
     <string name="alias_delete_behavior_info_title">Azione di eliminazione</string>
     <string name="alias_delete_behavior_info_desc">Stabilisce se gli alias eliminati finiscono prima nel cestino oppure vengono rimossi subito.</string>
     <string name="alias_delete_behavior_subtitle">Sposta nel cestino o elimina subito</string>
