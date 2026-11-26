@@ -35,4 +35,12 @@
     <string name="notif_action_unlock_required">Sblocca il dispositivo, poi riprova.</string>
     <string name="notif_actions_section">Azioni delle notifiche</string>
     <string name="notif_actions_description">Scegli fino a 3 azioni da mostrare nelle notifiche di posta. Se un messaggio contiene un codice, Copia codice occupa un posto.</string>
+    <string name="push_distributor_title">App per le notifiche push</string>
+    <string name="push_distributor_subtitle">Scegli quale app recapita le notifiche ad Aster Mail.</string>
+    <string name="push_distributor_built_in">Servizi Google Play (integrato)</string>
+    <string name="push_distributor_none_installed">Per usare un\'altra app, installa un distributore UnifiedPush.</string>
+    <string name="push_distributor_fallback_title">Le notifiche ora usano i servizi Google Play</string>
+    <string name="push_distributor_fallback_body">%1$s è stata disinstallata, quindi le notifiche ora usano i servizi Google Play.</string>
+    <string name="notif_channel_push_delivery_name">Recapito delle notifiche</string>
+    <string name="notif_channel_push_delivery_description">Ti avvisa quando cambia l\'app che recapita le tue notifiche</string>
 </resources>

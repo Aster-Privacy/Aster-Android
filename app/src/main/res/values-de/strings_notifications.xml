@@ -35,4 +35,12 @@
     <string name="notif_action_unlock_required">Entsperren Sie Ihr Gerät und versuchen Sie es dann erneut.</string>
     <string name="notif_actions_section">Benachrichtigungsaktionen</string>
     <string name="notif_actions_description">Wählen Sie bis zu 3 Aktionen für E-Mail-Benachrichtigungen aus. Wenn eine Nachricht einen Code enthält, belegt Code kopieren einen Platz.</string>
+    <string name="push_distributor_title">App für Push-Benachrichtigungen</string>
+    <string name="push_distributor_subtitle">Wähle aus, welche App Benachrichtigungen an Aster Mail zustellt.</string>
+    <string name="push_distributor_built_in">Google Play-Dienste (integriert)</string>
+    <string name="push_distributor_none_installed">Um eine andere App zu verwenden, installiere einen UnifiedPush-Distributor.</string>
+    <string name="push_distributor_fallback_title">Benachrichtigungen nutzen jetzt Google Play-Dienste</string>
+    <string name="push_distributor_fallback_body">%1$s wurde deinstalliert, daher nutzen Benachrichtigungen jetzt Google Play-Dienste.</string>
+    <string name="notif_channel_push_delivery_name">Zustellung von Benachrichtigungen</string>
+    <string name="notif_channel_push_delivery_description">Informiert dich, wenn sich die App ändert, die deine Benachrichtigungen zustellt</string>
 </resources>

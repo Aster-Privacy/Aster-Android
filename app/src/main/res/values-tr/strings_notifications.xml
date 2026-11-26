@@ -35,4 +35,12 @@
     <string name="notif_action_unlock_required">Cihazınızın kilidini açın ve tekrar deneyin.</string>
     <string name="notif_actions_section">Bildirim eylemleri</string>
     <string name="notif_actions_description">E-posta bildirimlerinde gösterilecek en fazla 3 eylem seçin. Bir iletide kod varsa Kodu kopyala bir yer kaplar.</string>
+    <string name="push_distributor_title">Anlık bildirim uygulaması</string>
+    <string name="push_distributor_subtitle">Aster Mail bildirimlerini hangi uygulamanın ileteceğini seçin.</string>
+    <string name="push_distributor_built_in">Google Play Hizmetleri (yerleşik)</string>
+    <string name="push_distributor_none_installed">Başka bir uygulama kullanmak için bir UnifiedPush dağıtıcısı yükleyin.</string>
+    <string name="push_distributor_fallback_title">Bildirimler artık Google Play Hizmetleri\'ni kullanıyor</string>
+    <string name="push_distributor_fallback_body">%1$s kaldırıldığı için bildirimler artık Google Play Hizmetleri\'ni kullanıyor.</string>
+    <string name="notif_channel_push_delivery_name">Bildirim iletimi</string>
+    <string name="notif_channel_push_delivery_description">Bildirimlerinizi ileten uygulama değiştiğinde sizi bilgilendirir</string>
 </resources>
