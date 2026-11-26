@@ -30,7 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -129,7 +130,7 @@ class InboxSelectionTapTest {
     @Test
     fun the_row_stays_one_clickable_node_for_screen_readers() {
         set_harness(select_mode = true)
-        compose_rule.onNode(hasClickAction()).assertTextContains("Subject m1", substring = true)
+        compose_rule.onNode(hasClickAction()).assert(hasContentDescription("Subject m1", substring = true))
 
         star_toggles.clear()
         selection_log.clear()
