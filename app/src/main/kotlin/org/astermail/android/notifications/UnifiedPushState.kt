@@ -40,6 +40,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import org.astermail.android.BuildConfig
 import org.astermail.android.api.ApiClient
 import org.astermail.android.storage.TokenStore
 import org.unifiedpush.android.connector.UnifiedPush
@@ -60,6 +61,9 @@ object UnifiedPushState {
     private const val KEY_VAPID_PUBLIC_KEY = "vapid_public_key"
     private const val KEY_VAPID_FETCHED_AT = "vapid_fetched_at"
     private const val KEY_DEVICE_ID = "push_device_id"
+    private const val KEY_DISTRIBUTOR_CHOICE = "distributor_choice"
+    private const val KEY_DISTRIBUTOR_CHOICE_LABEL = "distributor_choice_label"
+    private const val KEY_DISTRIBUTOR_FALLBACK_LABEL = "distributor_fallback_label"
     private const val RESUBSCRIBE_INTERVAL_MS = 6L * 60L * 60L * 1000L
     private const val REGISTER_COOLDOWN_MS = 15L * 60L * 1000L
     private const val SUBSCRIBE_COOLDOWN_MS = 5L * 60L * 1000L
@@ -137,6 +141,7 @@ object UnifiedPushState {
         push_prefs(context).getString(KEY_ENDPOINT, null)
 
     fun has_pending_registration(context: Context): Boolean {
+        if (distributor_missing(context)) return true
         val prefs = push_prefs(context)
         val endpoint = prefs.getString(KEY_ENDPOINT, null)
         val registered = prefs.getString(KEY_REGISTERED_ENDPOINT, null)
@@ -194,6 +199,10 @@ object UnifiedPushState {
 
     fun sync_registration(context: Context) {
         if (!has_session(context)) return
+        if (distributor_missing(context)) {
+            fall_back_to_built_in(context)
+            return
+        }
         val prefs = push_prefs(context)
         val endpoint = prefs.getString(KEY_ENDPOINT, null)
         val p256dh = prefs.getString(KEY_PENDING_P256DH, null)
@@ -230,9 +239,104 @@ object UnifiedPushState {
                 if (cooldown_active(context, KEY_LAST_REGISTER_ATTEMPT_AT, REGISTER_COOLDOWN_MS)) {
                     return@launch
                 }
-                if (UnifiedPush.getAckDistributor(context) == null) {
+                if (distributor_choice_supported()) {
+                    val acked = UnifiedPush.getAckDistributor(context)
+                    val target = resolve_push_distributor(
+                        own_package = context.packageName,
+                        choice = distributor_choice(context),
+                        acked = acked,
+                        installed = distributors,
+                    ).target ?: return@launch
+                    if (acked != target) UnifiedPush.saveDistributor(context, target)
+                } else if (UnifiedPush.getAckDistributor(context) == null) {
                     UnifiedPush.saveDistributor(context, distributors.first())
                 }
+                UnifiedPush.register(context, vapid = get_vapid_public_key(context))
+            }
+        }
+    }
+
+    fun distributor_choice_supported(): Boolean = BuildConfig.FLAVOR == "full"
+
+    fun distributor_choice(context: Context): String? =
+        push_prefs(context).getString(KEY_DISTRIBUTOR_CHOICE, null)
+
+    fun installed_distributors(context: Context): List<String> =
+        runCatching { UnifiedPush.getDistributors(context) }.getOrDefault(emptyList())
+
+    fun current_distributor(context: Context): String = selected_push_distributor(
+        own_package = context.packageName,
+        choice = distributor_choice(context),
+        acked = runCatching { UnifiedPush.getAckDistributor(context) }.getOrNull(),
+        installed = installed_distributors(context),
+    )
+
+    fun distributor_missing(context: Context): Boolean {
+        if (!distributor_choice_supported()) return false
+        val choice = distributor_choice(context) ?: return false
+        return resolve_push_distributor(
+            own_package = context.packageName,
+            choice = choice,
+            acked = null,
+            installed = installed_distributors(context),
+        ).missing_choice != null
+    }
+
+    fun fallback_notice(context: Context): String? =
+        push_prefs(context).getString(KEY_DISTRIBUTOR_FALLBACK_LABEL, null)
+
+    fun dismiss_fallback_notice(context: Context) {
+        push_prefs(context).edit().remove(KEY_DISTRIBUTOR_FALLBACK_LABEL).apply()
+    }
+
+    fun choose_distributor(context: Context, distributor: String, label: String?) {
+        if (!distributor_choice_supported()) return
+        val external = distributor != context.packageName
+        val edit = push_prefs(context).edit()
+            .remove(KEY_DISTRIBUTOR_FALLBACK_LABEL)
+            .remove(KEY_ENDPOINT)
+            .remove(KEY_PENDING_P256DH)
+            .remove(KEY_PENDING_AUTH)
+            .remove(KEY_LAST_REGISTER_ATTEMPT_AT)
+            .remove(KEY_LAST_SUBSCRIBE_ATTEMPT_AT)
+        if (external) {
+            edit.putString(KEY_DISTRIBUTOR_CHOICE, distributor)
+                .putString(KEY_DISTRIBUTOR_CHOICE_LABEL, label?.takeIf { it.isNotBlank() } ?: distributor)
+        } else {
+            edit.putString(KEY_DISTRIBUTOR_CHOICE, distributor).remove(KEY_DISTRIBUTOR_CHOICE_LABEL)
+        }
+        edit.commit()
+        switch_distributor(context, distributor)
+    }
+
+    private fun fall_back_to_built_in(context: Context) {
+        val prefs = push_prefs(context)
+        val label = prefs.getString(KEY_DISTRIBUTOR_CHOICE_LABEL, null)
+            ?: prefs.getString(KEY_DISTRIBUTOR_CHOICE, null)
+            ?: return
+        prefs.edit()
+            .remove(KEY_DISTRIBUTOR_CHOICE)
+            .remove(KEY_DISTRIBUTOR_CHOICE_LABEL)
+            .putString(KEY_DISTRIBUTOR_FALLBACK_LABEL, label)
+            .remove(KEY_ENDPOINT)
+            .remove(KEY_PENDING_P256DH)
+            .remove(KEY_PENDING_AUTH)
+            .remove(KEY_LAST_REGISTER_ATTEMPT_AT)
+            .remove(KEY_LAST_SUBSCRIBE_ATTEMPT_AT)
+            .commit()
+        runCatching { PushDistributorNotifier.notify_fallback(context, label) }
+        val installed = installed_distributors(context)
+        val target = resolve_push_distributor(context.packageName, null, null, installed).target ?: return
+        switch_distributor(context, target)
+    }
+
+    private fun switch_distributor(context: Context, distributor: String) {
+        scope.launch {
+            runCatching {
+                if (!has_session(context)) return@launch
+                if (distributor !in UnifiedPush.getDistributors(context)) return@launch
+                UnifiedPush.saveDistributor(context, distributor)
+                push_prefs(context).edit().putLong(KEY_LAST_REGISTER_ATTEMPT_AT, System.currentTimeMillis()).apply()
                 UnifiedPush.register(context, vapid = get_vapid_public_key(context))
             }
         }

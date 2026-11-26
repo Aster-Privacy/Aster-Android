@@ -35,4 +35,12 @@
     <string name="notif_action_unlock_required">デバイスのロックを解除してから、もう一度お試しください。</string>
     <string name="notif_actions_section">通知のアクション</string>
     <string name="notif_actions_description">メール通知に表示するアクションを3つまで選択します。メッセージにコードが含まれる場合は、「コードをコピー」が1つ分を使います。</string>
+    <string name="push_distributor_title">プッシュ通知アプリ</string>
+    <string name="push_distributor_subtitle">Aster Mail に通知を届けるアプリを選択します。</string>
+    <string name="push_distributor_built_in">Google Play 開発者サービス（内蔵）</string>
+    <string name="push_distributor_none_installed">別のアプリを使うには、UnifiedPush ディストリビューターをインストールしてください。</string>
+    <string name="push_distributor_fallback_title">通知は Google Play 開発者サービスを使用するようになりました</string>
+    <string name="push_distributor_fallback_body">%1$s がアンインストールされたため、通知は Google Play 開発者サービスを使用するようになりました。</string>
+    <string name="notif_channel_push_delivery_name">通知の配信</string>
+    <string name="notif_channel_push_delivery_description">通知を届けるアプリが変わったときにお知らせします</string>
 </resources>

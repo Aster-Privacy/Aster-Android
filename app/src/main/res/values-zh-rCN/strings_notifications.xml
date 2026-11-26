@@ -35,4 +35,12 @@
     <string name="notif_action_unlock_required">请解锁设备，然后重试。</string>
     <string name="notif_actions_section">通知操作</string>
     <string name="notif_actions_description">最多选择 3 个要在邮件通知中显示的操作。如果邮件包含验证码，“复制验证码”会占用一个位置。</string>
+    <string name="push_distributor_title">推送通知应用</string>
+    <string name="push_distributor_subtitle">选择由哪个应用向 Aster Mail 传递通知。</string>
+    <string name="push_distributor_built_in">Google Play 服务（内置）</string>
+    <string name="push_distributor_none_installed">如需使用其他应用，请安装 UnifiedPush 分发器。</string>
+    <string name="push_distributor_fallback_title">通知现在使用 Google Play 服务</string>
+    <string name="push_distributor_fallback_body">%1$s 已被卸载，因此通知现在使用 Google Play 服务。</string>
+    <string name="notif_channel_push_delivery_name">通知传递</string>
+    <string name="notif_channel_push_delivery_description">在传递通知的应用发生变化时提醒您</string>
 </resources>

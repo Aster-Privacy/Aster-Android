@@ -35,4 +35,12 @@
     <string name="notif_action_unlock_required">अपना डिवाइस अनलॉक करें, फिर दोबारा कोशिश करें।</string>
     <string name="notif_actions_section">सूचना कार्रवाइयां</string>
     <string name="notif_actions_description">मेल सूचनाओं में दिखाने के लिए 3 तक कार्रवाइयां चुनें। अगर किसी संदेश में कोड है, तो कोड कॉपी करें एक जगह लेता है।</string>
+    <string name="push_distributor_title">पुश सूचना ऐप</string>
+    <string name="push_distributor_subtitle">चुनें कि कौन-सा ऐप Aster Mail तक सूचनाएं पहुंचाए।</string>
+    <string name="push_distributor_built_in">Google Play सेवाएं (बिल्ट-इन)</string>
+    <string name="push_distributor_none_installed">किसी दूसरे ऐप का इस्तेमाल करने के लिए, UnifiedPush डिस्ट्रिब्यूटर इंस्टॉल करें।</string>
+    <string name="push_distributor_fallback_title">सूचनाएं अब Google Play सेवाओं का इस्तेमाल करती हैं</string>
+    <string name="push_distributor_fallback_body">%1$s अनइंस्टॉल हो गया, इसलिए सूचनाएं अब Google Play सेवाओं का इस्तेमाल करती हैं।</string>
+    <string name="notif_channel_push_delivery_name">सूचना डिलीवरी</string>
+    <string name="notif_channel_push_delivery_description">सूचनाएं पहुंचाने वाला ऐप बदलने पर आपको बताता है</string>
 </resources>

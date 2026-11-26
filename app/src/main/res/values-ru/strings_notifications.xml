@@ -35,4 +35,12 @@
     <string name="notif_action_unlock_required">Разблокируйте устройство и повторите попытку.</string>
     <string name="notif_actions_section">Действия в уведомлениях</string>
     <string name="notif_actions_description">Выберите до 3 действий для уведомлений о почте. Если в письме есть код, кнопка «Копировать код» занимает одно место.</string>
+    <string name="push_distributor_title">Приложение для push-уведомлений</string>
+    <string name="push_distributor_subtitle">Выберите приложение, которое доставляет уведомления в Aster Mail.</string>
+    <string name="push_distributor_built_in">Сервисы Google Play (встроенные)</string>
+    <string name="push_distributor_none_installed">Чтобы использовать другое приложение, установите дистрибьютор UnifiedPush.</string>
+    <string name="push_distributor_fallback_title">Уведомления теперь используют сервисы Google Play</string>
+    <string name="push_distributor_fallback_body">Приложение %1$s удалено, поэтому уведомления теперь используют сервисы Google Play.</string>
+    <string name="notif_channel_push_delivery_name">Доставка уведомлений</string>
+    <string name="notif_channel_push_delivery_description">Сообщает, когда меняется приложение, доставляющее ваши уведомления</string>
 </resources>

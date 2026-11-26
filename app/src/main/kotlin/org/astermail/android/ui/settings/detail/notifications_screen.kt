@@ -382,6 +382,10 @@ fun NotificationsScreen(
                     )
                     }
                 }
+                if (org.astermail.android.notifications.UnifiedPushState.distributor_choice_supported()) {
+                    settings_row_gap(modifier = Modifier)
+                    push_distributor_row()
+                }
             }
             v_gap(AsterSpacing.lg)
             section_label(stringResource(R.string.events))

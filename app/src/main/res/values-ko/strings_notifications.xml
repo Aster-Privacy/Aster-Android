@@ -35,4 +35,12 @@
     <string name="notif_action_unlock_required">기기의 잠금을 해제한 후 다시 시도하세요.</string>
     <string name="notif_actions_section">알림 작업</string>
     <string name="notif_actions_description">메일 알림에 표시할 작업을 최대 3개까지 선택하세요. 메시지에 코드가 있으면 코드 복사가 한 자리를 차지합니다.</string>
+    <string name="push_distributor_title">푸시 알림 앱</string>
+    <string name="push_distributor_subtitle">Aster Mail에 알림을 전달할 앱을 선택하세요.</string>
+    <string name="push_distributor_built_in">Google Play 서비스(기본 제공)</string>
+    <string name="push_distributor_none_installed">다른 앱을 사용하려면 UnifiedPush 배포 앱을 설치하세요.</string>
+    <string name="push_distributor_fallback_title">이제 알림에 Google Play 서비스를 사용합니다</string>
+    <string name="push_distributor_fallback_body">%1$s 앱이 제거되어 이제 알림에 Google Play 서비스를 사용합니다.</string>
+    <string name="notif_channel_push_delivery_name">알림 전달</string>
+    <string name="notif_channel_push_delivery_description">알림을 전달하는 앱이 바뀌면 알려 줍니다</string>
 </resources>

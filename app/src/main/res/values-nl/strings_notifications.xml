@@ -35,4 +35,12 @@
     <string name="notif_action_unlock_required">Ontgrendel je apparaat en probeer het opnieuw.</string>
     <string name="notif_actions_section">Meldingsacties</string>
     <string name="notif_actions_description">Kies maximaal 3 acties die je in e-mailmeldingen wilt zien. Als een bericht een code bevat, neemt Code kopiëren één plek in.</string>
+    <string name="push_distributor_title">App voor pushmeldingen</string>
+    <string name="push_distributor_subtitle">Kies welke app meldingen aan Aster Mail bezorgt.</string>
+    <string name="push_distributor_built_in">Google Play-services (ingebouwd)</string>
+    <string name="push_distributor_none_installed">Installeer een UnifiedPush-distributor om een andere app te gebruiken.</string>
+    <string name="push_distributor_fallback_title">Meldingen gebruiken nu Google Play-services</string>
+    <string name="push_distributor_fallback_body">%1$s is verwijderd, dus meldingen gebruiken nu Google Play-services.</string>
+    <string name="notif_channel_push_delivery_name">Bezorging van meldingen</string>
+    <string name="notif_channel_push_delivery_description">Laat je weten wanneer de app die je meldingen bezorgt verandert</string>
 </resources>

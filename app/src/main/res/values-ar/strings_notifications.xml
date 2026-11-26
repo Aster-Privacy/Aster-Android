@@ -35,4 +35,12 @@
     <string name="notif_action_unlock_required">افتح قفل جهازك، ثم حاول مرة أخرى.</string>
     <string name="notif_actions_section">إجراءات الإشعارات</string>
     <string name="notif_actions_description">اختر ما يصل إلى 3 إجراءات لعرضها في إشعارات البريد. إذا كانت الرسالة تتضمن رمزًا، فإن نسخ الرمز يشغل مكانًا واحدًا.</string>
+    <string name="push_distributor_title">تطبيق الإشعارات الفورية</string>
+    <string name="push_distributor_subtitle">اختر التطبيق الذي يوصل الإشعارات إلى Aster Mail.</string>
+    <string name="push_distributor_built_in">Google Play services (مدمج)</string>
+    <string name="push_distributor_none_installed">لاستخدام تطبيق آخر، ثبّت موزّع UnifiedPush.</string>
+    <string name="push_distributor_fallback_title">تستخدم الإشعارات الآن Google Play services</string>
+    <string name="push_distributor_fallback_body">تمت إزالة %1$s، لذا تستخدم الإشعارات الآن Google Play services.</string>
+    <string name="notif_channel_push_delivery_name">توصيل الإشعارات</string>
+    <string name="notif_channel_push_delivery_description">يُعلمك عندما يتغير التطبيق الذي يوصل إشعاراتك</string>
 </resources>
