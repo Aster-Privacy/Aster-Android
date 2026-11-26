@@ -131,3 +131,58 @@ fun thread_reveal_ready(
     if (body_wait_expired) return true
     return expanded_ids.none { it !in hidden_ids && it !in ready_body_ids }
 }
+
+const val thread_anchor_hold_ms = 10_000L
+const val thread_header_item_key = "subject_header"
+
+data class ThreadAnchorProbe(
+    val index: Int?,
+    val desired_offset: Int,
+    val item_offset: Int?,
+    val can_scroll_forward: Boolean,
+    val target_id: String?,
+    val revealed: Boolean,
+    val released: Boolean,
+)
+
+fun thread_anchor_needs_scroll(
+    item_offset: Int?,
+    desired_offset: Int,
+    can_scroll_forward: Boolean,
+    tolerance_px: Int = 1,
+): Boolean {
+    if (item_offset == null) return true
+    val drift = item_offset - desired_offset
+    return when {
+        drift < -tolerance_px -> true
+        drift > tolerance_px -> can_scroll_forward
+        else -> false
+    }
+}
+
+fun thread_item_index_for_key(
+    item_keys: List<String>,
+    key: String,
+    header_item_count: Int,
+): Int? {
+    if (key == thread_header_item_key) return 0
+    val index = item_keys.indexOf(key)
+    return if (index < 0) null else header_item_count + index
+}
+
+fun thread_open_target_index(
+    message_ids: List<String>,
+    own_sent_ids: Set<String>,
+    opened_id: String,
+    header_item_count: Int,
+): Int? = initial_thread_scroll_index(
+    message_ids = message_ids,
+    opened_id = thread_open_anchor_id(message_ids, own_sent_ids, opened_id),
+    header_item_count = header_item_count,
+)
+
+fun thread_replied_since_saved(
+    tail_key: String?,
+    tail_is_own: Boolean,
+    saved_tail_key: String?,
+): Boolean = tail_is_own && tail_key != null && saved_tail_key != null && tail_key != saved_tail_key

@@ -112,6 +112,9 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextAlign
@@ -167,6 +170,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.takeWhile
 import android.Manifest
 import android.content.ContentValues
 import android.content.Intent
@@ -993,7 +999,7 @@ fun MailDetailScreen(
     var action_menu_anchor by action_menu_anchor_state
 
     var show_encryption_dropdown by remember { mutableStateOf(false) }
-    var hidden_group_revealed by remember(email_id) { mutableStateOf(false) }
+    var hidden_group_revealed by rememberSaveable(email_id) { mutableStateOf(false) }
     var allow_external_ids by remember(email_id) { mutableStateOf(emptySet<String>()) }
     var dismissed_unsub_ids by remember(email_id) { mutableStateOf(emptySet<String>()) }
     val unsubscribed_tokens by subscriptions_vm.unsubscribed_tokens.collectAsStateWithLifecycle()
@@ -1154,7 +1160,7 @@ fun MailDetailScreen(
         sizes.toMap()
     }
 
-    val user_expanded_ids = remember(email_id) {
+    val user_expanded_ids = rememberSaveable(email_id, saver = expanded_ids_saver) {
         mutableStateOf<Set<String>?>(null)
     }
     val current_expanded_ids = user_expanded_ids.value ?: open_layout?.expanded_ids.orEmpty()
@@ -1266,17 +1272,21 @@ fun MailDetailScreen(
     val list_state = rememberLazyListState()
     warm_body_web_view(ready = thread_revealed) { list_state.isScrollInProgress }
     val tail_message = display_messages.lastOrNull()
-    val tail_key = remember(display_ids, thread_send_aliases) {
-        thread_item_keys(display_ids, thread_send_aliases).lastOrNull()
+    val message_item_keys = remember(display_ids, thread_send_aliases) {
+        thread_item_keys(display_ids, thread_send_aliases)
     }
+    val tail_key = message_item_keys.lastOrNull()
     val tail_is_own = tail_message?.is_own_copy == true
     var user_dragged by remember(email_id) { mutableStateOf(false) }
+    var anchor_released by remember(email_id) { mutableStateOf(false) }
+    var saved_anchor_key by rememberSaveable(email_id) { mutableStateOf<String?>(null) }
+    var saved_anchor_offset by rememberSaveable(email_id) { mutableStateOf(0) }
     LaunchedEffect(email_id, list_state) {
         list_state.interactionSource.interactions.collect { interaction ->
             if (interaction is androidx.compose.foundation.interaction.DragInteraction.Start) user_dragged = true
         }
     }
-    var followed_tail_key by remember(email_id) { mutableStateOf<String?>(null) }
+    var followed_tail_key by rememberSaveable(email_id) { mutableStateOf<String?>(null) }
     val pan_signal = remember { horizontal_pan_signal() }
     val card_reduce_motion = org.astermail.android.design.aster_reduce_motion()
     val card_placement_spec: androidx.compose.animation.core.FiniteAnimationSpec<androidx.compose.ui.unit.IntOffset>? =
@@ -1311,22 +1321,87 @@ fun MailDetailScreen(
         derivedStateOf { list_state.firstVisibleItemIndex > 0 || list_state.firstVisibleItemScrollOffset > 80 }
     }
 
-    LaunchedEffect(email_id, open_layout) {
+    val search_controller = remember_detail_search_controller(email_id)
+    val searching = search_controller != null
+    val latest_display_ids by rememberUpdatedState(display_ids)
+    val latest_own_sent_ids by rememberUpdatedState(own_sent_ids)
+    val latest_item_keys by rememberUpdatedState(message_item_keys)
+    val latest_thread_revealed by rememberUpdatedState(thread_revealed)
+    val latest_tail_key by rememberUpdatedState(tail_key)
+    val latest_tail_is_own by rememberUpdatedState(tail_is_own)
+    LaunchedEffect(email_id, open_layout != null) {
         if (initial_scroll_done || open_layout == null) return@LaunchedEffect
+        val start_tail = tail_key
+        val replied = thread_replied_since_saved(start_tail, tail_is_own, followed_tail_key)
+        val restore_key = saved_anchor_key.takeIf { !replied }
+        val restore_offset = saved_anchor_offset
+        followed_tail_key = start_tail
         if (user_dragged) {
-            followed_tail_key = tail_key
             initial_scroll_done = true
             return@LaunchedEffect
         }
-        val anchor = thread_open_anchor_id(display_ids, own_sent_ids, email_id)
-        val target = initial_thread_scroll_index(
-            message_ids = display_ids,
-            opened_id = anchor,
-            header_item_count = 1,
-        )
-        followed_tail_key = tail_key
+        val pinned_key = if (replied) start_tail else restore_key
+        val pinned_offset = if (pinned_key != null && pinned_key == restore_key) restore_offset else 0
+        var frozen_id: String? = null
+        withTimeoutOrNull(thread_anchor_hold_ms) {
+            snapshotFlow {
+                val released = user_dragged ||
+                    anchor_released ||
+                    (searching && latest_thread_revealed) ||
+                    (latest_tail_is_own && latest_tail_key != start_tail)
+                val keys = latest_item_keys
+                val target_id: String?
+                val index: Int?
+                if (pinned_key != null) {
+                    target_id = pinned_key
+                    index = thread_item_index_for_key(keys, pinned_key, header_item_count = 1)
+                } else {
+                    val ids = latest_display_ids
+                    val id = frozen_id ?: thread_open_anchor_id(ids, latest_own_sent_ids, email_id)
+                    target_id = id
+                    index = initial_thread_scroll_index(ids, id, header_item_count = 1)
+                }
+                val item_key = when {
+                    index == null -> null
+                    index == 0 -> thread_header_item_key
+                    else -> keys.getOrNull(index - 1)
+                }
+                ThreadAnchorProbe(
+                    index = index,
+                    desired_offset = -pinned_offset,
+                    item_offset = list_state.layoutInfo.visibleItemsInfo.firstOrNull { it.key == item_key }?.offset,
+                    can_scroll_forward = list_state.canScrollForward,
+                    target_id = target_id,
+                    revealed = latest_thread_revealed,
+                    released = released,
+                )
+            }
+                .distinctUntilChanged()
+                .takeWhile { !it.released }
+                .collect { probe ->
+                    if (probe.revealed && frozen_id == null) frozen_id = probe.target_id
+                    val index = probe.index
+                    if (index != null &&
+                        thread_anchor_needs_scroll(probe.item_offset, probe.desired_offset, probe.can_scroll_forward)
+                    ) {
+                        list_state.scrollToItem(index, pinned_offset)
+                    }
+                    initial_scroll_done = true
+                }
+        }
         initial_scroll_done = true
-        if (target != null) list_state.scrollToItem(target)
+    }
+    LaunchedEffect(email_id, initial_scroll_done) {
+        if (!initial_scroll_done) return@LaunchedEffect
+        snapshotFlow {
+            list_state.layoutInfo.visibleItemsInfo.firstOrNull()?.let { (it.key as? String) to -it.offset }
+        }
+            .distinctUntilChanged()
+            .collect { anchor ->
+                val key = anchor?.first ?: return@collect
+                saved_anchor_key = key
+                saved_anchor_offset = anchor.second.coerceAtLeast(0)
+            }
     }
     LaunchedEffect(email_id, tail_key, tail_is_own, initial_scroll_done, user_dragged) {
         if (!initial_scroll_done) return@LaunchedEffect
@@ -1342,11 +1417,11 @@ fun MailDetailScreen(
             if (card_reduce_motion) list_state.scrollToItem(index) else list_state.animateScrollToItem(index)
         }
     }
-    val search_controller = remember_detail_search_controller(email_id)
 
     val pending_anchor = remember { mutableStateOf<Triple<String, Int, Int>?>(null) }
     val toggle_tick = remember { mutableStateOf(0) }
     fun anchor_toggle(id: String) {
+        anchor_released = true
         val info = list_state.layoutInfo.visibleItemsInfo.firstOrNull { it.key == id }
         pending_anchor.value = if (info != null) Triple(id, info.index, info.offset) else null
         toggle_tick.value += 1
@@ -1374,12 +1449,14 @@ fun MailDetailScreen(
         body_holder.on_quote_collapse = { _, shift_dp ->
             val shift_px = shift_dp * quote_density
             if (shift_px > 1f && !body_holder.is_released && list_state.canScrollBackward) {
+                anchor_released = true
                 list_state.dispatchRawDelta(-shift_px)
             }
         }
         body_holder.on_quote_anchor = anchor@{ delta_px ->
             if (body_holder.is_released || list_state.isScrollInProgress) return@anchor false
             if ((delta_px > 0f && list_state.canScrollForward) || (delta_px < 0f && list_state.canScrollBackward)) {
+                anchor_released = true
                 list_state.dispatchRawDelta(delta_px)
             }
             true
@@ -1657,7 +1734,10 @@ fun MailDetailScreen(
                         if (run_size != null) {
                             hidden_group_indicator(
                                 count = run_size,
-                                on_reveal = { hidden_group_revealed = true },
+                                on_reveal = {
+                                    anchor_released = true
+                                    hidden_group_revealed = true
+                                },
                             )
                         }
                         return@items
@@ -7144,6 +7224,11 @@ private object renderable_part_memo {
         store[key] = value
     }
 }
+
+private val expanded_ids_saver = Saver<MutableState<Set<String>?>, ArrayList<String>>(
+    save = { state -> state.value?.let { ArrayList(it) } },
+    restore = { mutableStateOf<Set<String>?>(it.toSet()) },
+)
 
 private object thread_revealed_cache {
     private const val max_entries = 64
