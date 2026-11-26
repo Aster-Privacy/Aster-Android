@@ -1194,6 +1194,7 @@ fun MailDetailScreen(
         if (thread_revealed) thread_revealed_cache.mark_revealed(email_id)
     }
     val detail_phase = remember_detail_skeleton_phase(email_id, !thread_revealed)
+    val detail_content_alpha_state = remember_detail_content_alpha(email_id, thread_revealed)
 
     fun show_toast(msg: String) {
         org.astermail.android.ui.common.app_toast.show(msg)
@@ -1263,6 +1264,7 @@ fun MailDetailScreen(
     }
 
     val list_state = rememberLazyListState()
+    warm_body_web_view(ready = thread_revealed) { list_state.isScrollInProgress }
     val tail_message = display_messages.lastOrNull()
     val tail_key = remember(display_ids, thread_send_aliases) {
         thread_item_keys(display_ids, thread_send_aliases).lastOrNull()
@@ -1478,6 +1480,14 @@ fun MailDetailScreen(
             val subject_count_format = stringResource(R.string.inbox_subject_with_count, subject_base, subject_thread_count)
             val subject_text = if (subject_thread_count > 1) subject_count_format else subject_base
             val subject_copy_value = translated_thread_subject?.ifBlank { null } ?: email?.subject?.ifBlank { null }
+            val skeleton_header = email?.let { seed ->
+                val single = expected_message_count <= 1
+                detail_skeleton_header(
+                    subject = subject_text,
+                    sender_name = if (single) displayed_sender_name(seed.display_sender_name, seed.sender_name) else null,
+                    sender_email = if (single) displayed_sender_email(seed.display_sender_email, seed.sender_email) else null,
+                )
+            }
             if (search_controller != null) detail_search_effects(
                 controller = search_controller,
                 messages = display_messages,
@@ -1535,7 +1545,7 @@ fun MailDetailScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .horizontal_scroll_indicator(pan_signal, bottom_inset = bottom_bar_height)
-                    .detail_content_handoff(email_id, thread_revealed)
+                    .detail_content_handoff { detail_content_alpha_state.value }
                     .clipToBounds()
                     .lazy_top_fade(list_state, 28.dp)
             ) {
@@ -1925,8 +1935,10 @@ fun MailDetailScreen(
                 bottom_inset = bottom_bar_height,
             )
             detail_skeleton_layer(
+                thread_key = email_id,
                 phase = detail_phase,
                 message_count = expected_message_count,
+                header = skeleton_header,
             )
             if (search_controller != null && email != null) {
                 detail_search_overlay(search_controller, bottom_bar_height)
