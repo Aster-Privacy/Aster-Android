@@ -33,8 +33,8 @@ private const val MAX_GAP_WORDS = 3
 private const val BLOCKING_DISTANCE = 24
 private const val TECHNICAL_MARKER_LIMIT = 2
 
-private const val BOUNDED_START = "(?<![\\p{L}\\p{N}])"
-private const val BOUNDED_END = "(?![\\p{L}\\p{N}])"
+private const val BOUNDED_START = "(?<!(?-i:[\\p{L}\\p{N}]))"
+private const val BOUNDED_END = "(?!(?-i:[\\p{L}\\p{N}]))"
 
 private val BOUNDARY_SCRIPTS = setOf(
     Character.UnicodeScript.LATIN,
@@ -46,58 +46,58 @@ private val BOUNDARY_SCRIPTS = setOf(
 )
 
 private val CODE_TOKEN = Regex("[A-Za-z0-9]+")
-private val WORD = Regex("[\\p{L}\\p{N}]+")
-private val SENTENCE_BREAK = Regex("(?U)[.!?。！？](?:\\s|$)")
+private val WORD = Regex("(?-i:[\\p{L}\\p{N}])+")
+private val SENTENCE_BREAK = Regex("[.!?。！？](?:\\s|$)")
 private val UNIT_SUFFIX = Regex("^[0-9]+(?:ST|ND|RD|TH|AM|PM|K|M|P|GB|MB|KB|TB|PX|MP|HZ|FPS)$")
-private val SENDER_BRACKET = Regex("(?U)<([^<>]+)>\\s*$")
+private val SENDER_BRACKET = Regex("<([^<>]+)>\\s*$")
 private val INTENT_PREFIX = Regex("^(?:PIN|OTP|CODE|TAN|KOD)$", RegexOption.IGNORE_CASE)
 private val HYPHEN_INTENT = Regex("^(?:pin|otp|code|tan|kod|код)$", RegexOption.IGNORE_CASE)
 
-private val REPLY_PREFIX = Regex("(?U)^\\s*(?:(?:re|fwd?|aw|wg|tr|rv|sv|vs|antw|odp|enc|r|ynt|ilt|ответ|отв|пересл|回复|答复|转发|回覆|轉寄)\\s*(?:\\[\\d+\\]|\\(\\d+\\))?\\s*[:：]\\s*)+", RegexOption.IGNORE_CASE)
+private val REPLY_PREFIX = Regex("^\\s*(?:(?:re|fwd?|aw|wg|tr|rv|sv|vs|antw|odp|enc|r|ynt|ilt|ответ|отв|пересл|回复|答复|转发|回覆|轉寄)\\s*(?:\\[\\d+\\]|\\(\\d+\\))?\\s*[:：]\\s*)+", RegexOption.IGNORE_CASE)
 
-private val AUTOMATED_LOCAL_PART = Regex("(?U)^(?:no[-_.]?reply|do[-_.]?not[-_.]?reply|notifications?|notify|alerts?|security|verify|verification|accounts?|auth|login|signin|otp|codes?|mailer(?:-daemon)?|system|automated|robot|bot)(?:[-_.+][a-z0-9._+-]*)?\$", RegexOption.IGNORE_CASE)
+private val AUTOMATED_LOCAL_PART = Regex("^(?:no[-_.]?reply|do[-_.]?not[-_.]?reply|notifications?|notify|alerts?|security|verify|verification|accounts?|auth|login|signin|otp|codes?|mailer(?:-daemon)?|system|automated|robot|bot)(?:[-_.+][a-z0-9._+-]*)?\$", RegexOption.IGNORE_CASE)
 
-private val PROMOTION_PATTERN = Regex("(?U)(?<![\\p{L}\\p{N}])(?:gift ?cards?|promo\\p{L}*|coupons?|discount\\p{L}*|vouchers?|rabatt\\p{L}*|gutschein\\p{L}*|descuento\\p{L}*|cup[oó]n\\p{L}*|réduction\\p{L}*|sconto|скидк\\p{L}*)|[0-9]{1,3} ?% off|优惠|折扣|割引", RegexOption.IGNORE_CASE)
+private val PROMOTION_PATTERN = Regex("(?<!(?-i:[\\p{L}\\p{N}]))(?:gift ?cards?|promo(?-i:\\p{L})*|coupons?|discount(?-i:\\p{L})*|vouchers?|rabatt(?-i:\\p{L})*|gutschein(?-i:\\p{L})*|descuento(?-i:\\p{L})*|cup[oó]n(?-i:\\p{L})*|réduction(?-i:\\p{L})*|sconto|скидк(?-i:\\p{L})*)|[0-9]{1,3} ?% off|优惠|折扣|割引", RegexOption.IGNORE_CASE)
 
 private val QUOTE_MARKERS = listOf(
-    Regex("(?U)(?:^|\\s)On\\s[^\\n]{1,200}?\\swrote:", RegexOption.IGNORE_CASE),
-    Regex("(?U)(?:^|\\s)(?:Am|Le|El|Il|Op|Em|W dniu)\\s[^\\n]{1,200}?\\s(?:schrieb|a écrit|escribió|ha scritto|schreef|napisał\\p{L}*|escreveu)\\s?\\p{L}*:", RegexOption.IGNORE_CASE),
-    Regex("(?U)-{2,}\\s*(?:original message|forwarded message|weitergeleitete nachricht|ursprüngliche nachricht|message transféré|message d'origine|mensaje reenviado|mensaje original|messaggio inoltrato|messaggio originale|doorgestuurd bericht|oorspronkelijk bericht|wiadomość przekazana|oryginalna wiadomość|mensagem encaminhada|mensagem original|пересылаемое сообщение|исходное сообщение)", RegexOption.IGNORE_CASE),
-    Regex("(?U)(?:^|\\n)[ \\t]*>"),
-    Regex("(?U)(?:^|\\n)\\s*(?:From|Von|De|Da|Van|Od|От|Kimden):[^\\n]*\\n\\s*(?:Sent|Date|Gesendet|Datum|Envoyé|Enviado|Fecha|Inviato|Data|Verzonden|Wysłano|Отправлено|Tarih):", RegexOption.IGNORE_CASE),
+    Regex("(?:^|\\s)On\\s[^\\n]{1,200}?\\swrote:", RegexOption.IGNORE_CASE),
+    Regex("(?:^|\\s)(?:Am|Le|El|Il|Op|Em|W dniu)\\s[^\\n]{1,200}?\\s(?:schrieb|a écrit|escribió|ha scritto|schreef|napisał(?-i:\\p{L})*|escreveu)\\s?(?-i:\\p{L})*:", RegexOption.IGNORE_CASE),
+    Regex("-{2,}\\s*(?:original message|forwarded message|weitergeleitete nachricht|ursprüngliche nachricht|message transféré|message d'origine|mensaje reenviado|mensaje original|messaggio inoltrato|messaggio originale|doorgestuurd bericht|oorspronkelijk bericht|wiadomość przekazana|oryginalna wiadomość|mensagem encaminhada|mensagem original|пересылаемое сообщение|исходное сообщение)", RegexOption.IGNORE_CASE),
+    Regex("(?:^|\\n)[ \\t]*>"),
+    Regex("(?:^|\\n)\\s*(?:From|Von|De|Da|Van|Od|От|Kimden):[^\\n]*\\n\\s*(?:Sent|Date|Gesendet|Datum|Envoyé|Enviado|Fecha|Inviato|Data|Verzonden|Wysłano|Отправлено|Tarih):", RegexOption.IGNORE_CASE),
 )
 
 private val STRIPPED_SEGMENTS = listOf(
-    Regex("(?U)```[\\s\\S]*?(?:```|\$)"),
-    Regex("(?U)`[^`\\n]*`"),
-    Regex("(?U)^(?: {4}|\\t).*\$", RegexOption.MULTILINE),
-    Regex("(?U)(?:https?:\\/\\/|www\\.)\\S+", RegexOption.IGNORE_CASE),
-    Regex("(?U)[\\p{L}\\p{N}_-]+(?:\\.[\\p{L}\\p{N}_-]+)+\\/\\S*"),
-    Regex("(?U)\\S+@\\S+"),
+    Regex("```[\\s\\S]*?(?:```|\$)"),
+    Regex("`[^`\\n]*`"),
+    Regex("^(?: {4}|\\t).*\$", RegexOption.MULTILINE),
+    Regex("(?:https?:\\/\\/|www\\.)\\S+", RegexOption.IGNORE_CASE),
+    Regex("(?-i:[\\p{L}\\p{N}_-])+(?:\\.(?-i:[\\p{L}\\p{N}_-])+)+\\/\\S*"),
+    Regex("\\S+@\\S+"),
 )
 
 private val TECHNICAL_MARKERS = listOf(
-    Regex("(?U)(?<![\\p{L}\\p{N}])(?=[0-9a-f]*[a-f])(?=[0-9a-f]*[0-9])[0-9a-f]{7,40}(?![\\p{L}\\p{N}])"),
-    Regex("(?U)[\\p{L}\\p{N}_/.-]+\\.(?:rs|ts|tsx|js|jsx|mjs|kt|kts|swift|py|go|java|rb|php|c|cc|cpp|h|hpp|cs|sql|sh|yml|yaml|toml|gradle)(?![\\p{L}\\p{N}])", RegexOption.IGNORE_CASE),
-    Regex("(?U)(?<![\\p{L}\\p{N}])v[0-9]+\\.[0-9]+(?:\\.[0-9]+)*(?![\\p{L}\\p{N}])", RegexOption.IGNORE_CASE),
-    Regex("(?U)(?<![\\p{L}\\p{N}])(?:commits?|branch|pull request|merge request|stack ?trace|regression|segfault|null pointer|exception|cve-[0-9]{4}-[0-9]+|ghsa-[\\p{L}\\p{N}-]+|line [0-9]+)(?![\\p{L}\\p{N}])", RegexOption.IGNORE_CASE),
+    Regex("(?<!(?-i:[\\p{L}\\p{N}]))(?=[0-9a-f]*[a-f])(?=[0-9a-f]*[0-9])[0-9a-f]{7,40}(?!(?-i:[\\p{L}\\p{N}]))"),
+    Regex("(?-i:[\\p{L}\\p{N}_/.-])+\\.(?:rs|ts|tsx|js|jsx|mjs|kt|kts|swift|py|go|java|rb|php|c|cc|cpp|h|hpp|cs|sql|sh|yml|yaml|toml|gradle)(?!(?-i:[\\p{L}\\p{N}]))", RegexOption.IGNORE_CASE),
+    Regex("(?<!(?-i:[\\p{L}\\p{N}]))v[0-9]+\\.[0-9]+(?:\\.[0-9]+)*(?!(?-i:[\\p{L}\\p{N}]))", RegexOption.IGNORE_CASE),
+    Regex("(?<!(?-i:[\\p{L}\\p{N}]))(?:commits?|branch|pull request|merge request|stack ?trace|regression|segfault|null pointer|exception|cve-[0-9]{4}-[0-9]+|ghsa-(?-i:[\\p{L}\\p{N}-])+|line [0-9]+)(?!(?-i:[\\p{L}\\p{N}]))", RegexOption.IGNORE_CASE),
 )
 
 private val BEFORE_REJECT = listOf(
-    Regex("(?U)[\$€£¥₹₽₩#+/\\\\@=_&?%~^*|]\$"),
-    Regex("(?U)[\$€£¥₹₽₩]\\s\$"),
-    Regex("(?U)[0-9][ \\-./:,]\$"),
-    Regex("(?U)\\)\\s?\$"),
-    Regex("(?U)(?:^|[^\\p{L}])(?:usd|eur|gbp|chf|jpy|inr|cad|aud|rs\\.?|r\\\$)\\s?\$", RegexOption.IGNORE_CASE),
+    Regex("[\$€£¥₹₽₩#+/\\\\@=_&?%~^*|]\$"),
+    Regex("[\$€£¥₹₽₩]\\s\$"),
+    Regex("[0-9][ \\-./:,]\$"),
+    Regex("\\)\\s?\$"),
+    Regex("(?:^|(?-i:[^\\p{L}]))(?:usd|eur|gbp|chf|jpy|inr|cad|aud|rs\\.?|r\\\$)\\s?\$", RegexOption.IGNORE_CASE),
 )
 
 private val AFTER_REJECT = listOf(
-    Regex("(?U)^[.,:/][\\p{L}\\p{N}]"),
-    Regex("(?U)^[ -][0-9]"),
-    Regex("(?U)^-[\\p{L}\\p{N}]"),
-    Regex("(?U)^[@%\$€£¥₹₽₩_=/&]"),
-    Regex("(?U)^\\s?(?:%|[\$€£¥₹₽₩]|[ap]\\.?m\\.?(?!\\p{L})|utc|gmt|cet|cest|est|edt|pst|pdt|mins?(?!\\p{L})|minutes|hours?|hrs?|secs?(?!\\p{L})|seconds|days?(?!\\p{L})|weeks?|months?|years?|[kmgt]b(?!\\p{L})|kg(?!\\p{L})|km(?!\\p{L})|px(?!\\p{L})|points?|coins?|credits?|users?|people|times|items?|messages|emails)(?!\\p{L})", RegexOption.IGNORE_CASE),
-    Regex("(?U)^\\s?(?:usd|eur|gbp|chf|jpy|inr|cad|aud|dollars?|euros?)(?!\\p{L})", RegexOption.IGNORE_CASE),
+    Regex("^[.,:/](?-i:[\\p{L}\\p{N}])"),
+    Regex("^[ -][0-9]"),
+    Regex("^-(?-i:[\\p{L}\\p{N}])"),
+    Regex("^[@%\$€£¥₹₽₩_=/&]"),
+    Regex("^\\s?(?:%|[\$€£¥₹₽₩]|[ap]\\.?m\\.?(?!(?-i:\\p{L}))|utc|gmt|cet|cest|est|edt|pst|pdt|mins?(?!(?-i:\\p{L}))|minutes|hours?|hrs?|secs?(?!(?-i:\\p{L}))|seconds|days?(?!(?-i:\\p{L}))|weeks?|months?|years?|[kmgt]b(?!(?-i:\\p{L}))|kg(?!(?-i:\\p{L}))|km(?!(?-i:\\p{L}))|px(?!(?-i:\\p{L}))|points?|coins?|credits?|users?|people|times|items?|messages|emails)(?!(?-i:\\p{L}))", RegexOption.IGNORE_CASE),
+    Regex("^\\s?(?:usd|eur|gbp|chf|jpy|inr|cad|aud|dollars?|euros?)(?!(?-i:\\p{L}))", RegexOption.IGNORE_CASE),
 )
 
 private val STRONG_BOUNDED = listOf(
@@ -105,7 +105,7 @@ private val STRONG_BOUNDED = listOf(
     "one[- ]?time\\s+(?:password|passcode|pin)",
     "passcodes?",
     "otp",
-    "your(?:\\s+[\\p{L}\\p{N}-]+){0,2}?\\s+(?:codes?|pin|passcode)",
+    "your(?:\\s+(?-i:[\\p{L}\\p{N}-])+){0,2}?\\s+(?:codes?|pin|passcode)",
     "(?:enter|use)\\s+(?:this|the\\s+following|the)\\s+code",
     "(?:best[äa]tigungs|verifizierungs|sicherheits|anmelde|einmal|zugangs|freigabe|login)code",
     "einmal(?:passwort|kennwort)",
@@ -120,11 +120,11 @@ private val STRONG_BOUNDED = listOf(
     "(?:je|jouw|uw)\\s+code",
     "kod\\s+(?:weryfikacyjny|bezpiecze[nń]stwa|potwierdzaj[aą]cy|logowania|jednorazowy|dost[eę]pu|sms)",
     "(?:tw[oó]j|pa[nń]ski)\\s+kod",
-    "(?:do[gğ]rulama|g[uü]venlik|giri[sş]|onay)\\s+kod\\p{L}*",
+    "(?:do[gğ]rulama|g[uü]venlik|giri[sş]|onay)\\s+kod(?-i:\\p{L})*",
     "kodunuz",
     "код\\s+(?:подтверждения|проверки|безопасности|доступа|для\\s+входа|верификации)",
     "(?:ваш|твой)\\s+код",
-    "одноразов\\p{L}*\\s+(?:код|пароль)",
+    "одноразов(?-i:\\p{L})*\\s+(?:код|пароль)",
     "(?:رمز|كود)\\s+(?:التحقق|التأكيد|الأمان|الدخول|التفعيل)",
     "(?:सत्यापन|ओटीपी)\\s*कोड",
     "ओटीपी",
@@ -156,25 +156,25 @@ private val STRONG_BARE = listOf(
 
 private val WEAK_BOUNDED = listOf(
     "codes?",
-    "v[eé]rif\\p{L}*",
+    "v[eé]rif(?-i:\\p{L})*",
     "sign(?:ing)?[- ]?in",
     "log(?:ging)?[- ]?in",
     "logon",
-    "auth\\p{L}*",
-    "confirm\\p{L}*",
+    "auth(?-i:\\p{L})*",
+    "confirm(?-i:\\p{L})*",
     "pin",
-    "kod\\p{L}*",
+    "kod(?-i:\\p{L})*",
     "c[oó]digo",
     "codice",
-    "код\\p{L}{0,3}",
-    "best[äa]tig\\p{L}*",
-    "anmeld\\p{L}*",
+    "код(?-i:\\p{L}){0,3}",
+    "best[äa]tig(?-i:\\p{L})*",
+    "anmeld(?-i:\\p{L})*",
     "connexion",
     "acceso",
     "accesso",
-    "weryfik\\p{L}*",
-    "do[gğ]rula\\p{L}*",
-    "подтвер\\p{L}*",
+    "weryfik(?-i:\\p{L})*",
+    "do[gğ]rula(?-i:\\p{L})*",
+    "подтвер(?-i:\\p{L})*",
 )
 
 private val WEAK_BARE = listOf(
@@ -358,7 +358,7 @@ private class code_link(val distance: Int, val words: Int)
 private fun bounded_pattern(words: List<String>, bare: List<String>): Regex {
     val parts = mutableListOf("$BOUNDED_START(?:${words.joinToString("|")})$BOUNDED_END")
     if (bare.isNotEmpty()) parts.add("(?:${bare.joinToString("|")})")
-    return Regex("(?U)" + parts.joinToString("|"), RegexOption.IGNORE_CASE)
+    return Regex(parts.joinToString("|"), RegexOption.IGNORE_CASE)
 }
 
 private fun find_spans(text: String, pattern: Regex): MutableList<code_span> =
