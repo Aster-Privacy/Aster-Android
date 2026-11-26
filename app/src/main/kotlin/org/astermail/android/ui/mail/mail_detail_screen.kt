@@ -9995,8 +9995,7 @@ private fun pending_reply_card(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(colors.bg_secondary)
+            .acrylic(colors, SquircleShape(14.dp), colors.bg_secondary)
             .padding(AsterSpacing.md),
     ) {
         if (recipients.isNotEmpty()) {
