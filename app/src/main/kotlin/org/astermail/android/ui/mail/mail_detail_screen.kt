@@ -311,10 +311,26 @@ private val EXTERNAL_RESOURCE_PATTERN = Regex(
 
 private val FONT_FACE_PATTERN = Regex("""@font-face""", RegexOption.IGNORE_CASE)
 
-private val LINK_STYLESHEET_PATTERN = Regex(
-    """<link\b[^>]*rel\s*=\s*["']stylesheet["'][^>]*>""",
-    RegexOption.IGNORE_CASE,
-)
+private val LINK_TAG_START = Regex("""<link\b""", RegexOption.IGNORE_CASE)
+
+private val STYLESHEET_REL_PATTERN = Regex("""rel\s*=\s*["']stylesheet["']""", RegexOption.IGNORE_CASE)
+
+internal fun markup_tags(html: String, start: Regex): Sequence<IntRange> = sequence {
+    var from = 0
+    while (from < html.length) {
+        val open = start.find(html, from) ?: break
+        val close = html.indexOf('>', open.range.last + 1)
+        if (close < 0) break
+        yield(open.range.first..close)
+        from = close + 1
+    }
+}
+
+internal fun stylesheet_link_tags(html: String): List<String> =
+    markup_tags(html, LINK_TAG_START)
+        .map { html.substring(it.first, it.last + 1) }
+        .filter { STYLESHEET_REL_PATTERN.containsMatchIn(it) }
+        .toList()
 
 internal enum class ExternalContentType { image, tracker, font, stylesheet }
 
@@ -336,7 +352,7 @@ internal data class ExternalContentCounts(
 private const val EXTERNAL_ITEM_LIST_CAP = 60
 
 private val HREF_URL_PATTERN = Regex("""(?<![-\w])href\s*=\s*["'](https?://[^"']+)["']""", RegexOption.IGNORE_CASE)
-private val FONT_URL_PATTERN = Regex("""url\s*\(\s*["']?(https?://[^"')]+)""", RegexOption.IGNORE_CASE)
+private val FONT_URL_PATTERN = Regex("""url\s*\(\s*["']?(https?://[^"')]{1,2048})""", RegexOption.IGNORE_CASE)
 
 private fun external_display_url(url: String): String {
     val trimmed = url.trim()
@@ -365,7 +381,8 @@ internal fun count_external_content(html: String, report: EmailHtmlSanitizer.Tra
         if (items.size < EXTERNAL_ITEM_LIST_CAP) items.add(ExternalContentItem(ExternalContentType.tracker, url))
     }
     val fonts = FONT_FACE_PATTERN.findAll(html).count()
-    val css = LINK_STYLESHEET_PATTERN.findAll(html).count()
+    val stylesheets = stylesheet_link_tags(html)
+    val css = stylesheets.size
     if (fonts > 0) {
         FONT_URL_PATTERN.findAll(html).take(EXTERNAL_ITEM_LIST_CAP).forEach { m ->
             if (items.size < EXTERNAL_ITEM_LIST_CAP) {
@@ -373,9 +390,9 @@ internal fun count_external_content(html: String, report: EmailHtmlSanitizer.Tra
             }
         }
     }
-    LINK_STYLESHEET_PATTERN.findAll(html).forEach { m ->
+    stylesheets.forEach { tag ->
         if (items.size < EXTERNAL_ITEM_LIST_CAP) {
-            val url = HREF_URL_PATTERN.find(m.value)?.groupValues?.get(1)
+            val url = HREF_URL_PATTERN.find(tag)?.groupValues?.get(1)
             if (!url.isNullOrBlank()) {
                 items.add(ExternalContentItem(ExternalContentType.stylesheet, url))
             }
@@ -404,7 +421,7 @@ private val PROXY_CSS_URL_PATTERN = Regex(
 )
 
 private val CID_SRC_PATTERN = Regex(
-    """(src\s*=\s*["'])cid:([^"']+)(["'])""",
+    """(src\s*=\s*["'])cid:([^"']{1,998})(["'])""",
     RegexOption.IGNORE_CASE,
 )
 
@@ -515,8 +532,7 @@ internal fun inline_cids_resolved(references: Set<String>, inline_images: Map<St
 
 internal fun resolve_inline_cids(html: String, inline_images: Map<String, String>): String {
     if (!html.contains("cid:", ignoreCase = true)) return html
-    val sized = INLINE_IMG_TAG_PATTERN.replace(html) { tag_match ->
-        val tag = tag_match.value
+    val sized = replace_markup_tags(html, INLINE_IMG_TAG_START) { tag ->
         var size: Pair<Int, Int>? = null
         val rewritten = CID_SRC_PATTERN.replace(tag) { match ->
             val reference = inline_reference_key(match.groupValues[2])
@@ -538,7 +554,19 @@ internal fun resolve_inline_cids(html: String, inline_images: Map<String, String
     }
 }
 
-private val INLINE_IMG_TAG_PATTERN = Regex("""<img\s[^>]*>""", RegexOption.IGNORE_CASE)
+private val INLINE_IMG_TAG_START = Regex("""<img\s""", RegexOption.IGNORE_CASE)
+
+internal fun replace_markup_tags(html: String, start: Regex, transform: (String) -> String): String {
+    val out = StringBuilder(html.length)
+    var cursor = 0
+    for (tag in markup_tags(html, start)) {
+        out.append(html, cursor, tag.first)
+        out.append(transform(html.substring(tag.first, tag.last + 1)))
+        cursor = tag.last + 1
+    }
+    out.append(html, cursor, html.length)
+    return out.toString()
+}
 
 private val IMG_WIDTH_ATTR = Regex("""\swidth\s*=\s*["']?\s*(\d+(?:\.\d+)?)\s*(?:px)?\s*["']?(?=[\s/>])""", RegexOption.IGNORE_CASE)
 
