@@ -2282,7 +2282,7 @@
     <string name="alias_default_domain_info_desc">New aliases start with this domain. You can pick a different domain for any individual alias.</string>
     <string name="alias_default_domain_platform">Aster domain</string>
     <string name="alias_default_domain_custom">Your custom domain</string>
-    <string name="alias_disabled_response">Disabled alias response</string>
+    <string name="alias_disabled_response">Response to blocked mail</string>
     <string name="alias_delete_behavior">Delete behavior</string>
     <string name="alias_always_expand">Always expand</string>
     <string name="alias_always_expand_subtitle">Show full alias settings panel by default</string>
@@ -2329,11 +2329,11 @@
     <string name="alias_sender_format_via">Via</string>
     <string name="alias_sender_format_at">At</string>
     <string name="alias_unsubscribe_subtitle">Disable alias when unsubscribed</string>
-    <string name="alias_disabled_response_info_title">Disabled Alias Response</string>
+    <string name="alias_disabled_response_info_title">Response to Blocked Mail</string>
     <string name="alias_disabled_response_info_desc">If you choose to ignore it, the sender isn\'t told anything. Mail from a blocked sender follows your block setting, such as moving to Spam, and mail to a disabled alias or address is dropped. If you choose to reject it, the mail is refused and the sender gets a notice that it wasn\'t delivered.</string>
     <string name="alias_disabled_response_subtitle">What happens when a blocked sender emails you, or someone emails a disabled alias or address</string>
-    <string name="alias_disabled_response_ignore">Ignore</string>
-    <string name="alias_disabled_response_reject">Reject</string>
+    <string name="alias_disabled_response_ignore">Silently ignore</string>
+    <string name="alias_disabled_response_reject">Reject (bounce)</string>
     <string name="alias_delete_behavior_info_title">Delete Action</string>
     <string name="alias_delete_behavior_info_desc">Controls whether deleted aliases go to trash first or are removed immediately.</string>
     <string name="alias_delete_behavior_subtitle">Move to trash or delete immediately</string>

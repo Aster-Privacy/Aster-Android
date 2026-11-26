@@ -2012,7 +2012,7 @@
     <string name="alias_default_domain_info_desc">नए एलियास इसी डोमेन से शुरू होते हैं। किसी एक एलियास के लिए आप दूसरा डोमेन चुन सकते हैं।</string>
     <string name="alias_default_domain_platform">Aster डोमेन</string>
     <string name="alias_default_domain_custom">आपका कस्टम डोमेन</string>
-    <string name="alias_disabled_response">बंद एलियास का जवाब</string>
+    <string name="alias_disabled_response">रोके गए मेल का जवाब</string>
     <string name="alias_delete_behavior">हटाने का व्यवहार</string>
     <string name="alias_always_expand">हमेशा खुला रखें</string>
     <string name="alias_always_expand_subtitle">एलियास सेटिंग का पूरा पैनल डिफ़ॉल्ट रूप से दिखाएं</string>
@@ -2056,11 +2056,11 @@
     <string name="alias_sender_format_via">Via</string>
     <string name="alias_sender_format_at">At</string>
     <string name="alias_unsubscribe_subtitle">सदस्यता छोड़ने पर एलियास बंद करें</string>
-    <string name="alias_disabled_response_info_title">बंद एलियास का जवाब</string>
+    <string name="alias_disabled_response_info_title">रोके गए मेल का जवाब</string>
     <string name="alias_disabled_response_info_desc">अगर आप अनदेखा करना चुनते हैं, तो प्रेषक को कुछ नहीं बताया जाता। ब्लॉक किए गए प्रेषक का मेल आपकी ब्लॉक सेटिंग के अनुसार चलता है, जैसे स्पैम में जाना, और बंद एलियास या पते पर आया मेल हटा दिया जाता है। अगर आप अस्वीकार करना चुनते हैं, तो मेल अस्वीकार कर दिया जाता है और प्रेषक को सूचना मिलती है कि वह डिलीवर नहीं हुआ।</string>
     <string name="alias_disabled_response_subtitle">जब कोई ब्लॉक किया गया प्रेषक आपको ईमेल करता है, या कोई बंद एलियास या पते पर ईमेल करता है, तब क्या होता है</string>
-    <string name="alias_disabled_response_ignore">अनदेखा करें</string>
-    <string name="alias_disabled_response_reject">अस्वीकार करें</string>
+    <string name="alias_disabled_response_ignore">चुपचाप अनदेखा करें</string>
+    <string name="alias_disabled_response_reject">अस्वीकार करें (वापस भेजें)</string>
     <string name="alias_delete_behavior_info_title">हटाने की कार्रवाई</string>
     <string name="alias_delete_behavior_info_desc">तय करता है कि हटाए गए एलियास पहले ट्रैश में जाएं या तुरंत मिटा दिए जाएं।</string>
     <string name="alias_delete_behavior_subtitle">ट्रैश में डालें या तुरंत हटाएं</string>

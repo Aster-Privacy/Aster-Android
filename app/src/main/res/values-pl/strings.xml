@@ -2113,7 +2113,7 @@
     <string name="alias_default_domain_info_desc">Nowe aliasy korzystają z tej domeny. Dla każdego aliasu możesz wybrać inną domenę.</string>
     <string name="alias_default_domain_platform">Domena Aster</string>
     <string name="alias_default_domain_custom">Twoja własna domena</string>
-    <string name="alias_disabled_response">Odpowiedź wyłączonego aliasu</string>
+    <string name="alias_disabled_response">Odpowiedź na zablokowaną pocztę</string>
     <string name="alias_delete_behavior">Zachowanie przy usuwaniu</string>
     <string name="alias_always_expand">Zawsze rozwijaj</string>
     <string name="alias_always_expand_subtitle">Domyślnie pokazuje pełny panel ustawień aliasu</string>
@@ -2154,11 +2154,11 @@
     <string name="alias_sender_format_via">Przez</string>
     <string name="alias_sender_format_at">W</string>
     <string name="alias_unsubscribe_subtitle">Wyłącz alias po wypisaniu się</string>
-    <string name="alias_disabled_response_info_title">Odpowiedź wyłączonego aliasu</string>
+    <string name="alias_disabled_response_info_title">Odpowiedź na zablokowaną pocztę</string>
     <string name="alias_disabled_response_info_desc">Jeśli wybierzesz ignorowanie, nadawca nie dostanie żadnej informacji. Poczta od zablokowanego nadawcy jest obsługiwana zgodnie z ustawieniem blokady, na przykład trafia do spamu, a poczta wysłana na wyłączony alias lub adres jest usuwana. Jeśli wybierzesz odrzucanie, poczta zostanie odrzucona, a nadawca otrzyma powiadomienie, że nie została dostarczona.</string>
     <string name="alias_disabled_response_subtitle">Co się dzieje, gdy pisze do Ciebie zablokowany nadawca lub gdy ktoś pisze na wyłączony alias albo adres</string>
-    <string name="alias_disabled_response_ignore">Zignoruj</string>
-    <string name="alias_disabled_response_reject">Odrzuć</string>
+    <string name="alias_disabled_response_ignore">Po cichu ignoruj</string>
+    <string name="alias_disabled_response_reject">Odrzuć (odbicie)</string>
     <string name="alias_delete_behavior_info_title">Sposób usuwania</string>
     <string name="alias_delete_behavior_info_desc">Określa, czy usunięte aliasy trafiają najpierw do kosza, czy znikają od razu.</string>
     <string name="alias_delete_behavior_subtitle">Przenieś do kosza albo usuń od razu</string>

@@ -2106,7 +2106,7 @@
     <string name="alias_default_domain_info_desc">Los alias nuevos empiezan con este dominio. Puedes elegir otro dominio para cualquier alias.</string>
     <string name="alias_default_domain_platform">Dominio de Aster</string>
     <string name="alias_default_domain_custom">Tu dominio personalizado</string>
-    <string name="alias_disabled_response">Respuesta del alias desactivado</string>
+    <string name="alias_disabled_response">Respuesta al correo bloqueado</string>
     <string name="alias_delete_behavior">Comportamiento al eliminar</string>
     <string name="alias_always_expand">Mostrar siempre desplegado</string>
     <string name="alias_always_expand_subtitle">Muestra por defecto el panel completo de ajustes del alias</string>
@@ -2147,11 +2147,11 @@
     <string name="alias_sender_format_via">Vía</string>
     <string name="alias_sender_format_at">En</string>
     <string name="alias_unsubscribe_subtitle">Desactivar el alias al darse de baja</string>
-    <string name="alias_disabled_response_info_title">Respuesta del alias desactivado</string>
+    <string name="alias_disabled_response_info_title">Respuesta al correo bloqueado</string>
     <string name="alias_disabled_response_info_desc">Si eliges ignorar, el remitente no recibe ningún aviso. El correo de un remitente bloqueado sigue tu ajuste de bloqueo, como moverse a Spam, y el correo enviado a un alias o una dirección desactivados se descarta. Si eliges rechazar, el correo se rechaza y el remitente recibe un aviso de que no se entregó.</string>
     <string name="alias_disabled_response_subtitle">Qué ocurre cuando un remitente bloqueado te escribe o alguien escribe a un alias o una dirección desactivados</string>
-    <string name="alias_disabled_response_ignore">Ignorar</string>
-    <string name="alias_disabled_response_reject">Rechazar</string>
+    <string name="alias_disabled_response_ignore">Ignorar en silencio</string>
+    <string name="alias_disabled_response_reject">Rechazar (rebote)</string>
     <string name="alias_delete_behavior_info_title">Acción al eliminar</string>
     <string name="alias_delete_behavior_info_desc">Controla si los alias eliminados pasan primero a la papelera o se borran de inmediato.</string>
     <string name="alias_delete_behavior_subtitle">Mover a la papelera o eliminar al instante</string>

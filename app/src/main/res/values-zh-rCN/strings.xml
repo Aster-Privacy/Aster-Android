@@ -2095,7 +2095,7 @@
     <string name="alias_default_domain_info_desc">新别名默认使用该域名。您也可以为单个别名选择其他域名。</string>
     <string name="alias_default_domain_platform">Aster 域名</string>
     <string name="alias_default_domain_custom">自定义域名</string>
-    <string name="alias_disabled_response">已停用别名的回应</string>
+    <string name="alias_disabled_response">对被屏蔽邮件的响应</string>
     <string name="alias_delete_behavior">删除行为</string>
     <string name="alias_always_expand">始终展开</string>
     <string name="alias_always_expand_subtitle">默认展开完整的别名设置面板</string>
@@ -2136,11 +2136,11 @@
     <string name="alias_sender_format_via">经由</string>
     <string name="alias_sender_format_at">来自</string>
     <string name="alias_unsubscribe_subtitle">退订后停用该别名</string>
-    <string name="alias_disabled_response_info_title">已停用别名的回应</string>
+    <string name="alias_disabled_response_info_title">对被屏蔽邮件的响应</string>
     <string name="alias_disabled_response_info_desc">如果选择忽略，发件人不会收到任何通知。已屏蔽发件人的邮件会按照您的屏蔽设置处理，例如移到垃圾邮件；发往已停用别名或地址的邮件会被丢弃。如果选择拒收，邮件会被拒绝，发件人会收到未送达的通知。</string>
     <string name="alias_disabled_response_subtitle">已屏蔽的发件人给您发邮件，或有人向已停用的别名或地址发邮件时的处理方式</string>
-    <string name="alias_disabled_response_ignore">忽略</string>
-    <string name="alias_disabled_response_reject">拒收</string>
+    <string name="alias_disabled_response_ignore">静默忽略</string>
+    <string name="alias_disabled_response_reject">拒收（退信）</string>
     <string name="alias_delete_behavior_info_title">删除方式</string>
     <string name="alias_delete_behavior_info_desc">决定删除的别名是先进回收站，还是立即移除。</string>
     <string name="alias_delete_behavior_subtitle">移到回收站或立即删除</string>

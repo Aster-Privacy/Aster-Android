@@ -2101,7 +2101,7 @@
     <string name="alias_default_domain_info_desc">Yeni takma adlar bu alan adıyla başlar. Her takma ad için farklı bir alan adı seçebilirsiniz.</string>
     <string name="alias_default_domain_platform">Aster alan adı</string>
     <string name="alias_default_domain_custom">Kendi alan adınız</string>
-    <string name="alias_disabled_response">Kapalı takma adın yanıtı</string>
+    <string name="alias_disabled_response">Engellenen postaya yanıt</string>
     <string name="alias_delete_behavior">Silme davranışı</string>
     <string name="alias_always_expand">Her zaman genişlet</string>
     <string name="alias_always_expand_subtitle">Takma ad ayarları panelini varsayılan olarak açık gösterir</string>
@@ -2142,11 +2142,11 @@
     <string name="alias_sender_format_via">Üzerinden</string>
     <string name="alias_sender_format_at">Şurada</string>
     <string name="alias_unsubscribe_subtitle">Abonelikten çıkınca takma adı kapat</string>
-    <string name="alias_disabled_response_info_title">Kapalı takma adın yanıtı</string>
+    <string name="alias_disabled_response_info_title">Engellenen postaya yanıt</string>
     <string name="alias_disabled_response_info_desc">Yok saymayı seçerseniz gönderene hiçbir şey bildirilmez. Engellenen bir göndericinin postası, Spam\'e taşınmak gibi engelleme ayarınıza göre işlenir ve devre dışı bir takma ada ya da adrese gelen posta silinir. Reddetmeyi seçerseniz posta reddedilir ve gönderen, postanın teslim edilmediğine dair bir bildirim alır.</string>
     <string name="alias_disabled_response_subtitle">Engellediğiniz bir gönderen size e-posta gönderdiğinde veya biri devre dışı bir takma ada ya da adrese yazdığında ne olacağı</string>
-    <string name="alias_disabled_response_ignore">Yok say</string>
-    <string name="alias_disabled_response_reject">Geri çevir</string>
+    <string name="alias_disabled_response_ignore">Sessizce yok say</string>
+    <string name="alias_disabled_response_reject">Reddet (geri döndür)</string>
     <string name="alias_delete_behavior_info_title">Silme davranışı</string>
     <string name="alias_delete_behavior_info_desc">Silinen takma adların önce çöp kutusuna mı gideceğini yoksa hemen mi kaldırılacağını belirler.</string>
     <string name="alias_delete_behavior_subtitle">Çöp kutusuna taşı ya da hemen sil</string>

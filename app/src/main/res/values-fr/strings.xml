@@ -1544,7 +1544,7 @@
     <string name="alias_default_domain_info_desc">Les nouveaux alias utilisent ce domaine. Vous pouvez choisir un autre domaine pour chaque alias.</string>
     <string name="alias_default_domain_platform">Domaine Aster</string>
     <string name="alias_default_domain_custom">Votre domaine personnalisé</string>
-    <string name="alias_disabled_response">Réponse de l\'alias désactivé</string>
+    <string name="alias_disabled_response">Réponse aux e-mails bloqués</string>
     <string name="alias_delete_behavior">Comportement à la suppression</string>
     <string name="alias_always_expand">Toujours développer</string>
     <string name="alias_always_expand_subtitle">Afficher le panneau complet des paramètres d\'alias par défaut</string>
@@ -1587,11 +1587,11 @@
     <string name="alias_sender_format_via">Via</string>
     <string name="alias_sender_format_at">À</string>
     <string name="alias_unsubscribe_subtitle">Désactiver l\'alias lors du désabonnement</string>
-    <string name="alias_disabled_response_info_title">Réponse de l\'alias désactivé</string>
+    <string name="alias_disabled_response_info_title">Réponse aux e-mails bloqués</string>
     <string name="alias_disabled_response_info_desc">Si vous choisissez d\'ignorer, l\'expéditeur n\'est informé de rien. Les e-mails d\'un expéditeur bloqué suivent votre réglage de blocage, comme le déplacement vers le dossier Spam, et les e-mails envoyés à un alias ou une adresse désactivés sont supprimés. Si vous choisissez de rejeter, l\'e-mail est refusé et l\'expéditeur reçoit un avis indiquant qu\'il n\'a pas été distribué.</string>
     <string name="alias_disabled_response_subtitle">Ce qui se passe lorsqu\'un expéditeur bloqué vous écrit, ou lorsque quelqu\'un écrit à un alias ou une adresse désactivés</string>
-    <string name="alias_disabled_response_ignore">Ignorer</string>
-    <string name="alias_disabled_response_reject">Rejeter</string>
+    <string name="alias_disabled_response_ignore">Ignorer silencieusement</string>
+    <string name="alias_disabled_response_reject">Rejeter (renvoyer)</string>
     <string name="alias_delete_behavior_info_title">Action à la suppression</string>
     <string name="alias_delete_behavior_info_desc">Contrôle si les alias supprimés vont d\'abord dans la corbeille ou sont retirés immédiatement.</string>
     <string name="alias_delete_behavior_subtitle">Déplacer vers la corbeille ou supprimer immédiatement</string>
