@@ -2147,8 +2147,8 @@
     <string name="alias_sender_format_at">Em</string>
     <string name="alias_unsubscribe_subtitle">Desativar o alias ao cancelar a subscrição</string>
     <string name="alias_disabled_response_info_title">Resposta do alias desativado</string>
-    <string name="alias_disabled_response_info_desc">Escolha o que acontece quando alguém envia um e-mail para um alias que desativou.</string>
-    <string name="alias_disabled_response_subtitle">O que o remetente vê quando envia um e-mail para um alias desativado</string>
+    <string name="alias_disabled_response_info_desc">Se escolher ignorar, o remetente não é avisado. O e-mail de um remetente bloqueado segue a sua definição de bloqueio, como ser movido para Spam, e o e-mail enviado para um alias ou endereço desativado é descartado. Se escolher rejeitar, o e-mail é recusado e o remetente recebe um aviso de que não foi entregue.</string>
+    <string name="alias_disabled_response_subtitle">O que acontece quando um remetente bloqueado lhe envia um e-mail ou quando alguém escreve para um alias ou endereço desativado</string>
     <string name="alias_disabled_response_ignore">Ignorar</string>
     <string name="alias_disabled_response_reject">Rejeitar</string>
     <string name="alias_delete_behavior_info_title">Ação ao eliminar</string>

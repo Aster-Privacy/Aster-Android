@@ -2147,8 +2147,8 @@
     <string name="alias_sender_format_at">Presso</string>
     <string name="alias_unsubscribe_subtitle">Disattiva l\'alias quando ti disiscrivi</string>
     <string name="alias_disabled_response_info_title">Risposta dell\'alias disattivato</string>
-    <string name="alias_disabled_response_info_desc">Scegli cosa succede quando qualcuno scrive a un alias che hai disattivato.</string>
-    <string name="alias_disabled_response_subtitle">Cosa vede chi scrive a un alias disattivato</string>
+    <string name="alias_disabled_response_info_desc">Se scegli di ignorare, il mittente non viene avvisato. La posta di un mittente bloccato segue la tua impostazione di blocco, come lo spostamento in Spam, e la posta inviata a un alias o a un indirizzo disattivato viene scartata. Se scegli di rifiutare, la posta viene respinta e il mittente riceve un avviso di mancata consegna.</string>
+    <string name="alias_disabled_response_subtitle">Cosa succede quando un mittente bloccato ti scrive o quando qualcuno scrive a un alias o a un indirizzo disattivato</string>
     <string name="alias_disabled_response_ignore">Ignora</string>
     <string name="alias_disabled_response_reject">Rifiuta</string>
     <string name="alias_delete_behavior_info_title">Azione di eliminazione</string>

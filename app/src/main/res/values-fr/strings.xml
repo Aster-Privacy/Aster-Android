@@ -1588,8 +1588,8 @@
     <string name="alias_sender_format_at">À</string>
     <string name="alias_unsubscribe_subtitle">Désactiver l\'alias lors du désabonnement</string>
     <string name="alias_disabled_response_info_title">Réponse de l\'alias désactivé</string>
-    <string name="alias_disabled_response_info_desc">Choisissez ce qui se passe quand quelqu\'un envoie un e-mail à un alias désactivé.</string>
-    <string name="alias_disabled_response_subtitle">Ce que voit l\'expéditeur en écrivant à un alias désactivé</string>
+    <string name="alias_disabled_response_info_desc">Si vous choisissez d\'ignorer, l\'expéditeur n\'est informé de rien. Les e-mails d\'un expéditeur bloqué suivent votre réglage de blocage, comme le déplacement vers le dossier Spam, et les e-mails envoyés à un alias ou une adresse désactivés sont supprimés. Si vous choisissez de rejeter, l\'e-mail est refusé et l\'expéditeur reçoit un avis indiquant qu\'il n\'a pas été distribué.</string>
+    <string name="alias_disabled_response_subtitle">Ce qui se passe lorsqu\'un expéditeur bloqué vous écrit, ou lorsque quelqu\'un écrit à un alias ou une adresse désactivés</string>
     <string name="alias_disabled_response_ignore">Ignorer</string>
     <string name="alias_disabled_response_reject">Rejeter</string>
     <string name="alias_delete_behavior_info_title">Action à la suppression</string>
