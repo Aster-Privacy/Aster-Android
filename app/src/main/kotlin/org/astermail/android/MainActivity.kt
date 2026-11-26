@@ -254,6 +254,7 @@ class MainActivity :
     override fun onCreate(saved_instance_state: Bundle?) {
         super.onCreate(saved_instance_state)
         enforce_secure_flag()
+        runCatching { org.astermail.android.ui.mail.web_view_support.warm_in_background(applicationContext) }
         LockdownStore.register_listener(applicationContext, lockdown_listener)
         lifecycleScope.launch {
             app_lock_store.config_version.collect { enforce_secure_flag() }

@@ -783,13 +783,7 @@ fun MailDetailScreen(
     }
 
     val thread_attachments = thread_state.attachments
-    val api_messages = remember(thread_state.messages, thread_attachments) {
-        thread_state.messages.map { msg ->
-            val base = thread_message_to_mock(msg)
-            val atts = thread_attachments[msg.id]
-            if (!atts.isNullOrEmpty()) thread_message_with_attachments(base, atts) else base
-        }
-    }
+    val api_messages = mapped_thread_messages_state(thread_state.messages, thread_attachments)
     val api_item = thread_state.item?.takeIf { thread_matches_email }
     val all_thread_attachments = remember(api_messages) {
         api_messages.flatMap { it.attachments }
@@ -1072,15 +1066,14 @@ fun MailDetailScreen(
         messages.firstOrNull { it.id == email_id }?.id ?: messages.lastOrNull()?.id
     }
     val optimistic_thread_messages by mail_vm.thread_optimistic_messages.collectAsStateWithLifecycle()
+    val optimistic_mapped_messages = mapped_thread_messages_state(optimistic_thread_messages, emptyMap())
     val thread_send_aliases by mail_vm.thread_send_aliases.collectAsStateWithLifecycle()
-    val display_messages = remember(messages, optimistic_thread_messages, thread_matches_email, detail_grouping) {
-        if (!detail_grouping || !thread_matches_email || optimistic_thread_messages.isEmpty()) {
+    val display_messages = remember(messages, optimistic_mapped_messages, thread_matches_email, detail_grouping) {
+        if (!detail_grouping || !thread_matches_email || optimistic_mapped_messages.isEmpty()) {
             messages
         } else {
             val known = messages.mapTo(HashSet()) { it.id }
-            messages + optimistic_thread_messages
-                .filter { it.id !in known }
-                .map { thread_message_to_mock(it) }
+            messages + optimistic_mapped_messages.filter { it.id !in known }
         }
     }
     val display_ids = remember(display_messages) { display_messages.map { it.id } }
@@ -3885,9 +3878,11 @@ internal fun expanded_message(
             value = result
         }
         val html_part = html_part_state.value
-        val text_part_lazy = remember(msg.body_html, msg.body) {
+        val text_part_lazy = remember(msg.body_html, msg.body, msg.body_plain_fallback) {
             lazy(LazyThreadSafetyMode.NONE) {
-                msg.body.ifBlank { org.astermail.android.mail.html_to_plain_text(msg.body_html.orEmpty()) }
+                msg.body.ifBlank {
+                    msg.body_plain_fallback ?: org.astermail.android.mail.html_to_plain_text(msg.body_html.orEmpty())
+                }
             }
         }
         val text_part by text_part_lazy
@@ -6894,6 +6889,8 @@ internal object web_view_support {
     @Volatile
     private var known_available = false
 
+    private val warm_started = java.util.concurrent.atomic.AtomicBoolean(false)
+
     fun is_available(ctx: android.content.Context): Boolean {
         if (known_available) return true
         val available = runCatching {
@@ -6901,6 +6898,15 @@ internal object web_view_support {
         }.isSuccess
         if (available) known_available = true
         return available
+    }
+
+    fun warm_in_background(ctx: android.content.Context) {
+        if (known_available || !warm_started.compareAndSet(false, true)) return
+        val app = ctx.applicationContext
+        Thread {
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND)
+            runCatching { is_available(app) }
+        }.apply { name = "aster-webview-warm" }.start()
     }
 }
 
@@ -7140,6 +7146,25 @@ internal fun configure_mail_body_web_view(
     web.isHorizontalScrollBarEnabled = false
     web.overScrollMode = android.view.View.OVER_SCROLL_IF_CONTENT_SCROLLS
     web.isNestedScrollingEnabled = false
+}
+
+private object body_estimate_memo {
+    private const val max_entries = 128
+    private val store = object : java.util.LinkedHashMap<Long, Float>(max_entries, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, Float>?): Boolean = size > max_entries
+    }
+    @Synchronized fun get(key: Long): Float? = store[key]
+    @Synchronized fun put(key: Long, value: Float) { store[key] = value }
+}
+
+private const val WHITE_PAGE_SCAN_CHARS = 1024
+
+internal fun built_html_wants_white_page(doc: String?): Boolean {
+    if (doc == null) return false
+    val window = if (doc.length > WHITE_PAGE_SCAN_CHARS) doc.substring(0, WHITE_PAGE_SCAN_CHARS) else doc
+    val head_at = window.indexOf("<head")
+    val opening = if (head_at >= 0) window.substring(0, head_at) else window
+    return opening.contains("data-white=\"1\"")
 }
 
 private object body_height_cache {
@@ -7869,10 +7894,20 @@ internal fun email_html_view(
         onDispose { on_subject_translated_ref[0]?.invoke(null) }
     }
 
-    val inline_sig = remember(inline_images) { inline_images.keys.sorted().joinToString(",").hashCode() }
-    val inline_refs = remember(html) { inline_cid_references(html) }
-    val inline_complete = remember(inline_refs, inline_images) { inline_cids_resolved(inline_refs, inline_images) }
-    var inline_wait_over by remember(html) { mutableStateOf(inline_refs.isEmpty()) }
+    val inline_sig = remember(inline_images) {
+        if (inline_images.isEmpty()) 0 else inline_images.keys.sorted().joinToString(",").hashCode()
+    }
+    val inline_refs_quick = remember(html) { if (!html.contains("cid:", ignoreCase = true)) emptySet<String>() else null }
+    val inline_refs_state = remember(html) { mutableStateOf(inline_refs_quick) }
+    LaunchedEffect(html) {
+        if (inline_refs_state.value != null) return@LaunchedEffect
+        inline_refs_state.value = withContext(Dispatchers.Default) { inline_cid_references(html) }
+    }
+    val inline_refs = inline_refs_state.value
+    val inline_complete = remember(inline_refs, inline_images) {
+        inline_refs != null && inline_cids_resolved(inline_refs, inline_images)
+    }
+    var inline_wait_over by remember(html) { mutableStateOf(inline_refs_quick?.isEmpty() == true) }
     LaunchedEffect(html) {
         if (inline_wait_over) return@LaunchedEffect
         delay(INLINE_IMAGE_WAIT_MS)
@@ -7890,28 +7925,43 @@ internal fun email_html_view(
             force_dark = force_dark_emails,
         )
     }
-    val estimated_height = remember(html_hash, screen_width_dp) {
-        if (html.isEmpty()) placeholder_body_height else estimated_body_height_dp(html, screen_width_dp).dp
+    val estimate_key = remember(html_hash, screen_width_dp) { html_hash.toLong() * 31L + screen_width_dp.toLong() }
+    val estimated_height_known = remember(estimate_key) {
+        if (html.isEmpty()) placeholder_body_height.value else body_estimate_memo.get(estimate_key)
     }
     val body_holder = local_body_view_holder.current
     val measure = remember(message_key, body_holder) {
         message_key?.let { key -> body_holder?.measure_for(key) } ?: body_measure()
     }
+    val reserve_awaits_estimate = remember(measure) { booleanArrayOf(false) }
     remember(measure, base_height_key) {
         if (measure.height_key != base_height_key) {
             val previous_dp = androidx.compose.runtime.snapshots.Snapshot.withoutReadObservation {
                 measure.view_dp.takeIf { it >= 1f } ?: measure.reserve_dp.takeIf { it > 1f }
             }
+            val cached_dp = body_height_cache.get(base_height_key)
+            reserve_awaits_estimate[0] = (cached_dp == null || cached_dp < 1f) && previous_dp == null && estimated_height_known == null
             measure.begin_key(
                 base_height_key,
                 seed_body_height(
-                    body_height_cache.get(base_height_key),
-                    previous_dp ?: estimated_height.value,
+                    cached_dp,
+                    previous_dp ?: estimated_height_known ?: placeholder_body_height.value,
                 ),
                 android.os.SystemClock.uptimeMillis(),
             )
         }
         base_height_key
+    }
+    LaunchedEffect(measure, base_height_key, estimate_key) {
+        if (html.isEmpty() || estimated_height_known != null) return@LaunchedEffect
+        val html_now = html
+        val width_now = screen_width_dp
+        val estimate_dp = withContext(Dispatchers.Default) { estimated_body_height_dp(html_now, width_now).toFloat() }
+        body_estimate_memo.put(estimate_key, estimate_dp)
+        if (reserve_awaits_estimate[0] && measure.height_key == base_height_key && !measure.measured && !measure.view_is_known_height) {
+            measure.reserve_dp = estimate_dp.coerceAtLeast(1f)
+        }
+        reserve_awaits_estimate[0] = false
     }
     val alive = remember { booleanArrayOf(true) }
     DisposableEffect(Unit) {
@@ -7956,7 +8006,7 @@ internal fun email_html_view(
     allow_external_ref[0] = allow_external
     val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { ((((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong()) * 31L + sanitize_options.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L) }
     var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { mutableStateOf<String?>(if (html.isEmpty()) null else html_cache.get(cache_key)) }
-    val wants_white_page = remember(prebuilt_html) { prebuilt_html?.contains("data-white=\"1\"") == true }
+    val wants_white_page = remember(prebuilt_html) { built_html_wants_white_page(prebuilt_html) }
 
     val search_session = if (search_key != null) org.astermail.android.ui.search.local_search_highlight.current else null
     val search_terms = search_session?.terms?.body.orEmpty()
