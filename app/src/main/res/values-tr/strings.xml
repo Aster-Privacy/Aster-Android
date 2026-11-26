@@ -3796,4 +3796,23 @@
     <string name="pending_send_failed">Bu ileti gönderilemedi.</string>
     <string name="pending_send_waiting">Bağlantı bekleniyor. Tekrar çevrimiçi olduğunuzda bu ileti gönderilecek.</string>
     <string name="thread_offline_saved_copy">Çevrimdışısınız. Bu, bu cihazda kayıtlı kopyadır.</string>
+    <string name="signature_font_family">Yazı tipi</string>
+    <string name="signature_font_family_default">Varsayılan yazı tipi</string>
+    <string name="signature_font_family_monospace">Eş aralıklı</string>
+    <string name="table_insert">Tablo ekle</string>
+    <string name="table_options">Tablo seçenekleri</string>
+    <string name="table_rows">Satırlar</string>
+    <string name="table_columns">Sütunlar</string>
+    <string name="table_show_borders">Kenarlıkları göster</string>
+    <string name="table_add_row">Satır ekle</string>
+    <string name="table_remove_row">Satırı kaldır</string>
+    <string name="table_add_column">Sütun ekle</string>
+    <string name="table_remove_column">Sütunu kaldır</string>
+    <string name="table_insert_row_above">Üste satır ekle</string>
+    <string name="table_insert_row_below">Alta satır ekle</string>
+    <string name="table_insert_column_before">Önüne sütun ekle</string>
+    <string name="table_insert_column_after">Arkasına sütun ekle</string>
+    <string name="table_delete_row">Satırı sil</string>
+    <string name="table_delete_column">Sütunu sil</string>
+    <string name="table_delete">Tabloyu sil</string>
 </resources>

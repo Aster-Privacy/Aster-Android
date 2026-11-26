@@ -3688,4 +3688,23 @@
     <string name="pending_send_failed">यह संदेश भेजा नहीं जा सका.</string>
     <string name="pending_send_waiting">कनेक्शन की प्रतीक्षा की जा रही है. आपके वापस ऑनलाइन होते ही यह संदेश भेज दिया जाएगा.</string>
     <string name="thread_offline_saved_copy">आप ऑफ़लाइन हैं। यह इस डिवाइस पर सहेजी गई कॉपी है।</string>
+    <string name="signature_font_family">फ़ॉन्ट</string>
+    <string name="signature_font_family_default">डिफ़ॉल्ट फ़ॉन्ट</string>
+    <string name="signature_font_family_monospace">मोनोस्पेस</string>
+    <string name="table_insert">तालिका डालें</string>
+    <string name="table_options">तालिका विकल्प</string>
+    <string name="table_rows">पंक्तियां</string>
+    <string name="table_columns">कॉलम</string>
+    <string name="table_show_borders">बॉर्डर दिखाएं</string>
+    <string name="table_add_row">पंक्ति जोड़ें</string>
+    <string name="table_remove_row">पंक्ति हटाएं</string>
+    <string name="table_add_column">कॉलम जोड़ें</string>
+    <string name="table_remove_column">कॉलम हटाएं</string>
+    <string name="table_insert_row_above">ऊपर पंक्ति डालें</string>
+    <string name="table_insert_row_below">नीचे पंक्ति डालें</string>
+    <string name="table_insert_column_before">पहले कॉलम डालें</string>
+    <string name="table_insert_column_after">बाद में कॉलम डालें</string>
+    <string name="table_delete_row">पंक्ति हटाएं</string>
+    <string name="table_delete_column">कॉलम हटाएं</string>
+    <string name="table_delete">तालिका हटाएं</string>
 </resources>

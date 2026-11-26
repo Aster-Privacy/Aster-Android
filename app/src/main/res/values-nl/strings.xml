@@ -3796,4 +3796,23 @@
     <string name="pending_send_failed">Dit bericht kan niet worden verstuurd.</string>
     <string name="pending_send_waiting">Wachten op verbinding. Dit bericht wordt verstuurd zodra je weer online bent.</string>
     <string name="thread_offline_saved_copy">Je bent offline. Dit is de kopie die op dit apparaat is opgeslagen.</string>
+    <string name="signature_font_family">Lettertype</string>
+    <string name="signature_font_family_default">Standaardlettertype</string>
+    <string name="signature_font_family_monospace">Monospace</string>
+    <string name="table_insert">Tabel invoegen</string>
+    <string name="table_options">Tabelopties</string>
+    <string name="table_rows">Rijen</string>
+    <string name="table_columns">Kolommen</string>
+    <string name="table_show_borders">Randen tonen</string>
+    <string name="table_add_row">Rij toevoegen</string>
+    <string name="table_remove_row">Rij verwijderen</string>
+    <string name="table_add_column">Kolom toevoegen</string>
+    <string name="table_remove_column">Kolom verwijderen</string>
+    <string name="table_insert_row_above">Rij erboven invoegen</string>
+    <string name="table_insert_row_below">Rij eronder invoegen</string>
+    <string name="table_insert_column_before">Kolom ervoor invoegen</string>
+    <string name="table_insert_column_after">Kolom erna invoegen</string>
+    <string name="table_delete_row">Rij verwijderen</string>
+    <string name="table_delete_column">Kolom verwijderen</string>
+    <string name="table_delete">Tabel verwijderen</string>
 </resources>

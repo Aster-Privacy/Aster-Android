@@ -3864,4 +3864,23 @@
     <string name="pending_send_failed">Не удалось отправить это сообщение.</string>
     <string name="pending_send_waiting">Ожидание подключения. Сообщение будет отправлено, когда вы снова будете в сети.</string>
     <string name="thread_offline_saved_copy">Вы не в сети. Это копия, сохранённая на этом устройстве.</string>
+    <string name="signature_font_family">Шрифт</string>
+    <string name="signature_font_family_default">Шрифт по умолчанию</string>
+    <string name="signature_font_family_monospace">Моноширинный</string>
+    <string name="table_insert">Вставить таблицу</string>
+    <string name="table_options">Параметры таблицы</string>
+    <string name="table_rows">Строки</string>
+    <string name="table_columns">Столбцы</string>
+    <string name="table_show_borders">Показывать границы</string>
+    <string name="table_add_row">Добавить строку</string>
+    <string name="table_remove_row">Удалить строку</string>
+    <string name="table_add_column">Добавить столбец</string>
+    <string name="table_remove_column">Удалить столбец</string>
+    <string name="table_insert_row_above">Вставить строку выше</string>
+    <string name="table_insert_row_below">Вставить строку ниже</string>
+    <string name="table_insert_column_before">Вставить столбец перед</string>
+    <string name="table_insert_column_after">Вставить столбец после</string>
+    <string name="table_delete_row">Удалить строку</string>
+    <string name="table_delete_column">Удалить столбец</string>
+    <string name="table_delete">Удалить таблицу</string>
 </resources>

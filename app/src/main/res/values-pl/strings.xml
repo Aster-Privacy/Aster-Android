@@ -3864,4 +3864,23 @@
     <string name="pending_send_failed">Nie udało się wysłać tej wiadomości.</string>
     <string name="pending_send_waiting">Oczekiwanie na połączenie. Ta wiadomość zostanie wysłana, gdy wrócisz do trybu online.</string>
     <string name="thread_offline_saved_copy">Jesteś offline. To jest kopia zapisana na tym urządzeniu.</string>
+    <string name="signature_font_family">Czcionka</string>
+    <string name="signature_font_family_default">Domyślna czcionka</string>
+    <string name="signature_font_family_monospace">Stała szerokość</string>
+    <string name="table_insert">Wstaw tabelę</string>
+    <string name="table_options">Opcje tabeli</string>
+    <string name="table_rows">Wiersze</string>
+    <string name="table_columns">Kolumny</string>
+    <string name="table_show_borders">Pokaż obramowanie</string>
+    <string name="table_add_row">Dodaj wiersz</string>
+    <string name="table_remove_row">Usuń wiersz</string>
+    <string name="table_add_column">Dodaj kolumnę</string>
+    <string name="table_remove_column">Usuń kolumnę</string>
+    <string name="table_insert_row_above">Wstaw wiersz powyżej</string>
+    <string name="table_insert_row_below">Wstaw wiersz poniżej</string>
+    <string name="table_insert_column_before">Wstaw kolumnę przed</string>
+    <string name="table_insert_column_after">Wstaw kolumnę po</string>
+    <string name="table_delete_row">Usuń wiersz</string>
+    <string name="table_delete_column">Usuń kolumnę</string>
+    <string name="table_delete">Usuń tabelę</string>
 </resources>

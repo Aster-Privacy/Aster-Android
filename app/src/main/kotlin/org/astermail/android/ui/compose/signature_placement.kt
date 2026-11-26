@@ -78,6 +78,13 @@ fun plain_lines_html(text: String): String =
 fun plain_signature_html(signature: String): String =
     signature.split("\n").joinToString("<br>") { escape_body_text(it) }
 
+fun preserve_plain_spaces(escaped_line: String): String =
+    escaped_line.replace("\t", "    ").replace(Regex("^ "), "&nbsp;").replace("  ", " &nbsp;")
+
+fun plain_signature_display_html(signature: String): String =
+    signature.replace("\r\n", "\n").split("\n")
+        .joinToString("<br>") { preserve_plain_spaces(escape_body_text(it)) }
+
 fun signature_div_html(signature_id: String?, inner_html: String): String {
     val id_attr = signature_id?.takeIf { it.isNotBlank() }
         ?.let { " data-aster-signature-id=\"" + escape_body_text(it) + "\"" }
@@ -183,7 +190,7 @@ fun assemble_body_with_signature(
 ): String {
     val split = split_body_before_signature(body, plain_signature, is_rich)
     val signature_div = when {
-        split != null -> signature_div_html(signature_id, plain_signature_html(plain_signature))
+        split != null -> signature_div_html(signature_id, plain_signature_display_html(plain_signature))
         html_signature.isNotBlank() -> signature_div_html(signature_id, html_signature)
         else -> {
             val core = if (is_rich) body else body.trimEnd('\n', ' ')
