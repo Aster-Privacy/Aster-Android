@@ -1921,6 +1921,8 @@
     <string name="publish_to_wkd_sub">Publica la clave de tu dirección principal en el Web Key Directory. Los alias y las direcciones de dominio propio no se publican.</string>
     <string name="publish_to_keyservers">Publicar en servidores de claves</string>
     <string name="publish_to_keyservers_sub">Publicar tu clave en servidores de claves públicos</string>
+    <string name="alias_pgp_title">Usar PGP con alias</string>
+    <string name="alias_pgp_sub">Si desactivas esta opción, el correo que envíes desde un alias no incluirá ninguna firma PGP ni datos de clave que lo vinculen con tu cuenta.</string>
     <string name="keyserver_publish_failed">Tu clave pública no se publicó en el servidor de claves. Otro intento debería resolverlo.</string>
     <string name="public_key_copied">Clave pública copiada</string>
     <string name="created_at_format">Creada el %1$s</string>

@@ -88,6 +88,7 @@ data class EncryptionSettings(
     val encrypt_by_default: Boolean = false,
     val require_encryption: Boolean = false,
     val ipfs_storage_enabled: Boolean = false,
+    val alias_pgp_enabled: Boolean = true,
 )
 
 @Serializable
@@ -96,6 +97,7 @@ data class UpdateEncryptionSettingsRequest(
     val encrypt_by_default: Boolean? = null,
     val require_encryption: Boolean? = null,
     val ipfs_storage_enabled: Boolean? = null,
+    val alias_pgp_enabled: Boolean? = null,
 )
 
 @Serializable

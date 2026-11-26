@@ -4664,6 +4664,29 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun toggle_alias_pgp() {
+        val current = _state.value.encryption_settings?.alias_pgp_enabled ?: return
+        _state.update { it.copy(encryption_settings = it.encryption_settings?.copy(alias_pgp_enabled = !current)) }
+        viewModelScope.launch {
+            val saved = try {
+                encryption_api.update_encryption_settings(
+                    org.astermail.android.api.encryption.UpdateEncryptionSettingsRequest(alias_pgp_enabled = !current)
+                )
+            } catch (t: Throwable) {
+                if (t is kotlinx.coroutines.CancellationException) throw t
+                false
+            }
+            if (!saved) {
+                _state.update {
+                    it.copy(
+                        encryption_settings = it.encryption_settings?.copy(alias_pgp_enabled = current),
+                        action_result = context.getString(R.string.settings_save_failed_banner),
+                    )
+                }
+            }
+        }
+    }
+
     fun toggle_encrypt_by_default() {
         val current = _state.value.encryption_settings?.encrypt_by_default ?: false
         _state.update { it.copy(encryption_settings = it.encryption_settings?.copy(encrypt_by_default = !current)) }

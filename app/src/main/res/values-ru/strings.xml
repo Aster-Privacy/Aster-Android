@@ -1928,6 +1928,8 @@
     <string name="publish_to_wkd_sub">Публикует ключ вашего основного адреса в Web Key Directory. Псевдонимы и адреса собственного домена не публикуются.</string>
     <string name="publish_to_keyservers">Публиковать на серверах ключей</string>
     <string name="publish_to_keyservers_sub">Публикует ваш ключ на публичных серверах ключей</string>
+    <string name="alias_pgp_title">Использовать PGP с псевдонимами</string>
+    <string name="alias_pgp_sub">Если этот параметр выключен, письма, отправленные с псевдонима, не содержат подписи PGP и сведений о ключе, которые связывают их с вашим аккаунтом.</string>
     <string name="keyserver_publish_failed">Публичный ключ не опубликован на сервере ключей. Повторная попытка обычно помогает.</string>
     <string name="public_key_copied">Открытый ключ скопирован</string>
     <string name="created_at_format">Создан %1$s</string>

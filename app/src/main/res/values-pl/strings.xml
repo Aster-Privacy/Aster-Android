@@ -1928,6 +1928,8 @@
     <string name="publish_to_wkd_sub">Publikuje klucz Twojego adresu głównego w Web Key Directory. Aliasy i adresy własnej domeny nie są publikowane.</string>
     <string name="publish_to_keyservers">Publikuj na serwerach kluczy</string>
     <string name="publish_to_keyservers_sub">Publikuje Twój klucz na publicznych serwerach kluczy</string>
+    <string name="alias_pgp_title">Używaj PGP z aliasami</string>
+    <string name="alias_pgp_sub">Gdy ta opcja jest wyłączona, poczta wysyłana z aliasu nie zawiera podpisu PGP ani danych klucza, które łączą ją z Twoim kontem.</string>
     <string name="keyserver_publish_failed">Nie udało się opublikować klucza publicznego na serwerze kluczy. Spróbuj ponownie.</string>
     <string name="public_key_copied">Skopiowano klucz publiczny</string>
     <string name="created_at_format">Utworzono %1$s</string>

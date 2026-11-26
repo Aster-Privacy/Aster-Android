@@ -1943,6 +1943,8 @@
     <string name="public_key_copied">Clé publique copiée dans le presse-papiers</string>
     <string name="publish_to_keyservers">Publier sur les serveurs de clés</string>
     <string name="publish_to_keyservers_sub">Publier votre clé sur les serveurs de clés publics</string>
+    <string name="alias_pgp_title">Utiliser PGP avec les alias</string>
+    <string name="alias_pgp_sub">Quand cette option est désactivée, les e-mails que vous envoyez depuis un alias ne contiennent aucune signature PGP ni aucune information de clé qui les relie à votre compte.</string>
     <string name="keyserver_publish_failed">La publication de votre clé publique sur le serveur de clés a échoué. Réessayez, cela devrait fonctionner.</string>
     <string name="publish_to_wkd">Publier sur WKD</string>
     <string name="publish_to_wkd_sub">Publier la clé de votre adresse principale sur le Web Key Directory. Les alias et les adresses de domaine personnalisé ne sont pas publiés.</string>

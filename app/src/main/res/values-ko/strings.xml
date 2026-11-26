@@ -1910,6 +1910,8 @@
     <string name="publish_to_wkd_sub">기본 주소의 키를 Web Key Directory에 게시합니다. 별칭과 사용자 도메인 주소는 게시되지 않습니다.</string>
     <string name="publish_to_keyservers">키서버에 게시</string>
     <string name="publish_to_keyservers_sub">공개 키 서버에 키를 게시합니다</string>
+    <string name="alias_pgp_title">별칭에서 PGP 사용</string>
+    <string name="alias_pgp_sub">이 옵션을 끄면 별칭으로 보내는 메일에 계정과 연결되는 PGP 서명이나 키 정보가 포함되지 않습니다.</string>
     <string name="keyserver_publish_failed">공개 키가 키 서버에 게시되지 않았습니다. 다시 시도하면 됩니다.</string>
     <string name="public_key_copied">공개 키를 복사했습니다</string>
     <string name="created_at_format">%1$s에 생성됨</string>

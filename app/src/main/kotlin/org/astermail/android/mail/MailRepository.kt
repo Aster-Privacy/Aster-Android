@@ -6552,6 +6552,18 @@ class MailRepository @Inject constructor(
         ),
     ).toByteArray(Charsets.UTF_8)
 
+    private suspend fun alias_pgp_enabled_for_send(from: String): Boolean {
+        if (sends_as_primary_for_alias_policy(from, session_key_store.get_user_email())) return true
+        val api = encryption_api_provider?.get() ?: return false
+        return try {
+            api.get_encryption_settings().alias_pgp_enabled
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
     private suspend fun sign_mime_bytes(mime_bytes: ByteArray, from: String): DetachedSignature? {
         val external_signer = if (ExternalPgpKeyCodec.is_primary_sender(from, session_key_store.get_user_email())) {
             runCatching { external_pgp_key_store?.signing_key_if_ready() }.getOrNull()
@@ -6643,6 +6655,7 @@ class MailRepository @Inject constructor(
         require_encryption: Boolean,
         ack_scope: String?,
         used_acknowledgments: MutableList<ExternalKeyAcknowledgmentUse>,
+        sign_copy: Boolean,
     ): Map<String, String>? {
         val outside = ClientPgpCopies.outside_recipients(to + cc + bcc, ::is_internal_recipient)
         if (outside.isEmpty()) return null
@@ -6753,7 +6766,7 @@ class MailRepository @Inject constructor(
         }
         val outcome = try {
             val mime_bytes = build_protected_mime_bytes(subject, body_html, from, to, cc, attachments)
-            val entity = sign_mime_bytes(mime_bytes, from)
+            val entity = (if (sign_copy) sign_mime_bytes(mime_bytes, from) else null)
                 ?.let { ClientPgpCopies.build_signed_mime_entity(mime_bytes, it.signature, it.micalg) }
                 ?: mime_bytes
             ClientPgpCopies.encrypt_copies_outcome(entity, recipient_keys, attachment_bytes)
@@ -7643,6 +7656,7 @@ class MailRepository @Inject constructor(
                 wrapped,
                 allow_non_post_quantum,
             )
+            val alias_pgp_enabled = alias_pgp_enabled_for_send(from_addr)
             val client_copies = build_client_pgp_copies(
                 subject = subject,
                 body_html = recipient_body_html,
@@ -7658,6 +7672,7 @@ class MailRepository @Inject constructor(
                 require_encryption = require_encryption,
                 ack_scope = ack_scope,
                 used_acknowledgments = used_acknowledgments,
+                sign_copy = copy_may_carry_signature(from_addr, session_key_store.get_user_email(), alias_pgp_enabled),
             )
             val (encrypted_envelope, envelope_nonce) = sealed_sent_envelope(client_copies, internal_copy_is_encrypted = true)
             val mixed_attachments = if (attachments.isNotEmpty()) {
@@ -7711,6 +7726,11 @@ class MailRepository @Inject constructor(
                     signed_mime_micalg = signed_payload?.micalg,
                     client_send_id = client_send_id,
                     external_pgp_bodies = client_copies,
+                    primary_only_signing = copies_sign_only_as_primary(
+                        from_addr,
+                        session_key_store.get_user_email(),
+                        alias_pgp_enabled,
+                    ),
                     force_pgp = force_pgp,
                     pgp_recipients = listed_pgp_recipients.takeIf { it.isNotEmpty() },
                     priority = priority,
@@ -7746,6 +7766,7 @@ class MailRepository @Inject constructor(
             }.toString()
 
             val from_addr = sender_email ?: session_key_store.get_user_email().orEmpty()
+            val alias_pgp_enabled = alias_pgp_enabled_for_send(from_addr)
             val client_copies = build_client_pgp_copies(
                 subject = subject,
                 body_html = recipient_body_html,
@@ -7761,6 +7782,7 @@ class MailRepository @Inject constructor(
                 require_encryption = require_encryption,
                 ack_scope = ack_scope,
                 used_acknowledgments = used_acknowledgments,
+                sign_copy = copy_may_carry_signature(from_addr, session_key_store.get_user_email(), alias_pgp_enabled),
             )
             val (encrypted_envelope, envelope_nonce) = sealed_sent_envelope(client_copies, internal_copy_is_encrypted = true)
             val secure_message = if (uses_password_sealed_message(expiry_password)) {
@@ -7832,6 +7854,11 @@ class MailRepository @Inject constructor(
                     signed_mime_signature = signed_payload?.signature,
                     signed_mime_micalg = signed_payload?.micalg,
                     external_pgp_bodies = client_copies,
+                    primary_only_signing = copies_sign_only_as_primary(
+                        from_addr,
+                        session_key_store.get_user_email(),
+                        alias_pgp_enabled,
+                    ),
                     force_pgp = force_pgp.takeIf { expiry_password.isNullOrEmpty() },
                     pgp_recipients = listed_pgp_recipients.takeIf {
                         it.isNotEmpty() && expiry_password.isNullOrEmpty()
@@ -9517,6 +9544,24 @@ class MailRepository @Inject constructor(
 
         fun sender_may_sign_outbound(from: String, primary_email: String?): Boolean =
             ExternalPgpKeyCodec.is_primary_sender(from, primary_email)
+
+        fun sends_as_primary_for_alias_policy(from: String, primary_email: String?): Boolean {
+            val primary = primary_email?.trim()?.lowercase(java.util.Locale.ROOT).orEmpty()
+            val address = from.substringAfterLast('<', from).substringBefore('>').trim().lowercase(java.util.Locale.ROOT)
+            if (primary.isEmpty() || address.isEmpty()) return false
+            return without_local_dots(address) == without_local_dots(primary)
+        }
+
+        private fun without_local_dots(address: String): String {
+            val at = address.lastIndexOf('@')
+            return if (at < 0) address else address.substring(0, at).replace(".", "") + address.substring(at)
+        }
+
+        fun copy_may_carry_signature(from: String, primary_email: String?, alias_pgp_enabled: Boolean): Boolean =
+            sends_as_primary_for_alias_policy(from, primary_email) || alias_pgp_enabled
+
+        fun copies_sign_only_as_primary(from: String, primary_email: String?, alias_pgp_enabled: Boolean): Boolean =
+            sends_as_primary_for_alias_policy(from, primary_email) || !alias_pgp_enabled
 
         private fun decrypt_sealed_attachment_bytes(
             encrypted_data_b64: String,

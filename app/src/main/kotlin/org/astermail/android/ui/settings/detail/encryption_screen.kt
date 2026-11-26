@@ -459,6 +459,15 @@ fun EncryptionScreen(
                 enabled = keyserver_published != true,
                 on_change = { vm.toggle_keyserver_publishing() },
             )
+            if (enc != null) {
+                settings_row_gap()
+                settings_toggle_row(
+                    title = stringResource(R.string.alias_pgp_title),
+                    subtitle = stringResource(R.string.alias_pgp_sub),
+                    checked = enc.alias_pgp_enabled,
+                    on_change = { vm.toggle_alias_pgp() },
+                )
+            }
         }
 
         v_gap(AsterSpacing.xxl)

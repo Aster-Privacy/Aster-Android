@@ -1910,6 +1910,8 @@
     <string name="publish_to_wkd_sub">把您主地址的密钥发布到 Web Key Directory。别名和自定义域名地址不会发布。</string>
     <string name="publish_to_keyservers">发布到密钥服务器</string>
     <string name="publish_to_keyservers_sub">把您的公钥发布到公共密钥服务器</string>
+    <string name="alias_pgp_title">在别名中使用 PGP</string>
+    <string name="alias_pgp_sub">关闭后，从别名发送的邮件不会包含任何可将其关联到你账户的 PGP 签名或密钥信息。</string>
     <string name="keyserver_publish_failed">您的公钥未能发布到密钥服务器。请再试一次。</string>
     <string name="public_key_copied">已复制公钥</string>
     <string name="created_at_format">创建于 %1$s</string>

@@ -1920,6 +1920,8 @@
     <string name="publish_to_wkd_sub">Pubblica la chiave del tuo indirizzo principale nella Web Key Directory. Gli alias e gli indirizzi di dominio personalizzato non vengono pubblicati.</string>
     <string name="publish_to_keyservers">Pubblica sui keyserver</string>
     <string name="publish_to_keyservers_sub">Pubblica la tua chiave sui keyserver pubblici</string>
+    <string name="alias_pgp_title">Usa PGP con gli alias</string>
+    <string name="alias_pgp_sub">Quando questa opzione è disattivata, le e-mail che invii da un alias non contengono alcuna firma PGP né dettagli della chiave che le colleghino al tuo account.</string>
     <string name="keyserver_publish_failed">La tua chiave pubblica non è stata pubblicata sul keyserver. Riprova.</string>
     <string name="public_key_copied">Chiave pubblica copiata</string>
     <string name="created_at_format">Creata il %1$s</string>

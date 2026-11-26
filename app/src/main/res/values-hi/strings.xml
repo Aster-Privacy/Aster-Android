@@ -1815,6 +1815,8 @@
     <string name="publish_to_wkd_sub">अपने मुख्य पते की कुंजी Web Key Directory पर प्रकाशित करें। एलियास और कस्टम डोमेन के पते प्रकाशित नहीं होते।</string>
     <string name="publish_to_keyservers">कीसर्वर पर प्रकाशित करें</string>
     <string name="publish_to_keyservers_sub">अपनी कुंजी सार्वजनिक कीसर्वर पर प्रकाशित करें</string>
+    <string name="alias_pgp_title">उपनामों के साथ PGP का इस्तेमाल करें</string>
+    <string name="alias_pgp_sub">यह बंद होने पर, किसी उपनाम से भेजे गए आपके ईमेल में कोई PGP हस्ताक्षर या कुंजी विवरण नहीं होता जो उसे आपके खाते से जोड़े।</string>
     <string name="keyserver_publish_failed">आपकी सार्वजनिक कुंजी कीसर्वर पर प्रकाशित नहीं हुई। एक और कोशिश से काम बन जाना चाहिए।</string>
     <string name="public_key_copied">सार्वजनिक कुंजी क्लिपबोर्ड पर कॉपी हुई</string>
     <string name="created_at_format">%1$s को बनाया गया</string>
