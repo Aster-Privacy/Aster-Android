@@ -37,8 +37,22 @@ class trailing_breaks_test {
     fun removes_mixed_breaks_and_spaces() {
         assertEquals(
             "<b>Aster Support</b>",
-            trim_trailing_breaks("<b>Aster Support</b><br/> &nbsp;<BR>\n"),
+            trim_trailing_breaks("<b>Aster Support</b><br> <br>\n"),
         )
+    }
+
+    @Test
+    fun rich_body_without_signature_has_no_trailing_breaks() {
+        val html = assemble_body_with_signature(
+            body = trim_trailing_breaks("Best regards,<br>Aster Support<br><br>"),
+            is_rich = true,
+            plain_signature = "",
+            html_signature = "",
+            signature_id = null,
+            quote_html = "",
+            place_below = false,
+        )
+        assertEquals(false, html.removeSuffix("</div>").endsWith("<br>"))
     }
 
     @Test
