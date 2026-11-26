@@ -162,8 +162,12 @@ fun aster_theme_root(content: @Composable () -> Unit) {
         }
         val low_network by org.astermail.android.api.network.low_network_state.is_active.collectAsStateWithLifecycle()
         val trust_context = org.astermail.android.ui.mail.collected_sender_trust_context()
+        val own_avatars_state = org.astermail.android.ui.mail.collected_own_address_avatars_state()
+        val contact_photo_version_state = org.astermail.android.ui.mail.collected_contact_photo_version_state()
         CompositionLocalProvider(
             org.astermail.android.network.local_low_network provides low_network,
+            org.astermail.android.ui.mail.local_own_address_avatars provides own_avatars_state,
+            org.astermail.android.ui.mail.local_contact_photo_version provides contact_photo_version_state,
             org.astermail.android.ui.mail.local_sender_trust_context provides trust_context,
             LocalDensity provides scaled_density,
             local_text_scale provides text_size_state.scale,
