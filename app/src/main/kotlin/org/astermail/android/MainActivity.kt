@@ -2356,7 +2356,7 @@ private fun aster_launch_splash(modifier: Modifier) {
         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
     ) {
         androidx.compose.foundation.Image(
-            painter = androidx.compose.ui.res.painterResource(R.drawable.aster_wordmark),
+            painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_wordmark),
             contentDescription = null,
             modifier = Modifier.height(22.dp),
         )

@@ -526,7 +526,7 @@ private fun AsterSystemAvatar(
         contentAlignment = Alignment.Center,
     ) {
         Image(
-            painter = painterResource(id = R.drawable.aster_wordmark),
+            painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_wordmark),
             contentDescription = null,
             contentScale = ContentScale.Fit,
             modifier = Modifier.size(width = size * 0.72f, height = size * 0.18f),

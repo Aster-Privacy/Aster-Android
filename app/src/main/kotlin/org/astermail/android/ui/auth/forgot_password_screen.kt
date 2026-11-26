@@ -281,7 +281,7 @@ private fun recovery_step_header(
 
     if (show_logo) {
         Image(
-            painter = painterResource(R.drawable.aster_wordmark),
+            painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_wordmark),
             contentDescription = null,
             modifier = Modifier.height(auth_logo_height),
         )

@@ -184,7 +184,7 @@ fun SuspendedAccountGate(
                     .padding(top = 40.dp, bottom = AsterSpacing.xxxl),
             ) {
                 Image(
-                    painter = painterResource(R.drawable.aster_wordmark),
+                    painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_wordmark),
                     contentDescription = null,
                     modifier = Modifier.height(org.astermail.android.ui.auth.auth_logo_height),
                 )

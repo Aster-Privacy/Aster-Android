@@ -3251,7 +3251,7 @@ private fun drawer_footer(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
-                painter = painterResource(R.drawable.aster_wordmark),
+                painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_wordmark),
                 contentDescription = stringResource(R.string.app_name),
                 contentScale = ContentScale.FillWidth,
                 modifier = Modifier

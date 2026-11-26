@@ -200,6 +200,12 @@ class AsterApplication : Application(), ImageLoaderFactory, androidx.work.Config
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
             runCatching { org.astermail.android.ui.theme.theme_manifest.load_cached(this@AsterApplication) }
         }
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
+            org.astermail.android.ui.common.raster_painter_cache.prewarm(
+                resources,
+                intArrayOf(R.drawable.aster_wordmark, R.drawable.aster_logo, R.drawable.official_badge),
+            )
+        }
         org.astermail.android.ui.mail.AsterTimePreferences.set_use_24h(
             android.text.format.DateFormat.is24HourFormat(this),
         )

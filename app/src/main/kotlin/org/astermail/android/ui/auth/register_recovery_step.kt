@@ -104,7 +104,7 @@ fun RegisterRecoveryStep(
 
     auth_centered_column {
         Image(
-            painter = painterResource(R.drawable.aster_wordmark),
+            painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_wordmark),
             contentDescription = null,
             modifier = Modifier.height(40.dp),
         )

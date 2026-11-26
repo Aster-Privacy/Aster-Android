@@ -286,7 +286,7 @@ fun guard_sheet_frame(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 fun guard_wordmark(modifier: Modifier = Modifier, height: Dp = org.astermail.android.ui.auth.auth_logo_height) {
     Image(
-        painter = painterResource(R.drawable.aster_wordmark),
+        painter = org.astermail.android.ui.common.cached_raster_painter(R.drawable.aster_wordmark),
         contentDescription = stringResource(R.string.guard_logo_description),
         contentScale = ContentScale.FillWidth,
         modifier = modifier
