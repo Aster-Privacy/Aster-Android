@@ -39,8 +39,6 @@ private const val rekey_attempts_prefix = "rekey_attempts_"
 
 const val rekey_max_attempts = 3
 
-private const val warm_join_timeout_ms = 5_000L
-
 internal val create_retry_delays_ms = longArrayOf(150L, 450L)
 
 internal const val rekeyed_suffix = "_v2"
@@ -112,15 +110,6 @@ object SecurePrefs {
             val pending = names.filterNot { opened.containsKey(it) }
             if (pending.isNotEmpty()) {
                 runCatching { master_key(app) }
-                val threads = pending.map { name ->
-                    Thread { runCatching { open(app, name) } }.apply {
-                        priority = Thread.NORM_PRIORITY
-                        start()
-                    }
-                }
-                for (thread in threads) {
-                    runCatching { thread.join(warm_join_timeout_ms) }
-                }
                 for (name in pending) {
                     runCatching { open(app, name) }
                 }
