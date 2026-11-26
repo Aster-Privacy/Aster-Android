@@ -485,9 +485,7 @@ fun EmailRow(
         }
 
         Column(modifier = Modifier.weight(1f)) {
-            val via_label = remember(email.display_sender_email, email.sender_email) {
-                custom_forward_via_label(email.display_sender_email, email.sender_email)
-            }
+            val via_label = custom_forward_via_label(email.display_sender_email, email.sender_email)
             val via_color = colors.text_tertiary
             val sender_text = remember(shown_sender_name, via_label, via_color) {
                 with_via_suffix(shown_sender_name, via_label, via_color)
@@ -926,12 +924,10 @@ fun ThreadInboxRow(
             )
         }
         Column(modifier = Modifier.weight(1f)) {
-            val via_label = remember(shown_participants.size <= 1, email.display_sender_email, email.sender_email) {
-                if (shown_participants.size <= 1) {
-                    custom_forward_via_label(email.display_sender_email, email.sender_email)
-                } else {
-                    null
-                }
+            val via_label = if (shown_participants.size <= 1) {
+                custom_forward_via_label(email.display_sender_email, email.sender_email)
+            } else {
+                null
             }
             val via_color = colors.text_tertiary
             val sender_text = remember(participants_text, via_label, via_color) {
@@ -1357,7 +1353,9 @@ private fun format_participants(
 
 @Composable
 internal fun custom_forward_via_label(display_sender_email: String?, sender_email: String): String? {
-    val domain = custom_forward_via_domain(display_sender_email, sender_email) ?: return null
+    val domain = remember(display_sender_email, sender_email) {
+        custom_forward_via_domain(display_sender_email, sender_email)
+    } ?: return null
     return stringResource(R.string.forwarded_via_domain, domain)
 }
 
