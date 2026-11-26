@@ -78,6 +78,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -191,7 +192,7 @@ internal fun inbox_leading_slot(
         },
         label = "avatar_check_reveal",
     )
-    val back_visible = flip.value > 90f
+    val back_visible by remember { derivedStateOf { flip.value > 90f } }
     Box(
         modifier = tap_modifier.graphicsLayer {
             rotationY = flip.value
