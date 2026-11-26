@@ -168,8 +168,39 @@ internal fun is_definitive_favicon_miss(error: Throwable?): Boolean =
 internal fun is_cancelled_favicon_load(error: Throwable?): Boolean =
     error is java.util.concurrent.CancellationException
 
+private const val decoded_avatar_cache_bytes = 4 * 1024 * 1024
+
+private val decoded_avatar_cache = object : android.util.LruCache<String, ByteArray>(decoded_avatar_cache_bytes) {
+    override fun sizeOf(key: String, value: ByteArray): Int = value.size
+}
+
+internal fun cached_avatar_model(url: String): Any? {
+    if (!url.startsWith("data:")) return url
+    return decoded_avatar_cache.get(url)
+}
+
+@Composable
+internal fun remember_avatar_model(url: String): Any? {
+    val state = remember(url) { mutableStateOf(cached_avatar_model(url)) }
+    if (state.value == null) {
+        LaunchedEffect(url) {
+            state.value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                decode_avatar_model(url)
+            }
+        }
+    }
+    return state.value
+}
+
 internal fun decode_avatar_model(url: String): Any {
     if (!url.startsWith("data:")) return url
+    decoded_avatar_cache.get(url)?.let { return it }
+    val decoded = decode_data_avatar(url)
+    if (decoded is ByteArray) decoded_avatar_cache.put(url, decoded)
+    return decoded
+}
+
+private fun decode_data_avatar(url: String): Any {
     val comma = url.indexOf(',')
     if (comma < 0) return url
     val meta = url.substring(5, comma)
@@ -274,27 +305,29 @@ fun SenderAvatar(
                     style = avatar_initial_style(size),
                 )
             }
-            val model = remember(resolved_profile_picture) { decode_avatar_model(resolved_profile_picture) }
-            val request = remember(resolved_profile_picture, model) {
-                ImageRequest.Builder(context)
-                    .data(model)
-                    .memoryCacheKey(resolved_profile_picture)
-                    .placeholderMemoryCacheKey(resolved_profile_picture)
-                    .diskCacheKey(resolved_profile_picture)
-                    .crossfade(false)
-                    .build()
+            val model = remember_avatar_model(resolved_profile_picture)
+            if (model != null) {
+                val request = remember(resolved_profile_picture, model) {
+                    ImageRequest.Builder(context)
+                        .data(model)
+                        .memoryCacheKey(resolved_profile_picture)
+                        .placeholderMemoryCacheKey(resolved_profile_picture)
+                        .diskCacheKey(resolved_profile_picture)
+                        .crossfade(false)
+                        .build()
+                }
+                AsyncImage(
+                    model = request,
+                    contentDescription = name.ifBlank { null },
+                    contentScale = ContentScale.Crop,
+                    onState = { state ->
+                        loaded_pp = state is coil.compose.AsyncImagePainter.State.Success
+                        if (state is coil.compose.AsyncImagePainter.State.Success) pp_drawable = state.result.drawable
+                        if (state is coil.compose.AsyncImagePainter.State.Error && !is_cancelled_favicon_load(state.result.throwable)) failed_pp = true
+                    },
+                    modifier = Modifier.size(size).padding(pp_inset).clip(CircleShape),
+                )
             }
-            AsyncImage(
-                model = request,
-                contentDescription = name.ifBlank { null },
-                contentScale = ContentScale.Crop,
-                onState = { state ->
-                    loaded_pp = state is coil.compose.AsyncImagePainter.State.Success
-                    if (state is coil.compose.AsyncImagePainter.State.Success) pp_drawable = state.result.drawable
-                    if (state is coil.compose.AsyncImagePainter.State.Error && !is_cancelled_favicon_load(state.result.throwable)) failed_pp = true
-                },
-                modifier = Modifier.size(size).padding(pp_inset).clip(CircleShape),
-            )
         }
         return
     }
@@ -554,27 +587,29 @@ private fun AsterDomainAvatar(
                     style = avatar_initial_style(size),
                 )
             }
-            val model = remember(resolved_pic) { decode_avatar_model(resolved_pic) }
-            val request = remember(resolved_pic, model) {
-                ImageRequest.Builder(context)
-                    .data(model)
-                    .memoryCacheKey(resolved_pic)
-                    .placeholderMemoryCacheKey(resolved_pic)
-                    .diskCacheKey(resolved_pic)
-                    .crossfade(false)
-                    .build()
+            val model = remember_avatar_model(resolved_pic)
+            if (model != null) {
+                val request = remember(resolved_pic, model) {
+                    ImageRequest.Builder(context)
+                        .data(model)
+                        .memoryCacheKey(resolved_pic)
+                        .placeholderMemoryCacheKey(resolved_pic)
+                        .diskCacheKey(resolved_pic)
+                        .crossfade(false)
+                        .build()
+                }
+                AsyncImage(
+                    model = request,
+                    contentDescription = name.ifBlank { null },
+                    contentScale = ContentScale.Crop,
+                    onState = { state ->
+                        loaded = state is coil.compose.AsyncImagePainter.State.Success
+                        if (state is coil.compose.AsyncImagePainter.State.Success) pic_drawable = state.result.drawable
+                        if (state is coil.compose.AsyncImagePainter.State.Error && !is_cancelled_favicon_load(state.result.throwable)) pic_failed = true
+                    },
+                    modifier = Modifier.size(size).padding(pic_inset).clip(CircleShape),
+                )
             }
-            AsyncImage(
-                model = request,
-                contentDescription = name.ifBlank { null },
-                contentScale = ContentScale.Crop,
-                onState = { state ->
-                    loaded = state is coil.compose.AsyncImagePainter.State.Success
-                    if (state is coil.compose.AsyncImagePainter.State.Success) pic_drawable = state.result.drawable
-                    if (state is coil.compose.AsyncImagePainter.State.Error && !is_cancelled_favicon_load(state.result.throwable)) pic_failed = true
-                },
-                modifier = Modifier.size(size).padding(pic_inset).clip(CircleShape),
-            )
         }
         return
     }
