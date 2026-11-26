@@ -33,6 +33,7 @@ object DoubleRatchet {
     private const val max_skip = 1000
     private const val max_total_skipped = 2000
     private const val skipped_key_ttl_ms = 30L * 24 * 60 * 60 * 1000
+    const val max_consumed_message_keys = 2000
     const val max_header_version = 255
     const val max_header_counter = Int.MAX_VALUE
 
@@ -42,7 +43,8 @@ object DoubleRatchet {
             state.previous_chain_length >= 0 &&
             state.epoch >= 0 &&
             state.skipped_message_keys.size <= max_total_skipped &&
-            state.skipped_message_keys.all { it.message_number >= 0 }
+            state.skipped_message_keys.all { it.message_number >= 0 } &&
+            state.consumed_message_keys.size <= max_consumed_message_keys
 
     fun header_version(header: MessageHeader): Int {
         val version = header.v ?: 1
@@ -107,6 +109,7 @@ object DoubleRatchet {
         val plaintext = RatchetCrypto.aes_gcm_decrypt(ciphertext, message_key_aes, nonce, ad)
 
         work.chain_key_recv = RatchetCrypto.b64_encode(new_chain_key)
+        record_consumed(work, header.dh_public, header.message_number)
         work.recv_message_number += 1
         work.updated_at = System.currentTimeMillis()
         if (header_bound) work.header_bound = true
@@ -138,6 +141,7 @@ object DoubleRatchet {
         val nonce = RatchetCrypto.b64_decode(recipient.nonce)
         val plaintext = RatchetCrypto.aes_gcm_decrypt(ciphertext, message_key.copyOfRange(0, 32), nonce, ad)
         state.skipped_message_keys.removeAt(idx)
+        record_consumed(state, header.dh_public, header.message_number)
         return String(plaintext, Charsets.UTF_8)
     }
 
@@ -282,6 +286,14 @@ object DoubleRatchet {
         state.chain_key_send = RatchetCrypto.b64_encode(chain_send)
     }
 
+    fun record_consumed(state: RatchetState, dh_public: String, message_number: Int) {
+        val entry = ConsumedMessageKey(dh_public, message_number)
+        state.consumed_message_keys.remove(entry)
+        state.consumed_message_keys.add(entry)
+        val excess = state.consumed_message_keys.size - max_consumed_message_keys
+        if (excess > 0) repeat(excess) { state.consumed_message_keys.removeAt(0) }
+    }
+
     private fun cleanup_old_skipped(state: RatchetState) {
         val cutoff = System.currentTimeMillis() - skipped_key_ttl_ms
         state.skipped_message_keys.removeAll { it.timestamp < cutoff }
@@ -296,6 +308,7 @@ object DoubleRatchet {
         return state.copy(
             dh_keypair = state.dh_keypair.copy(),
             skipped_message_keys = state.skipped_message_keys.toMutableList(),
+            consumed_message_keys = state.consumed_message_keys.toMutableList(),
         )
     }
 
@@ -311,6 +324,8 @@ object DoubleRatchet {
         target.epoch = source.epoch
         target.skipped_message_keys.clear()
         target.skipped_message_keys.addAll(source.skipped_message_keys)
+        target.consumed_message_keys.clear()
+        target.consumed_message_keys.addAll(source.consumed_message_keys)
         target.updated_at = source.updated_at
         target.header_bound = source.header_bound
     }

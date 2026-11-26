@@ -1018,6 +1018,7 @@
     <string name="payment_method_removed">결제 수단이 제거되었습니다</string>
     <string name="session_expired_sign_in">세션이 만료되었습니다. 다시 로그인해 주세요.</string>
     <string name="vault_open_failed_notice">이 기기에서 키를 잠금 해제할 수 없어 일부 메일이 여기에서 열리지 않을 수 있습니다. 키를 복구하려면 웹에서 Aster Mail에 로그인한 다음 이 기기에서 다시 로그인하세요.</string>
+    <string name="storage_key_update_pending_notice">Aster Mail에서 저장된 데이터를 보호하는 키의 업데이트를 완료하지 못했습니다. 변경 사항은 계속 저장되며, Aster Mail은 백그라운드에서 계속 재시도합니다.</string>
     <string name="could_not_start_checkout">결제를 시작할 수 없습니다</string>
     <string name="could_not_open_portal">결제 포털을 열 수 없습니다</string>
     <string name="cancel_failed">구독을 취소할 수 없습니다</string>

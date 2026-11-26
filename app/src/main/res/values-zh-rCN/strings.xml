@@ -1018,6 +1018,7 @@
     <string name="payment_method_removed">支付方式已移除</string>
     <string name="session_expired_sign_in">您的会话已过期。请重新登录。</string>
     <string name="vault_open_failed_notice">无法在此设备上解锁您的密钥，因此部分邮件可能无法在这里打开。要修复密钥，请在网页版 Aster Mail 登录，然后在此设备上重新登录。</string>
+    <string name="storage_key_update_pending_notice">Aster Mail 无法完成更新用于保护你已存数据的密钥。你的更改仍会保存，Aster Mail 会在后台继续重试。</string>
     <string name="could_not_start_checkout">无法开始结账</string>
     <string name="could_not_open_portal">无法打开账单门户</string>
     <string name="cancel_failed">无法取消订阅</string>

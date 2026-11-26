@@ -552,4 +552,33 @@ class EmailDarkContrastTest {
         assertEquals("1", Jsoup.parse(html).selectFirst("html")!!.attr("data-white"))
         assertTrue(html.contains("a{color:$PAPER_LINK}"))
     }
+
+    @Test
+    fun sheet_hints_skip_pattern_selectors_and_keep_simple_ones() {
+        val body = "<style>[class~=^(a+)+\$]{color:#111111}.ink{color:#111111}</style>" +
+            "<p class=\"aaa\">Pattern</p><p class=\"ink\">Simple</p>"
+        val result = enforce_text_contrast(
+            body = body,
+            page_background = "#121212",
+            page_ink = "#e8e8e8",
+            link_color = "#8ab4f8",
+            forced_dark = false,
+        )
+        val paragraphs = Jsoup.parseBodyFragment(result).select("p")
+        assertFalse(paragraphs[0].hasAttr(INK_ATTRIBUTE))
+        assertEquals(INK_LIGHT, paragraphs[1].attr(INK_ATTRIBUTE))
+    }
+
+    @Test
+    fun sheet_hints_ignore_pattern_attribute_rules_on_their_own() {
+        val body = "<style>[class~=^(a+)+\$]{color:#111111}</style><p class=\"aaa\">Pattern</p>"
+        val result = enforce_text_contrast(
+            body = body,
+            page_background = "#121212",
+            page_ink = "#e8e8e8",
+            link_color = "#8ab4f8",
+            forced_dark = false,
+        )
+        assertEquals(body, result)
+    }
 }

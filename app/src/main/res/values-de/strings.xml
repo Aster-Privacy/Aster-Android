@@ -1019,6 +1019,7 @@
     <string name="payment_method_removed">Zahlungsmethode entfernt</string>
     <string name="session_expired_sign_in">Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.</string>
     <string name="vault_open_failed_notice">Ihre Schlüssel konnten auf diesem Gerät nicht entsperrt werden, daher lassen sich einige E-Mails hier möglicherweise nicht öffnen. Um Ihre Schlüssel zu reparieren, melden Sie sich bei Aster Mail im Web an und danach erneut auf diesem Gerät.</string>
+    <string name="storage_key_update_pending_notice">Aster Mail konnte den Schlüssel, der Ihre gespeicherten Daten schützt, nicht vollständig aktualisieren. Ihre Änderungen werden weiterhin gespeichert, und Aster Mail versucht es im Hintergrund weiter.</string>
     <string name="could_not_start_checkout">Bezahlvorgang konnte nicht gestartet werden</string>
     <string name="could_not_open_portal">Abrechnungsportal konnte nicht geöffnet werden</string>
     <string name="cancel_failed">Abonnement konnte nicht gekündigt werden</string>

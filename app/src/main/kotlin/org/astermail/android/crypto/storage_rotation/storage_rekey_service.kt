@@ -632,6 +632,8 @@ class StorageRekeyService @Inject constructor(
         val api = KtorResealApi(api_client)
         runCatching { heal_once(api, force = false) }
         val outcome = rotator(api).ensure_random_storage_key()
+        StorageKeyPendingNotice.observe(outcome)
+        if (is_storage_key_pending(outcome)) runCatching { StorageRekeyWorker.enqueue(context) }
         outcome_vault(outcome)?.let { vault -> runCatching { keep_side_copy(api, vault) } }
         outcome
     }
@@ -645,6 +647,7 @@ class StorageRekeyService @Inject constructor(
         runCatching { heal_once(api, force = true) }
         val vault_rotator = rotator(api)
         val outcome = vault_rotator.ensure_random_storage_key()
+        StorageKeyPendingNotice.observe(outcome)
         val vault = outcome_vault(outcome)
             ?: return@withContext ResealRunResult(
                 ResealRunStatus.INTERRUPTED,

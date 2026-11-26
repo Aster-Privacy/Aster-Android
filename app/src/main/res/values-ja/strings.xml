@@ -1018,6 +1018,7 @@
     <string name="payment_method_removed">お支払い方法を削除しました</string>
     <string name="session_expired_sign_in">セッションの有効期限が切れました。もう一度サインインしてください。</string>
     <string name="vault_open_failed_notice">このデバイスで鍵のロックを解除できなかったため、一部のメールがここで開けない可能性があります。鍵を修復するには、ウェブ版のAster Mailにサインインしてから、このデバイスでもう一度サインインしてください。</string>
+    <string name="storage_key_update_pending_notice">Aster Mail は保存済みデータを保護するキーの更新を完了できませんでした。変更は引き続き保存され、Aster Mail はバックグラウンドで再試行を続けます。</string>
     <string name="could_not_start_checkout">チェックアウトを開始できませんでした</string>
     <string name="could_not_open_portal">請求ポータルを開けませんでした</string>
     <string name="cancel_failed">サブスクリプションをキャンセルできませんでした</string>

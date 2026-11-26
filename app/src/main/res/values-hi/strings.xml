@@ -1424,6 +1424,7 @@
     <string name="payment_method_removed">भुगतान का तरीका हटा दिया गया</string>
     <string name="session_expired_sign_in">आपका सत्र समाप्त हो गया है। कृपया फिर से साइन इन करें।</string>
     <string name="vault_open_failed_notice">इस डिवाइस पर आपकी कुंजियाँ अनलॉक नहीं हो सकीं, इसलिए कुछ मेल यहाँ शायद न खुलें। अपनी कुंजियाँ ठीक करने के लिए, वेब पर Aster Mail में साइन इन करें और फिर इस डिवाइस पर दोबारा साइन इन करें।</string>
+    <string name="storage_key_update_pending_notice">Aster Mail आपके सहेजे गए डेटा की सुरक्षा करने वाली कुंजी को अपडेट करना पूरा नहीं कर सका। आपके बदलाव अब भी सहेजे जाते हैं, और Aster Mail पृष्ठभूमि में कोशिश करता रहता है।</string>
     <string name="could_not_start_checkout">चेकआउट शुरू नहीं हो सका</string>
     <string name="could_not_open_portal">बिलिंग पोर्टल नहीं खुल सका</string>
     <string name="cancel_failed">सदस्यता रद्द नहीं हो सकी</string>
