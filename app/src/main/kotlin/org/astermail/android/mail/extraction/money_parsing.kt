@@ -207,8 +207,10 @@ internal fun fraction_digits(currency: String): Int {
     return runCatching { Currency.getInstance(currency).defaultFractionDigits }.getOrNull()?.takeIf { it >= 0 } ?: 2
 }
 
+private val number_grouping_regex = Regex("[\\u00A0\\u202F '’]")
+
 internal fun parse_number(raw: String, currency: String): Double? {
-    val digits_only = raw.replace(Regex("[\\u00A0\\u202F '’]"), "")
+    val digits_only = raw.replace(number_grouping_regex, "")
     val last_dot = digits_only.lastIndexOf('.')
     val last_comma = digits_only.lastIndexOf(',')
     val normalized = when {

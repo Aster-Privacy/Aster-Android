@@ -109,28 +109,35 @@ object favicon_miss_store {
     private const val prefs_name = "aster_favicon_misses"
     private const val max_entries = 500
     @Volatile private var prefs: android.content.SharedPreferences? = null
+    private val stored_keys: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
 
     fun attach(context: android.content.Context) {
         val store = context.applicationContext.getSharedPreferences(prefs_name, android.content.Context.MODE_PRIVATE)
-        prefs = store
         val now = System.currentTimeMillis()
         val expired = mutableListOf<String>()
         for ((domain, value) in store.all) {
-            val until = value as? Long ?: continue
-            if (until > now) favicon_blocked_until.putIfAbsent(domain, until) else expired.add(domain)
+            val until = value as? Long
+            if (until != null && until > now) {
+                favicon_blocked_until.putIfAbsent(domain, until)
+                stored_keys.add(domain)
+            } else {
+                expired.add(domain)
+            }
         }
         if (expired.isNotEmpty()) store.edit().apply { expired.forEach { remove(it) } }.apply()
+        prefs = store
     }
 
     internal fun remember_miss(root_domain: String, until: Long) {
         val store = prefs ?: return
-        if (store.all.size >= max_entries) return
+        if (!stored_keys.contains(root_domain) && stored_keys.size >= max_entries) return
+        stored_keys.add(root_domain)
         store.edit().putLong(root_domain, until).apply()
     }
 
     internal fun forget(root_domain: String) {
         val store = prefs ?: return
-        if (store.contains(root_domain)) store.edit().remove(root_domain).apply()
+        if (stored_keys.remove(root_domain)) store.edit().remove(root_domain).apply()
     }
 }
 
