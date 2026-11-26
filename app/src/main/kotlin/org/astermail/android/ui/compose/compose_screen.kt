@@ -1921,10 +1921,10 @@ private fun compose_screen_content(
         val raw_formatted_body = get_body_with_formatting()
         val strip_branding = settings_state.preferences?.show_aster_branding == false
         val branding_footer_kept = !strip_branding && raw_formatted_body.contains(footer_secured_by_plain)
-        val body_without_footer = (
+        val body_without_footer = trim_trailing_breaks(
             if (strip_branding) raw_formatted_body.replace(footer_secured_by_plain, "")
-            else raw_formatted_body.removeSuffix(footer_secured_by_plain)
-        ).trimEnd('\n', ' ')
+            else raw_formatted_body.removeSuffix(footer_secured_by_plain),
+        )
         val body_is_rich = raw_formatted_body != body
         val place_signature_below = signature_below_quote(
             active_signature_placement,
