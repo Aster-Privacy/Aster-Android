@@ -22,6 +22,7 @@
 package org.astermail.android.storage
 
 import android.content.SharedPreferences
+import java.util.concurrent.atomic.AtomicLong
 
 class SealedPrefs(
     private val delegate: SharedPreferences,
@@ -29,8 +30,30 @@ class SealedPrefs(
     private val is_plain_name: (String) -> Boolean = { false },
 ) : SharedPreferences {
 
-    fun has_sealed_values(): Boolean =
-        runCatching { delegate.all.values.any { LockSeal.is_sealed(it as? String) } }.getOrDefault(false)
+    private val sealed_generation = AtomicLong()
+
+    @Volatile
+    private var sealed_cache: Pair<Long, Boolean>? = null
+
+    private val change_listener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> mark_changed() }
+
+    init {
+        runCatching { delegate.registerOnSharedPreferenceChangeListener(change_listener) }
+    }
+
+    private fun mark_changed() {
+        sealed_generation.incrementAndGet()
+        sealed_cache = null
+    }
+
+    fun has_sealed_values(): Boolean {
+        val generation = sealed_generation.get()
+        sealed_cache?.let { (cached_generation, value) -> if (cached_generation == generation) return value }
+        val value = runCatching { delegate.all.values.any { LockSeal.is_sealed(it as? String) } }.getOrNull()
+            ?: return false
+        if (sealed_generation.get() == generation) sealed_cache = generation to value
+        return value
+    }
 
     fun drops_write(name: String): Boolean = !LockKeyHolder.is_open() && holds_sealed_value(name)
 
@@ -50,7 +73,11 @@ class SealedPrefs(
             editor.putString(name, LockSeal.seal(key, store, name, value))
             changed = true
         }
-        !changed || editor.commit()
+        try {
+            !changed || editor.commit()
+        } finally {
+            mark_changed()
+        }
     }
 
     fun unseal_all(lock_key: ByteArray? = null): Boolean =
@@ -66,7 +93,11 @@ class SealedPrefs(
             editor.putString(name, opened)
             changed = true
         }
-        return !changed || editor.commit()
+        return try {
+            !changed || editor.commit()
+        } finally {
+            mark_changed()
+        }
     }
 
     override fun getAll(): MutableMap<String, *> {
@@ -162,8 +193,22 @@ class SealedPrefs(
             inner.clear()
         }
 
-        override fun commit(): Boolean = inner.commit()
+        override fun commit(): Boolean {
+            mark_changed()
+            return try {
+                inner.commit()
+            } finally {
+                mark_changed()
+            }
+        }
 
-        override fun apply() = inner.apply()
+        override fun apply() {
+            mark_changed()
+            try {
+                inner.apply()
+            } finally {
+                mark_changed()
+            }
+        }
     }
 }

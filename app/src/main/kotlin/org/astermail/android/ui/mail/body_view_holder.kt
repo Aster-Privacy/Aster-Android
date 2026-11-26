@@ -94,13 +94,16 @@ internal class held_body(val measure: body_measure) {
 }
 
 internal fun release_body_view_later(view: mail_body_web_view) {
-    android.os.Handler(android.os.Looper.getMainLooper()).post {
+    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
         runCatching {
             (view.parent as? android.view.ViewGroup)?.removeView(view)
             view.release_body()
         }
-    }
+    }, BODY_VIEW_RELEASE_DELAY_MS)
 }
+
+internal const val BODY_VIEW_RELEASE_DELAY_MS =
+    org.astermail.android.ui.common.nav_anim_duration_ms + 200L
 
 internal class body_view_holder(capacity: Int = LIVE_BODY_VIEW_CAPACITY) {
     private var released = false
