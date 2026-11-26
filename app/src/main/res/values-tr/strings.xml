@@ -1998,7 +1998,7 @@
     <string name="auto_delete_spam_180">180 gün sonra</string>
     <string name="auto_delete_spam_365">365 gün sonra</string>
     <string name="auto_delete_trash">Çöp kutusunu şu süre sonra otomatik sil:</string>
-    <string name="auto_delete_trash_subtitle">Bu süreden eski Çöp Kutusu e-postaları kalıcı olarak silinir.</string>
+    <string name="auto_delete_trash_subtitle">E-postalar, Çöp Kutusu\'na taşındıktan bu süre sonra kalıcı olarak silinir.</string>
     <string name="auto_delete_spam_never">Asla (süresiz sakla)</string>
     <string name="emails_per_page">Sayfa başına e-posta</string>
     <string name="emails_per_page_subtitle">Gelen kutusu, arşiv ve diğer klasörlerde sayfa başına yüklenen e-posta sayısı</string>

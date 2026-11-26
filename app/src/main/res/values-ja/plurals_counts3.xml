@@ -26,7 +26,7 @@
         <item quantity="other">スパム内のアイテムは%1$d日後に自動的に削除されます。</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
-        <item quantity="other">ゴミ箱のアイテムは %1$d 日後に自動的に削除されます。</item>
+        <item quantity="other">メッセージはゴミ箱に移動してから %1$d 日後に自動的に削除されます。</item>
     </plurals>
     <plurals name="pending_deletion_body_days">
         <item quantity="other">お客様のアカウントは%1$d日後に削除されます。削除をキャンセルすると、アカウントを保持し、メールとサブスクリプションへのアクセスを復元できます。</item>

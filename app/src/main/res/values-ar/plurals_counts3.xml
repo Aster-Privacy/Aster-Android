@@ -65,12 +65,12 @@
         <item quantity="other">تُحذف العناصر في مجلد الرسائل المزعجة تلقائيًا بعد %1$d يوم.</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
-        <item quantity="zero">تُحذف العناصر في المهملات تلقائيًا بعد %1$d يوم.</item>
-        <item quantity="one">تُحذف العناصر في المهملات تلقائيًا بعد يوم واحد.</item>
-        <item quantity="two">تُحذف العناصر في المهملات تلقائيًا بعد يومين.</item>
-        <item quantity="few">تُحذف العناصر في المهملات تلقائيًا بعد %1$d أيام.</item>
-        <item quantity="many">تُحذف العناصر في المهملات تلقائيًا بعد %1$d يومًا.</item>
-        <item quantity="other">تُحذف العناصر في المهملات تلقائيًا بعد %1$d يوم.</item>
+        <item quantity="zero">تُحذف الرسائل تلقائيًا بعد %1$d يوم من نقلها إلى المهملات.</item>
+        <item quantity="one">تُحذف الرسائل تلقائيًا بعد يوم واحد من نقلها إلى المهملات.</item>
+        <item quantity="two">تُحذف الرسائل تلقائيًا بعد يومين من نقلها إلى المهملات.</item>
+        <item quantity="few">تُحذف الرسائل تلقائيًا بعد %1$d أيام من نقلها إلى المهملات.</item>
+        <item quantity="many">تُحذف الرسائل تلقائيًا بعد %1$d يومًا من نقلها إلى المهملات.</item>
+        <item quantity="other">تُحذف الرسائل تلقائيًا بعد %1$d يوم من نقلها إلى المهملات.</item>
     </plurals>
     <plurals name="pending_deletion_body_days">
         <item quantity="zero">من المقرر حذف حسابك خلال %1$d يوم. ألغِ الحذف للاحتفاظ بحسابك واستعادة الوصول إلى بريدك واشتراكك.</item>
