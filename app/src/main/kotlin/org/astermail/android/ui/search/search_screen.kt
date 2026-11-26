@@ -1576,8 +1576,9 @@ internal fun search_results_list(
                 ?.index
         }
     }
-    val drag_anchor_index = remember { androidx.compose.runtime.mutableIntStateOf(-1) }
-    val drag_last_index = remember { androidx.compose.runtime.mutableIntStateOf(-1) }
+    val drag_anchor_id = remember { mutableStateOf<String?>(null) }
+    val drag_last_id = remember { mutableStateOf<String?>(null) }
+    val drag_last_rows = remember { mutableStateOf<Any?>(null) }
     val drag_pre_selected = remember { mutableStateListOf<String>() }
     val drag_pointer_y = remember { androidx.compose.runtime.mutableFloatStateOf(-1f) }
     val drag_viewport_height = remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
@@ -1589,15 +1590,17 @@ internal fun search_results_list(
     }
 
     fun apply_drag_selection(y: Float) {
-        val anchor = drag_anchor_index.intValue
-        if (anchor < 0) return
-        val idx = index_at_offset(y) ?: return
-        if (idx == drag_last_index.intValue) return
-        drag_last_index.intValue = idx
+        val anchor_id = drag_anchor_id.value ?: return
+        val rows = live_threads
+        val current_id = index_at_offset(y)?.let { rows.getOrNull(it)?.newest?.id } ?: return
+        if (current_id == drag_last_id.value && rows === drag_last_rows.value) return
+        val anchor = rows.indexOfFirst { it.newest.id == anchor_id }
+        val idx = rows.indexOfFirst { it.newest.id == current_id }
+        if (anchor < 0 || idx < 0) return
+        drag_last_id.value = current_id
+        drag_last_rows.value = rows
         val target = LinkedHashSet(drag_pre_selected)
-        for (i in minOf(anchor, idx)..maxOf(anchor, idx)) {
-            live_threads.getOrNull(i)?.newest?.id?.let { target.add(it) }
-        }
+        for (i in minOf(anchor, idx)..maxOf(anchor, idx)) target.add(rows[i].newest.id)
         if (target != live_selected_set) {
             haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
             live_set_selection(target.toList())
@@ -1646,8 +1649,9 @@ internal fun search_results_list(
                             base.remove(id)
                             drag_pre_selected.clear()
                             drag_pre_selected.addAll(base)
-                            drag_anchor_index.intValue = idx
-                            drag_last_index.intValue = idx
+                            drag_anchor_id.value = id
+                            drag_last_id.value = id
+                            drag_last_rows.value = live_threads
                             drag_viewport_height.floatValue = size.height.toFloat()
                             drag_pointer_y.floatValue = offset.y
                             drag_selecting = true
@@ -1661,15 +1665,17 @@ internal fun search_results_list(
                     onDragEnd = {
                         drag_selecting = false
                         drag_pointer_y.floatValue = -1f
-                        drag_anchor_index.intValue = -1
-                        drag_last_index.intValue = -1
+                        drag_anchor_id.value = null
+                        drag_last_id.value = null
+                        drag_last_rows.value = null
                         drag_pre_selected.clear()
                     },
                     onDragCancel = {
                         drag_selecting = false
                         drag_pointer_y.floatValue = -1f
-                        drag_anchor_index.intValue = -1
-                        drag_last_index.intValue = -1
+                        drag_anchor_id.value = null
+                        drag_last_id.value = null
+                        drag_last_rows.value = null
                         drag_pre_selected.clear()
                     },
                 )

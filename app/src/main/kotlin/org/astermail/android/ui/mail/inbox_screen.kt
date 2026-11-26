@@ -1837,12 +1837,6 @@ fun InboxScreen(
         return key
     }
 
-    fun thread_index_at_offset(y: Float): Int? {
-        val id = thread_id_at_offset(y) ?: return null
-        val idx = visible_threads.indexOfFirst { it.thread_id == id }
-        return if (idx >= 0) idx else null
-    }
-
     var rows_settled by remember(current_folder) { mutableStateOf(false) }
     LaunchedEffect(current_folder, visible_threads.isEmpty()) {
         if (visible_threads.isEmpty()) return@LaunchedEffect
@@ -1859,8 +1853,9 @@ fun InboxScreen(
         }
     }
 
-    val drag_anchor_index = remember { androidx.compose.runtime.mutableIntStateOf(-1) }
-    val drag_last_index = remember { androidx.compose.runtime.mutableIntStateOf(-1) }
+    val drag_anchor_id = remember { mutableStateOf<String?>(null) }
+    val drag_last_id = remember { mutableStateOf<String?>(null) }
+    val drag_last_rows = remember { mutableStateOf<List<ThreadRow>?>(null) }
     val drag_pre_selected = remember { mutableStateListOf<String>() }
     val drag_pointer_y = remember { androidx.compose.runtime.mutableFloatStateOf(-1f) }
     val drag_viewport_height = remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
@@ -1876,17 +1871,19 @@ fun InboxScreen(
     }
 
     fun apply_drag_selection(y: Float) {
-        val anchor = drag_anchor_index.intValue
-        if (anchor < 0) return
-        val idx = thread_index_at_offset(y) ?: return
-        if (idx == drag_last_index.intValue) return
-        drag_last_index.intValue = idx
+        val anchor_id = drag_anchor_id.value ?: return
+        val current_id = thread_id_at_offset(y) ?: return
+        val rows = visible_threads
+        if (current_id == drag_last_id.value && rows === drag_last_rows.value) return
+        val anchor = rows.indexOfFirst { it.thread_id == anchor_id }
+        val idx = rows.indexOfFirst { it.thread_id == current_id }
+        if (anchor < 0 || idx < 0) return
+        drag_last_id.value = current_id
+        drag_last_rows.value = rows
         val lo = minOf(anchor, idx)
         val hi = maxOf(anchor, idx)
         val target = LinkedHashSet(drag_pre_selected)
-        for (i in lo..hi) {
-            visible_threads.getOrNull(i)?.thread_id?.let { target.add(it) }
-        }
+        for (i in lo..hi) target.add(rows[i].thread_id)
         if (target.size != selected_ids.size || !target.containsAll(selected_ids)) {
             drag_haptic()
             selected_ids.clear()
@@ -2809,10 +2806,10 @@ fun InboxScreen(
                                             drag_travel = (change.position - down.position).getDistance()
                                             if (drag_travel < drag_start_slop) continue
                                             if (!drag_started) {
-                                                val anchor_index = visible_threads.indexOfFirst { it.thread_id == anchor_id }
-                                                if (anchor_index < 0) continue
-                                                drag_anchor_index.intValue = anchor_index
-                                                drag_last_index.intValue = anchor_index
+                                                if (visible_threads.none { it.thread_id == anchor_id }) continue
+                                                drag_anchor_id.value = anchor_id
+                                                drag_last_id.value = anchor_id
+                                                drag_last_rows.value = visible_threads
                                                 drag_pre_selected.clear()
                                                 drag_pre_selected.addAll(selected_ids)
                                                 drag_viewport_height.floatValue = size.height.toFloat()
@@ -2826,8 +2823,9 @@ fun InboxScreen(
                                     } finally {
                                         drag_selecting = false
                                         drag_pointer_y.floatValue = -1f
-                                        drag_anchor_index.intValue = -1
-                                        drag_last_index.intValue = -1
+                                        drag_anchor_id.value = null
+                                        drag_last_id.value = null
+                                        drag_last_rows.value = null
                                         drag_pre_selected.clear()
                                     }
                                 }
