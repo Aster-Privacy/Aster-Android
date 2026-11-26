@@ -929,7 +929,7 @@ fun ContactsScreen(
                                         section_letter_header(letter = letter, is_first_group = group_index == 0)
                                     }
                                 }
-                                itemsIndexed(group, key = { _, c -> c.id }) { index, c ->
+                                itemsIndexed(group, key = { _, c -> c.id }, contentType = { _, _ -> "contact_row" }) { index, c ->
                                     Box(modifier = if (query.isBlank()) Modifier.animateItem() else Modifier) {
                                     ContactRow(
                                         contact = c,
@@ -1407,7 +1407,7 @@ private fun trash_pane(
             modifier = Modifier.lazy_top_fade(trash_list_state),
             contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = 88.dp + bottom_inset),
         ) {
-            itemsIndexed(contacts, key = { _, c -> c.id }) { index, contact ->
+            itemsIndexed(contacts, key = { _, c -> c.id }, contentType = { _, _ -> "contact_row" }) { index, contact ->
                 Row(
                     modifier = contact_card_modifier(
                         is_first = index == 0,
@@ -1509,7 +1509,7 @@ private fun groups_pane(
         modifier = modifier.lazy_top_fade(groups_list_state),
         contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = 88.dp + bottom_inset),
     ) {
-        itemsIndexed(groups, key = { _, group -> group.id }) { index, group ->
+        itemsIndexed(groups, key = { _, group -> group.id }, contentType = { _, _ -> "contact_group_row" }) { index, group ->
             val count = count_of(group)
             val members_label = context.resources.getQuantityString(
                 R.plurals.group_members_plural,

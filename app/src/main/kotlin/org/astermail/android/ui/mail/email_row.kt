@@ -465,7 +465,16 @@ fun EmailRow(
                     trailing_controls()
                 }
             }
-            alias_indicator_store.label_for_delivery(email.routing_token, email.received_on)?.let {
+            val alias_label = remember(
+                email.routing_token,
+                email.received_on,
+                alias_indicator_store.enabled,
+                alias_indicator_store.token_labels,
+                alias_indicator_store.labels,
+            ) {
+                alias_indicator_store.label_for_delivery(email.routing_token, email.received_on)
+            }
+            alias_label?.let {
                 Spacer(Modifier.height(4.dp))
                 Row(
                     modifier = Modifier
@@ -867,7 +876,16 @@ fun ThreadInboxRow(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    alias_indicator_store.label_for_delivery(email.routing_token, email.received_on)?.let {
+                    val alias_label = remember(
+                        email.routing_token,
+                        email.received_on,
+                        alias_indicator_store.enabled,
+                        alias_indicator_store.token_labels,
+                        alias_indicator_store.labels,
+                    ) {
+                        alias_indicator_store.label_for_delivery(email.routing_token, email.received_on)
+                    }
+                    alias_label?.let {
                         Spacer(Modifier.width(6.dp))
                         alias_chip(it, modifier = Modifier.widthIn(max = 148.dp))
                     }
@@ -945,27 +963,38 @@ fun ThreadInboxRow(
     }
 }
 
+private val inbox_bidi_ltr_style = TextStyle(textDirection = TextDirection.Content, textAlign = TextAlign.Left)
+
+private val inbox_bidi_rtl_style = TextStyle(textDirection = TextDirection.Content, textAlign = TextAlign.Right)
+
 @Composable
-internal fun inbox_bidi_line_style(): TextStyle = TextStyle(
-    textDirection = TextDirection.Content,
-    textAlign = if (LocalLayoutDirection.current == LayoutDirection.Rtl) TextAlign.Right else TextAlign.Left,
-)
+internal fun inbox_bidi_line_style(): TextStyle =
+    if (LocalLayoutDirection.current == LayoutDirection.Rtl) inbox_bidi_rtl_style else inbox_bidi_ltr_style
+
+@Composable
+private fun inbox_line_style(base: TextStyle, font_size: androidx.compose.ui.unit.TextUnit, bidi: Boolean): TextStyle {
+    val line = if (bidi) inbox_bidi_line_style() else null
+    return remember(base, font_size, line) {
+        val sized = base.merge(TextStyle(fontSize = font_size))
+        if (line != null) sized.merge(line) else sized
+    }
+}
 
 @Composable
 internal fun inbox_sender_text_style(): TextStyle =
-    MaterialTheme.typography.bodyLarge.merge(TextStyle(fontSize = 16.sp)).merge(inbox_bidi_line_style())
+    inbox_line_style(MaterialTheme.typography.bodyLarge, 16.sp, bidi = true)
 
 @Composable
 internal fun inbox_time_text_style(): TextStyle =
-    MaterialTheme.typography.labelSmall.merge(TextStyle(fontSize = 13.sp))
+    inbox_line_style(MaterialTheme.typography.labelSmall, 13.sp, bidi = false)
 
 @Composable
 internal fun inbox_subject_text_style(): TextStyle =
-    MaterialTheme.typography.bodyMedium.merge(TextStyle(fontSize = 15.sp)).merge(inbox_bidi_line_style())
+    inbox_line_style(MaterialTheme.typography.bodyMedium, 15.sp, bidi = true)
 
 @Composable
 internal fun inbox_preview_text_style(): TextStyle =
-    MaterialTheme.typography.bodySmall.merge(TextStyle(fontSize = 14.sp)).merge(inbox_bidi_line_style())
+    inbox_line_style(MaterialTheme.typography.bodySmall, 14.sp, bidi = true)
 
 internal val inbox_star_slot_size = 32.dp
 
@@ -1027,12 +1056,24 @@ internal val inbox_group_corner = 18.dp
 internal val inbox_group_inner_corner = 6.dp
 internal val inbox_group_split = 3.dp
 
-internal fun inbox_group_shape(is_first: Boolean, is_last: Boolean): Shape = RoundedCornerShape(
+private fun build_inbox_group_shape(is_first: Boolean, is_last: Boolean): Shape = RoundedCornerShape(
     topStart = if (is_first) inbox_group_corner else inbox_group_inner_corner,
     topEnd = if (is_first) inbox_group_corner else inbox_group_inner_corner,
     bottomStart = if (is_last) inbox_group_corner else inbox_group_inner_corner,
     bottomEnd = if (is_last) inbox_group_corner else inbox_group_inner_corner,
 )
+
+private val inbox_group_shape_single = build_inbox_group_shape(is_first = true, is_last = true)
+private val inbox_group_shape_top = build_inbox_group_shape(is_first = true, is_last = false)
+private val inbox_group_shape_bottom = build_inbox_group_shape(is_first = false, is_last = true)
+private val inbox_group_shape_middle = build_inbox_group_shape(is_first = false, is_last = false)
+
+internal fun inbox_group_shape(is_first: Boolean, is_last: Boolean): Shape = when {
+    is_first && is_last -> inbox_group_shape_single
+    is_first -> inbox_group_shape_top
+    is_last -> inbox_group_shape_bottom
+    else -> inbox_group_shape_middle
+}
 
 private fun shift_lightness(base: Color, delta: Float, saturation_boost: Float): Color {
     val hsl = FloatArray(3)
@@ -1048,7 +1089,18 @@ private fun lightness_of(color: Color): Float {
     return hsl[2]
 }
 
-internal fun inbox_card_read_color(colors: AsterSemanticColors): Color =
+private class CardReadColorEntry(
+    val is_glass: Boolean,
+    val is_dark: Boolean,
+    val bg_primary: Color,
+    val bg_card: Color,
+    val value: Color,
+)
+
+@Volatile
+private var card_read_color_entry: CardReadColorEntry? = null
+
+private fun compute_inbox_card_read_color(colors: AsterSemanticColors): Color =
     if (colors.is_glass) {
         colors.bg_card.copy(alpha = 1f)
     } else if (colors.is_dark) {
@@ -1056,6 +1108,22 @@ internal fun inbox_card_read_color(colors: AsterSemanticColors): Color =
     } else {
         shift_lightness(colors.bg_primary, -0.04f, 1f)
     }
+
+internal fun inbox_card_read_color(colors: AsterSemanticColors): Color {
+    val cached = card_read_color_entry
+    if (
+        cached != null &&
+        cached.is_glass == colors.is_glass &&
+        cached.is_dark == colors.is_dark &&
+        cached.bg_primary == colors.bg_primary &&
+        cached.bg_card == colors.bg_card
+    ) {
+        return cached.value
+    }
+    val value = compute_inbox_card_read_color(colors)
+    card_read_color_entry = CardReadColorEntry(colors.is_glass, colors.is_dark, colors.bg_primary, colors.bg_card, value)
+    return value
+}
 
 internal fun inbox_card_unread_color(colors: AsterSemanticColors): Color =
     inbox_card_read_color(colors)

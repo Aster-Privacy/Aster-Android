@@ -48,7 +48,7 @@ import org.astermail.android.storage.AccountStore
 import org.astermail.android.ui.mail.avatar_colors_for
 import org.astermail.android.ui.mail.avatar_key_for
 import org.astermail.android.ui.mail.avatar_initial_style
-import org.astermail.android.ui.mail.decode_avatar_model
+import org.astermail.android.ui.mail.remember_avatar_model
 import org.astermail.android.ui.mail.initial_for
 
 @Composable
@@ -88,23 +88,25 @@ fun current_user_avatar(
         }
         if (url != null) {
             val cache_key = remember(url) { stable_cache_key(url) }
-            val model = remember(url) { decode_avatar_model(url) }
-            val request = remember(cache_key, context, model) {
-                ImageRequest.Builder(context)
-                    .data(model)
-                    .memoryCacheKey(cache_key)
-                    .placeholderMemoryCacheKey(cache_key)
-                    .diskCacheKey(cache_key)
-                    .crossfade(false)
-                    .build()
+            val model = remember_avatar_model(url)
+            if (model != null) {
+                val request = remember(cache_key, context, model) {
+                    ImageRequest.Builder(context)
+                        .data(model)
+                        .memoryCacheKey(cache_key)
+                        .placeholderMemoryCacheKey(cache_key)
+                        .diskCacheKey(cache_key)
+                        .crossfade(false)
+                        .build()
+                }
+                AsyncImage(
+                    model = request,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    onState = { state -> loaded = state is AsyncImagePainter.State.Success },
+                    modifier = Modifier.size(size).clip(CircleShape),
+                )
             }
-            AsyncImage(
-                model = request,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                onState = { state -> loaded = state is AsyncImagePainter.State.Success },
-                modifier = Modifier.size(size).clip(CircleShape),
-            )
         }
     }
 }

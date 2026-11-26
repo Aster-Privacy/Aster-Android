@@ -125,7 +125,24 @@ private fun is_neutral_light(label: Color, is_dark: Boolean): Boolean {
     return is_dark && hsl.saturation <= chip_neutral_max_saturation && hsl.lightness >= chip_neutral_min_lightness
 }
 
+private data class ChipColorKey(val label: Color, val surface: Color, val is_dark: Boolean)
+
+private const val chip_color_cache_limit = 256
+
+private val chip_background_cache = object : LinkedHashMap<ChipColorKey, Color>(64, 0.75f, true) {
+    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<ChipColorKey, Color>?): Boolean =
+        size > chip_color_cache_limit
+}
+
 internal fun chip_background(label: Color, surface: Color, is_dark: Boolean): Color {
+    val key = ChipColorKey(label, surface, is_dark)
+    synchronized(chip_background_cache) { chip_background_cache[key] }?.let { return it }
+    val value = compute_chip_background(label, surface, is_dark)
+    synchronized(chip_background_cache) { chip_background_cache[key] = value }
+    return value
+}
+
+private fun compute_chip_background(label: Color, surface: Color, is_dark: Boolean): Color {
     if (is_neutral_light(label, is_dark)) return mix(surface, label, 0.12f)
     val base = to_hsl(label)
     val saturation = if (base.saturation <= 0.04f) {
