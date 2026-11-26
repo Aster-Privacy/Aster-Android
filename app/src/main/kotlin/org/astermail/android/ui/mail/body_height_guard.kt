@@ -59,6 +59,8 @@ internal fun keeps_inline_images(
 internal const val pending_send_phase_queued = 0
 internal const val pending_send_phase_sending = 1
 internal const val pending_send_phase_sent = 2
+internal const val pending_send_phase_failed = 3
+internal const val pending_send_phase_waiting = 4
 
 internal fun pending_send_phase(sent: Boolean, send_at_ms: Long?, now_ms: Long): Pair<Int, Int> = when {
     sent -> pending_send_phase_sent to 0
@@ -66,6 +68,18 @@ internal fun pending_send_phase(sent: Boolean, send_at_ms: Long?, now_ms: Long):
         pending_send_phase_queued to ((send_at_ms - now_ms + 999L) / 1000L).toInt()
     else -> pending_send_phase_sending to 0
 }
+
+internal fun pending_send_display_phase(send_status: String?, send_at_ms: Long?, now_ms: Long): Pair<Int, Int> =
+    when (send_status) {
+        org.astermail.android.mail.OPTIMISTIC_FAILED_STATUS -> pending_send_phase_failed to 0
+        org.astermail.android.mail.OPTIMISTIC_WAITING_STATUS -> pending_send_phase_waiting to 0
+        else -> pending_send_phase(send_status == org.astermail.android.mail.OPTIMISTIC_SENT_STATUS, send_at_ms, now_ms)
+    }
+
+internal fun pending_send_counts_down(send_status: String?): Boolean =
+    send_status != org.astermail.android.mail.OPTIMISTIC_SENT_STATUS &&
+        send_status != org.astermail.android.mail.OPTIMISTIC_FAILED_STATUS &&
+        send_status != org.astermail.android.mail.OPTIMISTIC_WAITING_STATUS
 
 internal fun thread_item_keys(ids: List<String>, aliases: Map<String, String>): List<String> {
     if (aliases.isEmpty()) return ids

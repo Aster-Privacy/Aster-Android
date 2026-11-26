@@ -29,12 +29,50 @@ import org.astermail.android.api.mail.ThreadMessageItem
 const val OPTIMISTIC_SEND_ID_PREFIX = "pending_send_"
 const val OPTIMISTIC_SEND_STATUS = "sending"
 const val OPTIMISTIC_SENT_STATUS = "sent"
+const val OPTIMISTIC_FAILED_STATUS = "pending_failed"
+const val OPTIMISTIC_WAITING_STATUS = "pending_offline"
+const val OPTIMISTIC_ATTACHMENT_ID_PREFIX = "pending_attachment_"
 const val OPTIMISTIC_SEND_CLOCK_SKEW_MS = 15_000L
 const val OPTIMISTIC_SEND_LINGER_MS = 600_000L
 
 fun is_optimistic_send_id(id: String): Boolean = id.startsWith(OPTIMISTIC_SEND_ID_PREFIX)
 
 fun optimistic_send_message_id(pending_id: String): String = OPTIMISTIC_SEND_ID_PREFIX + pending_id
+
+fun optimistic_send_pending_id(message_id: String): String? =
+    message_id.takeIf { is_optimistic_send_id(it) }?.removePrefix(OPTIMISTIC_SEND_ID_PREFIX)?.takeIf { it.isNotBlank() }
+
+fun optimistic_attachment_id(pending_id: String, index: Int): String =
+    "$OPTIMISTIC_ATTACHMENT_ID_PREFIX${pending_id}_$index"
+
+fun parse_optimistic_attachment_id(id: String): Pair<String, Int>? {
+    if (!id.startsWith(OPTIMISTIC_ATTACHMENT_ID_PREFIX)) return null
+    val rest = id.removePrefix(OPTIMISTIC_ATTACHMENT_ID_PREFIX)
+    val pending_id = rest.substringBeforeLast('_', "")
+    val index = rest.substringAfterLast('_', "").toIntOrNull() ?: return null
+    if (pending_id.isBlank() || index < 0) return null
+    return pending_id to index
+}
+
+fun is_optimistic_send_status(status: String?): Boolean =
+    status == OPTIMISTIC_SEND_STATUS ||
+        status == OPTIMISTIC_SENT_STATUS ||
+        status == OPTIMISTIC_FAILED_STATUS ||
+        status == OPTIMISTIC_WAITING_STATUS
+
+enum class OptimisticSendPhase { SENDING, WAITING, FAILED }
+
+fun optimistic_send_attachment_files(
+    attachments: List<org.astermail.android.api.send.ExternalAttachmentPayload>,
+): List<DraftAttachmentFile> =
+    without_inline_images(attachments).map { att ->
+        DraftAttachmentFile(
+            path = "",
+            name = att.filename,
+            size_bytes = att.size_bytes.coerceAtLeast(0L),
+            mime_type = att.content_type,
+        )
+    }
 
 data class OptimisticSend(
     val pending_id: String,
@@ -46,7 +84,15 @@ data class OptimisticSend(
     val committed: Boolean = false,
     val mail_item_id: String? = null,
     val send_at_ms: Long = started_at_ms,
+    val phase: OptimisticSendPhase = OptimisticSendPhase.SENDING,
 )
+
+fun optimistic_send_status(send: OptimisticSend): String = when {
+    send.committed -> OPTIMISTIC_SENT_STATUS
+    send.phase == OptimisticSendPhase.FAILED -> OPTIMISTIC_FAILED_STATUS
+    send.phase == OptimisticSendPhase.WAITING -> OPTIMISTIC_WAITING_STATUS
+    else -> OPTIMISTIC_SEND_STATUS
+}
 
 class OptimisticSendStore {
     private val _sends = MutableStateFlow<List<OptimisticSend>>(emptyList())
@@ -84,6 +130,25 @@ class OptimisticSendStore {
         return marked
     }
 
+    fun mark_phase(pending_id: String, phase: OptimisticSendPhase, send_at_ms: Long? = null): Boolean {
+        var marked = false
+        _sends.update { list ->
+            marked = false
+            list.map { send ->
+                if (send.pending_id == pending_id && !send.committed) {
+                    marked = true
+                    send.copy(phase = phase, send_at_ms = send_at_ms ?: send.send_at_ms)
+                } else {
+                    send
+                }
+            }
+        }
+        return marked
+    }
+
+    fun pending_ids_in(phase: OptimisticSendPhase): List<String> =
+        _sends.value.filter { !it.committed && it.phase == phase }.map { it.pending_id }
+
     fun clear() {
         _sends.value = emptyList()
     }
@@ -100,6 +165,7 @@ fun build_optimistic_send_message(
     subject: String,
     body_html: String,
     has_attachments: Boolean,
+    attachments: List<DraftAttachmentFile> = emptyList(),
 ): ThreadMessageDecrypted {
     val id = optimistic_send_message_id(pending_id)
     val ts = java.time.Instant.ofEpochMilli(started_at_ms).toString()
@@ -110,7 +176,7 @@ fun build_optimistic_send_message(
         message_ts = ts,
         created_at = ts,
         is_read = true,
-        has_attachments = has_attachments,
+        has_attachments = has_attachments || attachments.isNotEmpty(),
     )
     val recipients = to.filter { it.isNotBlank() }
     return ThreadMessageDecrypted(
@@ -127,9 +193,10 @@ fun build_optimistic_send_message(
         to_addresses = recipients,
         cc_addresses = cc.filter { it.isNotBlank() },
         bcc_addresses = bcc.filter { it.isNotBlank() },
-        has_attachments = has_attachments,
+        has_attachments = has_attachments || attachments.isNotEmpty(),
         subject = subject,
         own_sealed = true,
+        draft_attachments = attachments,
     )
 }
 
@@ -233,7 +300,7 @@ fun optimistic_sends_for_thread(
             send.message.copy(
                 pending_send_at_ms = send.send_at_ms,
                 raw_item = send.message.raw_item.copy(
-                    send_status = if (send.committed) OPTIMISTIC_SENT_STATUS else OPTIMISTIC_SEND_STATUS,
+                    send_status = optimistic_send_status(send),
                 ),
             )
         }

@@ -3858,4 +3858,6 @@
     <string name="search_match_previous">Poprzednie dopasowanie</string>
     <string name="search_match_next">Następne dopasowanie</string>
     <string name="search_match_clear">Wyczyść wyróżnienia</string>
+    <string name="pending_send_failed">Nie udało się wysłać tej wiadomości.</string>
+    <string name="pending_send_waiting">Oczekiwanie na połączenie. Ta wiadomość zostanie wysłana, gdy wrócisz do trybu online.</string>
 </resources>

@@ -3212,6 +3212,13 @@ class MailViewModel @Inject constructor(
         on_result: (Result<Pair<MessageAttachment, ByteArray>>) -> Unit,
     ) {
         viewModelScope.launch(Dispatchers.IO) {
+            val pending = parse_optimistic_attachment_id(attachment.id)
+            if (pending != null) {
+                val result = repository.pending_send_attachment_bytes(pending.first, pending.second)
+                    .map { bytes -> attachment to bytes }
+                kotlinx.coroutines.withContext(Dispatchers.Main) { on_result(result) }
+                return@launch
+            }
             val inline = if (!attachment.encrypted_data.isNullOrBlank() && !attachment.data_nonce.isNullOrBlank()) {
                 runCatching {
                     val bytes = repository.decrypt_attachment_data(
@@ -6877,6 +6884,7 @@ class MailViewModel @Inject constructor(
             subject = subject,
             body_html = body_html,
             has_attachments = attachments.isNotEmpty(),
+            attachments = attachments,
         )
         var delivered = false
         var mail_item_id: String? = null
@@ -6976,6 +6984,11 @@ class MailViewModel @Inject constructor(
 
     fun retry_failed_send(pending_id: String, allow_non_post_quantum: Boolean = false) {
         viewModelScope.launch { runCatching { repository.retry_failed_send(pending_id, allow_non_post_quantum) } }
+    }
+
+    fun retry_pending_send(message_id: String) {
+        val pending_id = optimistic_send_pending_id(message_id) ?: return
+        retry_failed_send(pending_id)
     }
 
     fun trust_new_keys_and_retry(pending_id: String, recipients: List<String>) {

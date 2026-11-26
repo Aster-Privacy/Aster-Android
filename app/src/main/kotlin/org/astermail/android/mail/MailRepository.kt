@@ -43,6 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -1755,6 +1756,10 @@ class MailRepository @Inject constructor(
             app_scope.launch { runCatching { reconcile_pending_sends() } }
             app_scope.launch { runCatching { drain_pending_actions_now() } }
         }
+        app_scope.launch {
+            val online = runCatching { network_online }.getOrNull() ?: return@launch
+            online.drop(1).collect { up -> if (up) runCatching { retry_waiting_sends() } }
+        }
     }
 
     suspend fun schedule_send_with_undo(
@@ -1797,6 +1802,7 @@ class MailRepository @Inject constructor(
             subject = subject,
             body_html = body_html,
             has_attachments = attachments.isNotEmpty(),
+            attachments = optimistic_send_attachment_files(attachments),
         )
         val persisted = app_scope.async {
             runCatching {
@@ -2025,18 +2031,84 @@ class MailRepository @Inject constructor(
         expected_owner: String? = null,
         attempt: Int = 0,
     ): PendingSendOutcome {
+        if (optimistic_send_store.get(pending_id)?.phase != OptimisticSendPhase.SENDING) {
+            optimistic_send_store.mark_phase(pending_id, OptimisticSendPhase.SENDING)
+        }
         val outcome = run_pending_send_inner(pending_id, expected_owner, attempt)
         when (outcome) {
-            PendingSendOutcome.FAILED -> optimistic_send_store.remove(pending_id)
+            PendingSendOutcome.FAILED -> optimistic_send_store.mark_phase(pending_id, failed_phase_for(pending_id))
             PendingSendOutcome.DEFERRED -> if (park_deferred_send(pending_id)) {
-                optimistic_send_store.remove(pending_id)
+                optimistic_send_store.mark_phase(pending_id, OptimisticSendPhase.WAITING)
             }
+            PendingSendOutcome.WAIT_FOR_NETWORK -> optimistic_send_store.mark_phase(pending_id, OptimisticSendPhase.WAITING)
             PendingSendOutcome.GONE -> if (optimistic_send_store.get(pending_id)?.committed == false) {
                 optimistic_send_store.remove(pending_id)
             }
             else -> Unit
         }
         return outcome
+    }
+
+    private fun failed_phase_for(pending_id: String): OptimisticSendPhase =
+        if (stored_failure_reason(pending_id) == SendFailureReason.CONNECTION) {
+            OptimisticSendPhase.WAITING
+        } else {
+            OptimisticSendPhase.FAILED
+        }
+
+    private suspend fun retry_waiting_sends() {
+        val account_id = session_key_store.get_user_id() ?: return
+        optimistic_send_store.sends.value
+            .filter { !it.committed && it.phase == OptimisticSendPhase.WAITING && it.account_id == account_id }
+            .forEach { send -> retry_failed_send(send.pending_id) }
+    }
+
+    suspend fun pending_send_attachment_bytes(pending_id: String, index: Int): Result<ByteArray> = runCatching {
+        val account_id = session_key_store.get_user_id()
+        val row = pending_send_dao.get_readable(pending_id) ?: throw java.io.FileNotFoundException("pending send gone")
+        if (row.account_id != null && row.account_id != account_id) throw SecurityException("pending send owner mismatch")
+        val attachment = without_inline_images(load_outbox_attachments(row.attachments_json)).getOrNull(index)
+            ?: throw java.io.FileNotFoundException("pending attachment gone")
+        java.util.Base64.getMimeDecoder().decode(attachment.data)
+    }
+
+    private fun restore_optimistic_send(row: PendingSendEntity) {
+        val token = row.thread_token?.takeIf { it.isNotBlank() } ?: return
+        if (optimistic_send_store.get(row.id) != null) return
+        fun addresses(raw: String): List<String> =
+            runCatching { outbox_json.decodeFromString<List<String>>(raw) }.getOrDefault(emptyList())
+        val to = addresses(row.to_json)
+        val cc = addresses(row.cc_json)
+        val bcc = addresses(row.bcc_json)
+        if (to.isEmpty() && cc.isEmpty() && bcc.isEmpty()) return
+        val files = runCatching {
+            optimistic_send_attachment_files(load_outbox_attachments(row.attachments_json))
+        }.getOrDefault(emptyList())
+        val phase = if (row.status == STATUS_FAILED) failed_phase_for(row.id) else OptimisticSendPhase.SENDING
+        optimistic_send_store.add(
+            OptimisticSend(
+                pending_id = row.id,
+                account_id = row.account_id ?: session_key_store.get_user_id(),
+                thread_token = token,
+                reply_to_id = null,
+                started_at_ms = row.created_at_ms,
+                send_at_ms = row.fire_at_ms,
+                phase = phase,
+                message = build_optimistic_send_message(
+                    pending_id = row.id,
+                    started_at_ms = row.created_at_ms,
+                    sender_email = row.sender_email,
+                    sender_display_name = row.sender_display_name,
+                    to = to,
+                    cc = cc,
+                    bcc = bcc,
+                    subject = row.subject,
+                    body_html = row.body_html,
+                    has_attachments = files.isNotEmpty(),
+                    attachments = files,
+                ),
+            ),
+        )
     }
 
     private suspend fun park_deferred_send(pending_id: String): Boolean {
@@ -2066,6 +2138,7 @@ class MailRepository @Inject constructor(
         subject: String,
         body_html: String,
         has_attachments: Boolean,
+        attachments: List<DraftAttachmentFile> = emptyList(),
     ): Boolean {
         val token = thread_token?.takeIf { it.isNotBlank() }
         val parent = reply_to_id?.takeIf { it.isNotBlank() }
@@ -2089,6 +2162,7 @@ class MailRepository @Inject constructor(
                     subject = subject,
                     body_html = body_html,
                     has_attachments = has_attachments,
+                    attachments = attachments,
                 ),
             ),
         )
@@ -2106,6 +2180,7 @@ class MailRepository @Inject constructor(
         subject: String,
         body_html: String,
         has_attachments: Boolean,
+        attachments: List<ExternalAttachmentPayload> = emptyList(),
     ): String? {
         val pending_id = java.util.UUID.randomUUID().toString()
         val started_at_ms = System.currentTimeMillis()
@@ -2123,6 +2198,7 @@ class MailRepository @Inject constructor(
             subject = subject,
             body_html = body_html,
             has_attachments = has_attachments,
+            attachments = optimistic_send_attachment_files(attachments),
         )
         return pending_id.takeIf { added }
     }
@@ -2532,6 +2608,7 @@ class MailRepository @Inject constructor(
         val rows = pending_rows_for_current_account() ?: return
         val now = System.currentTimeMillis()
         for (row in rows) {
+            runCatching { restore_optimistic_send(row) }
             if (row.status == STATUS_FAILED) continue
             val remaining = (row.fire_at_ms - now).coerceAtLeast(0L)
             runCatching { UndoSendWorker.enqueue_if_absent(context, row.id, remaining, row.account_id) }
@@ -2623,6 +2700,7 @@ class MailRepository @Inject constructor(
             runCatching { pending_send_dao.mark_pending(pending_id) }
         }
         forget_send_failure(pending_id)
+        optimistic_send_store.mark_phase(pending_id, OptimisticSendPhase.SENDING, send_at_ms = System.currentTimeMillis())
         runCatching { UndoSendWorker.enqueue(context, pending_id, 0L, row.account_id) }
         settle_send_problem()
     }
@@ -2633,6 +2711,7 @@ class MailRepository @Inject constructor(
             runCatching { UndoSendWorker.cancel(context, pending_id) }
             runCatching { pending_send_dao.delete_by_id(pending_id) }
             delete_outbox_attachments(pending_id)
+            optimistic_send_store.remove(pending_id)
         }
         forget_send_failure(pending_id)
         settle_send_problem()
@@ -2653,6 +2732,7 @@ class MailRepository @Inject constructor(
             if (row.status != STATUS_FAILED) continue
             runCatching { pending_send_dao.mark_pending(row.id) }
             forget_send_failure(row.id)
+            optimistic_send_store.mark_phase(row.id, OptimisticSendPhase.SENDING, send_at_ms = System.currentTimeMillis())
             runCatching { UndoSendWorker.enqueue(context, row.id, 0L, row.account_id) }
         }
         _failed_send_count.value = 0
@@ -2667,6 +2747,7 @@ class MailRepository @Inject constructor(
             runCatching { UndoSendWorker.cancel(context, row.id) }
             runCatching { pending_send_dao.delete_by_id(row.id) }
             delete_outbox_attachments(row.id)
+            optimistic_send_store.remove(row.id)
             forget_send_failure(row.id)
         }
         _failed_send_count.value = 0

@@ -83,6 +83,30 @@ class BodyHeightGuardTest {
     }
 
     @Test
+    fun a_failed_or_waiting_send_shows_its_state_without_a_countdown() {
+        assertEquals(
+            pending_send_phase_failed to 0,
+            pending_send_display_phase(org.astermail.android.mail.OPTIMISTIC_FAILED_STATUS, 10_000L, 0L),
+        )
+        assertEquals(
+            pending_send_phase_waiting to 0,
+            pending_send_display_phase(org.astermail.android.mail.OPTIMISTIC_WAITING_STATUS, 10_000L, 0L),
+        )
+        assertEquals(
+            pending_send_phase_queued to 10,
+            pending_send_display_phase(org.astermail.android.mail.OPTIMISTIC_SEND_STATUS, 10_000L, 0L),
+        )
+        assertEquals(
+            pending_send_phase_sent to 0,
+            pending_send_display_phase(org.astermail.android.mail.OPTIMISTIC_SENT_STATUS, 10_000L, 0L),
+        )
+        assertTrue(pending_send_counts_down(org.astermail.android.mail.OPTIMISTIC_SEND_STATUS))
+        assertFalse(pending_send_counts_down(org.astermail.android.mail.OPTIMISTIC_FAILED_STATUS))
+        assertFalse(pending_send_counts_down(org.astermail.android.mail.OPTIMISTIC_WAITING_STATUS))
+        assertFalse(pending_send_counts_down(org.astermail.android.mail.OPTIMISTIC_SENT_STATUS))
+    }
+
+    @Test
     fun thread_keys_take_an_alias_only_when_it_is_free() {
         assertEquals(listOf("a", "p1"), thread_item_keys(listOf("a", "srv"), mapOf("srv" to "p1")))
         assertEquals(listOf("srv", "p1"), thread_item_keys(listOf("srv", "p1"), mapOf("srv" to "p1")))

@@ -3925,4 +3925,6 @@
     <string name="search_match_previous">التطابق السابق</string>
     <string name="search_match_next">التطابق التالي</string>
     <string name="search_match_clear">مسح التمييز</string>
+    <string name="pending_send_failed">تعذّر إرسال هذه الرسالة.</string>
+    <string name="pending_send_waiting">في انتظار الاتصال. سيتم إرسال هذه الرسالة عند عودتك إلى الإنترنت.</string>
 </resources>

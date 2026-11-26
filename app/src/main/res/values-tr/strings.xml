@@ -3790,4 +3790,6 @@
     <string name="search_match_previous">Önceki eşleşme</string>
     <string name="search_match_next">Sonraki eşleşme</string>
     <string name="search_match_clear">Vurguları temizle</string>
+    <string name="pending_send_failed">Bu ileti gönderilemedi.</string>
+    <string name="pending_send_waiting">Bağlantı bekleniyor. Tekrar çevrimiçi olduğunuzda bu ileti gönderilecek.</string>
 </resources>

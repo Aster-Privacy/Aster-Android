@@ -3845,4 +3845,6 @@
     <string name="search_match_previous">Occurrence précédente</string>
     <string name="search_match_next">Occurrence suivante</string>
     <string name="search_match_clear">Effacer le surlignage</string>
+    <string name="pending_send_failed">Impossible d’envoyer ce message.</string>
+    <string name="pending_send_waiting">En attente de connexion. Ce message sera envoyé dès que vous serez de nouveau en ligne.</string>
 </resources>

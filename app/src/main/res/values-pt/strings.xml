@@ -3816,4 +3816,6 @@
     <string name="search_match_previous">Correspondência anterior</string>
     <string name="search_match_next">Próxima correspondência</string>
     <string name="search_match_clear">Limpar destaques</string>
+    <string name="pending_send_failed">Não foi possível enviar esta mensagem.</string>
+    <string name="pending_send_waiting">A aguardar ligação. Esta mensagem será enviada assim que voltar a estar online.</string>
 </resources>

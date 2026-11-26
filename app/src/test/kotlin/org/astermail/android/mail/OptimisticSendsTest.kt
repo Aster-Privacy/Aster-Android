@@ -65,6 +65,95 @@ class OptimisticSendsTest {
         )
     }
 
+    private fun shown_status(send: OptimisticSend): String? =
+        optimistic_sends_for_thread(
+            sends = listOf(send),
+            account_id = "user_1",
+            thread_token = "thread_1",
+            item_id = "msg_1",
+            server_messages = emptyList(),
+        ).single().raw_item.send_status
+
+    @Test
+    fun `each phase shows its own status in the thread`() {
+        assertEquals(OPTIMISTIC_SEND_STATUS, shown_status(send("p1")))
+        assertEquals(OPTIMISTIC_FAILED_STATUS, shown_status(send("p1").copy(phase = OptimisticSendPhase.FAILED)))
+        assertEquals(OPTIMISTIC_WAITING_STATUS, shown_status(send("p1").copy(phase = OptimisticSendPhase.WAITING)))
+        assertEquals(
+            OPTIMISTIC_SENT_STATUS,
+            shown_status(send("p1").copy(phase = OptimisticSendPhase.FAILED, committed = true)),
+        )
+        listOf(OPTIMISTIC_SEND_STATUS, OPTIMISTIC_SENT_STATUS, OPTIMISTIC_FAILED_STATUS, OPTIMISTIC_WAITING_STATUS)
+            .forEach { assertTrue(is_optimistic_send_status(it)) }
+        assertFalse(is_optimistic_send_status("failed"))
+    }
+
+    @Test
+    fun `mark_phase moves an unsent reply and leaves a committed one alone`() {
+        val store = OptimisticSendStore()
+        store.add(send("open"))
+        store.add(send("done"))
+        store.mark_committed("done", "server_1")
+
+        assertTrue(store.mark_phase("open", OptimisticSendPhase.FAILED))
+        assertFalse(store.mark_phase("done", OptimisticSendPhase.FAILED))
+        assertFalse(store.mark_phase("missing", OptimisticSendPhase.FAILED))
+        assertEquals(OptimisticSendPhase.FAILED, store.get("open")?.phase)
+        assertEquals(listOf("open"), store.pending_ids_in(OptimisticSendPhase.FAILED))
+
+        assertTrue(store.mark_phase("open", OptimisticSendPhase.SENDING, send_at_ms = 42L))
+        assertEquals(42L, store.get("open")?.send_at_ms)
+        assertTrue(store.pending_ids_in(OptimisticSendPhase.FAILED).isEmpty())
+    }
+
+    @Test
+    fun `pending ids and attachment ids round trip`() {
+        val message_id = optimistic_send_message_id("abc_1")
+        assertEquals("abc_1", optimistic_send_pending_id(message_id))
+        assertEquals(null, optimistic_send_pending_id("server_1"))
+        assertEquals(null, optimistic_send_pending_id(OPTIMISTIC_SEND_ID_PREFIX))
+
+        assertEquals("abc_1" to 2, parse_optimistic_attachment_id(optimistic_attachment_id("abc_1", 2)))
+        assertEquals(null, parse_optimistic_attachment_id("att_1"))
+        assertEquals(null, parse_optimistic_attachment_id(OPTIMISTIC_ATTACHMENT_ID_PREFIX + "abc_x"))
+        assertEquals(null, parse_optimistic_attachment_id(OPTIMISTIC_ATTACHMENT_ID_PREFIX + "_1"))
+    }
+
+    @Test
+    fun `pending attachments keep their names and sizes and skip inline images`() {
+        val payloads = listOf(
+            org.astermail.android.api.send.ExternalAttachmentPayload(
+                data = "AAAA", filename = "contract.pdf", content_type = "application/pdf", size_bytes = 52_428_800L,
+            ),
+            org.astermail.android.api.send.ExternalAttachmentPayload(
+                data = "AAAA", filename = "logo.png", content_type = "image/png", size_bytes = 10L, content_id = "logo",
+            ),
+        )
+        val files = optimistic_send_attachment_files(payloads)
+        assertEquals(listOf("contract.pdf"), files.map { it.name })
+        assertEquals(52_428_800L, files.single().size_bytes)
+
+        val message = build_optimistic_send_message(
+            pending_id = "p1",
+            started_at_ms = started_at_ms,
+            sender_email = "me@astermail.org",
+            sender_display_name = "Me",
+            to = listOf("friend@astermail.org"),
+            cc = emptyList(),
+            bcc = emptyList(),
+            subject = "Re: Hi",
+            body_html = "<p>see attached</p>",
+            has_attachments = false,
+            attachments = files,
+        )
+        assertTrue(message.has_attachments)
+        val shown = org.astermail.android.ui.mail.optimistic_message_attachments(message)
+        assertEquals(listOf(optimistic_attachment_id("p1", 0)), shown.map { it.id })
+        assertEquals("contract.pdf", shown.single().filename)
+        assertEquals("application/pdf", shown.single().content_type)
+        assertEquals(52_428_800L, shown.single().size_bytes)
+    }
+
     @Test
     fun `optimistic message is a sending sent item with plain text`() {
         val message = send("p1").message

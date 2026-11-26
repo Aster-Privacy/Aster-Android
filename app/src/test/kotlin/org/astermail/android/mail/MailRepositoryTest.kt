@@ -3540,7 +3540,7 @@ class MailRepositoryTest {
     }
 
     @Test
-    fun `a failed send removes the optimistic reply`() = runTest {
+    fun `a failed send keeps the reply in its thread as failed`() = runTest {
         val pending_id = schedule_threaded_reply()
         every { session_key_store.has_ratchet_keys() } returns true
         every { session_key_store.get_user_email() } returns "me@astermail.org"
@@ -3550,7 +3550,83 @@ class MailRepositoryTest {
         val outcome = await_real { repo.run_pending_send(pending_id) }
 
         assertEquals(PendingSendOutcome.FAILED, outcome)
+        val send = repo.optimistic_sends.value.single()
+        assertEquals(OptimisticSendPhase.FAILED, send.phase)
+        val shown = optimistic_sends_for_thread(
+            sends = repo.optimistic_sends.value,
+            account_id = "user_1",
+            thread_token = "thread_1",
+            item_id = "msg_1",
+            server_messages = emptyList(),
+        )
+        assertEquals(listOf(OPTIMISTIC_FAILED_STATUS), shown.map { it.raw_item.send_status })
+    }
+
+    @Test
+    fun `retrying a failed reply shows it as sending again`() = runTest {
+        val pending_id = schedule_threaded_reply()
+        every { session_key_store.has_ratchet_keys() } returns true
+        every { session_key_store.get_user_email() } returns "me@astermail.org"
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } throws
+            RatchetEncryptionException("friend@astermail.org", "no prekey bundle available for recipient")
+        await_real { repo.run_pending_send(pending_id) }
+
+        repo.retry_failed_send(pending_id)
+
+        assertEquals(OptimisticSendPhase.SENDING, repo.optimistic_sends.value.single().phase)
+        assertEquals("pending", pending_send_dao.rows[pending_id]?.status)
+    }
+
+    @Test
+    fun `discarding a failed reply removes it from the thread`() = runTest {
+        val pending_id = schedule_threaded_reply()
+        every { session_key_store.has_ratchet_keys() } returns true
+        every { session_key_store.get_user_email() } returns "me@astermail.org"
+        coEvery { ratchet_encryptor.encrypt_envelope(any(), any(), any()) } throws
+            RatchetEncryptionException("friend@astermail.org", "no prekey bundle available for recipient")
+        await_real { repo.run_pending_send(pending_id) }
+
+        repo.discard_failed_send(pending_id)
+
         assertTrue(repo.optimistic_sends.value.isEmpty())
+    }
+
+    @Test
+    fun `reconcile shows queued and failed replies in their threads after a restart`() = runTest {
+        every { session_key_store.get_user_id() } returns "user_1"
+        pending_send_dao.rows["p_wait"] = pending_row("p_wait", fire_at_ms = 5_000L).copy(thread_token = "thread_1")
+        pending_send_dao.rows["p_fail"] = pending_row("p_fail", status = "failed")
+            .copy(thread_token = "thread_1", created_at_ms = 10L)
+        pending_send_dao.rows["p_loose"] = pending_row("p_loose")
+
+        repo.reconcile_pending_sends()
+
+        val sends = repo.optimistic_sends.value.associateBy { it.pending_id }
+        assertEquals(setOf("p_wait", "p_fail"), sends.keys)
+        assertEquals(OptimisticSendPhase.FAILED, sends.getValue("p_fail").phase)
+        assertEquals("user_1", sends.getValue("p_wait").account_id)
+        assertEquals("thread_1", sends.getValue("p_wait").thread_token)
+        val shown = optimistic_sends_for_thread(
+            sends = repo.optimistic_sends.value,
+            account_id = "user_1",
+            thread_token = "thread_1",
+            item_id = "msg_1",
+            server_messages = emptyList(),
+        )
+        assertEquals(
+            listOf(optimistic_send_message_id("p_wait"), optimistic_send_message_id("p_fail")),
+            shown.map { it.id },
+        )
+    }
+
+    @Test
+    fun `reconcile does not add a reply twice`() = runTest {
+        pending_send_dao.rows["p_wait"] = pending_row("p_wait").copy(thread_token = "thread_1")
+
+        repo.reconcile_pending_sends()
+        repo.reconcile_pending_sends()
+
+        assertEquals(1, repo.optimistic_sends.value.size)
     }
 
     @Test

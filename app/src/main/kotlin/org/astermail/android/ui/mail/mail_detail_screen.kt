@@ -1910,6 +1910,7 @@ fun MailDetailScreen(
                             is_system = is_system_sender,
                             can_collapse = !is_pending_send && thread_items.size > 1,
                             is_pending_send = is_pending_send,
+                            on_retry_pending_send = { mail_vm.retry_pending_send(msg.id) },
                         )
                     }
                     }
@@ -3215,6 +3216,7 @@ internal fun expanded_message(
     sender_unauthenticated: Boolean = false,
     on_acknowledge_identity: () -> Unit = {},
     is_pending_send: Boolean = false,
+    on_retry_pending_send: () -> Unit = {},
     translation_enabled: Boolean = true,
     allow_auto_translate: Boolean = true,
     translation_subject: String? = null,
@@ -3652,6 +3654,7 @@ internal fun expanded_message(
             pending_send_status(
                 send_status = msg.send_status,
                 send_at_ms = msg.pending_send_at_ms,
+                on_retry = on_retry_pending_send,
                 modifier = Modifier
                     .padding(horizontal = AsterSpacing.md)
                     .padding(bottom = AsterSpacing.sm)
@@ -9943,18 +9946,20 @@ private fun sender_unverified_banner(sender: String) {
 private fun pending_send_status(
     send_status: String?,
     send_at_ms: Long?,
+    on_retry: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
-    val sent = send_status == org.astermail.android.mail.OPTIMISTIC_SENT_STATUS
+    val counts_down = pending_send_counts_down(send_status)
     var now_ms by remember { mutableStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(sent, send_at_ms) {
-        while (!sent && send_at_ms != null && now_ms < send_at_ms) {
+    LaunchedEffect(counts_down, send_at_ms) {
+        now_ms = System.currentTimeMillis()
+        while (counts_down && send_at_ms != null && now_ms < send_at_ms) {
             kotlinx.coroutines.delay((send_at_ms - now_ms).rem(1000L).takeIf { it > 0 } ?: 1000L)
             now_ms = System.currentTimeMillis()
         }
     }
-    val phase = pending_send_phase(sent, send_at_ms, now_ms)
+    val phase = pending_send_display_phase(send_status, send_at_ms, now_ms)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.semantics(mergeDescendants = true) {},
@@ -9973,6 +9978,18 @@ private fun pending_send_status(
                         stroke_width = 1.5.dp,
                         modifier = Modifier.size(12.dp),
                     )
+                    pending_send_phase_failed -> Icon(
+                        imageVector = TablerIcons.AlertTriangle,
+                        contentDescription = null,
+                        tint = colors.danger,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    pending_send_phase_waiting -> Icon(
+                        imageVector = TablerIcons.CloudOff,
+                        contentDescription = null,
+                        tint = colors.text_muted,
+                        modifier = Modifier.size(14.dp),
+                    )
                     else -> Icon(
                         imageVector = TablerIcons.Clock,
                         contentDescription = null,
@@ -9987,10 +10004,30 @@ private fun pending_send_status(
             text = when (phase.first) {
                 pending_send_phase_sent -> stringResource(R.string.sent)
                 pending_send_phase_sending -> stringResource(R.string.sending)
+                pending_send_phase_failed -> stringResource(R.string.pending_send_failed)
+                pending_send_phase_waiting -> stringResource(R.string.pending_send_waiting)
                 else -> stringResource(R.string.sending_in_countdown, phase.second)
             },
-            color = if (phase.first == pending_send_phase_sent) colors.accent_blue else colors.text_muted,
+            color = when (phase.first) {
+                pending_send_phase_sent -> colors.accent_blue
+                pending_send_phase_failed -> colors.danger
+                else -> colors.text_muted
+            },
             fontSize = 12.sp,
+            modifier = Modifier.weight(1f, fill = false),
         )
+        if (phase.first == pending_send_phase_failed) {
+            Spacer(Modifier.width(4.dp))
+            TextButton(
+                onClick = on_retry,
+                modifier = Modifier.testTag("pending_send_retry"),
+            ) {
+                Text(
+                    text = stringResource(R.string.retry),
+                    color = colors.accent_blue,
+                    fontSize = 12.sp,
+                )
+            }
+        }
     }
 }

@@ -3758,4 +3758,6 @@
     <string name="search_match_previous">上一处匹配</string>
     <string name="search_match_next">下一处匹配</string>
     <string name="search_match_clear">清除高亮</string>
+    <string name="pending_send_failed">无法发送此邮件。</string>
+    <string name="pending_send_waiting">正在等待网络连接。恢复联网后将发送此邮件。</string>
 </resources>
