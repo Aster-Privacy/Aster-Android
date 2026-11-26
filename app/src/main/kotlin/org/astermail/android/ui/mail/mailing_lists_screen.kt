@@ -572,6 +572,7 @@ fun MailingListsScreen(
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .offset { IntOffset(0, header_offset_px.floatValue.roundToInt()) }
+                .graphicsLayer()
                 .onSizeChanged { if (it.height > 0) header_height_px = it.height }
                 .drawBehind {
                     if (has_backdrop) return@drawBehind
@@ -582,7 +583,8 @@ fun MailingListsScreen(
                         (-header_offset_px.floatValue / limit).coerceIn(0f, 1f)
                     }
                     drawRect(color = header_bg, alpha = 1f - fraction)
-                },
+                }
+                .graphicsLayer(),
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Spacer(Modifier.height(status_bar_top))
