@@ -7057,6 +7057,25 @@ internal fun configure_mail_body_web_view(
     web.isNestedScrollingEnabled = false
 }
 
+private object body_estimate_memo {
+    private const val max_entries = 128
+    private val store = object : java.util.LinkedHashMap<Long, Float>(max_entries, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, Float>?): Boolean = size > max_entries
+    }
+    @Synchronized fun get(key: Long): Float? = store[key]
+    @Synchronized fun put(key: Long, value: Float) { store[key] = value }
+}
+
+private const val WHITE_PAGE_SCAN_CHARS = 1024
+
+internal fun built_html_wants_white_page(doc: String?): Boolean {
+    if (doc == null) return false
+    val window = if (doc.length > WHITE_PAGE_SCAN_CHARS) doc.substring(0, WHITE_PAGE_SCAN_CHARS) else doc
+    val head_at = window.indexOf("<head")
+    val opening = if (head_at >= 0) window.substring(0, head_at) else window
+    return opening.contains("data-white=\"1\"")
+}
+
 private object body_height_cache {
     private const val max_entries = 128
     private val store = object : java.util.LinkedHashMap<Long, Float>(max_entries, 0.75f, true) {
@@ -7779,10 +7798,20 @@ internal fun email_html_view(
         onDispose { on_subject_translated_ref[0]?.invoke(null) }
     }
 
-    val inline_sig = remember(inline_images) { inline_images.keys.sorted().joinToString(",").hashCode() }
-    val inline_refs = remember(html) { inline_cid_references(html) }
-    val inline_complete = remember(inline_refs, inline_images) { inline_cids_resolved(inline_refs, inline_images) }
-    var inline_wait_over by remember(html) { mutableStateOf(inline_refs.isEmpty()) }
+    val inline_sig = remember(inline_images) {
+        if (inline_images.isEmpty()) 0 else inline_images.keys.sorted().joinToString(",").hashCode()
+    }
+    val inline_refs_quick = remember(html) { if (!html.contains("cid:", ignoreCase = true)) emptySet<String>() else null }
+    val inline_refs_state = remember(html) { mutableStateOf(inline_refs_quick) }
+    LaunchedEffect(html) {
+        if (inline_refs_state.value != null) return@LaunchedEffect
+        inline_refs_state.value = withContext(Dispatchers.Default) { inline_cid_references(html) }
+    }
+    val inline_refs = inline_refs_state.value
+    val inline_complete = remember(inline_refs, inline_images) {
+        inline_refs != null && inline_cids_resolved(inline_refs, inline_images)
+    }
+    var inline_wait_over by remember(html) { mutableStateOf(inline_refs_quick?.isEmpty() == true) }
     LaunchedEffect(html) {
         if (inline_wait_over) return@LaunchedEffect
         delay(INLINE_IMAGE_WAIT_MS)
@@ -7800,28 +7829,43 @@ internal fun email_html_view(
             force_dark = force_dark_emails,
         )
     }
-    val estimated_height = remember(html_hash, screen_width_dp) {
-        if (html.isEmpty()) placeholder_body_height else estimated_body_height_dp(html, screen_width_dp).dp
+    val estimate_key = remember(html_hash, screen_width_dp) { html_hash.toLong() * 31L + screen_width_dp.toLong() }
+    val estimated_height_known = remember(estimate_key) {
+        if (html.isEmpty()) placeholder_body_height.value else body_estimate_memo.get(estimate_key)
     }
     val body_holder = local_body_view_holder.current
     val measure = remember(message_key, body_holder) {
         message_key?.let { key -> body_holder?.measure_for(key) } ?: body_measure()
     }
+    val reserve_awaits_estimate = remember(measure) { booleanArrayOf(false) }
     remember(measure, base_height_key) {
         if (measure.height_key != base_height_key) {
             val previous_dp = androidx.compose.runtime.snapshots.Snapshot.withoutReadObservation {
                 measure.view_dp.takeIf { it >= 1f } ?: measure.reserve_dp.takeIf { it > 1f }
             }
+            val cached_dp = body_height_cache.get(base_height_key)
+            reserve_awaits_estimate[0] = (cached_dp == null || cached_dp < 1f) && previous_dp == null && estimated_height_known == null
             measure.begin_key(
                 base_height_key,
                 seed_body_height(
-                    body_height_cache.get(base_height_key),
-                    previous_dp ?: estimated_height.value,
+                    cached_dp,
+                    previous_dp ?: estimated_height_known ?: placeholder_body_height.value,
                 ),
                 android.os.SystemClock.uptimeMillis(),
             )
         }
         base_height_key
+    }
+    LaunchedEffect(measure, base_height_key, estimate_key) {
+        if (html.isEmpty() || estimated_height_known != null) return@LaunchedEffect
+        val html_now = html
+        val width_now = screen_width_dp
+        val estimate_dp = withContext(Dispatchers.Default) { estimated_body_height_dp(html_now, width_now).toFloat() }
+        body_estimate_memo.put(estimate_key, estimate_dp)
+        if (reserve_awaits_estimate[0] && measure.height_key == base_height_key && !measure.measured && !measure.view_is_known_height) {
+            measure.reserve_dp = estimate_dp.coerceAtLeast(1f)
+        }
+        reserve_awaits_estimate[0] = false
     }
     val alive = remember { booleanArrayOf(true) }
     DisposableEffect(Unit) {
@@ -7866,7 +7910,7 @@ internal fun email_html_view(
     allow_external_ref[0] = allow_external
     val cache_key = remember(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { ((((html_cache.key(html_hash, allow_external, bg_hex, screen_width_dp, force_dark_emails, translate_active) * 31L + (if (dyslexia_font) 1L else 0L)) * 31L + email_font_id.hashCode().toLong()) * 31L + text_zoom.toLong()) * 31L + sanitize_options.hashCode().toLong()) * 31L + (if (underline_links) 1L else 0L) }
     var prebuilt_html by remember(html_hash, allow_external, translate_active, dyslexia_font, email_font_id, text_zoom, sanitize_options, underline_links) { mutableStateOf<String?>(if (html.isEmpty()) null else html_cache.get(cache_key)) }
-    val wants_white_page = remember(prebuilt_html) { prebuilt_html?.contains("data-white=\"1\"") == true }
+    val wants_white_page = remember(prebuilt_html) { built_html_wants_white_page(prebuilt_html) }
 
     val search_session = if (search_key != null) org.astermail.android.ui.search.local_search_highlight.current else null
     val search_terms = search_session?.terms?.body.orEmpty()
