@@ -1018,6 +1018,7 @@
     <string name="payment_method_removed">Metoda płatności usunięta</string>
     <string name="session_expired_sign_in">Twoja sesja wygasła. Zaloguj się ponownie.</string>
     <string name="vault_open_failed_notice">Nie udało się odblokować kluczy na tym urządzeniu, dlatego niektóre wiadomości mogą się tutaj nie otwierać. Aby naprawić klucze, zaloguj się do Aster Mail w przeglądarce, a potem zaloguj się ponownie na tym urządzeniu.</string>
+    <string name="storage_key_update_pending_notice">Aster Mail nie mógł dokończyć aktualizacji klucza, który chroni zapisane dane. Zmiany nadal są zapisywane, a Aster Mail ponawia próby w tle.</string>
     <string name="could_not_start_checkout">Nie udało się rozpocząć procesu płatności</string>
     <string name="could_not_open_portal">Nie udało się otworzyć portalu rozliczeń</string>
     <string name="cancel_failed">Nie udało się anulować subskrypcji</string>

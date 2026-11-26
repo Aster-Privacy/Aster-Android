@@ -1072,6 +1072,7 @@
     <string name="payment_method_removed">Moyen de paiement supprimé</string>
     <string name="session_expired_sign_in">Votre session a expiré. Veuillez vous reconnecter.</string>
     <string name="vault_open_failed_notice">Vos clés n\'ont pas pu être déverrouillées sur cet appareil, et certains e-mails risquent de ne pas s\'ouvrir ici. Pour réparer vos clés, connectez-vous à Aster Mail sur le web, puis reconnectez-vous sur cet appareil.</string>
+    <string name="storage_key_update_pending_notice">Aster Mail n'a pas pu terminer la mise à jour de la clé qui protège vos données enregistrées. Vos modifications sont toujours enregistrées, et Aster Mail continue d'essayer en arrière-plan.</string>
     <string name="could_not_start_checkout">Impossible de démarrer le paiement</string>
     <string name="could_not_open_portal">Impossible d\'ouvrir le portail de facturation</string>
     <string name="cancel_failed">Impossible d\'annuler l\'abonnement</string>

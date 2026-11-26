@@ -1593,6 +1593,7 @@
     <string name="payment_method_removed">Payment method removed</string>
     <string name="session_expired_sign_in">Your session has expired. Please sign in again.</string>
     <string name="vault_open_failed_notice">Your keys couldn\'t be unlocked on this device, so some mail might not open here. To repair your keys, sign in to Aster Mail on the web, and then sign in on this device again.</string>
+    <string name="storage_key_update_pending_notice">Aster Mail couldn't finish updating the key that protects your saved data. Your changes still save, and Aster Mail keeps trying in the background.</string>
     <string name="could_not_start_checkout">Could not start checkout</string>
     <string name="could_not_open_portal">Could not open billing portal</string>
     <string name="cancel_failed">Could not cancel subscription</string>

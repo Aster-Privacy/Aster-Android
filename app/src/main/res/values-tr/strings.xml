@@ -1018,6 +1018,7 @@
     <string name="payment_method_removed">Ödeme yöntemi kaldırıldı</string>
     <string name="session_expired_sign_in">Oturumunuzun süresi doldu. Lütfen tekrar giriş yapın.</string>
     <string name="vault_open_failed_notice">Anahtarlarınızın kilidi bu cihazda açılamadı, bu nedenle bazı e-postalar burada açılmayabilir. Anahtarlarınızı onarmak için web\'de Aster Mail\'de oturum açın, ardından bu cihazda yeniden oturum açın.</string>
+    <string name="storage_key_update_pending_notice">Aster Mail, kayıtlı verilerinizi koruyan anahtarı güncellemeyi tamamlayamadı. Değişiklikleriniz kaydedilmeye devam ediyor ve Aster Mail arka planda denemeyi sürdürüyor.</string>
     <string name="could_not_start_checkout">Ödeme başlatılamadı</string>
     <string name="could_not_open_portal">Faturalandırma portalı açılamadı</string>
     <string name="cancel_failed">Abonelik iptal edilemedi</string>

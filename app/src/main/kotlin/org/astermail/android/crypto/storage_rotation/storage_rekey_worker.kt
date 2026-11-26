@@ -65,6 +65,10 @@ fun storage_rekey_next_run(result: ResealRunResult, attempt: Int, retire_attempt
         return StorageRekeyNextRun(0, wait, retire_attempt)
     }
     if (!should_retry_storage_rekey(result)) return null
+    if (result.reason == VAULT_CAS_UNSUPPORTED) {
+        return STORAGE_KEY_PENDING_RETRY_DELAYS_SECS.getOrNull(attempt)
+            ?.let { StorageRekeyNextRun(attempt + 1, it, retire_attempt) }
+    }
     if (result.status == ResealRunStatus.INTERRUPTED && result.reason == LEGACY_KEY_RETIRE_PENDING) {
         val next_attempt = (retire_attempt + 1).coerceAtMost(STORAGE_REKEY_RETIRE_MAX_ATTEMPTS + 8)
         return StorageRekeyNextRun(attempt, storage_rekey_retire_wait(retire_attempt), next_attempt)

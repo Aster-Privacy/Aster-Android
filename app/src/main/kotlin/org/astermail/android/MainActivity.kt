@@ -878,6 +878,19 @@ private fun AsterNavHost() {
         )
     }
 
+    val storage_key_pending_state by org.astermail.android.crypto.storage_rotation.StorageKeyPendingNotice.pending
+        .collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(storage_key_pending_state, is_signed_in_state) {
+        if (!storage_key_pending_state || !is_signed_in_state) return@LaunchedEffect
+        org.astermail.android.crypto.storage_rotation.StorageKeyPendingNotice.consume()
+        org.astermail.android.ui.common.app_toast.show(
+            org.astermail.android.ui.common.TopToastState(
+                message = context.getString(R.string.storage_key_update_pending_notice),
+                duration_ms = org.astermail.android.ui.common.toast_action_duration_ms,
+            ),
+        )
+    }
+
     val forced_switch_settings_vm = org.astermail.android.settings.shared_settings_view_model()
     androidx.compose.runtime.LaunchedEffect(auth_gate) {
         auth_gate.forced_account_switch.collect {

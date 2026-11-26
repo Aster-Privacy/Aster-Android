@@ -54,7 +54,7 @@ private val STORAGE_KEY_FIELDS = listOf("data_kek", "data_kek_random", "storage_
 data class ServerVaultSnapshot(
     val encrypted_vault: String,
     val vault_nonce: String,
-    val vault_sha256: String,
+    val vault_sha256: String?,
     val vault_kdf_iterations: Int = VaultKdf.DEFAULT_ITERATIONS,
 )
 
@@ -165,6 +165,8 @@ const val LANE_REPLAY_FIELD = "lane_replay"
 
 const val VAULT_ROLLED_BACK = "vault_rolled_back"
 
+const val VAULT_CAS_UNSUPPORTED = "vault_cas_unsupported"
+
 class VaultUpdater(
     private val api: ResealApi,
     private val codec: StorageVaultCodec,
@@ -188,8 +190,8 @@ class VaultUpdater(
         val data = reply.data?.as_object() ?: return null
         val encrypted_vault = data.str("encrypted_vault")
         val vault_nonce = data.str("vault_nonce")
-        val vault_sha256 = data.str("vault_sha256")
-        if (encrypted_vault.isNullOrEmpty() || vault_nonce.isNullOrEmpty() || vault_sha256.isNullOrEmpty()) return null
+        val vault_sha256 = data.str("vault_sha256")?.trim()?.takeIf { it.isNotEmpty() }
+        if (encrypted_vault.isNullOrEmpty() || vault_nonce.isNullOrEmpty()) return null
         val iterations = parse_vault_kdf_iterations(data) ?: return null
         return ServerVaultSnapshot(encrypted_vault, vault_nonce, vault_sha256, iterations)
     }
@@ -263,6 +265,7 @@ class VaultUpdater(
     suspend fun raise_work_factor(): VaultWorkFactor = lock.withLock {
         val user = user_id() ?: return@withLock VaultWorkFactor.SKIPPED
         val snapshot = fetch_snapshot() ?: return@withLock VaultWorkFactor.SKIPPED
+        if (snapshot.vault_sha256 == null) return@withLock VaultWorkFactor.SKIPPED
         if (snapshot.vault_kdf_iterations == VaultKdf.LEVEL2_ITERATIONS) return@withLock VaultWorkFactor.CURRENT
         val server = decrypt_snapshot(snapshot) ?: return@withLock VaultWorkFactor.SKIPPED
         if (rolled_back(server)) return@withLock VaultWorkFactor.SKIPPED
@@ -341,6 +344,9 @@ class VaultUpdater(
                     return VaultUpdateOutcome.Unchanged(server)
                 }
                 VaultEdit.CHANGED -> Unit
+            }
+            if (allow_storage_key_change && snapshot.vault_sha256 == null) {
+                return VaultUpdateOutcome.Failed(VAULT_CAS_UNSUPPORTED)
             }
             preserve_vault_fields(server, next, local_keys(), allow_storage_key_change, now())
             stamp(next, server)

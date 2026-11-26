@@ -1018,6 +1018,7 @@
     <string name="payment_method_removed">Metodo di pagamento rimosso</string>
     <string name="session_expired_sign_in">La tua sessione è scaduta. Accedi di nuovo.</string>
     <string name="vault_open_failed_notice">Non è stato possibile sbloccare le tue chiavi su questo dispositivo, quindi alcune email potrebbero non aprirsi qui. Per riparare le chiavi, accedi ad Aster Mail sul web e poi accedi di nuovo su questo dispositivo.</string>
+    <string name="storage_key_update_pending_notice">Aster Mail non è riuscito a completare l'aggiornamento della chiave che protegge i tuoi dati salvati. Le modifiche vengono comunque salvate e Aster Mail continua a riprovare in background.</string>
     <string name="could_not_start_checkout">Impossibile avviare il pagamento</string>
     <string name="could_not_open_portal">Impossibile aprire il portale di fatturazione</string>
     <string name="cancel_failed">Impossibile annullare l\'abbonamento</string>
