@@ -28,12 +28,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.astermail.android.design.aster_reduce_motion
 
 private const val static_spinner_progress = 0.75f
 private const val static_linear_progress = 0.4f
+private val spinner_default_diameter = 40.dp
+
+internal fun Modifier.square_spinner_bounds(): Modifier = layout { measurable, constraints ->
+    val preferred = spinner_default_diameter.roundToPx()
+    val width = if (constraints.hasBoundedWidth) preferred.coerceIn(constraints.minWidth, constraints.maxWidth) else preferred.coerceAtLeast(constraints.minWidth)
+    val height = if (constraints.hasBoundedHeight) preferred.coerceIn(constraints.minHeight, constraints.maxHeight) else preferred.coerceAtLeast(constraints.minHeight)
+    val side = minOf(width, height)
+    val placeable = measurable.measure(Constraints.fixed(side, side))
+    layout(width, height) {
+        placeable.place((width - side) / 2, (height - side) / 2)
+    }
+}
 
 @Composable
 fun aster_spinner(
@@ -46,7 +60,7 @@ fun aster_spinner(
     if (aster_reduce_motion()) {
         CircularProgressIndicator(
             progress = { static_spinner_progress },
-            modifier = modifier,
+            modifier = modifier.square_spinner_bounds(),
             color = color,
             strokeWidth = stroke_width,
             trackColor = track_color,
@@ -55,7 +69,7 @@ fun aster_spinner(
         )
     } else {
         CircularProgressIndicator(
-            modifier = modifier,
+            modifier = modifier.square_spinner_bounds(),
             color = color,
             strokeWidth = stroke_width,
             trackColor = track_color,

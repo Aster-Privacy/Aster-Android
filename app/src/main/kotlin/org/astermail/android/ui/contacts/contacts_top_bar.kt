@@ -189,7 +189,7 @@ internal fun contacts_search_top_bar(
                     color = colors.accent_blue,
                     stroke_width = 2.dp,
                     stroke_cap = StrokeCap.Round,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(18.dp).testTag("contacts_sync_spinner"),
                 )
             }
             if (query.isNotEmpty()) {
