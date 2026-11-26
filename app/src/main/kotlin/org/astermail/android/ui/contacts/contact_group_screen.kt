@@ -348,7 +348,7 @@ fun ContactGroupScreen(
                         .testTag("contact_group_members"),
                     contentPadding = PaddingValues(top = AsterSpacing.sm, bottom = 88.dp + nav_bottom),
                 ) {
-                    itemsIndexed(members, key = { _, contact -> contact.id }) { index, contact ->
+                    itemsIndexed(members, key = { _, contact -> contact.id }, contentType = { _, _ -> "contact_row" }) { index, contact ->
                         Box(modifier = Modifier.animateItem().testTag("contact_group_member_" + contact.id)) {
                             ContactRow(
                                 contact = contact,
@@ -591,7 +591,7 @@ private fun add_members_dialog(
                             .testTag("add_members_list"),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
-                        itemsIndexed(candidates, key = { _, contact -> contact.id }) { _, contact ->
+                        itemsIndexed(candidates, key = { _, contact -> contact.id }, contentType = { _, _ -> "contact_candidate_row" }) { _, contact ->
                             val checked = contact.id in picked_set
                             Row(
                                 modifier = Modifier

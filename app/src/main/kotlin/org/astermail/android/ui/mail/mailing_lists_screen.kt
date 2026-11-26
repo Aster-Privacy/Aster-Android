@@ -514,7 +514,7 @@ fun MailingListsScreen(
                         hint = if (show_unsubscribed) null else stringResource(R.string.scan_inbox_hint),
                     )
                 }
-                else -> itemsIndexed(visible, key = { _, item -> item.id }) { idx, item ->
+                else -> itemsIndexed(visible, key = { _, item -> item.id }, contentType = { _, _ -> "mailing_list_row" }) { idx, item ->
                     subscription_row(
                         modifier = Modifier.animateItem(fadeInSpec = null),
                         item = item,
