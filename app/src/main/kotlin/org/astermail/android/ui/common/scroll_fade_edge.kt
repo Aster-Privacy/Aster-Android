@@ -43,7 +43,11 @@ fun Modifier.top_fade_edge(
     height: Dp = scroll_fade_edge_height,
     strength: (edge_px: Float) -> Float,
 ): Modifier = this
-    .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+    .graphicsLayer {
+        val edge_px = height.toPx().coerceAtMost(size.height)
+        val masked = edge_px > 0f && strength(edge_px) > 0f
+        compositingStrategy = if (masked) CompositingStrategy.Offscreen else CompositingStrategy.Auto
+    }
     .drawWithContent {
         drawContent()
         val edge_px = height.toPx().coerceAtMost(size.height)
@@ -61,6 +65,7 @@ fun Modifier.top_fade_edge(
             blendMode = BlendMode.DstIn,
         )
     }
+    .graphicsLayer()
 
 fun Modifier.scroll_top_fade(
     state: ScrollState,
