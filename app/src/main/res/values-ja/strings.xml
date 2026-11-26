@@ -3771,4 +3771,23 @@
     <string name="pending_send_failed">このメッセージを送信できませんでした。</string>
     <string name="pending_send_waiting">接続を待っています。オンラインに戻るとこのメッセージが送信されます。</string>
     <string name="thread_offline_saved_copy">オフラインです。これはこのデバイスに保存されているコピーです。</string>
+    <string name="signature_font_family">フォント</string>
+    <string name="signature_font_family_default">既定のフォント</string>
+    <string name="signature_font_family_monospace">等幅</string>
+    <string name="table_insert">表を挿入</string>
+    <string name="table_options">表のオプション</string>
+    <string name="table_rows">行</string>
+    <string name="table_columns">列</string>
+    <string name="table_show_borders">罫線を表示</string>
+    <string name="table_add_row">行を追加</string>
+    <string name="table_remove_row">行を削除</string>
+    <string name="table_add_column">列を追加</string>
+    <string name="table_remove_column">列を削除</string>
+    <string name="table_insert_row_above">上に行を挿入</string>
+    <string name="table_insert_row_below">下に行を挿入</string>
+    <string name="table_insert_column_before">前に列を挿入</string>
+    <string name="table_insert_column_after">後に列を挿入</string>
+    <string name="table_delete_row">行を削除</string>
+    <string name="table_delete_column">列を削除</string>
+    <string name="table_delete">表を削除</string>
 </resources>

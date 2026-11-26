@@ -3797,4 +3797,23 @@
     <string name="pending_send_failed">Diese Nachricht konnte nicht gesendet werden.</string>
     <string name="pending_send_waiting">Warten auf eine Verbindung. Diese Nachricht wird gesendet, sobald Sie wieder online sind.</string>
     <string name="thread_offline_saved_copy">Sie sind offline. Das ist die auf diesem Gerät gespeicherte Kopie.</string>
+    <string name="signature_font_family">Schriftart</string>
+    <string name="signature_font_family_default">Standardschrift</string>
+    <string name="signature_font_family_monospace">Monospace</string>
+    <string name="table_insert">Tabelle einfügen</string>
+    <string name="table_options">Tabellenoptionen</string>
+    <string name="table_rows">Zeilen</string>
+    <string name="table_columns">Spalten</string>
+    <string name="table_show_borders">Rahmen anzeigen</string>
+    <string name="table_add_row">Zeile hinzufügen</string>
+    <string name="table_remove_row">Zeile entfernen</string>
+    <string name="table_add_column">Spalte hinzufügen</string>
+    <string name="table_remove_column">Spalte entfernen</string>
+    <string name="table_insert_row_above">Zeile oberhalb einfügen</string>
+    <string name="table_insert_row_below">Zeile unterhalb einfügen</string>
+    <string name="table_insert_column_before">Spalte davor einfügen</string>
+    <string name="table_insert_column_after">Spalte danach einfügen</string>
+    <string name="table_delete_row">Zeile löschen</string>
+    <string name="table_delete_column">Spalte löschen</string>
+    <string name="table_delete">Tabelle löschen</string>
 </resources>

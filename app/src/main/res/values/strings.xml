@@ -3849,4 +3849,23 @@
     <string name="pending_send_failed">Couldn’t send this message.</string>
     <string name="pending_send_waiting">Waiting for a connection. This message sends when you’re back online.</string>
     <string name="thread_offline_saved_copy">You’re offline. This is the copy saved on this device.</string>
+    <string name="signature_font_family">Font</string>
+    <string name="signature_font_family_default">Default font</string>
+    <string name="signature_font_family_monospace">Monospace</string>
+    <string name="table_insert">Insert table</string>
+    <string name="table_options">Table options</string>
+    <string name="table_rows">Rows</string>
+    <string name="table_columns">Columns</string>
+    <string name="table_show_borders">Show borders</string>
+    <string name="table_add_row">Add row</string>
+    <string name="table_remove_row">Remove row</string>
+    <string name="table_add_column">Add column</string>
+    <string name="table_remove_column">Remove column</string>
+    <string name="table_insert_row_above">Insert row above</string>
+    <string name="table_insert_row_below">Insert row below</string>
+    <string name="table_insert_column_before">Insert column before</string>
+    <string name="table_insert_column_after">Insert column after</string>
+    <string name="table_delete_row">Delete row</string>
+    <string name="table_delete_column">Delete column</string>
+    <string name="table_delete">Delete table</string>
 </resources>

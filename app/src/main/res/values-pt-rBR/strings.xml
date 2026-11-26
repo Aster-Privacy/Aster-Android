@@ -3822,4 +3822,23 @@
     <string name="pending_send_failed">Não foi possível enviar esta mensagem.</string>
     <string name="pending_send_waiting">Aguardando conexão. Esta mensagem será enviada quando você voltar a ficar online.</string>
     <string name="thread_offline_saved_copy">Você está off-line. Esta é a cópia salva neste dispositivo.</string>
+    <string name="signature_font_family">Fonte</string>
+    <string name="signature_font_family_default">Fonte padrão</string>
+    <string name="signature_font_family_monospace">Monoespaçada</string>
+    <string name="table_insert">Inserir tabela</string>
+    <string name="table_options">Opções da tabela</string>
+    <string name="table_rows">Linhas</string>
+    <string name="table_columns">Colunas</string>
+    <string name="table_show_borders">Mostrar bordas</string>
+    <string name="table_add_row">Adicionar linha</string>
+    <string name="table_remove_row">Remover linha</string>
+    <string name="table_add_column">Adicionar coluna</string>
+    <string name="table_remove_column">Remover coluna</string>
+    <string name="table_insert_row_above">Inserir linha acima</string>
+    <string name="table_insert_row_below">Inserir linha abaixo</string>
+    <string name="table_insert_column_before">Inserir coluna antes</string>
+    <string name="table_insert_column_after">Inserir coluna depois</string>
+    <string name="table_delete_row">Excluir linha</string>
+    <string name="table_delete_column">Excluir coluna</string>
+    <string name="table_delete">Excluir tabela</string>
 </resources>

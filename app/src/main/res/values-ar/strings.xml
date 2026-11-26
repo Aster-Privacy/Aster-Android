@@ -3931,4 +3931,23 @@
     <string name="pending_send_failed">تعذّر إرسال هذه الرسالة.</string>
     <string name="pending_send_waiting">في انتظار الاتصال. سيتم إرسال هذه الرسالة عند عودتك إلى الإنترنت.</string>
     <string name="thread_offline_saved_copy">أنت غير متصل بالإنترنت. هذه هي النسخة المحفوظة على هذا الجهاز.</string>
+    <string name="signature_font_family">نوع الخط</string>
+    <string name="signature_font_family_default">الخط الافتراضي</string>
+    <string name="signature_font_family_monospace">خط أحادي المسافة</string>
+    <string name="table_insert">إدراج جدول</string>
+    <string name="table_options">خيارات الجدول</string>
+    <string name="table_rows">الصفوف</string>
+    <string name="table_columns">الأعمدة</string>
+    <string name="table_show_borders">إظهار الحدود</string>
+    <string name="table_add_row">إضافة صف</string>
+    <string name="table_remove_row">إزالة صف</string>
+    <string name="table_add_column">إضافة عمود</string>
+    <string name="table_remove_column">إزالة عمود</string>
+    <string name="table_insert_row_above">إدراج صف أعلاه</string>
+    <string name="table_insert_row_below">إدراج صف أدناه</string>
+    <string name="table_insert_column_before">إدراج عمود قبل</string>
+    <string name="table_insert_column_after">إدراج عمود بعد</string>
+    <string name="table_delete_row">حذف الصف</string>
+    <string name="table_delete_column">حذف العمود</string>
+    <string name="table_delete">حذف الجدول</string>
 </resources>

@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import org.astermail.android.mail.align_simple_tables
 import org.astermail.android.mail.decode_html_entities
 import org.astermail.android.mail.strip_html_comments
 import org.astermail.android.mail.strip_non_rendered_blocks
@@ -245,7 +246,7 @@ object ProtectedMimeBuilder {
     private fun base64_body(value: String): String = wrap_base64(base64_of_string(value))
 
     fun html_to_plain_text(input: String): String {
-        val html = strip_non_rendered_blocks(strip_html_comments(input))
+        val html = align_simple_tables(strip_non_rendered_blocks(strip_html_comments(input)))
         val out = StringBuilder()
         var index = 0
 
@@ -285,7 +286,7 @@ object ProtectedMimeBuilder {
             index += 1
         }
 
-        val decoded = decode_html_entities(out.toString())
+        val decoded = decode_html_entities(out.toString().trimStart(' ', '\t', '\n', '\r'))
 
         val collapsed = StringBuilder()
         var blank_run = 0
@@ -303,7 +304,7 @@ object ProtectedMimeBuilder {
             collapsed.append(trimmed).append("\r\n")
         }
 
-        val result = collapsed.toString().trim()
+        val result = collapsed.toString().trim('\r', '\n')
 
         return result.ifEmpty { " " }
     }

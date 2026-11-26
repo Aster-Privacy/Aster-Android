@@ -3764,4 +3764,23 @@
     <string name="pending_send_failed">无法发送此邮件。</string>
     <string name="pending_send_waiting">正在等待网络连接。恢复联网后将发送此邮件。</string>
     <string name="thread_offline_saved_copy">您处于离线状态。这是保存在此设备上的副本。</string>
+    <string name="signature_font_family">字体</string>
+    <string name="signature_font_family_default">默认字体</string>
+    <string name="signature_font_family_monospace">等宽</string>
+    <string name="table_insert">插入表格</string>
+    <string name="table_options">表格选项</string>
+    <string name="table_rows">行</string>
+    <string name="table_columns">列</string>
+    <string name="table_show_borders">显示边框</string>
+    <string name="table_add_row">添加行</string>
+    <string name="table_remove_row">移除行</string>
+    <string name="table_add_column">添加列</string>
+    <string name="table_remove_column">移除列</string>
+    <string name="table_insert_row_above">在上方插入行</string>
+    <string name="table_insert_row_below">在下方插入行</string>
+    <string name="table_insert_column_before">在前面插入列</string>
+    <string name="table_insert_column_after">在后面插入列</string>
+    <string name="table_delete_row">删除行</string>
+    <string name="table_delete_column">删除列</string>
+    <string name="table_delete">删除表格</string>
 </resources>

@@ -362,10 +362,7 @@ private fun signature_edit_modal(
             AsterSecondaryButton(
                 label = stringResource(R.string.signature_edit_as_plain),
                 onClick = {
-                    content = android.text.Html.fromHtml(
-                        content,
-                        android.text.Html.FROM_HTML_MODE_COMPACT,
-                    ).toString().trim()
+                    content = signature_html_to_plain_text(content)
                     is_html = false
                 },
             )
