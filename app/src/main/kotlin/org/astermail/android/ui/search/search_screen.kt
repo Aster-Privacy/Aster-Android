@@ -748,7 +748,7 @@ fun SearchScreen(
         return expand_thread_selection(ids, members, grouping_enabled)
     }
 
-    val selection_snapshot = selected_ids.toList()
+    val selection_snapshot by remember { androidx.compose.runtime.derivedStateOf { selected_ids.toList() } }
     val selection_flags = remember(selection_snapshot, thread_member_ids, grouping_enabled, corpus_lookup, filtered_ids) {
         search_selection_flags_of(
             selection = selection_snapshot,

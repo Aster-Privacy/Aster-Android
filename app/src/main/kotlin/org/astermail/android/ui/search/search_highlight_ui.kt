@@ -135,6 +135,8 @@ internal fun search_subject_text(subject: String): AnnotatedString? {
     }
 }
 
+private val search_match_bar_shape = RoundedCornerShape(22.dp)
+
 @Composable
 internal fun search_match_bar(
     session: search_highlight_session,
@@ -162,7 +164,7 @@ internal fun search_match_bar(
         } else {
             label
         }
-        val shape = RoundedCornerShape(22.dp)
+        val shape = search_match_bar_shape
         val bar_bg = if (colors.is_dark) Color(0xFF26272B) else Color.White
         val border_color = colors.text_primary.copy(alpha = if (colors.is_dark) 0.12f else 0.08f)
         val accent_dot = remember(colors.accent_blue, colors.is_dark) {
