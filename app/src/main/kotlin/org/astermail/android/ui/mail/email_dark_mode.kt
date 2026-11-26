@@ -611,6 +611,7 @@ private fun collect_sheet_hints(doc: org.jsoup.nodes.Document, honors_background
     val inks = HashMap<org.jsoup.nodes.Element, String>()
     val images = HashSet<org.jsoup.nodes.Element>()
     var budget = MAX_CONTRAST_RULES
+    var selector_budget = MAIL_SELECTOR_MAX_COUNT
     for (sheet in doc.select("style")) {
         for (rule in STYLE_RULE.findAll(sheet.data())) {
             if (budget-- <= 0) return sheet_hints(backgrounds, inks, images)
@@ -625,7 +626,8 @@ private fun collect_sheet_hints(doc: org.jsoup.nodes.Document, honors_background
             if (!image && background == null && ink == null) continue
             for (part in rule.groupValues[1].split(',')) {
                 val selector = part.trim()
-                if (selector.isEmpty() || selector.startsWith("@") || selector.contains(':')) continue
+                if (!is_simple_mail_selector(selector)) continue
+                if (selector_budget-- <= 0) return sheet_hints(backgrounds, inks, images)
                 val matches = try {
                     doc.body().select(selector)
                 } catch (_: org.jsoup.select.Selector.SelectorParseException) {
