@@ -155,6 +155,9 @@ data class ThreadUiState(
     val attachments_failed: Boolean = false,
     val attachments_loading: Set<String> = emptySet(),
     val attachments_settled: Set<String> = emptySet(),
+    val offline: Boolean = false,
+    val requested_id: String? = null,
+    val requested_thread_token: String? = null,
 )
 
 data class SearchUiState(
@@ -216,11 +219,12 @@ class MailViewModel @Inject constructor(
 
     val thread_optimistic_messages: StateFlow<List<ThreadMessageDecrypted>> =
         combine(_thread_state, repository.optimistic_sends) { state, sends ->
+            val target = thread_optimistic_target(state)
             optimistic_sends_for_thread(
                 sends = sends,
                 account_id = repository.current_account_id(),
-                thread_token = state.item?.thread_token,
-                item_id = state.item?.id,
+                thread_token = target.thread_token,
+                item_id = target.item_id,
                 server_messages = state.messages,
                 conversation_grouping = repository.is_conversation_grouping_enabled,
             )
@@ -1599,7 +1603,8 @@ class MailViewModel @Inject constructor(
         val item_id = offline_retry_item_id ?: return
         offline_retry_item_id = null
         val state = _thread_state.value
-        if (state.item != null || state.error == null) return
+        val showing_saved_copy = state.offline && state.item?.id == item_id
+        if (!showing_saved_copy && (state.item != null || state.error == null)) return
         load_thread(item_id)
     }
 
@@ -2899,38 +2904,36 @@ class MailViewModel @Inject constructor(
                     is_transient_failure(item_result.exceptionOrNull())
                 val offline_fallback = if (offline_failure && seed != null) offline_message_from_seed(seed) else null
                 if (thread_gen != thread_load_generation) return@launch
-                if (offline_fallback != null && seed != null) {
-                    offline_retry_item_id = null
-                    _thread_state.value = apply_thread_read_overrides(
-                        ThreadUiState(messages = listOf(offline_fallback), item = seed),
-                    )
-                    return@launch
+                val transient = !missing_on_server && is_transient_failure(item_result.exceptionOrNull())
+                val error_text = when {
+                    missing_on_server -> context.getString(R.string.message_replaced_or_deleted)
+                    offline_failure -> context.getString(open_failure_message(item_result.exceptionOrNull()))
+                    else -> item_result.exceptionOrNull()
+                        ?.takeUnless { is_cancellation(it) }
+                        ?.let {
+                            org.astermail.android.localized_api_error(
+                                context,
+                                it,
+                                context.getString(R.string.something_went_wrong),
+                            )
+                        }
+                        ?: context.getString(R.string.something_went_wrong)
                 }
-                if (!kept && item_result.exceptionOrNull()?.let { is_cancellation(it) } != true) {
+                val next = thread_state_after_open_failure(
+                    item_id = item_id,
+                    keep = keep,
+                    seed = seed,
+                    offline_fallback = offline_fallback,
+                    missing_on_server = missing_on_server,
+                    transient = transient,
+                    error_text = error_text,
+                )
+                if (!kept && next.error != null && item_result.exceptionOrNull()?.let { is_cancellation(it) } != true) {
                     undo_failed_open(item_id)
                 }
                 if (missing_on_server) forget_missing_search_item(item_id)
-                _thread_state.value = if (kept) {
-                    keep.copy(is_loading = false, error = null)
-                } else if (missing_on_server) {
-                    ThreadUiState(error = context.getString(R.string.message_replaced_or_deleted))
-                } else if (offline_failure) {
-                    offline_retry_item_id = item_id
-                    ThreadUiState(error = context.getString(open_failure_message(item_result.exceptionOrNull())))
-                } else {
-                    ThreadUiState(
-                        error = item_result.exceptionOrNull()
-                            ?.takeUnless { is_cancellation(it) }
-                            ?.let {
-                                org.astermail.android.localized_api_error(
-                                    context,
-                                    it,
-                                    context.getString(R.string.something_went_wrong),
-                                )
-                            }
-                            ?: context.getString(R.string.something_went_wrong),
-                    )
-                }
+                offline_retry_item_id = if (next.offline) item_id else null
+                _thread_state.value = if (next.error == null) apply_thread_read_overrides(next) else next
             }
             } finally {
                 early_thread?.cancel()

@@ -3847,4 +3847,5 @@
     <string name="search_match_clear">Effacer le surlignage</string>
     <string name="pending_send_failed">Impossible d’envoyer ce message.</string>
     <string name="pending_send_waiting">En attente de connexion. Ce message sera envoyé dès que vous serez de nouveau en ligne.</string>
+    <string name="thread_offline_saved_copy">Vous êtes hors ligne. Ceci est la copie enregistrée sur cet appareil.</string>
 </resources>

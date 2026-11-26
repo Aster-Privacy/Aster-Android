@@ -50,4 +50,5 @@ data class PendingSendEntity(
     val force_pgp: Boolean? = null,
     val pgp_recipients_json: String? = null,
     val priority: String? = null,
+    val reply_to_id: String? = null,
 )

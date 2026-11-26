@@ -1512,9 +1512,26 @@ fun MailDetailScreen(
                             label = stringResource(R.string.retry),
                             onClick = { mail_vm.load_thread(email_id) },
                         )
+                        if (thread_state.requested_id == email_id) {
+                            optimistic_thread_messages.forEach { reply ->
+                                pending_reply_card(
+                                    reply = reply,
+                                    on_retry = { mail_vm.retry_pending_send(reply.id) },
+                                    modifier = Modifier.testTag("pending_reply_card"),
+                                )
+                            }
+                        }
                     }
                 }
                 return@Column
+            }
+
+            AsterExpandVisibility(visible = thread_state.offline && email != null) {
+                thread_offline_notice(
+                    modifier = Modifier
+                        .padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs)
+                        .testTag("thread_offline_notice"),
+                )
             }
 
             Box(
@@ -9939,6 +9956,70 @@ private fun sender_unverified_banner(sender: String) {
                 lineHeight = 17.sp,
             )
         }
+    }
+}
+
+@Composable
+private fun thread_offline_notice(modifier: Modifier = Modifier) {
+    val colors = AsterMaterial.colors
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.semantics(mergeDescendants = true) {},
+    ) {
+        Icon(
+            imageVector = TablerIcons.CloudOff,
+            contentDescription = null,
+            tint = colors.text_muted,
+            modifier = Modifier.size(14.dp),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = stringResource(R.string.thread_offline_saved_copy),
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.text_muted,
+        )
+    }
+}
+
+@Composable
+private fun pending_reply_card(
+    reply: org.astermail.android.mail.ThreadMessageDecrypted,
+    on_retry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AsterMaterial.colors
+    val recipients = reply.to_addresses.ifEmpty {
+        listOfNotNull(reply.to_label.takeIf { it.isNotBlank() })
+    }
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(colors.bg_secondary)
+            .padding(AsterSpacing.md),
+    ) {
+        if (recipients.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.to_label_prefix, recipients.joinToString(", ")),
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.text_muted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Text(
+            text = reply.body_text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.text_primary,
+            maxLines = 4,
+            overflow = TextOverflow.Ellipsis,
+        )
+        pending_send_status(
+            send_status = reply.raw_item.send_status,
+            send_at_ms = reply.pending_send_at_ms,
+            on_retry = on_retry,
+        )
     }
 }
 

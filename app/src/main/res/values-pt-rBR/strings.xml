@@ -3818,4 +3818,5 @@
     <string name="search_match_clear">Limpar destaques</string>
     <string name="pending_send_failed">Não foi possível enviar esta mensagem.</string>
     <string name="pending_send_waiting">Aguardando conexão. Esta mensagem será enviada quando você voltar a ficar online.</string>
+    <string name="thread_offline_saved_copy">Você está off-line. Esta é a cópia salva neste dispositivo.</string>
 </resources>

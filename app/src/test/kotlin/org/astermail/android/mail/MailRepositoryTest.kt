@@ -3620,6 +3620,63 @@ class MailRepositoryTest {
     }
 
     @Test
+    fun `reconcile restores a reply that only knows its parent message after a restart`() = runTest {
+        every { session_key_store.get_user_id() } returns "user_1"
+        pending_send_dao.rows["p_parent"] = pending_row("p_parent", fire_at_ms = 5_000L)
+            .copy(thread_token = null, reply_to_id = "msg_1")
+
+        repo.reconcile_pending_sends()
+
+        val send = repo.optimistic_sends.value.single()
+        assertEquals("p_parent", send.pending_id)
+        assertNull(send.thread_token)
+        assertEquals("msg_1", send.reply_to_id)
+        val shown = optimistic_sends_for_thread(
+            sends = repo.optimistic_sends.value,
+            account_id = "user_1",
+            thread_token = null,
+            item_id = "msg_1",
+            server_messages = emptyList(),
+        )
+        assertEquals(listOf(optimistic_send_message_id("p_parent")), shown.map { it.id })
+    }
+
+    @Test
+    fun `reconcile keeps the parent message on a restored threaded reply`() = runTest {
+        every { session_key_store.get_user_id() } returns "user_1"
+        pending_send_dao.rows["p_both"] = pending_row("p_both")
+            .copy(thread_token = "thread_1", reply_to_id = "msg_1")
+
+        repo.reconcile_pending_sends()
+
+        assertEquals("msg_1", repo.optimistic_sends.value.single().reply_to_id)
+    }
+
+    @Test
+    fun `a reply without a thread token stores its parent message in the outbox`() = runTest {
+        every { session_key_store.get_user_id() } returns "user_1"
+        coEvery { mail_api.create_draft(any()) } returns
+            org.astermail.android.api.mail.CreateDraftResponse(id = "safety_parent", success = true)
+        val pending_id = repo.schedule_send_with_undo(
+            to = listOf("friend@astermail.org"),
+            cc = emptyList(),
+            bcc = emptyList(),
+            subject = "Re: Hi",
+            body_html = "<p>thanks</p>",
+            sender_email = "me@astermail.org",
+            sender_display_name = "Me",
+            thread_token = null,
+            undo_seconds = 10,
+            draft_id = null,
+            reply_to_id = "msg_1",
+        ).getOrThrow()
+        wait_until(5000L) { runBlocking { pending_send_dao.get_by_id(pending_id) } != null }
+
+        assertEquals("msg_1", pending_send_dao.get_by_id(pending_id)?.reply_to_id)
+        assertEquals("msg_1", repo.optimistic_sends.value.single().reply_to_id)
+    }
+
+    @Test
     fun `reconcile does not add a reply twice`() = runTest {
         pending_send_dao.rows["p_wait"] = pending_row("p_wait").copy(thread_token = "thread_1")
 

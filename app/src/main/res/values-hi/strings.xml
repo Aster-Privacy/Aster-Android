@@ -3684,4 +3684,5 @@
     <string name="search_match_clear">हाइलाइट हटाएं</string>
     <string name="pending_send_failed">यह संदेश भेजा नहीं जा सका.</string>
     <string name="pending_send_waiting">कनेक्शन की प्रतीक्षा की जा रही है. आपके वापस ऑनलाइन होते ही यह संदेश भेज दिया जाएगा.</string>
+    <string name="thread_offline_saved_copy">आप ऑफ़लाइन हैं। यह इस डिवाइस पर सहेजी गई कॉपी है।</string>
 </resources>

@@ -3760,4 +3760,5 @@
     <string name="search_match_clear">清除高亮</string>
     <string name="pending_send_failed">无法发送此邮件。</string>
     <string name="pending_send_waiting">正在等待网络连接。恢复联网后将发送此邮件。</string>
+    <string name="thread_offline_saved_copy">您处于离线状态。这是保存在此设备上的副本。</string>
 </resources>

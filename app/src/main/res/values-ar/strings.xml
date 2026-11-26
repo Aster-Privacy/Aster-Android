@@ -3927,4 +3927,5 @@
     <string name="search_match_clear">مسح التمييز</string>
     <string name="pending_send_failed">تعذّر إرسال هذه الرسالة.</string>
     <string name="pending_send_waiting">في انتظار الاتصال. سيتم إرسال هذه الرسالة عند عودتك إلى الإنترنت.</string>
+    <string name="thread_offline_saved_copy">أنت غير متصل بالإنترنت. هذه هي النسخة المحفوظة على هذا الجهاز.</string>
 </resources>

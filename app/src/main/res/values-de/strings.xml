@@ -3793,4 +3793,5 @@
     <string name="search_match_clear">Markierungen entfernen</string>
     <string name="pending_send_failed">Diese Nachricht konnte nicht gesendet werden.</string>
     <string name="pending_send_waiting">Warten auf eine Verbindung. Diese Nachricht wird gesendet, sobald Sie wieder online sind.</string>
+    <string name="thread_offline_saved_copy">Sie sind offline. Das ist die auf diesem Gerät gespeicherte Kopie.</string>
 </resources>
