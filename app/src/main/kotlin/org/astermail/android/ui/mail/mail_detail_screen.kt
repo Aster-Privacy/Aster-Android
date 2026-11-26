@@ -777,13 +777,7 @@ fun MailDetailScreen(
     }
 
     val thread_attachments = thread_state.attachments
-    val api_messages = remember(thread_state.messages, thread_attachments) {
-        thread_state.messages.map { msg ->
-            val base = thread_message_to_mock(msg)
-            val atts = thread_attachments[msg.id]
-            if (!atts.isNullOrEmpty()) thread_message_with_attachments(base, atts) else base
-        }
-    }
+    val api_messages = mapped_thread_messages_state(thread_state.messages, thread_attachments)
     val api_item = thread_state.item?.takeIf { thread_matches_email }
     val all_thread_attachments = remember(api_messages) {
         api_messages.flatMap { it.attachments }
@@ -1066,15 +1060,14 @@ fun MailDetailScreen(
         messages.firstOrNull { it.id == email_id }?.id ?: messages.lastOrNull()?.id
     }
     val optimistic_thread_messages by mail_vm.thread_optimistic_messages.collectAsStateWithLifecycle()
+    val optimistic_mapped_messages = mapped_thread_messages_state(optimistic_thread_messages, emptyMap())
     val thread_send_aliases by mail_vm.thread_send_aliases.collectAsStateWithLifecycle()
-    val display_messages = remember(messages, optimistic_thread_messages, thread_matches_email, detail_grouping) {
-        if (!detail_grouping || !thread_matches_email || optimistic_thread_messages.isEmpty()) {
+    val display_messages = remember(messages, optimistic_mapped_messages, thread_matches_email, detail_grouping) {
+        if (!detail_grouping || !thread_matches_email || optimistic_mapped_messages.isEmpty()) {
             messages
         } else {
             val known = messages.mapTo(HashSet()) { it.id }
-            messages + optimistic_thread_messages
-                .filter { it.id !in known }
-                .map { thread_message_to_mock(it) }
+            messages + optimistic_mapped_messages.filter { it.id !in known }
         }
     }
     val display_ids = remember(display_messages) { display_messages.map { it.id } }
@@ -3805,9 +3798,11 @@ internal fun expanded_message(
             value = result
         }
         val html_part = html_part_state.value
-        val text_part_lazy = remember(msg.body_html, msg.body) {
+        val text_part_lazy = remember(msg.body_html, msg.body, msg.body_plain_fallback) {
             lazy(LazyThreadSafetyMode.NONE) {
-                msg.body.ifBlank { org.astermail.android.mail.html_to_plain_text(msg.body_html.orEmpty()) }
+                msg.body.ifBlank {
+                    msg.body_plain_fallback ?: org.astermail.android.mail.html_to_plain_text(msg.body_html.orEmpty())
+                }
             }
         }
         val text_part by text_part_lazy
