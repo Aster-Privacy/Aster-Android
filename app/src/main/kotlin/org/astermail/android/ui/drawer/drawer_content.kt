@@ -135,6 +135,8 @@ import org.astermail.android.design.parse_hex_color_safe
 import androidx.compose.animation.core.tween
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.storage.StoredAccount
+import org.astermail.android.ui.icons.alias_mask_icon
+import org.astermail.android.ui.icons.alias_mask_tone
 import org.astermail.android.ui.icons.all_mail_icon
 import org.astermail.android.ui.common.page_surface
 
@@ -3183,11 +3185,7 @@ private fun drawer_alias_row(
         animationSpec = tween(durationMillis = 150),
         label = "row_bg",
     )
-    val icon_color by animateColorAsState(
-        targetValue = if (selected) colors.text_primary else colors.text_muted,
-        animationSpec = tween(durationMillis = 150),
-        label = "row_icon",
-    )
+    val icon_color = alias_mask_tone(address, colors.is_dark)
     val row_modifier = Modifier
         .fillMaxWidth()
         .padding(horizontal = 10.dp, vertical = 2.dp)
@@ -3201,7 +3199,7 @@ private fun drawer_alias_row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = TablerIcons.At,
+            imageVector = alias_mask_icon,
             contentDescription = null,
             tint = icon_color,
             modifier = Modifier.size(22.dp),
