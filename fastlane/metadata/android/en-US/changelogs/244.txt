@@ -1,0 +1,5 @@
+Bug fixes and improvements:
+
+- You can now choose which app delivers your notifications. Go to Settings > Notifications and select Push notification app.
+- If the app you chose is uninstalled, Aster Mail switches back to the built-in delivery and lets you know.
+- The sync spinner on the Contacts screen now turns in place instead of drifting off center.
