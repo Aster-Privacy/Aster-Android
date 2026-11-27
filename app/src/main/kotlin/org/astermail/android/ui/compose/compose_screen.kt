@@ -2335,7 +2335,7 @@ private fun compose_screen_content(
             return
         }
 
-        if (settings_state.preferences?.auto_save_recent_recipients != false) {
+        if (settings_state.preferences?.auto_save_recent_recipients == true) {
             contacts_vm.auto_save_recipients(
                 recipients = snap_to + snap_cc + snap_bcc,
                 own_addresses = buildSet {
