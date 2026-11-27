@@ -2296,8 +2296,8 @@
     <string name="vanguard_confirm_disable_title">Vanguard를 끌까요?</string>
     <string name="vanguard_confirm_disable_desc">Vanguard 보호 기능이 꺼집니다. 앱 잠금은 계속 켜져 있습니다.</string>
     <string name="vanguard_disable">끄기</string>
-    <string name="vanguard_lockdown_first_title">먼저 잠금 모드를 끄세요</string>
-    <string name="vanguard_lockdown_first_desc">이 계정에서 잠금 모드가 켜져 있습니다. Vanguard를 끄려면 웹 또는 데스크톱 앱의 Aster Mail에서 잠금 모드를 끈 다음 다시 시도하세요.</string>
+    <string name="vanguard_lockdown_first_title">먼저 차단 모드를 끄세요</string>
+    <string name="vanguard_lockdown_first_desc">이 계정에서 차단 모드가 켜져 있습니다. Vanguard를 끄려면 웹 또는 데스크톱 앱의 Aster Mail에서 차단 모드를 끈 다음 다시 시도하세요.</string>
     <string name="app_lock_pin">앱 잠금</string>
     <string name="app_lock_pin_description">앱을 열 때 PIN이나 암호문을 요구합니다.</string>
     <string name="app_lock_change_pin">PIN 변경</string>

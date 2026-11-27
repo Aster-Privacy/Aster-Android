@@ -2308,8 +2308,8 @@
     <string name="vanguard_confirm_disable_title">Disattivare Vanguard?</string>
     <string name="vanguard_confirm_disable_desc">Le protezioni di Vanguard verranno disattivate. Il blocco app resta attivo.</string>
     <string name="vanguard_disable">Disattiva</string>
-    <string name="vanguard_lockdown_first_title">Disattiva prima la modalità Blocco</string>
-    <string name="vanguard_lockdown_first_desc">La modalità Blocco è attiva per questo account. Per disattivare Vanguard, disattiva la modalità Blocco in Aster Mail sul web o nell\'app desktop, poi riprova.</string>
+    <string name="vanguard_lockdown_first_title">Disattiva prima la modalità isolamento</string>
+    <string name="vanguard_lockdown_first_desc">La modalità isolamento è attiva per questo account. Per disattivare Vanguard, disattiva la modalità isolamento in Aster Mail sul web o nell\'app desktop, poi riprova.</string>
     <string name="app_lock_pin">Blocco app</string>
     <string name="app_lock_pin_description">Richiedi un PIN o una passphrase per aprire l\'app.</string>
     <string name="app_lock_change_pin">Cambia PIN</string>
