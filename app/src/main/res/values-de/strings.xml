@@ -2304,6 +2304,8 @@
     <string name="vanguard_confirm_disable_title">Vanguard deaktivieren?</string>
     <string name="vanguard_confirm_disable_desc">Die Vanguard-Schutzfunktionen werden abgeschaltet. Die App-Sperre bleibt aktiv.</string>
     <string name="vanguard_disable">Deaktivieren</string>
+    <string name="vanguard_lockdown_first_title">Zuerst den Blockierungsmodus ausschalten</string>
+    <string name="vanguard_lockdown_first_desc">Für dieses Konto ist der Blockierungsmodus aktiv. Um Vanguard auszuschalten, schalten Sie den Blockierungsmodus in Aster Mail im Web oder in der Desktop-App aus und versuchen Sie es dann erneut.</string>
     <string name="app_lock_pin">App-Sperre</string>
     <string name="app_lock_pin_description">PIN oder Passphrase verlangen, um die App zu öffnen.</string>
     <string name="app_lock_change_pin">PIN ändern</string>

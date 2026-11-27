@@ -49,3 +49,14 @@ fun subscription_plan_code(subscription: SubscriptionInfo?): String {
 
 fun is_vanguard_plan(subscription: SubscriptionInfo?): Boolean =
     subscription_plan_code(subscription) in vanguard_plan_codes
+
+fun vanguard_switch_available(
+    server_eligible: Boolean?,
+    plan_allows: Boolean,
+    subscription_known: Boolean,
+    enabled: Boolean,
+): Boolean {
+    if (enabled) return true
+    server_eligible?.let { return it }
+    return plan_allows || !subscription_known
+}

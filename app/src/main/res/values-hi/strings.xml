@@ -2216,6 +2216,8 @@
     <string name="vanguard_confirm_disable_title">Vanguard बंद करें?</string>
     <string name="vanguard_confirm_disable_desc">Vanguard की सुरक्षाएं बंद हो जाएंगी। ऐप लॉक चालू रहेगा।</string>
     <string name="vanguard_disable">बंद करें</string>
+    <string name="vanguard_lockdown_first_title">पहले लॉकडाउन मोड बंद करें</string>
+    <string name="vanguard_lockdown_first_desc">इस खाते के लिए लॉकडाउन मोड चालू है। Vanguard बंद करने के लिए, वेब पर या डेस्कटॉप ऐप में Aster Mail में लॉकडाउन मोड बंद करें, फिर दोबारा कोशिश करें।</string>
     <string name="app_lock_pin">ऐप लॉक</string>
     <string name="app_lock_pin_description">ऐप खोलने के लिए PIN या पासफ़्रेज़ ज़रूरी करें।</string>
     <string name="app_lock_change_pin">PIN बदलें</string>

@@ -311,6 +311,7 @@ data class SettingsUiState(
     val audit_events_load_failed: Boolean = false,
     val audit_events_loaded: Boolean = false,
     val vanguard_enabled: Boolean? = null,
+    val vanguard_eligible: Boolean? = null,
     val vanguard_status_load_failed: Boolean = false,
     val security_loading: Boolean = false,
     val pgp_key_info: org.astermail.android.api.encryption.PgpKeyInfo? = null,
@@ -4430,7 +4431,14 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val v = load_settings_resource(await_session_ready, settings_load_backoff) { security_api.get_vanguard_status() }.getOrThrow()
-                _state.update { it.copy(vanguard_enabled = v.enabled, vanguard_status_load_failed = false) }
+                v.lockdown_enabled?.let { org.astermail.android.security.LockdownStore.set_enabled(context, it) }
+                _state.update {
+                    it.copy(
+                        vanguard_enabled = v.enabled,
+                        vanguard_eligible = v.eligible ?: it.vanguard_eligible,
+                        vanguard_status_load_failed = false,
+                    )
+                }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.update { it.copy(vanguard_status_load_failed = it.vanguard_enabled == null) }
@@ -4443,7 +4451,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val v = security_api.enable_vanguard()
-                _state.update { it.copy(vanguard_enabled = v.enabled) }
+                _state.update { it.copy(vanguard_enabled = v.enabled, vanguard_eligible = v.eligible ?: it.vanguard_eligible) }
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
                 _state.value = _state.value.copy(action_result = org.astermail.android.localized_api_error(context, t, context.getString(R.string.something_went_wrong)))
@@ -4455,7 +4463,8 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val v = security_api.disable_vanguard()
-                _state.update { it.copy(vanguard_enabled = v.enabled) }
+                if (!v.enabled) org.astermail.android.security.LockdownStore.set_enabled(context, false)
+                _state.update { it.copy(vanguard_enabled = v.enabled, vanguard_eligible = v.eligible ?: it.vanguard_eligible) }
                 if (!v.enabled) on_disabled()
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) throw t
