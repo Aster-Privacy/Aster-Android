@@ -2296,6 +2296,8 @@
     <string name="vanguard_confirm_disable_title">Vanguard を無効にしますか？</string>
     <string name="vanguard_confirm_disable_desc">Vanguard の保護機能がオフになります。アプリロックはオンのままです。</string>
     <string name="vanguard_disable">無効にする</string>
+    <string name="vanguard_lockdown_first_title">先にロックダウンモードをオフにしてください</string>
+    <string name="vanguard_lockdown_first_desc">このアカウントではロックダウンモードがオンになっています。Vanguard をオフにするには、Web 版またはデスクトップアプリの Aster Mail でロックダウンモードをオフにしてから、もう一度お試しください。</string>
     <string name="app_lock_pin">アプリロック</string>
     <string name="app_lock_pin_description">アプリを開くときに PIN またはパスフレーズを求めます。</string>
     <string name="app_lock_change_pin">PIN を変更</string>

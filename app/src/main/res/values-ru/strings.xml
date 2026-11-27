@@ -2317,6 +2317,8 @@
     <string name="vanguard_confirm_disable_title">Отключить Vanguard?</string>
     <string name="vanguard_confirm_disable_desc">Средства защиты Vanguard будут выключены. Блокировка приложения останется включенной.</string>
     <string name="vanguard_disable">Отключить</string>
+    <string name="vanguard_lockdown_first_title">Сначала выключите режим блокировки</string>
+    <string name="vanguard_lockdown_first_desc">Для этой учетной записи включен режим блокировки. Чтобы выключить Vanguard, выключите режим блокировки в Aster Mail в браузере или в приложении для компьютера, затем повторите попытку.</string>
     <string name="app_lock_pin">Блокировка приложения</string>
     <string name="app_lock_pin_description">Спрашивать PIN-код или пароль при открытии приложения.</string>
     <string name="app_lock_change_pin">Изменить PIN-код</string>

@@ -985,10 +985,16 @@ private fun vanguard_section(
     val colors = AsterMaterial.colors
     val state by vm.state.collectAsStateWithLifecycle()
 
-    val is_nova_plus = is_vanguard_plan(state.subscription)
     val vanguard_enabled = state.vanguard_enabled == true
+    val is_nova_plus = vanguard_switch_available(
+        server_eligible = state.vanguard_eligible,
+        plan_allows = is_vanguard_plan(state.subscription),
+        subscription_known = state.subscription != null,
+        enabled = vanguard_enabled,
+    )
 
     var show_disable_confirm by remember { mutableStateOf(false) }
+    var show_lockdown_first by remember { mutableStateOf(false) }
     val lock_context = LocalContext.current
 
     val lock_config_version by lock_store.config_version.collectAsState()
@@ -1035,12 +1041,16 @@ private fun vanguard_section(
                             stroke_width = 2.dp,
                             color = colors.text_muted,
                         )
-                    } else if (is_nova_plus || state.subscription == null) {
+                    } else if (is_nova_plus) {
                         AsterSwitch(
                             checked = vanguard_enabled,
                             onCheckedChange = { v ->
-                                if (v) vm.enable_vanguard()
-                                else show_disable_confirm = true
+                                when {
+                                    v -> vm.enable_vanguard()
+                                    org.astermail.android.security.LockdownStore.is_enabled(lock_context) ->
+                                        show_lockdown_first = true
+                                    else -> show_disable_confirm = true
+                                }
                             },
                             enabled = state.vanguard_enabled != null,
                         )
@@ -1116,6 +1126,16 @@ private fun vanguard_section(
                     get_credential = { json -> request_passkey_json(host, json) },
                 )
             },
+        )
+    }
+
+    if (show_lockdown_first) {
+        AsterAlertDialog(
+            on_dismiss = { show_lockdown_first = false },
+            title = stringResource(R.string.vanguard_lockdown_first_title),
+            message = stringResource(R.string.vanguard_lockdown_first_desc),
+            confirm_label = stringResource(R.string.ok),
+            on_confirm = { show_lockdown_first = false },
         )
     }
 

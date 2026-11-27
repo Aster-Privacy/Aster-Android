@@ -2303,6 +2303,8 @@
     <string name="vanguard_confirm_disable_title">Vanguard uitschakelen?</string>
     <string name="vanguard_confirm_disable_desc">De Vanguard-bescherming wordt uitgezet. De appvergrendeling blijft aan.</string>
     <string name="vanguard_disable">Uitschakelen</string>
+    <string name="vanguard_lockdown_first_title">Zet eerst de vergrendelmodus uit</string>
+    <string name="vanguard_lockdown_first_desc">De vergrendelmodus staat aan voor dit account. Zet de vergrendelmodus uit in Aster Mail op het web of in de desktop-app om Vanguard uit te zetten, en probeer het daarna opnieuw.</string>
     <string name="app_lock_pin">Appvergrendeling</string>
     <string name="app_lock_pin_description">Vraag om een pincode of wachtwoordzin om de app te openen.</string>
     <string name="app_lock_change_pin">Pincode wijzigen</string>

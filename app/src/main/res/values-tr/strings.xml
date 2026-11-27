@@ -2303,6 +2303,8 @@
     <string name="vanguard_confirm_disable_title">Vanguard kapatılsın mı?</string>
     <string name="vanguard_confirm_disable_desc">Vanguard korumaları kapatılacak. Uygulama kilidi açık kalır.</string>
     <string name="vanguard_disable">Kapat</string>
+    <string name="vanguard_lockdown_first_title">Önce Kilitleme Modu\'nu kapatın</string>
+    <string name="vanguard_lockdown_first_desc">Bu hesapta Kilitleme Modu açık. Vanguard\'ı kapatmak için web\'de veya masaüstü uygulamasında Aster Mail\'de Kilitleme Modu\'nu kapatın, ardından yeniden deneyin.</string>
     <string name="app_lock_pin">Uygulama kilidi</string>
     <string name="app_lock_pin_description">Uygulamayı açmak için PIN ya da parola gerekir.</string>
     <string name="app_lock_change_pin">PIN\'i değiştir</string>

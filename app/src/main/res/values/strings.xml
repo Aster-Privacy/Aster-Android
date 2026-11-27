@@ -2499,6 +2499,8 @@
     <string name="vanguard_confirm_disable_title">Disable Vanguard?</string>
     <string name="vanguard_confirm_disable_desc">Vanguard protections will be turned off. App Lock stays on.</string>
     <string name="vanguard_disable">Disable</string>
+    <string name="vanguard_lockdown_first_title">Turn off Lockdown Mode first</string>
+    <string name="vanguard_lockdown_first_desc">Lockdown Mode is on for this account. To turn off Vanguard, turn off Lockdown Mode in Aster Mail on the web or in the desktop app, then try again.</string>
 
     <!-- App Lock settings -->
     <string name="app_lock_pin">App Lock</string>

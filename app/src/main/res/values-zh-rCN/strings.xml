@@ -2296,6 +2296,8 @@
     <string name="vanguard_confirm_disable_title">要停用 Vanguard 吗？</string>
     <string name="vanguard_confirm_disable_desc">Vanguard 保护将被关闭。应用锁会保持开启。</string>
     <string name="vanguard_disable">停用</string>
+    <string name="vanguard_lockdown_first_title">请先关闭锁定模式</string>
+    <string name="vanguard_lockdown_first_desc">此帐户已开启锁定模式。要关闭 Vanguard，请先在网页版或桌面应用的 Aster Mail 中关闭锁定模式，然后重试。</string>
     <string name="app_lock_pin">应用锁</string>
     <string name="app_lock_pin_description">打开应用时需要输入 PIN 码或口令。</string>
     <string name="app_lock_change_pin">更改 PIN 码</string>

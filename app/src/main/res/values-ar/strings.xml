@@ -2331,6 +2331,8 @@
     <string name="vanguard_confirm_disable_title">تعطيل Vanguard؟</string>
     <string name="vanguard_confirm_disable_desc">سيتم إيقاف وسائل حماية Vanguard. يبقى قفل التطبيق مفعّلًا.</string>
     <string name="vanguard_disable">تعطيل</string>
+    <string name="vanguard_lockdown_first_title">أوقف وضع الإغلاق أولاً</string>
+    <string name="vanguard_lockdown_first_desc">وضع الإغلاق مفعّل لهذا الحساب. لإيقاف Vanguard، أوقف وضع الإغلاق في Aster Mail على الويب أو في تطبيق سطح المكتب، ثم حاول مرة أخرى.</string>
     <string name="app_lock_pin">قفل التطبيق</string>
     <string name="app_lock_pin_description">طلب رمز PIN أو عبارة مرور لفتح التطبيق.</string>
     <string name="app_lock_change_pin">تغيير رمز PIN</string>

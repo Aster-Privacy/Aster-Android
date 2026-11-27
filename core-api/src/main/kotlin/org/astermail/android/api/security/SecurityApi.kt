@@ -176,6 +176,8 @@ data class AuditLogResponse(
 @Serializable
 data class VanguardStatus(
     val enabled: Boolean = false,
+    val eligible: Boolean? = null,
+    val lockdown_enabled: Boolean? = null,
 )
 
 interface SecurityApi {
