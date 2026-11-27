@@ -122,6 +122,7 @@ fun handle_guard_push(
     claim: (String) -> Boolean,
     enqueue: (guard_push) -> Unit,
     marks: guard_alert_marks = guard_alert_marks.none,
+    replace_notice_mail: () -> Unit = {},
 ): PushResult {
     val push = parse_guard_push(payload) ?: return PushResult.Ignore
     val known = runCatching { known_accounts() }.getOrDefault(emptyList())
@@ -130,9 +131,27 @@ fun handle_guard_push(
     val spec = guard_notification_spec_for(push.event)
     guard_cancelled_push(push)?.let { claim(guard_dedupe_key(it)) }
     if (spec.shows) runCatching { marks.note(push.account_id, push.event) }
+    if (spec.shows && push.event.has_notice_mail()) runCatching { replace_notice_mail() }
     guard_live_events.emit(push)
     enqueue(push)
     return if (spec.shows) PushResult.Shown else PushResult.Ignore
+}
+
+const val GUARD_NOTICE_FIELD = "guard_notice"
+
+fun guard_event.has_notice_mail(): Boolean = this == guard_event.change_held || this == guard_event.rescue_started
+
+fun guard_notice_payload(payload: JSONObject): JSONObject? {
+    if (payload.optString("type") != "new_mail") return null
+    val notice = payload.optJSONObject(GUARD_NOTICE_FIELD) ?: return null
+    val guard_payload = JSONObject()
+        .put("type", GUARD_PUSH_TYPE)
+        .put("event", notice.optString("event", ""))
+        .put("id", notice.optString("id", ""))
+        .put("account_id", notice.optString("account_id", ""))
+    val push = parse_guard_push(guard_payload) ?: return null
+    if (!guard_notification_spec_for(push.event).shows) return null
+    return guard_payload
 }
 
 enum class guard_open_target { request, changes, guard_settings, app }

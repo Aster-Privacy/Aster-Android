@@ -119,6 +119,26 @@ fun post_push_generic(
     return PushResult.Shown
 }
 
+private fun replace_guard_notice_mail(context: Context) {
+    val taken = NotificationDedupe.take_system_mail(context)
+    if (taken.isNotEmpty()) MailPollingWorker.cancel_notification_ids(context, taken)
+}
+
+private fun handle_guard_notice_mail(context: Context, item_id: String, guard_payload: JSONObject): PushResult {
+    signal_mail_refresh(context)
+    MailPollingWorker.claim_item_notification(context, item_id)
+    val result = org.astermail.android.guard.handle_guard_push(
+        payload = guard_payload,
+        known_accounts = { guard_known_accounts(context) },
+        claim = { NotificationDedupe.claim_event(context, it) },
+        enqueue = { LoginAlertNotifier.enqueue_guard(context, it) },
+        marks = NotificationDedupe.guard_marks(context),
+        replace_notice_mail = { replace_guard_notice_mail(context) },
+    )
+    NotificationDedupe.clear_guard_notice_mark(context)
+    return result
+}
+
 fun handle_push_payload(context: Context, payload: String): PushResult {
     val obj = JSONObject(payload)
     val type = obj.optString("type")
@@ -150,9 +170,13 @@ fun handle_push_payload(context: Context, payload: String): PushResult {
             claim = { NotificationDedupe.claim_event(context, it) },
             enqueue = { LoginAlertNotifier.enqueue_guard(context, it) },
             marks = NotificationDedupe.guard_marks(context),
+            replace_notice_mail = { replace_guard_notice_mail(context) },
         )
     }
     if (type != "new_mail" && type != "wake") return PushResult.Ignore
+    org.astermail.android.guard.guard_notice_payload(obj)?.let { guard_payload ->
+        return handle_guard_notice_mail(context, obj.optString("item_id", ""), guard_payload)
+    }
     runCatching {
         EntryPointAccessors.fromApplication(
             context.applicationContext,

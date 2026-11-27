@@ -1406,6 +1406,10 @@ class MailPollingWorker(
                         .build(),
                 )
             }
+            val system_notice = item_id.isNotBlank() &&
+                !sender_email.isNullOrBlank() &&
+                org.astermail.android.ui.mail.is_aster_system_address(sender_email)
+            if (system_notice && !NotificationDedupe.track_system_mail(context, item_id, message_id, sender_email)) return
             val manager = NotificationManagerCompat.from(context)
             manager.cancel(NOTIFICATION_ID)
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -1416,6 +1420,9 @@ class MailPollingWorker(
                 .commit()
             manager.notify(message_id, builder.build())
             post_group_summary(context, manager, message_id)
+            if (system_notice && !NotificationDedupe.system_mail_tracked(context, item_id, message_id)) {
+                cancel_notification_id(context, message_id)
+            }
         }
 
         private fun app_lock_configured(context: Context): Boolean =
