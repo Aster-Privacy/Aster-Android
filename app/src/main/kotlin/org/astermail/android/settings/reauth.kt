@@ -34,6 +34,10 @@ import org.astermail.android.auth.PasskeyCancelledException
 import org.astermail.android.auth.PasskeyFailedException
 import org.astermail.android.auth.PasskeyUnavailableException
 import org.astermail.android.auth.parse_assertion_response
+import org.astermail.android.guard.guard_error_message
+import org.astermail.android.guard.guard_step_up_field
+import org.astermail.android.guard.guard_step_up_rejection
+import org.astermail.android.guard.text
 
 enum class ReauthDemand {
     password,
@@ -104,7 +108,17 @@ sealed interface Reauthorized<out T> {
     data class Retry(val prompt: ReauthPrompt) : Reauthorized<Nothing>
 }
 
-fun reauth_retry_prompt(context: Context, prompt: ReauthPrompt, t: Throwable): ReauthPrompt = when {
+fun reauth_retry_prompt(context: Context, prompt: ReauthPrompt, t: Throwable): ReauthPrompt {
+    val rejection = guard_step_up_rejection(t)
+    return reauth_retry_prompt(context, prompt, t, rejection)
+}
+
+private fun reauth_retry_prompt(
+    context: Context,
+    prompt: ReauthPrompt,
+    t: Throwable,
+    rejection: guard_error_message?,
+): ReauthPrompt = when {
     reauth_demand_of(t) == ReauthDemand.totp_code -> prompt.copy(
         busy = false,
         needs_code = true,
@@ -112,6 +126,11 @@ fun reauth_retry_prompt(context: Context, prompt: ReauthPrompt, t: Throwable): R
     )
     t is PasskeyCancelledException || t is PasskeyUnavailableException || t is PasskeyFailedException ->
         prompt.copy(busy = false, error = key_check_error_text(context, t))
+    rejection != null -> prompt.copy(
+        busy = false,
+        needs_code = prompt.needs_code || rejection.step_up_field == guard_step_up_field.code,
+        error = rejection.text(context),
+    )
     else -> prompt.copy(
         busy = false,
         error = org.astermail.android.localized_api_error(

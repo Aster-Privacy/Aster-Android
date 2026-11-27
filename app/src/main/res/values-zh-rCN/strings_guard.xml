@@ -378,4 +378,14 @@
     <string name="guard_wait_paused_title">登录请求已暂停</string>
     <string name="guard_wait_paused">为了保护你的账户，Aster Guard 暂停了新的登录请求。请在 %1$s 之后重试。</string>
     <string name="guard_wait_sign_in_again">重新登录</string>
+    <string name="guard_step_up_password_wrong">密码不正确。</string>
+    <string name="guard_step_up_password_wrong_held">密码不正确。在密码更改处于暂缓状态期间，请输入您当前的密码，而不是新密码。</string>
+    <string name="guard_step_up_code_wrong">验证码不正确。请输入身份验证器应用中的当前验证码。</string>
+    <string name="guard_step_up_code_required">请输入身份验证器应用中的 6 位验证码。</string>
+    <string name="guard_step_up_key_failed">无法验证您的安全密钥。请重试。</string>
+    <string name="guard_step_up_locked">错误尝试次数过多，因此您的账户已被锁定。您可以在 %1$s 重试。</string>
+    <string name="guard_step_up_locked_soon">错误尝试次数过多。请稍等片刻，然后重试。</string>
+    <plurals name="guard_step_up_attempts_left">
+        <item quantity="other">您还可以尝试 %1$d 次，之后账户将被锁定 15 分钟。</item>
+    </plurals>
 </resources>

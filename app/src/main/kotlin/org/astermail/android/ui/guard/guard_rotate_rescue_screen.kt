@@ -186,7 +186,7 @@ private fun guard_rotate_form(
 private fun guard_rotate_notice_text(
     notice: guard_rotate_notice?,
     error: org.astermail.android.guard.guard_error_message? = null,
-): String? = when (notice) {
+): String? = if (error?.step_up_field != null) error.resolve() else when (notice) {
     null -> null
     guard_rotate_notice.wrong_password -> stringResource(R.string.guard_setup_wrong_password)
     guard_rotate_notice.totp_required -> stringResource(R.string.guard_setup_totp_required)

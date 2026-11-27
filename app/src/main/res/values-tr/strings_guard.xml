@@ -387,4 +387,15 @@
     <string name="guard_wait_paused_title">Oturum açma istekleri duraklatıldı</string>
     <string name="guard_wait_paused">Hesabınızı korumak için Aster Guard yeni oturum açma isteklerini duraklattı. %1$s sonrasında tekrar deneyin.</string>
     <string name="guard_wait_sign_in_again">Tekrar oturum aç</string>
+    <string name="guard_step_up_password_wrong">Parola yanlış.</string>
+    <string name="guard_step_up_password_wrong_held">Parola yanlış. Bir parola değişikliği beklemedeyken yeni parolanızı değil, mevcut parolanızı girin.</string>
+    <string name="guard_step_up_code_wrong">Doğrulama kodu yanlış. Doğrulama uygulamanızdaki güncel kodu girin.</string>
+    <string name="guard_step_up_code_required">Doğrulama uygulamanızdaki 6 haneli kodu girin.</string>
+    <string name="guard_step_up_key_failed">Güvenlik anahtarınız doğrulanamadı. Tekrar deneyin.</string>
+    <string name="guard_step_up_locked">Çok fazla yanlış deneme yapıldığı için hesabınız kilitlendi. %1$s saatinde tekrar deneyebilirsiniz.</string>
+    <string name="guard_step_up_locked_soon">Çok fazla yanlış deneme. Biraz bekleyin, sonra tekrar deneyin.</string>
+    <plurals name="guard_step_up_attempts_left">
+        <item quantity="one">Hesabınız 15 dakika kilitlenmeden önce 1 deneme hakkınız kaldı.</item>
+        <item quantity="other">Hesabınız 15 dakika kilitlenmeden önce %1$d deneme hakkınız kaldı.</item>
+    </plurals>
 </resources>

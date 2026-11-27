@@ -24,6 +24,7 @@ package org.astermail.android.guard
 import android.content.Context
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import java.time.Instant
 import org.astermail.android.R
@@ -51,7 +52,65 @@ import org.astermail.android.api.api_error_code
 
 const val GUARD_TIMED_RETRY_MIN_SECS = 60L
 
-data class guard_error_message(@StringRes val res: Int, val at: Instant? = null)
+data class guard_error_message(
+    @StringRes val res: Int,
+    val at: Instant? = null,
+    val attempts_left: Int? = null,
+    val step_up_field: guard_step_up_field? = null,
+)
+
+enum class guard_step_up_field { password, code, key, all }
+
+private const val STEP_UP_ATTEMPTS_WARNING_AT = 5
+
+private fun step_up_details(t: Throwable): Map<String, String> = when (t) {
+    is ApiError.InvalidCredentials -> t.details
+    is ApiError.ValidationError -> t.details
+    is ApiError.ForbiddenError -> t.details
+    else -> emptyMap()
+}
+
+private fun attempts_left_of(details: Map<String, String>): Int? =
+    details["attempts_remaining"]?.toIntOrNull()?.takeIf { it in 1..STEP_UP_ATTEMPTS_WARNING_AT }
+
+fun guard_step_up_rejection(t: Throwable, now: Instant = Instant.now()): guard_error_message? {
+    val details = step_up_details(t)
+    val attempts = attempts_left_of(details)
+    if (t is ApiError.InvalidCredentials) {
+        if (details["failed_factor"] == "security_key") {
+            return guard_error_message(R.string.guard_step_up_key_failed, attempts_left = attempts, step_up_field = guard_step_up_field.key)
+        }
+        val res = if (details["password_change_held"] == "true") {
+            R.string.guard_step_up_password_wrong_held
+        } else {
+            R.string.guard_step_up_password_wrong
+        }
+        return guard_error_message(res, attempts_left = attempts, step_up_field = guard_step_up_field.password)
+    }
+    return when (api_error_code(t)) {
+        STEP_UP_INVALID_CODE_CODE ->
+            guard_error_message(R.string.guard_step_up_code_wrong, attempts_left = attempts, step_up_field = guard_step_up_field.code)
+        STEP_UP_TOTP_REQUIRED_CODE ->
+            guard_error_message(R.string.guard_step_up_code_required, step_up_field = guard_step_up_field.code)
+        STEP_UP_ACCOUNT_LOCKED_CODE -> {
+            val ends = details["retry_after_seconds"]?.toLongOrNull()?.let { guard_retry_ends_at(it, now) }
+            ends?.let { guard_error_message(R.string.guard_step_up_locked, it, step_up_field = guard_step_up_field.all) }
+                ?: guard_error_message(R.string.guard_step_up_locked_soon, step_up_field = guard_step_up_field.all)
+        }
+        else -> null
+    }
+}
+
+private fun guard_step_up_reported(t: Throwable, now: Instant): guard_error_message? {
+    val details = step_up_details(t)
+    val reported = "failed_factor" in details ||
+        (api_error_code(t) == STEP_UP_ACCOUNT_LOCKED_CODE && "retry_after_seconds" in details)
+    return if (reported) guard_step_up_rejection(t, now) else null
+}
+
+private const val STEP_UP_INVALID_CODE_CODE = "INVALID_TWO_FACTOR_CODE"
+private const val STEP_UP_TOTP_REQUIRED_CODE = "TOTP_REQUIRED"
+private const val STEP_UP_ACCOUNT_LOCKED_CODE = "ACCOUNT_LOCKED"
 
 @StringRes
 fun guard_error_string_res(code: String?): Int? = when (code) {
@@ -80,7 +139,10 @@ fun guard_error_string_res(code: String?): Int? = when (code) {
 fun guard_retry_ends_at(retry_after_secs: Long, now: Instant): Instant? =
     if (retry_after_secs >= GUARD_TIMED_RETRY_MIN_SECS) now.plusSeconds(retry_after_secs) else null
 
-fun guard_error_message_for(t: Throwable, now: Instant = Instant.now()): guard_error_message? = when (t) {
+fun guard_error_message_for(t: Throwable, now: Instant = Instant.now()): guard_error_message? =
+    guard_step_up_reported(t, now) ?: guard_base_error_message(t, now)
+
+private fun guard_base_error_message(t: Throwable, now: Instant): guard_error_message? = when (t) {
     is ApiError.GuardRetry -> {
         val ends = guard_retry_ends_at(t.retry_after_secs, now)
         when (t.code) {
@@ -102,12 +164,18 @@ fun guard_error_message_for(t: Throwable, now: Instant = Instant.now()): guard_e
     else -> guard_error_string_res(api_error_code(t))?.let { guard_error_message(it) }
 }
 
-fun guard_error_message.text(context: Context): String =
-    at?.let { context.getString(res, guard_format_instant(it)) } ?: context.getString(res)
+fun guard_error_message.text(context: Context): String {
+    val base = at?.let { context.getString(res, guard_format_instant(it)) } ?: context.getString(res)
+    val left = attempts_left ?: return base
+    return "$base ${context.resources.getQuantityString(R.plurals.guard_step_up_attempts_left, left, left)}"
+}
 
 @Composable
-fun guard_error_message.resolve(): String =
-    at?.let { stringResource(res, guard_format_instant(it)) } ?: stringResource(res)
+fun guard_error_message.resolve(): String {
+    val base = at?.let { stringResource(res, guard_format_instant(it)) } ?: stringResource(res)
+    val left = attempts_left ?: return base
+    return "$base ${pluralStringResource(R.plurals.guard_step_up_attempts_left, left, left)}"
+}
 
 fun guard_error_text(context: Context, t: Throwable): String? = guard_error_message_for(t)?.text(context)
 

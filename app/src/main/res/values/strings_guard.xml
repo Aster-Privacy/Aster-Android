@@ -408,4 +408,15 @@
     <string name="guard_wait_paused_title">Sign-in requests are paused</string>
     <string name="guard_wait_paused">To protect your account, Aster Guard paused new sign-in requests. Try again after %1$s.</string>
     <string name="guard_wait_sign_in_again">Sign in again</string>
+    <string name="guard_step_up_password_wrong">The password is incorrect.</string>
+    <string name="guard_step_up_password_wrong_held">The password is incorrect. While a password change is on hold, enter your current password, not the new one.</string>
+    <string name="guard_step_up_code_wrong">The authenticator code is incorrect. Enter the current code from your authenticator app.</string>
+    <string name="guard_step_up_code_required">Enter the 6-digit code from your authenticator app.</string>
+    <string name="guard_step_up_key_failed">Your security key couldn\'t be verified. Try again.</string>
+    <string name="guard_step_up_locked">Too many incorrect attempts, so your account is locked. You can try again at %1$s.</string>
+    <string name="guard_step_up_locked_soon">Too many incorrect attempts. Wait a moment, then try again.</string>
+    <plurals name="guard_step_up_attempts_left">
+        <item quantity="one">You have 1 attempt left before your account is locked for 15 minutes.</item>
+        <item quantity="other">You have %1$d attempts left before your account is locked for 15 minutes.</item>
+    </plurals>
 </resources>

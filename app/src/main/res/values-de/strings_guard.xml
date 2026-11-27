@@ -387,4 +387,15 @@
     <string name="guard_wait_paused_title">Anmeldeanfragen sind pausiert</string>
     <string name="guard_wait_paused">Zum Schutz deines Kontos hat Aster Guard neue Anmeldeanfragen pausiert. Versuche es nach %1$s erneut.</string>
     <string name="guard_wait_sign_in_again">Erneut anmelden</string>
+    <string name="guard_step_up_password_wrong">Das Passwort ist falsch.</string>
+    <string name="guard_step_up_password_wrong_held">Das Passwort ist falsch. Solange eine Passwortänderung zurückgehalten wird, gib dein aktuelles Passwort ein, nicht das neue.</string>
+    <string name="guard_step_up_code_wrong">Der Authentifizierungscode ist falsch. Gib den aktuellen Code aus deiner Authentifizierungs-App ein.</string>
+    <string name="guard_step_up_code_required">Gib den 6-stelligen Code aus deiner Authentifizierungs-App ein.</string>
+    <string name="guard_step_up_key_failed">Dein Sicherheitsschlüssel konnte nicht überprüft werden. Versuche es erneut.</string>
+    <string name="guard_step_up_locked">Zu viele falsche Versuche, daher ist dein Konto gesperrt. Du kannst es um %1$s erneut versuchen.</string>
+    <string name="guard_step_up_locked_soon">Zu viele falsche Versuche. Warte einen Moment und versuche es dann erneut.</string>
+    <plurals name="guard_step_up_attempts_left">
+        <item quantity="one">Du hast noch 1 Versuch, bevor dein Konto für 15 Minuten gesperrt wird.</item>
+        <item quantity="other">Du hast noch %1$d Versuche, bevor dein Konto für 15 Minuten gesperrt wird.</item>
+    </plurals>
 </resources>

@@ -100,4 +100,60 @@ class GuardErrorTextTest {
         assertEquals(GUARD_DEVICE_LABEL_FALLBACK, guard_device_label_of("unknown", "Unknown"))
         assertTrue(guard_device_label_of("Maker", "x".repeat(200)).length <= GUARD_DEVICE_LABEL_MAX)
     }
+
+    @Test
+    fun wrong_step_up_password_names_the_password_and_the_held_change() {
+        val held = ApiError.InvalidCredentials(
+            mapOf("failed_factor" to "password", "attempts_remaining" to "2", "password_change_held" to "true"),
+        )
+        assertEquals(
+            guard_error_message(
+                R.string.guard_step_up_password_wrong_held,
+                attempts_left = 2,
+                step_up_field = guard_step_up_field.password,
+            ),
+            guard_error_message_for(held, now),
+        )
+        val plain = ApiError.InvalidCredentials(mapOf("failed_factor" to "password", "attempts_remaining" to "9"))
+        assertEquals(
+            guard_error_message(R.string.guard_step_up_password_wrong, step_up_field = guard_step_up_field.password),
+            guard_error_message_for(plain, now),
+        )
+    }
+
+    @Test
+    fun wrong_step_up_code_and_key_are_told_apart() {
+        val code = ApiError.ValidationError(
+            listOf("bad"),
+            "INVALID_TWO_FACTOR_CODE",
+            mapOf("failed_factor" to "totp", "attempts_remaining" to "1"),
+        )
+        assertEquals(
+            guard_error_message(R.string.guard_step_up_code_wrong, attempts_left = 1, step_up_field = guard_step_up_field.code),
+            guard_error_message_for(code, now),
+        )
+        val key = ApiError.InvalidCredentials(mapOf("failed_factor" to "security_key", "attempts_remaining" to "8"))
+        assertEquals(R.string.guard_step_up_key_failed, guard_error_message_for(key, now)?.res)
+    }
+
+    @Test
+    fun step_up_lockout_shows_when_to_try_again() {
+        val locked = ApiError.ForbiddenError(code = "ACCOUNT_LOCKED", details = mapOf("retry_after_seconds" to "900"))
+        assertEquals(
+            guard_error_message(R.string.guard_step_up_locked, now.plusSeconds(900), step_up_field = guard_step_up_field.all),
+            guard_error_message_for(locked, now),
+        )
+        val soon = ApiError.ForbiddenError(code = "ACCOUNT_LOCKED", details = mapOf("retry_after_seconds" to "10"))
+        assertEquals(R.string.guard_step_up_locked_soon, guard_error_message_for(soon, now)?.res)
+    }
+
+    @Test
+    fun errors_without_step_up_details_keep_their_old_text() {
+        assertNull(guard_error_message_for(ApiError.InvalidCredentials, now))
+        assertNull(guard_error_message_for(ApiError.ForbiddenError(code = "ACCOUNT_LOCKED"), now))
+        assertEquals(
+            R.string.guard_step_up_code_wrong,
+            guard_step_up_rejection(ApiError.ValidationError(listOf("bad"), "INVALID_TWO_FACTOR_CODE"), now)?.res,
+        )
+    }
 }

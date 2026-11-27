@@ -387,4 +387,15 @@
     <string name="guard_wait_paused_title">साइन-इन अनुरोध रोके गए हैं</string>
     <string name="guard_wait_paused">आपके खाते की सुरक्षा के लिए, Aster Guard ने नए साइन-इन अनुरोध रोक दिए हैं। %1$s के बाद फिर से कोशिश करें।</string>
     <string name="guard_wait_sign_in_again">फिर से साइन इन करें</string>
+    <string name="guard_step_up_password_wrong">पासवर्ड गलत है।</string>
+    <string name="guard_step_up_password_wrong_held">पासवर्ड गलत है। जब तक पासवर्ड बदलाव रुका हुआ है, नया नहीं बल्कि अपना मौजूदा पासवर्ड डालें।</string>
+    <string name="guard_step_up_code_wrong">ऑथेंटिकेटर कोड गलत है। अपने ऑथेंटिकेटर ऐप से मौजूदा कोड डालें।</string>
+    <string name="guard_step_up_code_required">अपने ऑथेंटिकेटर ऐप से 6 अंकों का कोड डालें।</string>
+    <string name="guard_step_up_key_failed">आपकी सुरक्षा कुंजी सत्यापित नहीं हो सकी। फिर से कोशिश करें।</string>
+    <string name="guard_step_up_locked">बहुत ज़्यादा गलत प्रयास हुए, इसलिए आपका खाता लॉक है। आप %1$s पर फिर से कोशिश कर सकते हैं।</string>
+    <string name="guard_step_up_locked_soon">बहुत ज़्यादा गलत प्रयास हुए। थोड़ा रुकें, फिर से कोशिश करें।</string>
+    <plurals name="guard_step_up_attempts_left">
+        <item quantity="one">आपका खाता 15 मिनट के लिए लॉक होने से पहले आपके पास 1 प्रयास बचा है।</item>
+        <item quantity="other">आपका खाता 15 मिनट के लिए लॉक होने से पहले आपके पास %1$d प्रयास बचे हैं।</item>
+    </plurals>
 </resources>

@@ -396,4 +396,15 @@
     <string name="guard_wait_paused_title">Le richieste di accesso sono sospese</string>
     <string name="guard_wait_paused">Per proteggere il tuo account, Aster Guard ha sospeso le nuove richieste di accesso. Riprova dopo %1$s.</string>
     <string name="guard_wait_sign_in_again">Accedi di nuovo</string>
+    <string name="guard_step_up_password_wrong">La password non è corretta.</string>
+    <string name="guard_step_up_password_wrong_held">La password non è corretta. Finché una modifica della password è in attesa, inserisci la password attuale, non quella nuova.</string>
+    <string name="guard_step_up_code_wrong">Il codice di autenticazione non è corretto. Inserisci il codice attuale dalla tua app di autenticazione.</string>
+    <string name="guard_step_up_code_required">Inserisci il codice di 6 cifre dalla tua app di autenticazione.</string>
+    <string name="guard_step_up_key_failed">Non è stato possibile verificare la tua chiave di sicurezza. Riprova.</string>
+    <string name="guard_step_up_locked">Troppi tentativi non corretti, quindi il tuo account è bloccato. Puoi riprovare alle %1$s.</string>
+    <string name="guard_step_up_locked_soon">Troppi tentativi non corretti. Attendi un momento, poi riprova.</string>
+    <plurals name="guard_step_up_attempts_left">
+        <item quantity="one">Hai ancora 1 tentativo prima che il tuo account venga bloccato per 15 minuti.</item>
+        <item quantity="other">Hai ancora %1$d tentativi prima che il tuo account venga bloccato per 15 minuti.</item>
+    </plurals>
 </resources>

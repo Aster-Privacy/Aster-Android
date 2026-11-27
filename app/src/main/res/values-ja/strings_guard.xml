@@ -378,4 +378,14 @@
     <string name="guard_wait_paused_title">サインインリクエストは一時停止中です</string>
     <string name="guard_wait_paused">アカウントを保護するため、Aster Guard は新しいサインインリクエストを一時停止しました。%1$s 以降にもう一度お試しください。</string>
     <string name="guard_wait_sign_in_again">もう一度サインイン</string>
+    <string name="guard_step_up_password_wrong">パスワードが正しくありません。</string>
+    <string name="guard_step_up_password_wrong_held">パスワードが正しくありません。パスワードの変更が保留中の間は、新しいパスワードではなく現在のパスワードを入力してください。</string>
+    <string name="guard_step_up_code_wrong">認証コードが正しくありません。認証アプリに表示されている現在のコードを入力してください。</string>
+    <string name="guard_step_up_code_required">認証アプリに表示されている6桁のコードを入力してください。</string>
+    <string name="guard_step_up_key_failed">セキュリティキーを確認できませんでした。もう一度お試しください。</string>
+    <string name="guard_step_up_locked">誤った試行が多すぎるため、アカウントはロックされています。%1$sに再度お試しください。</string>
+    <string name="guard_step_up_locked_soon">誤った試行が多すぎます。しばらく待ってから、もう一度お試しください。</string>
+    <plurals name="guard_step_up_attempts_left">
+        <item quantity="other">アカウントが15分間ロックされるまで、あと%1$d回試せます。</item>
+    </plurals>
 </resources>

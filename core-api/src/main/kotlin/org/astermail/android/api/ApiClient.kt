@@ -76,7 +76,11 @@ sealed class ApiError(message: String) : Exception(message) {
     object NetworkError : ApiError("network error")
     object UnauthorizedError : ApiError("unauthorized")
     object RefreshTokenRevoked : ApiError("refresh token revoked")
-    object InvalidCredentials : ApiError("invalid credentials")
+    open class InvalidCredentials(
+        val details: Map<String, String> = emptyMap(),
+    ) : ApiError("invalid credentials") {
+        companion object : InvalidCredentials()
+    }
     data class PaymentRequired(val detail: String = "") : ApiError(detail)
     data class AttachmentTooLarge(val detail: String = "") : ApiError(detail)
     data class SendQuotaReached(val detail: String = "") : ApiError(detail)
@@ -182,10 +186,15 @@ const val STORAGE_QUOTA_CODE = "STORAGE_QUOTA_EXCEEDED"
 const val ACCOUNT_SUSPENDED_CODE = "ACCOUNT_SUSPENDED"
 const val CAPTCHA_FAILED_CODE = "CAPTCHA_FAILED"
 
-fun map_unauthorized(server_code: String?, detail: String): ApiError =
+fun map_unauthorized(
+    server_code: String?,
+    detail: String,
+    details: Map<String, String> = emptyMap(),
+): ApiError =
     when (server_code) {
         FINGERPRINT_MISMATCH_CODE -> ApiError.StepUpRequired(detail.ifBlank { "step up required" })
-        INVALID_CREDENTIALS_CODE -> ApiError.InvalidCredentials
+        INVALID_CREDENTIALS_CODE ->
+            if (details.isEmpty()) ApiError.InvalidCredentials else ApiError.InvalidCredentials(details)
         REFRESH_TOKEN_REVOKED_CODE -> ApiError.RefreshTokenRevoked
         else -> ApiError.UnauthorizedError
     }
@@ -640,7 +649,7 @@ class ApiClient(
                 server_code,
                 parse_error_details(body),
             )
-            401 -> map_unauthorized(server_code, detail).also {
+            401 -> map_unauthorized(server_code, detail, parse_error_details(body)).also {
                 if (should_emit_unauthorized(server_code)) AuthEventBus.emit_unauthorized()
             }
             402 -> ApiError.PaymentRequired(detail)

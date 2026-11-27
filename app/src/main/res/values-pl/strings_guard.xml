@@ -405,4 +405,17 @@
     <string name="guard_wait_paused_title">Prośby o logowanie są wstrzymane</string>
     <string name="guard_wait_paused">Aby chronić Twoje konto, Aster Guard wstrzymał nowe prośby o logowanie. Spróbuj ponownie po %1$s.</string>
     <string name="guard_wait_sign_in_again">Zaloguj się ponownie</string>
+    <string name="guard_step_up_password_wrong">Hasło jest nieprawidłowe.</string>
+    <string name="guard_step_up_password_wrong_held">Hasło jest nieprawidłowe. Dopóki zmiana hasła jest wstrzymana, wpisz obecne hasło, a nie nowe.</string>
+    <string name="guard_step_up_code_wrong">Kod uwierzytelniający jest nieprawidłowy. Wpisz aktualny kod z aplikacji uwierzytelniającej.</string>
+    <string name="guard_step_up_code_required">Wpisz 6-cyfrowy kod z aplikacji uwierzytelniającej.</string>
+    <string name="guard_step_up_key_failed">Nie udało się zweryfikować klucza bezpieczeństwa. Spróbuj ponownie.</string>
+    <string name="guard_step_up_locked">Zbyt wiele nieprawidłowych prób, więc konto jest zablokowane. Możesz spróbować ponownie o %1$s.</string>
+    <string name="guard_step_up_locked_soon">Zbyt wiele nieprawidłowych prób. Zaczekaj chwilę i spróbuj ponownie.</string>
+    <plurals name="guard_step_up_attempts_left">
+        <item quantity="one">Pozostała 1 próba przed zablokowaniem konta na 15 minut.</item>
+        <item quantity="few">Pozostałe próby przed zablokowaniem konta na 15 minut: %1$d.</item>
+        <item quantity="many">Pozostałe próby przed zablokowaniem konta na 15 minut: %1$d.</item>
+        <item quantity="other">Pozostałe próby przed zablokowaniem konta na 15 minut: %1$d.</item>
+    </plurals>
 </resources>

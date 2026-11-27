@@ -400,14 +400,14 @@ class GuardSetupViewModel @Inject constructor(
                 guard_is_disabled(t) -> _state.update { it.copy(step = guard_setup_step.hidden, password = "") }
                 code == TOTP_REQUIRED_CODE -> {
                     _state.update { it.copy(show_totp = true) }
-                    to_password(guard_setup_notice.totp_required)
+                    to_password(guard_setup_notice.totp_required, t)
                 }
                 t is ApiError.InvalidCredentials || t is ApiError.StepUpRequired ||
                     code == STEP_UP_REQUIRED_CODE || code == INVALID_CREDENTIALS_CODE || code == INVALID_PASSWORD_CODE ->
                     if (sheet != null) {
                         to_passkey_failure(guard_passkey_failure.failed)
                     } else {
-                        to_password(guard_setup_notice.wrong_password)
+                        to_password(guard_setup_notice.wrong_password, t)
                     }
                 else -> to_failed_phase(guard_setup_step.password, t)
             }
@@ -569,8 +569,15 @@ class GuardSetupViewModel @Inject constructor(
         )
     }
 
-    private fun to_password(notice: guard_setup_notice) =
-        _state.update { it.copy(step = guard_setup_step.password, notice = notice, passkey_failure = null) }
+    private fun to_password(notice: guard_setup_notice, cause: Throwable? = null) =
+        _state.update {
+            it.copy(
+                step = guard_setup_step.password,
+                notice = notice,
+                passkey_failure = null,
+                error = cause?.let { t -> org.astermail.android.guard.guard_step_up_rejection(t) },
+            )
+        }
 
     private fun to_passkey_failure(failure: guard_passkey_failure) = _state.update {
         it.copy(
