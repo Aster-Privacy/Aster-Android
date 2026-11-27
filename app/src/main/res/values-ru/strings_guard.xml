@@ -405,4 +405,17 @@
     <string name="guard_wait_paused_title">Запросы на вход приостановлены</string>
     <string name="guard_wait_paused">Чтобы защитить ваш аккаунт, Aster Guard приостановил новые запросы на вход. Повторите попытку после %1$s.</string>
     <string name="guard_wait_sign_in_again">Войти снова</string>
+    <string name="guard_step_up_password_wrong">Неверный пароль.</string>
+    <string name="guard_step_up_password_wrong_held">Неверный пароль. Пока смена пароля задержана, введите текущий пароль, а не новый.</string>
+    <string name="guard_step_up_code_wrong">Неверный код аутентификатора. Введите текущий код из приложения-аутентификатора.</string>
+    <string name="guard_step_up_code_required">Введите 6-значный код из приложения-аутентификатора.</string>
+    <string name="guard_step_up_key_failed">Не удалось проверить ключ безопасности. Повторите попытку.</string>
+    <string name="guard_step_up_locked">Слишком много неверных попыток, поэтому аккаунт заблокирован. Повторите попытку в %1$s.</string>
+    <string name="guard_step_up_locked_soon">Слишком много неверных попыток. Подождите немного и повторите попытку.</string>
+    <plurals name="guard_step_up_attempts_left">
+        <item quantity="one">Осталась 1 попытка до блокировки аккаунта на 15 минут.</item>
+        <item quantity="few">Осталось попыток до блокировки аккаунта на 15 минут: %1$d.</item>
+        <item quantity="many">Осталось попыток до блокировки аккаунта на 15 минут: %1$d.</item>
+        <item quantity="other">Осталось попыток до блокировки аккаунта на 15 минут: %1$d.</item>
+    </plurals>
 </resources>

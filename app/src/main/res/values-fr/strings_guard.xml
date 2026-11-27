@@ -396,4 +396,15 @@
     <string name="guard_wait_paused_title">Les demandes de connexion sont en pause</string>
     <string name="guard_wait_paused">Pour protéger votre compte, Aster Guard a mis en pause les nouvelles demandes de connexion. Réessayez après %1$s.</string>
     <string name="guard_wait_sign_in_again">Se reconnecter</string>
+    <string name="guard_step_up_password_wrong">Le mot de passe est incorrect.</string>
+    <string name="guard_step_up_password_wrong_held">Le mot de passe est incorrect. Tant qu\'un changement de mot de passe est en attente, saisissez votre mot de passe actuel, pas le nouveau.</string>
+    <string name="guard_step_up_code_wrong">Le code d\'authentification est incorrect. Saisissez le code actuel de votre app d\'authentification.</string>
+    <string name="guard_step_up_code_required">Saisissez le code à 6 chiffres de votre app d\'authentification.</string>
+    <string name="guard_step_up_key_failed">Votre clé de sécurité n\'a pas pu être vérifiée. Réessayez.</string>
+    <string name="guard_step_up_locked">Trop de tentatives incorrectes, votre compte est donc verrouillé. Vous pouvez réessayer à %1$s.</string>
+    <string name="guard_step_up_locked_soon">Trop de tentatives incorrectes. Patientez un instant, puis réessayez.</string>
+    <plurals name="guard_step_up_attempts_left">
+        <item quantity="one">Il vous reste 1 tentative avant que votre compte soit verrouillé pendant 15 minutes.</item>
+        <item quantity="other">Il vous reste %1$d tentatives avant que votre compte soit verrouillé pendant 15 minutes.</item>
+    </plurals>
 </resources>

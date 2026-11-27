@@ -387,4 +387,15 @@
     <string name="guard_wait_paused_title">Aanmeldverzoeken zijn gepauzeerd</string>
     <string name="guard_wait_paused">Om je account te beschermen, heeft Aster Guard nieuwe aanmeldverzoeken gepauzeerd. Probeer het opnieuw na %1$s.</string>
     <string name="guard_wait_sign_in_again">Opnieuw aanmelden</string>
+    <string name="guard_step_up_password_wrong">Het wachtwoord is onjuist.</string>
+    <string name="guard_step_up_password_wrong_held">Het wachtwoord is onjuist. Zolang een wachtwoordwijziging wordt vastgehouden, voer je je huidige wachtwoord in, niet het nieuwe.</string>
+    <string name="guard_step_up_code_wrong">De authenticatiecode is onjuist. Voer de huidige code uit je authenticatie-app in.</string>
+    <string name="guard_step_up_code_required">Voer de 6-cijferige code uit je authenticatie-app in.</string>
+    <string name="guard_step_up_key_failed">Je beveiligingssleutel kon niet worden geverifieerd. Probeer het opnieuw.</string>
+    <string name="guard_step_up_locked">Te veel onjuiste pogingen, dus je account is vergrendeld. Je kunt het om %1$s opnieuw proberen.</string>
+    <string name="guard_step_up_locked_soon">Te veel onjuiste pogingen. Wacht even en probeer het dan opnieuw.</string>
+    <plurals name="guard_step_up_attempts_left">
+        <item quantity="one">Je hebt nog 1 poging voordat je account 15 minuten wordt vergrendeld.</item>
+        <item quantity="other">Je hebt nog %1$d pogingen voordat je account 15 minuten wordt vergrendeld.</item>
+    </plurals>
 </resources>

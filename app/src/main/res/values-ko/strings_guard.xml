@@ -378,4 +378,14 @@
     <string name="guard_wait_paused_title">로그인 요청이 일시 중지됨</string>
     <string name="guard_wait_paused">계정을 보호하기 위해 Aster Guard가 새 로그인 요청을 일시 중지했습니다. %1$s 이후에 다시 시도하세요.</string>
     <string name="guard_wait_sign_in_again">다시 로그인</string>
+    <string name="guard_step_up_password_wrong">비밀번호가 올바르지 않습니다.</string>
+    <string name="guard_step_up_password_wrong_held">비밀번호가 올바르지 않습니다. 비밀번호 변경이 보류 중인 동안에는 새 비밀번호가 아닌 현재 비밀번호를 입력하세요.</string>
+    <string name="guard_step_up_code_wrong">인증 코드가 올바르지 않습니다. 인증 앱에 표시된 현재 코드를 입력하세요.</string>
+    <string name="guard_step_up_code_required">인증 앱에 표시된 6자리 코드를 입력하세요.</string>
+    <string name="guard_step_up_key_failed">보안 키를 확인하지 못했습니다. 다시 시도하세요.</string>
+    <string name="guard_step_up_locked">잘못된 시도가 너무 많아 계정이 잠겼습니다. %1$s에 다시 시도할 수 있습니다.</string>
+    <string name="guard_step_up_locked_soon">잘못된 시도가 너무 많습니다. 잠시 기다린 후 다시 시도하세요.</string>
+    <plurals name="guard_step_up_attempts_left">
+        <item quantity="other">계정이 15분 동안 잠기기 전까지 %1$d번 더 시도할 수 있습니다.</item>
+    </plurals>
 </resources>

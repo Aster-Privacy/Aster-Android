@@ -124,6 +124,13 @@ class ApiErrorMappingTest {
     }
 
     @Test
+    fun step_up_rejections_keep_their_details() {
+        val err = map_unauthorized("INVALID_CREDENTIALS", "", mapOf("failed_factor" to "password"))
+        assertTrue(err is ApiError.InvalidCredentials)
+        assertEquals("password", (err as ApiError.InvalidCredentials).details["failed_factor"])
+    }
+
+    @Test
     fun other_unauthorized_responses_still_sign_out() {
         assertEquals(ApiError.UnauthorizedError, map_unauthorized(null, ""))
         assertTrue(should_emit_unauthorized(null))

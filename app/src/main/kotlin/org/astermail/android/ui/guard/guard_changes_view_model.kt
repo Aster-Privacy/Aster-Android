@@ -66,8 +66,8 @@ fun GuardPendingChange.to_row(): guard_change_row = guard_change_row(
     kind = guard_hold_kind.from_wire(kind),
     apply_after = guard_parse_instant(apply_after),
     created_at = guard_parse_instant(created_at),
-    server_skippable = skippable != false,
-    server_cancellable = cancellable != false,
+    server_skippable = (skip_available ?: skippable) != false,
+    server_cancellable = (cancel_available ?: cancellable) != false,
 )
 
 enum class guard_changes_notice {

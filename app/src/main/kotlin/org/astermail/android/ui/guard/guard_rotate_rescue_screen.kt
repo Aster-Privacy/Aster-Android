@@ -41,6 +41,7 @@ import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.guard.GuardHeldBanner
 import org.astermail.android.guard.guard_prompt_text
+import org.astermail.android.guard.resolve
 import org.astermail.android.ui.common.secure_screen
 import org.astermail.android.ui.settings.detail.detail_scaffold
 import org.astermail.android.ui.settings.detail.error_banner
@@ -186,7 +187,7 @@ private fun guard_rotate_form(
 private fun guard_rotate_notice_text(
     notice: guard_rotate_notice?,
     error: org.astermail.android.guard.guard_error_message? = null,
-): String? = when (notice) {
+): String? = if (error?.step_up_field != null) error.resolve() else when (notice) {
     null -> null
     guard_rotate_notice.wrong_password -> stringResource(R.string.guard_setup_wrong_password)
     guard_rotate_notice.totp_required -> stringResource(R.string.guard_setup_totp_required)

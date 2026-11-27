@@ -396,4 +396,15 @@
     <string name="guard_wait_paused_title">Las solicitudes de inicio de sesión están en pausa</string>
     <string name="guard_wait_paused">Para proteger tu cuenta, Aster Guard pausó las nuevas solicitudes de inicio de sesión. Vuelve a intentarlo después de %1$s.</string>
     <string name="guard_wait_sign_in_again">Volver a iniciar sesión</string>
+    <string name="guard_step_up_password_wrong">La contraseña es incorrecta.</string>
+    <string name="guard_step_up_password_wrong_held">La contraseña es incorrecta. Mientras haya un cambio de contraseña en espera, introduce tu contraseña actual, no la nueva.</string>
+    <string name="guard_step_up_code_wrong">El código del autenticador es incorrecto. Introduce el código actual de tu app de autenticación.</string>
+    <string name="guard_step_up_code_required">Introduce el código de 6 dígitos de tu app de autenticación.</string>
+    <string name="guard_step_up_key_failed">No se pudo verificar tu llave de seguridad. Inténtalo de nuevo.</string>
+    <string name="guard_step_up_locked">Demasiados intentos incorrectos, así que tu cuenta está bloqueada. Puedes volver a intentarlo a las %1$s.</string>
+    <string name="guard_step_up_locked_soon">Demasiados intentos incorrectos. Espera un momento y vuelve a intentarlo.</string>
+    <plurals name="guard_step_up_attempts_left">
+        <item quantity="one">Te queda 1 intento antes de que tu cuenta se bloquee durante 15 minutos.</item>
+        <item quantity="other">Te quedan %1$d intentos antes de que tu cuenta se bloquee durante 15 minutos.</item>
+    </plurals>
 </resources>

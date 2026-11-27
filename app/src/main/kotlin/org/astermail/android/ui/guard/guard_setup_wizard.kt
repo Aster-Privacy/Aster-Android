@@ -564,6 +564,7 @@ internal fun guard_setup_phase_failure(phase: guard_setup_phase?): Int = when (p
 
 @Composable
 private fun guard_setup_notice_text(state: guard_setup_ui): String? {
+    state.error?.takeIf { it.step_up_field != null && state.notice != null }?.let { return it.resolve() }
     if (state.notice != guard_setup_notice.failed) return guard_setup_notice_text(state.notice)
     val lead = stringResource(guard_setup_phase_failure(state.failed_phase))
     val detail = state.error?.resolve()

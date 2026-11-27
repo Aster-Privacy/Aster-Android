@@ -423,4 +423,19 @@
     <string name="guard_wait_paused_title">طلبات تسجيل الدخول متوقفة مؤقتًا</string>
     <string name="guard_wait_paused">لحماية حسابك، أوقف Aster Guard طلبات تسجيل الدخول الجديدة مؤقتًا. حاول مرة أخرى بعد %1$s.</string>
     <string name="guard_wait_sign_in_again">سجّل الدخول مرة أخرى</string>
+    <string name="guard_step_up_password_wrong">كلمة المرور غير صحيحة.</string>
+    <string name="guard_step_up_password_wrong_held">كلمة المرور غير صحيحة. أثناء تعليق تغيير كلمة المرور، أدخل كلمة مرورك الحالية وليس الجديدة.</string>
+    <string name="guard_step_up_code_wrong">رمز المصادقة غير صحيح. أدخل الرمز الحالي من تطبيق المصادقة.</string>
+    <string name="guard_step_up_code_required">أدخل الرمز المكون من 6 أرقام من تطبيق المصادقة.</string>
+    <string name="guard_step_up_key_failed">تعذر التحقق من مفتاح الأمان. حاول مرة أخرى.</string>
+    <string name="guard_step_up_locked">محاولات خاطئة كثيرة، لذلك تم قفل حسابك. يمكنك المحاولة مرة أخرى في %1$s.</string>
+    <string name="guard_step_up_locked_soon">محاولات خاطئة كثيرة. انتظر لحظة، ثم حاول مرة أخرى.</string>
+    <plurals name="guard_step_up_attempts_left">
+        <item quantity="zero">تبقى لديك %1$d محاولات قبل قفل حسابك لمدة 15 دقيقة.</item>
+        <item quantity="one">تبقت لديك محاولة واحدة قبل قفل حسابك لمدة 15 دقيقة.</item>
+        <item quantity="two">تبقى لديك %1$d محاولات قبل قفل حسابك لمدة 15 دقيقة.</item>
+        <item quantity="few">تبقى لديك %1$d محاولات قبل قفل حسابك لمدة 15 دقيقة.</item>
+        <item quantity="many">تبقى لديك %1$d محاولات قبل قفل حسابك لمدة 15 دقيقة.</item>
+        <item quantity="other">تبقى لديك %1$d محاولات قبل قفل حسابك لمدة 15 دقيقة.</item>
+    </plurals>
 </resources>

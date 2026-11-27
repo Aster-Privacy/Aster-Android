@@ -126,6 +126,8 @@ data class GuardPendingChange(
     val created_at: String = "",
     val skippable: Boolean? = null,
     val cancellable: Boolean? = null,
+    val skip_available: Boolean? = null,
+    val cancel_available: Boolean? = null,
 )
 
 @Serializable
