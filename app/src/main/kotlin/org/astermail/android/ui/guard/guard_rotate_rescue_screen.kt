@@ -41,6 +41,7 @@ import org.astermail.android.design.components.AsterGhostButton
 import org.astermail.android.design.components.AsterTextField
 import org.astermail.android.guard.GuardHeldBanner
 import org.astermail.android.guard.guard_prompt_text
+import org.astermail.android.guard.resolve
 import org.astermail.android.ui.common.secure_screen
 import org.astermail.android.ui.settings.detail.detail_scaffold
 import org.astermail.android.ui.settings.detail.error_banner
