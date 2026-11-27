@@ -297,6 +297,8 @@
     <string name="sending_in_countdown">Verzenden over %d s</string>
     <string name="reaction_sent">Reactie verzonden</string>
     <string name="undo_send_too_late">Je bericht is al verzonden</string>
+    <string name="sent_message_toast">Bericht verzonden</string>
+    <string name="sent_message_view">Bericht bekijken</string>
     <string name="undo">Ongedaan maken</string>
     <string name="save_draft">Concept opslaan</string>
     <string name="discard">Verwijderen</string>

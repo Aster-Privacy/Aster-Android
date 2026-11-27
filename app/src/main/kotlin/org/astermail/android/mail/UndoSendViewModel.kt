@@ -34,6 +34,7 @@ class UndoSendViewModel @Inject constructor(
     val dismissed_send_id: StateFlow<Long?> = dismissed.asStateFlow()
     val undo_restored_drafts: SharedFlow<String> = repository.undo_restored_drafts
     val undo_send_too_late: SharedFlow<Unit> = repository.undo_send_too_late
+    val sent_messages: SharedFlow<String?> = repository.sent_message_events
 
     fun dismiss(send_id: Long) {
         dismissed.value = send_id
