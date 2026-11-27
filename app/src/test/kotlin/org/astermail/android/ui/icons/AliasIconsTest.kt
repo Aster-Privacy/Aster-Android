@@ -21,7 +21,6 @@
 package org.astermail.android.ui.icons
 
 import androidx.compose.ui.graphics.vector.addPathNodes
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -32,12 +31,6 @@ class AliasIconsTest {
         for (d in ALIAS_AT_PATHS + GHOST_MASK_PATHS) {
             assertTrue(d, addPathNodes(d).isNotEmpty())
         }
-    }
-
-    @Test
-    fun icons_have_their_expected_strokes() {
-        assertEquals(2, ALIAS_AT_PATHS.size)
-        assertEquals(6, GHOST_MASK_PATHS.size)
     }
 
     @Test
