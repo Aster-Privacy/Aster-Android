@@ -38,6 +38,7 @@ object NotificationDedupe {
     const val NEW_MAIL_EVENT = "new_mail"
     const val GUARD_MARK_EVENT = "guard_mark"
     const val GUARD_ANY_ACCOUNT = "*"
+    const val SYSTEM_MAIL_EVENT = "system_mail"
     val GUARD_NOTICE_EVENTS = setOf("change_held", "rescue_started")
 
     private const val PREFS_NAME = "notification_dedupe_prefs"
@@ -177,6 +178,78 @@ object NotificationDedupe {
     ): Boolean {
         if (!is_within_window(last_guard_mark_ms, now_ms, SIGN_IN_MAIL_WINDOW_MS)) return false
         return is_aster_system_address(sender_email)
+    }
+
+    fun system_mail_key(item_id: String, notification_id: Int): String =
+        event_key(SYSTEM_MAIL_EVENT, "$notification_id:$item_id")
+
+    fun system_mail_notification_id(key: String): Int? {
+        val prefix = event_key(SYSTEM_MAIL_EVENT, "")
+        if (!key.startsWith(prefix)) return null
+        return key.removePrefix(prefix).substringBefore(':').toIntOrNull()
+    }
+
+    fun track_system_mail_entries(
+        entries: Map<String, Long>,
+        item_id: String,
+        notification_id: Int,
+        sender_email: String,
+        now_ms: Long,
+    ): Pair<Map<String, Long>, Boolean> {
+        if (item_id.isBlank() || !is_aster_system_address(sender_email)) return entries to true
+        take_guard_notice_mark(entries, sender_email, now_ms)?.let { return it to false }
+        return record_seen(entries, system_mail_key(item_id, notification_id), now_ms) to true
+    }
+
+    fun take_system_mail_entries(entries: Map<String, Long>, now_ms: Long): Pair<Map<String, Long>, Set<Int>> {
+        val taken = entries.filter { (key, stamp) ->
+            system_mail_notification_id(key) != null && is_within_window(stamp, now_ms, SIGN_IN_MAIL_WINDOW_MS)
+        }
+        val stale = entries.keys.filter { system_mail_notification_id(it) != null }
+        if (taken.isEmpty()) return (entries - stale.toSet()) to emptySet()
+        val remaining = entries - stale.toSet() - guard_mark_key(GUARD_ANY_ACCOUNT, GUARD_ANY_ACCOUNT)
+        return remaining to taken.keys.mapNotNull { system_mail_notification_id(it) }.toSet()
+    }
+
+    @Synchronized
+    fun track_system_mail(
+        context: Context,
+        item_id: String,
+        notification_id: Int,
+        sender_email: String?,
+        now_ms: Long = System.currentTimeMillis(),
+    ): Boolean {
+        if (sender_email.isNullOrBlank()) return true
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val entries = parse_seen(prefs.getString(KEY_SEEN_EVENTS, "").orEmpty())
+        val (updated, allowed) = track_system_mail_entries(entries, item_id, notification_id, sender_email, now_ms)
+        if (updated != entries) prefs.edit().putString(KEY_SEEN_EVENTS, encode_seen(updated)).commit()
+        return allowed
+    }
+
+    @Synchronized
+    fun system_mail_tracked(context: Context, item_id: String, notification_id: Int): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val entries = parse_seen(prefs.getString(KEY_SEEN_EVENTS, "").orEmpty())
+        return entries.containsKey(system_mail_key(item_id, notification_id))
+    }
+
+    @Synchronized
+    fun take_system_mail(context: Context, now_ms: Long = System.currentTimeMillis()): Set<Int> {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val entries = parse_seen(prefs.getString(KEY_SEEN_EVENTS, "").orEmpty())
+        val (remaining, taken) = take_system_mail_entries(entries, now_ms)
+        if (remaining != entries) prefs.edit().putString(KEY_SEEN_EVENTS, encode_seen(remaining)).commit()
+        return taken
+    }
+
+    @Synchronized
+    fun clear_guard_notice_mark(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val entries = parse_seen(prefs.getString(KEY_SEEN_EVENTS, "").orEmpty())
+        val key = guard_mark_key(GUARD_ANY_ACCOUNT, GUARD_ANY_ACCOUNT)
+        if (!entries.containsKey(key)) return
+        prefs.edit().putString(KEY_SEEN_EVENTS, encode_seen(entries - key)).commit()
     }
 
     @Synchronized
