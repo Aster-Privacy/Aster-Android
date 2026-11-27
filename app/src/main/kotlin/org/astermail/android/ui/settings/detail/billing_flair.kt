@@ -41,6 +41,7 @@ import compose.icons.tablericons.*
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.auto_mirrored
+import org.astermail.android.ui.icons.alias_at_icon
 
 internal fun plan_feature_icon(@StringRes feature_res: Int): ImageVector = when (feature_res) {
     R.string.settings_plan_bullet_free_storage,
@@ -58,7 +59,7 @@ internal fun plan_feature_icon(@StringRes feature_res: Int): ImageVector = when 
     R.string.settings_plan_bullet_star_aliases,
     R.string.settings_plan_bullet_unlimited_aliases,
     R.string.settings_plan_bullet_shared_aliases,
-    -> TablerIcons.At
+    -> alias_at_icon
     R.string.settings_plan_bullet_star_domains,
     R.string.settings_plan_bullet_nova_domains,
     R.string.settings_plan_bullet_unlimited_domains,

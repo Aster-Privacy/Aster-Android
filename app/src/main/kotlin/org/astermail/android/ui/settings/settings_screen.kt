@@ -86,6 +86,7 @@ import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.ui.settings.detail.settings_row_gap
 import org.astermail.android.ui.common.page_surface
+import org.astermail.android.ui.icons.alias_at_icon
 
 private const val support_address = "hello@astermail.org"
 
@@ -121,7 +122,7 @@ internal fun build_settings_sections(is_family: Boolean) = listOf(
     settings_section(
         R.string.settings_aliases_and_domains,
         listOf(
-            settings_row_item("aliases", R.string.settings_aliases, icon = TablerIcons.At),
+            settings_row_item("aliases", R.string.settings_aliases, icon = alias_at_icon),
             settings_row_item("domains", R.string.settings_domains, icon = TablerIcons.World),
         ),
     ),

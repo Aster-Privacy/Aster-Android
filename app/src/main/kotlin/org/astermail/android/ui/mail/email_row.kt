@@ -132,6 +132,7 @@ import org.astermail.android.mail.MailViewModel
 import org.astermail.android.api.preferences.UserPreferences
 import org.astermail.android.security.safe_sender_name
 import org.astermail.android.security.trusted_sender_name
+import org.astermail.android.ui.icons.alias_at_icon
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1428,7 +1429,7 @@ internal fun alias_chip(label: String, modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Icon(
-            imageVector = TablerIcons.At,
+            imageVector = alias_at_icon,
             contentDescription = stringResource(R.string.received_on_label),
             tint = colors.text_tertiary,
             modifier = Modifier.size(11.dp),
