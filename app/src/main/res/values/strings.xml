@@ -368,6 +368,8 @@
     <string name="print_not_available">Printing not available yet</string>
     <string name="report_spam">Report spam</string>
     <string name="reported_as_spam">Reported as spam</string>
+    <string name="report_phishing">Report phishing</string>
+    <string name="reported_as_phishing">Reported as phishing</string>
     <string name="block_sender">Block sender</string>
     <string name="copy_address">Copy address</string>
     <string name="sender_on_aster">Aster account</string>

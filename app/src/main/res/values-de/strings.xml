@@ -226,6 +226,8 @@
     <string name="print_not_available">Drucken noch nicht verfügbar</string>
     <string name="report_spam">Als Spam melden</string>
     <string name="reported_as_spam">Als Spam gemeldet</string>
+    <string name="report_phishing">Phishing melden</string>
+    <string name="reported_as_phishing">Als Phishing gemeldet</string>
     <string name="block_sender">Absender blockieren</string>
     <string name="message_unavailable">Nachricht nicht verfügbar</string>
     <string name="message_replaced_or_deleted">Diese Nachricht wurde gelöscht oder durch eine neuere Kopie ersetzt. Um sie zu finden, gehe zurück und suche erneut.</string>

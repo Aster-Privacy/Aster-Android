@@ -1154,6 +1154,8 @@ class MailViewModel @Inject constructor(
     )
 
     private val _toast_events = MutableSharedFlow<ToastEvent>(extraBufferCapacity = 32)
+    private val _reported_phishing_ids = MutableStateFlow<Set<String>>(emptySet())
+    val reported_phishing_ids: StateFlow<Set<String>> = _reported_phishing_ids.asStateFlow()
     val toast_events: SharedFlow<ToastEvent> = _toast_events.asSharedFlow()
 
     private val _batch_action_state = kotlinx.coroutines.flow.MutableStateFlow<BatchActionState?>(null)
@@ -5416,15 +5418,23 @@ class MailViewModel @Inject constructor(
             .distinct()
     }
 
-    fun mark_spam(item_ids: List<String>, thread_count: Int = 1, sender_emails_hint: List<String> = emptyList()) {
+    fun mark_spam(
+        item_ids: List<String>,
+        thread_count: Int = 1,
+        sender_emails_hint: List<String> = emptyList(),
+        toast_res: Int = R.string.reported_as_spam,
+        on_undo: () -> Unit = {},
+    ) {
         val had_demo = DEMO_PHISH_ITEM_ID in item_ids
         @Suppress("NAME_SHADOWING") val item_ids = handle_demo_in(item_ids)
         if (item_ids.isEmpty()) {
-            if (had_demo) emit_toast(context.getString(R.string.reported_as_spam))
+            if (had_demo) emit_toast(context.getString(toast_res))
             return
         }
         val previous = _inbox_state.value.items
         val removed_items = previous.filter { it.id in item_ids }
+        val from_archive = _inbox_state.value.current_folder == "archive"
+        val archived_ids = removed_items.filter { it.is_archived || from_archive }.map { it.id }
         val raw_items = lookup_raw_items(item_ids)
         val thread_tokens = conversation_thread_tokens(item_ids)
         _inbox_state.value = _inbox_state.value.copy(
@@ -5449,15 +5459,24 @@ class MailViewModel @Inject constructor(
                         val report_job =
                             viewModelScope.launch { repository.report_spam_senders(sender_emails) }
                         emit_toast_undo(
-                            context.getString(R.string.reported_as_spam),
+                            context.getString(toast_res),
                             context.getString(R.string.undo),
                         ) {
+                            on_undo()
                             undo_restore(
                                 removed_items = removed_items,
                                 search_removed = search_removed,
                                 item_ids = item_ids,
-                                reindex = { search_index_manager.mark_unspam(it) },
-                                restore = { repository.unmark_spam(it, thread_tokens) },
+                                reindex = { ids ->
+                                    search_index_manager.mark_unspam(ids)
+                                    val rearchive = ids.filter { it in archived_ids }
+                                    if (rearchive.isNotEmpty()) search_index_manager.mark_archived(rearchive)
+                                },
+                                restore = { ids ->
+                                    repository.unmark_spam(ids, thread_tokens)
+                                    val rearchive = ids.filter { it in archived_ids }
+                                    if (rearchive.isNotEmpty()) repository.archive(rearchive)
+                                },
                                 stats_change = stats_change,
                             )
                             viewModelScope.launch {
@@ -5476,6 +5495,40 @@ class MailViewModel @Inject constructor(
                 )
             } finally {
                 pending_removed_ids.removeAll(item_ids.toSet())
+            }
+        }
+    }
+
+    fun report_phishing(
+        item_ids: List<String>,
+        thread_count: Int = 1,
+        sender_emails_hint: List<String> = emptyList(),
+        in_spam: Boolean = _inbox_state.value.current_folder == "spam",
+    ) {
+        if (item_ids.isEmpty()) return
+        val ids = item_ids.toSet()
+        _reported_phishing_ids.update { it + ids }
+        val retract = { _reported_phishing_ids.update { it - ids } }
+        if (!in_spam) {
+            mark_spam(item_ids, thread_count, sender_emails_hint, R.string.reported_as_phishing, retract)
+            return
+        }
+        val known = _inbox_state.value.items +
+            _search_state.value.all_items +
+            listOfNotNull(_thread_state.value.item)
+        val sender_emails = known
+            .filter { it.id in ids }
+            .map { it.sender_email }
+            .ifEmpty { sender_emails_hint }
+        val report_job = viewModelScope.launch { repository.report_spam_senders(sender_emails) }
+        emit_toast_undo(
+            context.getString(R.string.reported_as_phishing),
+            context.getString(R.string.undo),
+        ) {
+            retract()
+            viewModelScope.launch {
+                report_job.join()
+                repository.remove_spam_senders(sender_emails)
             }
         }
     }

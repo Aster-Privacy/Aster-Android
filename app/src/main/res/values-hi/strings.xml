@@ -296,6 +296,8 @@
     <string name="print_not_available">प्रिंट करना अभी उपलब्ध नहीं</string>
     <string name="report_spam">स्पैम की शिकायत करें</string>
     <string name="reported_as_spam">स्पैम की शिकायत की गई</string>
+    <string name="report_phishing">फ़िशिंग की शिकायत करें</string>
+    <string name="reported_as_phishing">फ़िशिंग के रूप में शिकायत की गई</string>
     <string name="block_sender">प्रेषक को ब्लॉक करें</string>
     <string name="copy_address">पता कॉपी करें</string>
     <string name="sender_on_aster">Aster खाता</string>

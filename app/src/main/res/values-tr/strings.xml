@@ -225,6 +225,8 @@
     <string name="print_not_available">Yazdırma henüz kullanılamıyor</string>
     <string name="report_spam">Spam olarak bildir</string>
     <string name="reported_as_spam">Spam olarak bildirildi</string>
+    <string name="report_phishing">Kimlik avını bildir</string>
+    <string name="reported_as_phishing">Kimlik avı olarak bildirildi</string>
     <string name="block_sender">Göndereni engelle</string>
     <string name="message_unavailable">Mesaj kullanılamıyor</string>
     <string name="message_replaced_or_deleted">Bu ileti silindi veya daha yeni bir kopyayla değiştirildi. Bulmak için geri dönüp yeniden arayın.</string>

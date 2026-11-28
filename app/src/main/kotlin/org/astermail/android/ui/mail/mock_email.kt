@@ -282,6 +282,9 @@ data class ThreadMessage(
 val ThreadMessage.is_own_copy: Boolean
     get() = item_type == "sent" || item_type == "scheduled"
 
+val ThreadMessage.can_report_phishing: Boolean
+    get() = item_type == "received"
+
 val ThreadMessage.has_end_to_end_pgp: Boolean
     get() = pgp_encrypted &&
         (is_own_copy || pgp_signature == org.astermail.android.crypto.PgpSignatureStatus.VALID)
