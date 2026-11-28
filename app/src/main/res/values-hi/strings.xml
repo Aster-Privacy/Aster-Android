@@ -3713,4 +3713,19 @@
     <string name="table_delete_row">पंक्ति हटाएं</string>
     <string name="table_delete_column">कॉलम हटाएं</string>
     <string name="table_delete">तालिका हटाएं</string>
+    <string name="trust_banner_phishing_title">यह संदेश फ़िशिंग का प्रयास हो सकता है</string>
+    <string name="trust_banner_suspicious_title">इस संदेश के साथ सावधान रहें</string>
+    <string name="trust_banner_phishing_body">इस संदेश के लिंक बंद हैं। निजी जानकारी या पासवर्ड के साथ जवाब न दें।</string>
+    <string name="trust_banner_suspicious_body">लिंक खोलने या जवाब देने से पहले भेजने वाले की जांच करें।</string>
+    <string name="trust_banner_enable_links">लिंक चालू करें</string>
+    <string name="trust_banner_report">फ़िशिंग की शिकायत करें</string>
+    <string name="trust_banner_not_phishing">फ़िशिंग नहीं है</string>
+    <string name="trust_reason_impersonation">यह संदेश ऐसी सेवा से होने का दावा करता है जिसने इसे नहीं भेजा।</string>
+    <string name="trust_reason_self_name">भेजने वाले का नाम आपके अपने नाम या पते पर सेट है।</string>
+    <string name="trust_reason_address_in_name">भेजने वाले के नाम में एक ऐसा पता दिखता है जो भेजने वाले पते से अलग है।</string>
+    <string name="trust_reason_lookalike_sender">भेजने वाले का पता किसी जाने-माने पते जैसा दिखता है, लेकिन अलग है।</string>
+    <string name="trust_reason_unverified_sender">इस संदेश की पुष्टि भेजने वाले के डोमेन से आने के रूप में नहीं हो सकी।</string>
+    <string name="trust_reason_deceptive_link">एक लिंक एक पता दिखाता है लेकिन दूसरा खोलता है।</string>
+    <string name="trust_reason_reported_link">इस संदेश के लिंक उन साइटों पर ले जाते हैं जिनकी दूसरों ने फ़िशिंग के रूप में शिकायत की है।</string>
+    <string name="trust_reason_form">यह संदेश आपसे सीधे ईमेल में जानकारी दर्ज करने के लिए कहता है।</string>
 </resources>

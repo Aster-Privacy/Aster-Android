@@ -3874,4 +3874,19 @@
     <string name="table_delete_row">Delete row</string>
     <string name="table_delete_column">Delete column</string>
     <string name="table_delete">Delete table</string>
+    <string name="trust_banner_phishing_title">This message might be a phishing attempt</string>
+    <string name="trust_banner_suspicious_title">Be careful with this message</string>
+    <string name="trust_banner_phishing_body">Links in this message are turned off. Don\'t reply with personal information or passwords.</string>
+    <string name="trust_banner_suspicious_body">Check the sender before you open links or reply.</string>
+    <string name="trust_banner_enable_links">Turn on links</string>
+    <string name="trust_banner_report">Report phishing</string>
+    <string name="trust_banner_not_phishing">Not phishing</string>
+    <string name="trust_reason_impersonation">This message pretends to be from a service it isn\'t sent by.</string>
+    <string name="trust_reason_self_name">The sender\'s name is set to your own name or address.</string>
+    <string name="trust_reason_address_in_name">The sender\'s name shows an address that\'s different from the one it was sent from.</string>
+    <string name="trust_reason_lookalike_sender">The sender\'s address looks like a well-known address, but it\'s different.</string>
+    <string name="trust_reason_unverified_sender">This message couldn\'t be verified as coming from the sender\'s domain.</string>
+    <string name="trust_reason_deceptive_link">A link shows one address but opens a different one.</string>
+    <string name="trust_reason_reported_link">Links in this message go to sites that other people reported as phishing.</string>
+    <string name="trust_reason_form">This message asks you to enter information directly in the email.</string>
 </resources>

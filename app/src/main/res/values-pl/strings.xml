@@ -3889,4 +3889,19 @@
     <string name="table_delete_row">Usuń wiersz</string>
     <string name="table_delete_column">Usuń kolumnę</string>
     <string name="table_delete">Usuń tabelę</string>
+    <string name="trust_banner_phishing_title">Ta wiadomość może być próbą phishingu</string>
+    <string name="trust_banner_suspicious_title">Zachowaj ostrożność w przypadku tej wiadomości</string>
+    <string name="trust_banner_phishing_body">Linki w tej wiadomości są wyłączone. Nie odpowiadaj, podając dane osobowe ani hasła.</string>
+    <string name="trust_banner_suspicious_body">Sprawdź nadawcę, zanim otworzysz linki lub odpowiesz.</string>
+    <string name="trust_banner_enable_links">Włącz linki</string>
+    <string name="trust_banner_report">Zgłoś phishing</string>
+    <string name="trust_banner_not_phishing">To nie phishing</string>
+    <string name="trust_reason_impersonation">Ta wiadomość udaje, że pochodzi z usługi, która jej nie wysłała.</string>
+    <string name="trust_reason_self_name">Nazwa nadawcy jest ustawiona na Twoje imię lub adres.</string>
+    <string name="trust_reason_address_in_name">Nazwa nadawcy pokazuje adres inny niż ten, z którego wysłano wiadomość.</string>
+    <string name="trust_reason_lookalike_sender">Adres nadawcy wygląda jak znany adres, ale jest inny.</string>
+    <string name="trust_reason_unverified_sender">Nie udało się potwierdzić, że ta wiadomość pochodzi z domeny nadawcy.</string>
+    <string name="trust_reason_deceptive_link">Link pokazuje jeden adres, ale otwiera inny.</string>
+    <string name="trust_reason_reported_link">Linki w tej wiadomości prowadzą do witryn zgłoszonych przez innych jako phishing.</string>
+    <string name="trust_reason_form">Ta wiadomość prosi o wpisanie informacji bezpośrednio w e-mailu.</string>
 </resources>

@@ -3821,4 +3821,19 @@
     <string name="table_delete_row">Satırı sil</string>
     <string name="table_delete_column">Sütunu sil</string>
     <string name="table_delete">Tabloyu sil</string>
+    <string name="trust_banner_phishing_title">Bu ileti bir kimlik avı girişimi olabilir</string>
+    <string name="trust_banner_suspicious_title">Bu iletiye dikkat edin</string>
+    <string name="trust_banner_phishing_body">Bu iletideki bağlantılar kapatıldı. Kişisel bilgi veya parola içeren bir yanıt göndermeyin.</string>
+    <string name="trust_banner_suspicious_body">Bağlantıları açmadan veya yanıtlamadan önce göndereni kontrol edin.</string>
+    <string name="trust_banner_enable_links">Bağlantıları aç</string>
+    <string name="trust_banner_report">Kimlik avını bildir</string>
+    <string name="trust_banner_not_phishing">Kimlik avı değil</string>
+    <string name="trust_reason_impersonation">Bu ileti, onu göndermeyen bir hizmetten geliyormuş gibi davranıyor.</string>
+    <string name="trust_reason_self_name">Gönderen adı sizin adınız veya adresiniz olarak ayarlanmış.</string>
+    <string name="trust_reason_address_in_name">Gönderen adı, iletinin gönderildiği adresten farklı bir adres gösteriyor.</string>
+    <string name="trust_reason_lookalike_sender">Gönderen adresi tanınmış bir adrese benziyor ama farklı.</string>
+    <string name="trust_reason_unverified_sender">Bu iletinin gönderenin alan adından geldiği doğrulanamadı.</string>
+    <string name="trust_reason_deceptive_link">Bir bağlantı bir adres gösteriyor ama farklı bir adres açıyor.</string>
+    <string name="trust_reason_reported_link">Bu iletideki bağlantılar, başkalarının kimlik avı olarak bildirdiği sitelere gidiyor.</string>
+    <string name="trust_reason_form">Bu ileti, bilgileri doğrudan e-postaya girmenizi istiyor.</string>
 </resources>

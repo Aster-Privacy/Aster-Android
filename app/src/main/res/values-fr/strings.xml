@@ -3876,4 +3876,19 @@
     <string name="table_delete_row">Supprimer la ligne</string>
     <string name="table_delete_column">Supprimer la colonne</string>
     <string name="table_delete">Supprimer le tableau</string>
+    <string name="trust_banner_phishing_title">Ce message pourrait être une tentative d\'hameçonnage</string>
+    <string name="trust_banner_suspicious_title">Soyez prudent avec ce message</string>
+    <string name="trust_banner_phishing_body">Les liens de ce message sont désactivés. Ne répondez pas avec des informations personnelles ou des mots de passe.</string>
+    <string name="trust_banner_suspicious_body">Vérifiez l\'expéditeur avant d\'ouvrir des liens ou de répondre.</string>
+    <string name="trust_banner_enable_links">Activer les liens</string>
+    <string name="trust_banner_report">Signaler l\'hameçonnage</string>
+    <string name="trust_banner_not_phishing">Ce n\'est pas de l\'hameçonnage</string>
+    <string name="trust_reason_impersonation">Ce message prétend venir d\'un service qui ne l\'a pas envoyé.</string>
+    <string name="trust_reason_self_name">Le nom de l\'expéditeur correspond à votre propre nom ou adresse.</string>
+    <string name="trust_reason_address_in_name">Le nom de l\'expéditeur affiche une adresse différente de celle qui a envoyé le message.</string>
+    <string name="trust_reason_lookalike_sender">L\'adresse de l\'expéditeur ressemble à une adresse connue, mais elle est différente.</string>
+    <string name="trust_reason_unverified_sender">Impossible de vérifier que ce message provient du domaine de l\'expéditeur.</string>
+    <string name="trust_reason_deceptive_link">Un lien affiche une adresse mais en ouvre une autre.</string>
+    <string name="trust_reason_reported_link">Les liens de ce message mènent à des sites que d\'autres personnes ont signalés comme hameçonnage.</string>
+    <string name="trust_reason_form">Ce message vous demande de saisir des informations directement dans l\'e-mail.</string>
 </resources>

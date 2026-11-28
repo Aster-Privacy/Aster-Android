@@ -3789,4 +3789,19 @@
     <string name="table_delete_row">删除行</string>
     <string name="table_delete_column">删除列</string>
     <string name="table_delete">删除表格</string>
+    <string name="trust_banner_phishing_title">此邮件可能是钓鱼邮件</string>
+    <string name="trust_banner_suspicious_title">请小心处理此邮件</string>
+    <string name="trust_banner_phishing_body">此邮件中的链接已关闭。请勿回复个人信息或密码。</string>
+    <string name="trust_banner_suspicious_body">打开链接或回复前，请先核实发件人。</string>
+    <string name="trust_banner_enable_links">开启链接</string>
+    <string name="trust_banner_report">举报钓鱼邮件</string>
+    <string name="trust_banner_not_phishing">不是钓鱼邮件</string>
+    <string name="trust_reason_impersonation">此邮件冒充一项并未发送它的服务。</string>
+    <string name="trust_reason_self_name">发件人名称被设置为你自己的姓名或地址。</string>
+    <string name="trust_reason_address_in_name">发件人名称中显示的地址与实际发件地址不同。</string>
+    <string name="trust_reason_lookalike_sender">发件人地址看起来像一个知名地址，但实际不同。</string>
+    <string name="trust_reason_unverified_sender">无法验证此邮件来自发件人的域名。</string>
+    <string name="trust_reason_deceptive_link">某个链接显示的是一个地址，打开的却是另一个地址。</string>
+    <string name="trust_reason_reported_link">此邮件中的链接指向其他人举报为钓鱼的网站。</string>
+    <string name="trust_reason_form">此邮件要求你直接在邮件中输入信息。</string>
 </resources>

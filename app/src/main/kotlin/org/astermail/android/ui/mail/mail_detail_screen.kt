@@ -888,6 +888,9 @@ fun MailDetailScreen(
     val is_starred = star_override ?: (api_item?.is_starred == true)
     val is_spam_override_state = remember(email_id) { mutableStateOf<Boolean?>(null) }
     val is_spam_override by is_spam_override_state
+    val trust_reported_ids by mail_vm.reported_phishing_ids.collectAsStateWithLifecycle()
+    val trust_links_enabled_ids by mail_vm.trust_links_enabled_ids.collectAsStateWithLifecycle()
+    val trust_dismissed_ids by mail_vm.trust_dismissed_ids.collectAsStateWithLifecycle()
     val inbox_state_for_folder by mail_vm.inbox_state.collectAsStateWithLifecycle()
     val is_in_spam_folder = inbox_state_for_folder.current_folder == "spam"
     val is_spam = is_spam_override ?: ((api_item?.is_spam == true) || is_in_spam_folder)
@@ -1852,6 +1855,25 @@ fun MailDetailScreen(
                                 org.astermail.android.mail.ratchet.PinIdentity.canonical_id(msg.sender_email),
                             ),
                             sender_unauthenticated = msg.id in unauthenticated_message_ids,
+                            trust_links_enabled = msg.id in trust_links_enabled_ids,
+                            trust_dismissed = msg.id in trust_dismissed_ids,
+                            trust_reported = msg.id in trust_reported_ids || email_id in trust_reported_ids,
+                            on_trust_enable_links = { mail_vm.enable_trust_links(msg.id) },
+                            on_trust_report = {
+                                mail_vm.report_phishing(
+                                    listOf(msg.id),
+                                    sender_emails_hint = listOf(msg.sender_email),
+                                    in_spam = is_spam,
+                                )
+                                mail_vm.send_phishing_verdict("phishing", msg.sender_email, msg.body_html)
+                                if (!is_spam) {
+                                    is_spam_override_state.value = true
+                                    on_back()
+                                }
+                            },
+                            on_trust_not_phishing = {
+                                mail_vm.mark_not_phishing(msg.id, msg.sender_email, msg.body_html)
+                            },
                             on_acknowledge_identity = {
                                 mail_vm.acknowledge_identity_change(msg.sender_email)
                             },
@@ -3389,6 +3411,12 @@ internal fun expanded_message(
     allow_auto_translate: Boolean = true,
     translation_subject: String? = null,
     on_subject_translated: (String?) -> Unit = {},
+    trust_links_enabled: Boolean = false,
+    trust_dismissed: Boolean = false,
+    trust_reported: Boolean = false,
+    on_trust_enable_links: () -> Unit = {},
+    on_trust_report: () -> Unit = {},
+    on_trust_not_phishing: () -> Unit = {},
 ) {
     val colors = AsterMaterial.colors
     val banner_reduce_motion = aster_reduce_motion()
@@ -3406,6 +3434,18 @@ internal fun expanded_message(
         msg.sender_email.trim().lowercase() == my_email &&
         !msg.is_external
     val trust = remember_sender_trust(if (is_own_message) null else msg.trust_message)
+    val message_trust = remember(msg.id, msg.raw_headers, is_own_message, is_system) {
+        if (is_own_message || is_system || !msg.can_report_phishing) null
+        else org.astermail.android.mail.parse_message_trust(msg.raw_headers)
+    }
+    val links_blocked_state = rememberUpdatedState(
+        message_trust?.verdict == org.astermail.android.mail.TrustVerdict.phishing &&
+            !trust_links_enabled && !trust_dismissed,
+    )
+    val link_handler = rememberUpdatedState(on_link_click)
+    val guarded_link_click: (String) -> Unit = remember {
+        { url -> if (!links_blocked_state.value) link_handler.value(url) }
+    }
     val marks_hidden = trust?.show_identity_marks == false
     val shows_official_badge = !is_own_message && is_official_sender(msg)
     val shows_verified_check = !shows_official_badge && trust?.show_verified_badge == true && msg.sender_verified_domain != null
@@ -3853,6 +3893,16 @@ internal fun expanded_message(
             }
         }
 
+        if (message_trust != null && !trust_dismissed) {
+            message_trust_banner(
+                trust = message_trust,
+                links_enabled = trust_links_enabled,
+                reported = trust_reported,
+                on_enable_links = on_trust_enable_links,
+                on_report = on_trust_report,
+                on_not_phishing = on_trust_not_phishing,
+            )
+        }
         sender_trust_banner(trust)
 
         val phishing_key = remember(msg.id, msg.body_html, msg.body, msg.sender_email, is_system, auth_status) {
@@ -3888,7 +3938,8 @@ internal fun expanded_message(
         }
         val phishing_snapshot = phishing_result
         AnimatedVisibility(
-            visible = phishing_snapshot != null && phishing_snapshot.level != org.astermail.android.security.PhishingLevel.safe,
+            visible = message_trust == null && phishing_snapshot != null &&
+                phishing_snapshot.level != org.astermail.android.security.PhishingLevel.safe,
             enter = aster_expand_in(banner_reduce_motion),
             exit = aster_collapse_out(banner_reduce_motion),
         ) {
@@ -4016,7 +4067,7 @@ internal fun expanded_message(
                 inline_images = inline_images,
                 access_token = access_token,
                 on_ready = on_body_ready,
-                on_link_click = on_link_click,
+                on_link_click = guarded_link_click,
                 on_image_click = on_image_click,
                 translation_enabled = translation_enabled && !is_pending_send,
                 allow_auto_translate = allow_auto_translate &&
@@ -4187,7 +4238,7 @@ internal fun expanded_message(
                 allow_external = false,
                 access_token = access_token,
                 on_ready = on_body_ready,
-                on_link_click = on_link_click,
+                on_link_click = guarded_link_click,
                 on_image_click = on_image_click,
                 translation_enabled = translation_enabled && !is_pending_send,
                 allow_auto_translate = allow_auto_translate &&

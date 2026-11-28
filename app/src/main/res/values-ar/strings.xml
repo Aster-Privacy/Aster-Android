@@ -3956,4 +3956,19 @@
     <string name="table_delete_row">حذف الصف</string>
     <string name="table_delete_column">حذف العمود</string>
     <string name="table_delete">حذف الجدول</string>
+    <string name="trust_banner_phishing_title">قد تكون هذه الرسالة محاولة تصيد احتيالي</string>
+    <string name="trust_banner_suspicious_title">توخَّ الحذر مع هذه الرسالة</string>
+    <string name="trust_banner_phishing_body">تم إيقاف الروابط في هذه الرسالة. لا ترد بمعلومات شخصية أو كلمات مرور.</string>
+    <string name="trust_banner_suspicious_body">تحقق من المرسل قبل فتح الروابط أو الرد.</string>
+    <string name="trust_banner_enable_links">تشغيل الروابط</string>
+    <string name="trust_banner_report">الإبلاغ عن تصيد احتيالي</string>
+    <string name="trust_banner_not_phishing">ليست تصيدًا احتياليًا</string>
+    <string name="trust_reason_impersonation">تدّعي هذه الرسالة أنها من خدمة لم ترسلها.</string>
+    <string name="trust_reason_self_name">تم تعيين اسم المرسل إلى اسمك أو عنوانك.</string>
+    <string name="trust_reason_address_in_name">يعرض اسم المرسل عنوانًا مختلفًا عن العنوان الذي أُرسلت منه الرسالة.</string>
+    <string name="trust_reason_lookalike_sender">يبدو عنوان المرسل مثل عنوان معروف، لكنه مختلف.</string>
+    <string name="trust_reason_unverified_sender">تعذّر التحقق من أن هذه الرسالة مرسلة من نطاق المرسل.</string>
+    <string name="trust_reason_deceptive_link">يعرض رابط عنوانًا ويفتح عنوانًا مختلفًا.</string>
+    <string name="trust_reason_reported_link">تؤدي الروابط في هذه الرسالة إلى مواقع أبلغ عنها آخرون كمواقع تصيد احتيالي.</string>
+    <string name="trust_reason_form">تطلب هذه الرسالة إدخال معلومات مباشرة في البريد الإلكتروني.</string>
 </resources>

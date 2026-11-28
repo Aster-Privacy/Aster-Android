@@ -3789,4 +3789,19 @@
     <string name="table_delete_row">행 삭제</string>
     <string name="table_delete_column">열 삭제</string>
     <string name="table_delete">표 삭제</string>
+    <string name="trust_banner_phishing_title">이 메시지는 피싱 시도일 수 있습니다</string>
+    <string name="trust_banner_suspicious_title">이 메시지에 주의하세요</string>
+    <string name="trust_banner_phishing_body">이 메시지의 링크가 꺼져 있습니다. 개인 정보나 암호를 회신하지 마세요.</string>
+    <string name="trust_banner_suspicious_body">링크를 열거나 회신하기 전에 보낸 사람을 확인하세요.</string>
+    <string name="trust_banner_enable_links">링크 켜기</string>
+    <string name="trust_banner_report">피싱 신고</string>
+    <string name="trust_banner_not_phishing">피싱 아님</string>
+    <string name="trust_reason_impersonation">이 메시지는 실제로 보내지 않은 서비스에서 온 것처럼 가장합니다.</string>
+    <string name="trust_reason_self_name">보낸 사람 이름이 내 이름이나 주소로 설정되어 있습니다.</string>
+    <string name="trust_reason_address_in_name">보낸 사람 이름에 실제 발신 주소와 다른 주소가 표시됩니다.</string>
+    <string name="trust_reason_lookalike_sender">보낸 사람 주소가 잘 알려진 주소처럼 보이지만 다릅니다.</string>
+    <string name="trust_reason_unverified_sender">이 메시지가 보낸 사람의 도메인에서 왔는지 확인할 수 없습니다.</string>
+    <string name="trust_reason_deceptive_link">링크에 표시된 주소와 실제로 열리는 주소가 다릅니다.</string>
+    <string name="trust_reason_reported_link">이 메시지의 링크는 다른 사람들이 피싱으로 신고한 사이트로 연결됩니다.</string>
+    <string name="trust_reason_form">이 메시지는 이메일 안에 직접 정보를 입력하라고 요청합니다.</string>
 </resources>
