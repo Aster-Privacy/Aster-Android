@@ -181,6 +181,9 @@ import org.astermail.android.mail.list_count_refreshing
 import org.astermail.android.mail.normalize_swipe_action
 import org.astermail.android.settings.SettingsViewModel
 import org.astermail.android.ui.icons.all_mail_icon
+import org.astermail.android.ui.icons.mail_unread_icon
+import org.astermail.android.ui.icons.mark_read_icon
+import org.astermail.android.ui.icons.read_toggle_icon
 import org.astermail.android.settings.shared_settings_view_model
 import org.astermail.android.design.mirror_in_rtl
 import org.astermail.android.ui.common.page_surface
@@ -4003,7 +4006,7 @@ internal fun inbox_top_bar(
             ) {
                 overflow_menu_item(
                     label = stringResource(R.string.mark_all_read),
-                    icon = TablerIcons.MailOpened,
+                    icon = mark_read_icon,
                 ) {
                     quick_menu_open = false
                     on_quick_action(inbox_quick_action_mark_all_read)
@@ -4053,7 +4056,7 @@ internal fun inbox_top_bar(
                     }
                     overflow_menu_item(
                         label = stringResource(if (has_unread) R.string.mark_all_read else R.string.mark_all_unread),
-                        icon = if (has_unread) TablerIcons.MailOpened else TablerIcons.Mail,
+                        icon = read_toggle_icon(is_read = !has_unread),
                     ) {
                         overflow_menu_open = false
                         on_mark_all_read(has_unread)
@@ -4605,8 +4608,8 @@ internal fun selection_overflow_sheet(
                 if (selection_all_starred) stringResource(R.string.unstar) else stringResource(R.string.star),
                 colors.text_primary,
             ) { on_action("star") }
-            overflow_sheet_row("read", TablerIcons.MailOpened, stringResource(R.string.mark_as_read), colors.text_primary) { on_action("read") }
-            overflow_sheet_row("unread", TablerIcons.Mail, stringResource(R.string.mark_as_unread), colors.text_primary) { on_action("unread") }
+            overflow_sheet_row("read", mark_read_icon, stringResource(R.string.mark_as_read), colors.text_primary) { on_action("read") }
+            overflow_sheet_row("unread", mail_unread_icon, stringResource(R.string.mark_as_unread), colors.text_primary) { on_action("unread") }
             if (in_trash) {
                 overflow_sheet_row("restore", TablerIcons.Inbox, stringResource(R.string.swipe_restore), colors.text_primary) { on_action("restore") }
             }
@@ -4968,7 +4971,7 @@ internal fun read_toggle_swipe_icon(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     marks_read: Boolean,
 ): androidx.compose.ui.graphics.vector.ImageVector =
-    if (action == "toggle_read" && !marks_read) TablerIcons.Mail else icon
+    if (action == "toggle_read" && !marks_read) mail_unread_icon else icon
 
 @Composable
 private fun swipe_action_label(action: String): String = when (action) {
@@ -4991,7 +4994,7 @@ private fun swipe_action_label(action: String): String = when (action) {
 internal fun swipe_action_icon(action: String): androidx.compose.ui.graphics.vector.ImageVector = when (action) {
     "archive" -> TablerIcons.Archive
     "delete", "trash" -> TablerIcons.Trash
-    "toggle_read" -> TablerIcons.MailOpened
+    "toggle_read" -> mark_read_icon
     "snooze" -> TablerIcons.Clock
     "star" -> TablerIcons.Star
     "spam" -> spam_action_icon(is_spam = false)

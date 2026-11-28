@@ -23,8 +23,8 @@ package org.astermail.android.ui.mail
 
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Archive
-import compose.icons.tablericons.Mail
 import compose.icons.tablericons.MailOpened
+import org.astermail.android.ui.icons.mail_unread_icon
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -53,7 +53,7 @@ class ReadToggleSwipeLabelTest {
     @Test
     fun read_row_offers_unread() {
         assertEquals("Unread", read_toggle_swipe_label("toggle_read", "Read", marks_read = false, unread_label = "Unread"))
-        assertEquals(TablerIcons.Mail, read_toggle_swipe_icon("toggle_read", TablerIcons.MailOpened, marks_read = false))
+        assertEquals(mail_unread_icon, read_toggle_swipe_icon("toggle_read", TablerIcons.MailOpened, marks_read = false))
     }
 
     @Test
