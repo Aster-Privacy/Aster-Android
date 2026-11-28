@@ -1598,6 +1598,18 @@ fun InboxScreen(
         folder_total > selected_ids.size &&
         mail_vm.folder_supports_scope_selection(current_folder)
 
+    val list_at_end by remember(list_state) {
+        derivedStateOf {
+            val layout_info = list_state.layoutInfo
+            list_scrolled_to_end(
+                has_scrolled = list_state.canScrollBackward,
+                last_visible_index = layout_info.visibleItemsInfo.lastOrNull()?.index ?: -1,
+                total_items = layout_info.totalItemsCount,
+                footer_rows_visible = layout_info.visibleItemsInfo.any { it.contentType == "skeleton_row" },
+            )
+        }
+    }
+
     LaunchedEffect(list_state, current_folder) {
         snapshotFlow {
             val layout_info = list_state.layoutInfo
@@ -2552,7 +2564,14 @@ fun InboxScreen(
                     removal_quiet = false
                 }
                 val footer_skeleton_shown = org.astermail.android.design.remember_steady_flag(
-                    footer_skeleton_wanted(inbox_state.is_loading_more, removal_quiet),
+                    footer_skeleton_wanted(
+                        is_loading_more = inbox_state.is_loading_more,
+                        has_more = inbox_state.has_more,
+                        at_list_end = list_at_end,
+                        removal_quiet = removal_quiet,
+                    ),
+                    min_visible_ms = 0L,
+                    hide_grace_ms = 0L,
                 )
                 val skeleton_showing = remember { booleanArrayOf(false) }
                 val skeleton_now = inbox_skeleton_wanted(
@@ -5573,9 +5592,6 @@ internal fun filtered_load_more_wanted(
         has_more &&
         !is_busy &&
         loaded_items >= UNREAD_FILTER_DRAIN_MAX_ITEMS
-
-internal fun footer_skeleton_wanted(is_loading_more: Boolean, removal_quiet: Boolean): Boolean =
-    is_loading_more && !removal_quiet
 
 @Composable
 private fun inbox_account_button(
