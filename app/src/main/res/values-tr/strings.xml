@@ -1606,6 +1606,7 @@
     <string name="add_to_contacts">Kişilere kaydet</string>
     <string name="remove_from_contacts">Kişilerden kaldır</string>
     <string name="sender_action_new_message">Yeni ileti</string>
+    <string name="sender_system_no_replies">Bu adres otomatik mesajlar gönderir ve yanıt alamaz.</string>
     <string name="sender_action_add_contact">Kişi ekle</string>
     <string name="sender_action_view_contact">Kişiyi görüntüle</string>
     <string name="sender_action_in_contacts">Kişilerde</string>

@@ -1606,6 +1606,7 @@
     <string name="add_to_contacts">Opslaan in contacten</string>
     <string name="remove_from_contacts">Verwijderen uit contacten</string>
     <string name="sender_action_new_message">Nieuw bericht</string>
+    <string name="sender_system_no_replies">Dit adres verstuurt automatische berichten en kan geen antwoorden ontvangen.</string>
     <string name="sender_action_add_contact">Contact toevoegen</string>
     <string name="sender_action_view_contact">Contact bekijken</string>
     <string name="sender_action_in_contacts">In contacten</string>

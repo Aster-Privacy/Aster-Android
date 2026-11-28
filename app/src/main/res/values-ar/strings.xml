@@ -1630,6 +1630,7 @@
     <string name="add_to_contacts">حفظ في جهات الاتصال</string>
     <string name="remove_from_contacts">إزالة من جهات الاتصال</string>
     <string name="sender_action_new_message">رسالة جديدة</string>
+    <string name="sender_system_no_replies">يرسل هذا العنوان رسائل تلقائية ولا يمكنه استلام الردود.</string>
     <string name="sender_action_add_contact">إضافة جهة اتصال</string>
     <string name="sender_action_view_contact">عرض جهة الاتصال</string>
     <string name="sender_action_in_contacts">في جهات الاتصال</string>

@@ -1609,6 +1609,7 @@
     <string name="add_to_contacts">Salvar nos contatos</string>
     <string name="remove_from_contacts">Remover dos contatos</string>
     <string name="sender_action_new_message">Nova mensagem</string>
+    <string name="sender_system_no_replies">Este endereço envia mensagens automáticas e não pode receber respostas.</string>
     <string name="sender_action_add_contact">Adicionar contato</string>
     <string name="sender_action_view_contact">Ver contato</string>
     <string name="sender_action_in_contacts">Nos contatos</string>

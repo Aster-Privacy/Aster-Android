@@ -2178,6 +2178,7 @@
     <string name="add_to_contacts">Enregistrer dans les contacts</string>
     <string name="remove_from_contacts">Retirer des contacts</string>
     <string name="sender_action_new_message">Nouveau message</string>
+    <string name="sender_system_no_replies">Cette adresse envoie des messages automatiques et ne peut pas recevoir de réponses.</string>
     <string name="sender_action_add_contact">Ajouter le contact</string>
     <string name="sender_action_view_contact">Voir le contact</string>
     <string name="sender_action_in_contacts">Dans les contacts</string>

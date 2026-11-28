@@ -1610,6 +1610,7 @@
     <string name="add_to_contacts">Salva nei contatti</string>
     <string name="remove_from_contacts">Rimuovi dai contatti</string>
     <string name="sender_action_new_message">Nuovo messaggio</string>
+    <string name="sender_system_no_replies">Questo indirizzo invia messaggi automatici e non può ricevere risposte.</string>
     <string name="sender_action_add_contact">Aggiungi contatto</string>
     <string name="sender_action_view_contact">Vedi contatto</string>
     <string name="sender_action_in_contacts">Nei contatti</string>

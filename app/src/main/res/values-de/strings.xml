@@ -1607,6 +1607,7 @@
     <string name="add_to_contacts">In Kontakten speichern</string>
     <string name="remove_from_contacts">Aus Kontakten entfernen</string>
     <string name="sender_action_new_message">Neue Nachricht</string>
+    <string name="sender_system_no_replies">Diese Adresse versendet automatische Nachrichten und kann keine Antworten empfangen.</string>
     <string name="sender_action_add_contact">Kontakt hinzufügen</string>
     <string name="sender_action_view_contact">Kontakt ansehen</string>
     <string name="sender_action_in_contacts">In Kontakten</string>
