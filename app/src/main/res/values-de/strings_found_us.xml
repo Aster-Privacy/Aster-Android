@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="found_us_banner_message">Wie haben Sie von Aster Mail erfahren? Nur eine Frage, und sie ist freiwillig.</string>
+    <string name="found_us_banner_message">Wie haben Sie zuerst von Aster Mail erfahren? Die Antwort ist freiwillig.</string>
     <string name="found_us_banner_answer">Antworten</string>
     <string name="found_us_banner_dismiss">Schließen</string>
     <string name="found_us_remind_later">Nächste Woche erinnern</string>
@@ -31,5 +31,5 @@
     <string name="found_us_skip">Überspringen</string>
     <string name="found_us_send">Senden</string>
     <string name="found_us_thanks">Danke, dass Sie es uns verraten haben.</string>
-    <string name="found_us_send_failed">Ihre Antwort wurde nicht gesendet. Versuchen Sie es gleich noch einmal.</string>
+    <string name="found_us_send_failed">Ihre Antwort konnte nicht gesendet werden. Versuchen Sie es gleich noch einmal.</string>
 </resources>

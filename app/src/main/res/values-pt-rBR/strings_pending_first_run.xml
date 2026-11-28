@@ -20,6 +20,6 @@
     <string name="recovery_codes_refresh_body">Seus códigos de recuperação estão desatualizados. Obtenha novos códigos e salve-os em um lugar seguro. Depois que você tiver os novos códigos, os antigos deixam de funcionar.</string>
     <string name="recovery_codes_refresh_action">Obter novos códigos</string>
     <string name="recovery_phrase_migrate_title">Mude para códigos de recuperação</string>
-    <string name="recovery_phrase_migrate_body">As frases de recuperação vão deixar de existir. Gere códigos de recuperação agora para continuar podendo recuperar sua conta.</string>
+    <string name="recovery_phrase_migrate_body">O Aster está substituindo as frases de recuperação por códigos de recuperação. Para manter uma forma de recuperar sua conta, gere códigos de recuperação agora.</string>
     <string name="recovery_phrase_migrate_action">Obter códigos</string>
 </resources>

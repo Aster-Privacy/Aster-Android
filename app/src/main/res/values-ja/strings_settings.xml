@@ -24,10 +24,10 @@
     <string name="settings_feat_auto_responder">自動返信</string>
     <string name="settings_feat_alias_avatars">エイリアスの画像</string>
     <string name="settings_feat_instant_alias_delete">Aster ドメインのエイリアスの即時削除</string>
-    <string name="alias_too_new_title">このエイリアスは新しすぎて削除できません。</string>
-    <string name="alias_too_new_message">Aster ドメインの新しいエイリアスは、作成後 30 日間は削除できません。このエイリアスは %1$s から削除できます。すぐに削除するには、Supernova にアップグレードしてください。</string>
-    <string name="ghost_alias_too_new_title">このゴーストエイリアスは新しすぎて期限切れにできません。</string>
-    <string name="ghost_alias_too_new_message">新しいゴーストエイリアスは、期限切れにできるようになるまで作成後 30 日間そのまま残ります。このエイリアスは %1$s から期限切れにできるようになります。Supernova にアップグレードすると、ゴーストエイリアスをすぐに期限切れにできます。</string>
+    <string name="alias_too_new_title">このエイリアスはまだ削除できません</string>
+    <string name="alias_too_new_message">Aster ドメインの新しいエイリアスは 30 日間有効なままです。このエイリアスは %1$s から削除できます。すぐに削除するには、Supernova にアップグレードしてください。</string>
+    <string name="ghost_alias_too_new_title">このゴーストエイリアスはまだ期限切れにできません</string>
+    <string name="ghost_alias_too_new_message">新しいゴーストエイリアスは 30 日間有効なままです。このエイリアスは %1$s から期限切れにできます。すぐに期限切れにするには、Supernova にアップグレードしてください。</string>
     <string name="ghost_alias_max_extension_toast">このゴーストエイリアスは最大有効期間の90日に達しているため、これ以上延長できません。</string>
     <string name="settings_feat_folders">フォルダ</string>
     <string name="settings_feat_labels">ラベル</string>
@@ -40,7 +40,7 @@
     <string name="settings_feat_recovery_codes">リカバリーコード</string>
     <string name="settings_feat_password_folders">パスワード付きフォルダ</string>
     <string name="settings_feat_session_mgmt">セッション管理</string>
-    <string name="settings_feat_login_notifs">ログイン通知</string>
+    <string name="settings_feat_login_notifs">サインイン通知</string>
     <string name="settings_feat_encrypted_exports">暗号化エクスポート</string>
     <string name="settings_feat_hardware_keys">ハードウェアセキュリティキー</string>
     <string name="settings_feat_no_ads">広告なし</string>
@@ -87,7 +87,7 @@
     <string name="settings_diagnostics_clip_label">診断情報</string>
     <string name="settings_diagnostics_secure_storage">セキュアストレージ</string>
     <string name="settings_diagnostics_storage_ok">正常</string>
-    <string name="settings_diagnostics_storage_degraded">劣化しています。サインアウトしてからサインインし直してください</string>
+    <string name="settings_diagnostics_storage_degraded">劣化しています。サインアウトしてからサインインし直してください。</string>
     <string name="settings_crash_reports_title">クラッシュレポートを送信</string>
     <string name="settings_crash_reports_subtitle">オンにしない限りオフのままです。レポートにアカウント、メッセージ、連絡先が含まれることはありません。</string>
     <string name="settings_crash_reports_info">この設定がオンの場合、アプリがクラッシュしたとき、応答しなくなったとき、または機能に接続できなかったときに、Aster Mail は匿名のレポートを Aster に送信します。レポートには、エラーの種類、アプリのバージョン、エラーが発生したアプリのコード内の場所が含まれます。アドレス、メッセージ、連絡先、アカウントを特定できる情報が含まれることはありません。この設定がオフの場合、Aster Mail はレポートを送信しません。</string>

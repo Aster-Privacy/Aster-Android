@@ -13,7 +13,7 @@
     <string name="guard_approve_device">الجهاز</string>
     <string name="guard_approve_place">الموقع</string>
     <string name="guard_approve_time">الوقت</string>
-    <string name="guard_approve_failed">تعذّر على Aster إرسال ردك. تحقق من اتصالك وحاول مرة أخرى.</string>
+    <string name="guard_approve_failed">تعذّر إرسال ردك. تحقق من اتصالك وحاول مرة أخرى.</string>
     <string name="guard_approve_action">موافقة</string>
     <string name="guard_approve_try_again">إعادة المحاولة</string>
     <string name="guard_approve_close">إغلاق</string>
@@ -87,7 +87,7 @@
     <string name="guard_rescue_banner">بدأ شخص ما عملية إنقاذ توقف Aster Guard.</string>
     <string name="guard_rescue_banner_stop">إيقاف الإنقاذ</string>
     <string name="guard_wait_body">افتح Aster على جهاز مفعّل عليه Aster Guard، مثل المتصفح أو تطبيق سطح المكتب الذي استخدمته لتفعيله. افتح الطلب هناك وأدخل هذا الرقم للموافقة عليه.</string>
-    <string name="guard_wait_expired">انتهت صلاحية هذا الطلب. لإعادة المحاولة، سجّل الدخول مرة أخرى.</string>
+    <string name="guard_wait_expired">انتهت صلاحية هذا الطلب. للمتابعة، سجّل الدخول مرة أخرى.</string>
     <string name="guard_wait_denied">تم رفض تسجيل الدخول هذا على جهاز آخر.</string>
     <string name="guard_wait_held">يمكنك إكمال تسجيل الدخول على هذا الهاتف بعد %1$s.</string>
     <string name="guard_wait_retry">محاولات كثيرة جدًا. أعد المحاولة بعد %1$s.</string>
@@ -97,7 +97,7 @@
     <string name="guard_wait_code_submit">إرسال الرمز</string>
     <string name="guard_wait_wrong_code">هذا الرمز غير مطابق. تحقق من الرمز وأعد المحاولة.</string>
     <string name="guard_wait_needs_password">تمت الموافقة على تسجيل الدخول هذا. للإكمال، أدخل كلمة المرور مرة أخرى.</string>
-    <string name="guard_wait_failed">تعذّر على Aster إكمال تسجيل الدخول هذا. للمحاولة مرة أخرى، سجّل الدخول من جديد.</string>
+    <string name="guard_wait_failed">تعذّر إكمال تسجيل الدخول هذا. للمتابعة، سجّل الدخول مرة أخرى.</string>
     <string name="guard_number_description">الرقم الذي تدخله على هاتفك الآخر: %1$d</string>
     <string name="guard_prompt_resume_subtitle">تسجيل الدخول باستخدام Aster Guard على هذا الهاتف</string>
     <string name="notif_channel_guard_name">Aster Guard</string>

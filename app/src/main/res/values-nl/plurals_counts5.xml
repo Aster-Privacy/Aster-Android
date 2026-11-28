@@ -65,8 +65,8 @@
         <item quantity="other">De toegang wordt over %1$d dagen beperkt.</item>
     </plurals>
     <plurals name="templates_decrypt_failed_count">
-        <item quantity="one">%1$d sjabloon kon niet worden gelezen op dit apparaat. Het is opgeslagen met een sleutel die dit apparaat momenteel niet heeft.</item>
-        <item quantity="other">%1$d sjablonen konden niet worden gelezen op dit apparaat. Ze zijn opgeslagen met een sleutel die dit apparaat momenteel niet heeft.</item>
+        <item quantity="one">%1$d sjabloon kan niet worden gelezen op dit apparaat, omdat het is opgeslagen met een sleutel die dit apparaat niet heeft.</item>
+        <item quantity="other">%1$d sjablonen kunnen niet worden gelezen op dit apparaat, omdat ze zijn opgeslagen met een sleutel die dit apparaat niet heeft.</item>
     </plurals>
     <plurals name="contact_trash_days_left">
         <item quantity="one">Nog %1$d dag</item>

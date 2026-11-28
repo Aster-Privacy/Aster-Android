@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="notif_channel_login_alerts_name">Alertas de login</string>
+    <string name="notif_channel_login_alerts_name">Alertas de entrada</string>
     <string name="notif_channel_login_alerts_description">Alertas quando um novo dispositivo entra na sua conta</string>
     <string name="notif_login_alert_title">Novo login na sua conta</string>
     <string name="notif_login_alert_public_body">Um novo dispositivo entrou na sua conta</string>
@@ -8,7 +8,7 @@
     <string name="notif_login_alert_action_revoke">Não fui eu</string>
     <string name="notif_login_alert_revoking">Encerrando a nova sessão…</string>
     <string name="notif_login_alert_revoked">Sessão encerrada</string>
-    <string name="notif_login_alert_revoked_body">A nova sessão foi encerrada. Considere alterar sua senha nas configurações de segurança.</string>
+    <string name="notif_login_alert_revoked_body">A nova sessão foi encerrada. Para proteger sua conta, altere sua senha nas configurações de Segurança.</string>
     <string name="notif_login_alert_revoke_failed">Não foi possível encerrar a sessão</string>
     <string name="notif_login_alert_revoke_failed_body">Abra o app para revisar suas sessões ativas.</string>
     <string name="mute_folder_notifications">Silenciar notificações da pasta</string>
@@ -18,7 +18,7 @@
     <string name="notif_new_message">Nova mensagem</string>
     <string name="notif_group_summary_new_mail">Novo e-mail</string>
     <string name="notif_battery_opt_title">Atividade em segundo plano sem restrições</string>
-    <string name="notif_battery_opt_subtitle">Necessária para notificações confiáveis. Toque para ativar nas configurações do sistema.</string>
+    <string name="notif_battery_opt_subtitle">Necessária para notificações confiáveis. Toque para ativá-la nas configurações do sistema.</string>
     <string name="notif_blocked_title">As notificações estão desativadas</string>
     <string name="notif_blocked_subtitle">O Aster Mail não pode mostrar notificações até que você as permita. Toque para abrir as configurações do sistema.</string>
     <string name="notif_channel_downloads_name">Downloads</string>

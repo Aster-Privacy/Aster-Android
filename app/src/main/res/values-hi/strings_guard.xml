@@ -13,7 +13,7 @@
     <string name="guard_approve_device">डिवाइस</string>
     <string name="guard_approve_place">स्थान</string>
     <string name="guard_approve_time">समय</string>
-    <string name="guard_approve_failed">Aster आपका जवाब नहीं भेज सका। अपना कनेक्शन जांचें और फिर से कोशिश करें।</string>
+    <string name="guard_approve_failed">आपका जवाब नहीं भेजा जा सका। अपना कनेक्शन जांचें और फिर से कोशिश करें।</string>
     <string name="guard_approve_action">स्वीकृत करें</string>
     <string name="guard_approve_try_again">फिर से कोशिश करें</string>
     <string name="guard_approve_close">बंद करें</string>
@@ -87,7 +87,7 @@
     <string name="guard_rescue_banner">किसी ने एक रेस्क्यू शुरू किया है जो Aster Guard को बंद कर देता है।</string>
     <string name="guard_rescue_banner_stop">रेस्क्यू रोकें</string>
     <string name="guard_wait_body">ऐसे डिवाइस पर Aster खोलें जिस पर Aster Guard चालू हो, जैसे वह ब्राउज़र या डेस्कटॉप ऐप जिससे आपने इसे चालू किया था। वहां अनुरोध खोलें और उसे मंज़ूरी देने के लिए यह संख्या डालें।</string>
-    <string name="guard_wait_expired">इस अनुरोध की समय-सीमा खत्म हो गई है। फिर से कोशिश करने के लिए दोबारा साइन इन करें।</string>
+    <string name="guard_wait_expired">इस अनुरोध की समय-सीमा खत्म हो गई है। जारी रखने के लिए दोबारा साइन इन करें।</string>
     <string name="guard_wait_denied">इस साइन-इन को किसी दूसरे डिवाइस पर अस्वीकार किया गया।</string>
     <string name="guard_wait_held">आप %1$s के बाद इस फ़ोन पर साइन इन पूरा कर सकते हैं।</string>
     <string name="guard_wait_retry">बहुत ज़्यादा कोशिशें हुईं। %1$s में फिर से कोशिश करें।</string>
@@ -97,7 +97,7 @@
     <string name="guard_wait_code_submit">कोड भेजें</string>
     <string name="guard_wait_wrong_code">यह कोड मेल नहीं खाता। कोड जांचें और फिर से कोशिश करें।</string>
     <string name="guard_wait_needs_password">इस साइन-इन को स्वीकृति मिल गई है। पूरा करने के लिए अपना पासवर्ड फिर से डालें।</string>
-    <string name="guard_wait_failed">Aster यह साइन-इन पूरा नहीं कर सका। फिर से कोशिश करने के लिए, दोबारा साइन इन करें।</string>
+    <string name="guard_wait_failed">यह साइन-इन पूरा नहीं हो सका। जारी रखने के लिए दोबारा साइन इन करें।</string>
     <string name="guard_number_description">अपने दूसरे फ़ोन पर डालने के लिए नंबर: %1$d</string>
     <string name="guard_prompt_resume_subtitle">इस फ़ोन पर Aster Guard से साइन इन करें</string>
     <string name="notif_channel_guard_name">Aster Guard</string>

@@ -4,7 +4,7 @@
     <string name="rules_section_recipients">Ontvangers</string>
     <string name="rules_section_content">Inhoud</string>
     <string name="rules_section_attachments_flags">Bijlagen en markeringen</string>
-    <string name="rules_section_numeric_date_auth">Numeriek, datum en authenticatie</string>
+    <string name="rules_section_numeric_date_auth">Getallen, datums en authenticatie</string>
 
     <string name="rules_op_is">is</string>
     <string name="rules_op_is_not">is niet</string>
@@ -80,10 +80,10 @@
     <string name="no_custom_categories">Nog geen aangepaste categorieën.</string>
     <string name="category_name_required">Voer een naam in voor deze categorie.</string>
     <string name="category_rule_required">Voeg minstens één domein of trefwoord toe om op te matchen.</string>
-    <string name="category_domains_invalid">Ongeldige domeinen: %1$s. Gebruik een echt domein zoals example.com.</string>
-    <string name="category_keywords_invalid">Ongeldige trefwoorden: %1$s. Gebruik alleen gewone woorden.</string>
+    <string name="category_domains_invalid">Deze domeinen zijn niet geldig: %1$s. Gebruik een domein zoals example.com.</string>
+    <string name="category_keywords_invalid">Deze trefwoorden zijn niet geldig: %1$s. Gebruik alleen gewone woorden.</string>
     <string name="delete_category_title">Categorie verwijderen?</string>
-    <string name="delete_category_description">Weet je zeker dat je \"%1$s\" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="delete_category_description">\"%1$s\" verwijderen? Dit kan niet ongedaan worden gemaakt.</string>
     <string name="custom_categories_locked">Eigen categorieën zijn niet beschikbaar in je huidige abonnement.</string>
     <string name="custom_categories_limit_reached">Je hebt het maximum aantal eigen categorieën van je abonnement bereikt. Upgrade voor meer.</string>
     <string name="edit_custom_category">Categorie bewerken</string>
@@ -97,7 +97,7 @@
     <string name="category_match_keywords">Match onderwerp-trefwoorden</string>
     <string name="category_match_keywords_placeholder">nieuwsbrief, samenvatting</string>
     <string name="category_match_keywords_help">Kommagescheiden woorden. Als er één in de onderwerpregel voorkomt, gaat de e-mail naar deze categorie.</string>
-    <string name="category_tutorial_text">Tip: een eigen categorie past als het domein van de afzender OF het onderwerp een van je trefwoorden bevat. Eigen categorieën worden vóór de standaardcategorieën gecontroleerd, dus ze hebben altijd voorrang.</string>
+    <string name="category_tutorial_text">Een eigen categorie past als het domein van de afzender of het onderwerp een van je trefwoorden bevat. Eigen categorieën worden vóór de standaardcategorieën gecontroleerd, dus ze hebben altijd voorrang.</string>
     <string name="rules_create_first_folder_hint">Maak een map aan en deze regel kan overeenkomende e-mails erin verplaatsen.</string>
     <string name="rules_create_first_label_hint">Maak een label aan en deze regel kan het op overeenkomende e-mails toepassen.</string>
     <string name="muted_categories">Gedempte categorieën</string>

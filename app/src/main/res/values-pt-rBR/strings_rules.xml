@@ -4,7 +4,7 @@
     <string name="rules_section_recipients">Destinatários</string>
     <string name="rules_section_content">Conteúdo</string>
     <string name="rules_section_attachments_flags">Anexos e sinalizadores</string>
-    <string name="rules_section_numeric_date_auth">Numérico, data e autenticação</string>
+    <string name="rules_section_numeric_date_auth">Números, datas e autenticação</string>
 
     <string name="rules_op_is">é</string>
     <string name="rules_op_is_not">não é</string>
@@ -80,13 +80,13 @@
     <string name="no_custom_categories">Ainda não há categorias personalizadas.</string>
     <string name="category_name_required">Digite um nome para esta categoria.</string>
     <string name="category_rule_required">Adicione pelo menos um domínio ou palavra-chave para correspondência.</string>
-    <string name="category_domains_invalid">Domínios inválidos: %1$s. Use um domínio real como example.com.</string>
-    <string name="category_keywords_invalid">Palavras-chave inválidas: %1$s. Use apenas palavras simples.</string>
+    <string name="category_domains_invalid">Estes domínios não são válidos: %1$s. Use um domínio como example.com.</string>
+    <string name="category_keywords_invalid">Estas palavras-chave não são válidas: %1$s. Use apenas palavras simples.</string>
     <string name="delete_category_title">Excluir a categoria?</string>
-    <string name="delete_category_description">Tem certeza de que deseja excluir \"%1$s\"? Isso não pode ser desfeito.</string>
+    <string name="delete_category_description">Excluir \"%1$s\"? Não é possível desfazer.</string>
     <string name="custom_categories_locked">As categorias personalizadas não estão disponíveis no seu plano atual.</string>
     <string name="custom_categories_limit_reached">Você atingiu o limite de categorias personalizadas do seu plano. Faça upgrade para ter mais.</string>
-    <string name="edit_custom_category">Editar a categoria</string>
+    <string name="edit_custom_category">Editar categoria</string>
     <string name="new_custom_category">Nova categoria</string>
     <string name="category_name">Nome</string>
     <string name="category_name_placeholder">ex.: Newsletters</string>
@@ -97,7 +97,7 @@
     <string name="category_match_keywords">Corresponder palavras-chave do assunto</string>
     <string name="category_match_keywords_placeholder">newsletter, resumo</string>
     <string name="category_match_keywords_help">Palavras separadas por vírgula. Se alguma aparecer no assunto, o e-mail vai para esta categoria.</string>
-    <string name="category_tutorial_text">Dica: uma categoria personalizada corresponde quando o domínio do remetente OU o assunto contém alguma das suas palavras-chave. As categorias personalizadas são verificadas antes das integradas, então elas sempre têm prioridade.</string>
+    <string name="category_tutorial_text">Uma categoria personalizada corresponde quando o domínio do remetente ou o assunto contém alguma das suas palavras-chave. As categorias personalizadas são verificadas antes das integradas, então sempre têm prioridade.</string>
     <string name="rules_create_first_folder_hint">Crie uma pasta e esta regra poderá mover os e-mails correspondentes para ela.</string>
     <string name="rules_create_first_label_hint">Crie uma etiqueta e esta regra poderá aplicá-la aos e-mails correspondentes.</string>
     <string name="muted_categories">Categorias silenciadas</string>

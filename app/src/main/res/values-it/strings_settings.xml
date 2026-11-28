@@ -24,10 +24,10 @@
     <string name="settings_feat_auto_responder">Risposta automatica</string>
     <string name="settings_feat_alias_avatars">Immagini degli alias</string>
     <string name="settings_feat_instant_alias_delete">Eliminazione istantanea degli alias sui domini Aster</string>
-    <string name="alias_too_new_title">Questo alias è troppo recente per essere eliminato</string>
-    <string name="alias_too_new_message">I nuovi alias sui domini Aster restano attivi per 30 giorni prima che tu possa eliminarli. Puoi eliminare questo a partire dal %1$s. Per eliminarli subito, passa a Supernova.</string>
-    <string name="ghost_alias_too_new_title">Questo ghost alias è troppo recente per essere fatto scadere</string>
-    <string name="ghost_alias_too_new_message">I nuovi ghost alias restano attivi per 30 giorni prima di poter essere fatti scadere. Questo può essere fatto scadere a partire dal %1$s. Passa a Supernova per far scadere i ghost alias all\'istante.</string>
+    <string name="alias_too_new_title">Questo alias non può ancora essere eliminato</string>
+    <string name="alias_too_new_message">I nuovi alias sui domini Aster restano attivi per 30 giorni. Puoi eliminare questo a partire dal %1$s, oppure passare a Supernova per eliminare subito gli alias.</string>
+    <string name="ghost_alias_too_new_title">Questo ghost alias non può ancora scadere</string>
+    <string name="ghost_alias_too_new_message">I nuovi ghost alias restano attivi per 30 giorni. Puoi far scadere questo a partire dal %1$s, oppure passare a Supernova per far scadere subito i ghost alias.</string>
     <string name="ghost_alias_max_extension_toast">Questo alias ghost ha già raggiunto la durata massima di 90 giorni e non può essere ulteriormente esteso.</string>
     <string name="settings_feat_folders">Cartelle</string>
     <string name="settings_feat_labels">Etichette</string>
@@ -87,7 +87,7 @@
     <string name="settings_diagnostics_clip_label">Diagnostica</string>
     <string name="settings_diagnostics_secure_storage">Archiviazione sicura</string>
     <string name="settings_diagnostics_storage_ok">Integra</string>
-    <string name="settings_diagnostics_storage_degraded">Degradata, esci e accedi di nuovo</string>
+    <string name="settings_diagnostics_storage_degraded">Degradata. Esci e accedi di nuovo.</string>
     <string name="settings_crash_reports_title">Invia segnalazioni di arresto anomalo</string>
     <string name="settings_crash_reports_subtitle">Disattivato finché non lo attivi. Le segnalazioni non includono mai il tuo account, i tuoi messaggi o i tuoi contatti.</string>
     <string name="settings_crash_reports_info">Quando questa impostazione è attiva, Aster Mail invia ad Aster una segnalazione anonima se l\'app si arresta in modo anomalo, smette di rispondere o non riesce a raggiungere una funzione. Una segnalazione contiene il tipo di errore, la versione dell\'app e il punto del codice dell\'app in cui si è verificato l\'errore. Non contiene mai il tuo indirizzo, i tuoi messaggi, i tuoi contatti o qualsiasi elemento che identifichi il tuo account. Quando questa impostazione è disattivata, Aster Mail non invia alcuna segnalazione.</string>

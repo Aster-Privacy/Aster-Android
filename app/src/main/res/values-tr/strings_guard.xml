@@ -13,7 +13,7 @@
     <string name="guard_approve_device">Cihaz</string>
     <string name="guard_approve_place">Konum</string>
     <string name="guard_approve_time">Zaman</string>
-    <string name="guard_approve_failed">Aster yanıtınızı gönderemedi. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="guard_approve_failed">Yanıtınız gönderilemedi. Bağlantınızı kontrol edip tekrar deneyin.</string>
     <string name="guard_approve_action">Onayla</string>
     <string name="guard_approve_try_again">Tekrar dene</string>
     <string name="guard_approve_close">Kapat</string>
@@ -87,7 +87,7 @@
     <string name="guard_rescue_banner">Biri Aster Guard\'ı kapatan bir kurtarma başlattı.</string>
     <string name="guard_rescue_banner_stop">Kurtarmayı durdur</string>
     <string name="guard_wait_body">Aster\'ı, Aster Guard\'ın açık olduğu bir cihazda açın; örneğin onu açmak için kullandığınız tarayıcıda veya masaüstü uygulamasında. İsteği orada açın ve onaylamak için bu sayıyı girin.</string>
-    <string name="guard_wait_expired">Bu isteğin süresi doldu. Yeniden denemek için tekrar oturum açın.</string>
+    <string name="guard_wait_expired">Bu isteğin süresi doldu. Devam etmek için tekrar oturum açın.</string>
     <string name="guard_wait_denied">Bu oturum açma işlemi başka bir cihazda reddedildi.</string>
     <string name="guard_wait_held">Bu telefonda oturum açmayı %1$s sonrasında tamamlayabilirsiniz.</string>
     <string name="guard_wait_retry">Çok fazla deneme yapıldı. %1$s sonra yeniden deneyin.</string>
@@ -97,7 +97,7 @@
     <string name="guard_wait_code_submit">Kodu gönder</string>
     <string name="guard_wait_wrong_code">Bu kod eşleşmiyor. Kodu kontrol edip yeniden deneyin.</string>
     <string name="guard_wait_needs_password">Bu oturum açma onaylandı. Tamamlamak için şifrenizi yeniden girin.</string>
-    <string name="guard_wait_failed">Aster bu oturum açmayı tamamlayamadı. Tekrar denemek için yeniden oturum açın.</string>
+    <string name="guard_wait_failed">Bu oturum açma işlemi tamamlanamadı. Devam etmek için tekrar oturum açın.</string>
     <string name="guard_number_description">Diğer telefonunuza girilecek sayı: %1$d</string>
     <string name="guard_prompt_resume_subtitle">Bu telefonda Aster Guard ile oturum açın</string>
     <string name="notif_channel_guard_name">Aster Guard</string>

@@ -29,8 +29,8 @@
         <item quantity="other">%1$d ईमेल</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
-        <item quantity="one">स्पैम में रखी चीज़ें %1$d दिन बाद अपने आप हटा दी जाएंगी।</item>
-        <item quantity="other">स्पैम में रखी चीज़ें %1$d दिन बाद अपने आप हटा दी जाएंगी।</item>
+        <item quantity="one">स्पैम में मौजूद संदेश %1$d दिन बाद अपने आप हटा दिए जाते हैं।</item>
+        <item quantity="other">स्पैम में मौजूद संदेश %1$d दिन बाद अपने आप हटा दिए जाते हैं।</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
         <item quantity="one">मैसेज ट्रैश में जाने के %1$d दिन बाद अपने आप हटा दिए जाते हैं।</item>

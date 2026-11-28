@@ -29,8 +29,8 @@
         <item quantity="other">%1$d e-mails</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
-        <item quantity="one">Items in spam worden na %1$d dag automatisch verwijderd.</item>
-        <item quantity="other">Items in spam worden na %1$d dagen automatisch verwijderd.</item>
+        <item quantity="one">Berichten in Spam worden na %1$d dag automatisch verwijderd.</item>
+        <item quantity="other">Berichten in Spam worden na %1$d dagen automatisch verwijderd.</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
         <item quantity="one">Berichten worden %1$d dag nadat ze naar de prullenbak zijn verplaatst automatisch verwijderd.</item>

@@ -65,8 +65,8 @@
         <item quantity="other">%1$d दिन में पहुंच सीमित हो जाएगी।</item>
     </plurals>
     <plurals name="templates_decrypt_failed_count">
-        <item quantity="one">%1$d टेम्पलेट इस डिवाइस पर पढ़ा नहीं जा सका। वह ऐसी कुंजी से सहेजा गया था जो अभी इस डिवाइस के पास नहीं है।</item>
-        <item quantity="other">%1$d टेम्पलेट इस डिवाइस पर पढ़े नहीं जा सके। वे ऐसी कुंजी से सहेजे गए थे जो अभी इस डिवाइस के पास नहीं है।</item>
+        <item quantity="one">%1$d टेम्पलेट इस डिवाइस पर पढ़ा नहीं जा सकता, क्योंकि वह ऐसी कुंजी से सहेजा गया था जो इस डिवाइस के पास नहीं है।</item>
+        <item quantity="other">%1$d टेम्पलेट इस डिवाइस पर पढ़े नहीं जा सकते, क्योंकि वे ऐसी कुंजी से सहेजे गए थे जो इस डिवाइस के पास नहीं है।</item>
     </plurals>
     <plurals name="contact_trash_days_left">
         <item quantity="one">%1$d दिन शेष</item>

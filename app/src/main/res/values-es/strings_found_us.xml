@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="found_us_banner_message">¿Cómo conociste Aster Mail? Es una sola pregunta y es opcional.</string>
+    <string name="found_us_banner_message">¿Cómo conociste Aster Mail? Responder es opcional.</string>
     <string name="found_us_banner_answer">Responder</string>
     <string name="found_us_banner_dismiss">Descartar</string>
     <string name="found_us_remind_later">Recordármelo la próxima semana</string>

@@ -26,5 +26,5 @@
     <string name="no_raw_headers">Bu iletinin ham başlıkları yok.</string>
     <string name="copy_headers">Başlıkları kopyala</string>
     <string name="headers_copied">Başlıklar kopyalandı</string>
-    <string name="print_failed">Bu e-posta yazdırılamıyor. Yeniden deneyin.</string>
+    <string name="print_failed">Bu e-posta yazdırılamadı. Tekrar deneyin.</string>
 </resources>

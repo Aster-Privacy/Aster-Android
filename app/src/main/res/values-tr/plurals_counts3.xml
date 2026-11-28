@@ -29,8 +29,8 @@
         <item quantity="other">%1$d e-posta</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
-        <item quantity="one">Spam klasöründeki öğeler %1$d gün sonra otomatik olarak silinir.</item>
-        <item quantity="other">Spam klasöründeki öğeler %1$d gün sonra otomatik olarak silinir.</item>
+        <item quantity="one">Spam klasöründeki iletiler %1$d gün sonra otomatik olarak silinir.</item>
+        <item quantity="other">Spam klasöründeki iletiler %1$d gün sonra otomatik olarak silinir.</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
         <item quantity="one">İletiler, çöp kutusuna taşındıktan %1$d gün sonra otomatik olarak silinir.</item>

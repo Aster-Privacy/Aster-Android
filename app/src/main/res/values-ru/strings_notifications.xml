@@ -8,7 +8,7 @@
     <string name="notif_login_alert_action_revoke">Это не я</string>
     <string name="notif_login_alert_revoking">Завершение нового сеанса…</string>
     <string name="notif_login_alert_revoked">Сеанс завершён</string>
-    <string name="notif_login_alert_revoked_body">Новый сеанс завершён. Рекомендуем сменить пароль в настройках безопасности.</string>
+    <string name="notif_login_alert_revoked_body">Новый сеанс завершён. Чтобы защитить аккаунт, смените пароль в настройках безопасности.</string>
     <string name="notif_login_alert_revoke_failed">Не удалось завершить сеанс</string>
     <string name="notif_login_alert_revoke_failed_body">Откройте приложение, чтобы проверить активные сеансы.</string>
     <string name="mute_folder_notifications">Отключить уведомления папки</string>

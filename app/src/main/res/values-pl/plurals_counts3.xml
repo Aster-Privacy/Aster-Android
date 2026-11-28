@@ -43,10 +43,10 @@
         <item quantity="other">%1$d wiadomości</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
-        <item quantity="one">Elementy w spamie są automatycznie usuwane po %1$d dniu.</item>
-        <item quantity="few">Elementy w spamie są automatycznie usuwane po %1$d dniach.</item>
-        <item quantity="many">Elementy w spamie są automatycznie usuwane po %1$d dniach.</item>
-        <item quantity="other">Elementy w spamie są automatycznie usuwane po %1$d dnia.</item>
+        <item quantity="one">Wiadomości w folderze Spam są automatycznie usuwane po %1$d dniu.</item>
+        <item quantity="few">Wiadomości w folderze Spam są automatycznie usuwane po %1$d dniach.</item>
+        <item quantity="many">Wiadomości w folderze Spam są automatycznie usuwane po %1$d dniach.</item>
+        <item quantity="other">Wiadomości w folderze Spam są automatycznie usuwane po %1$d dnia.</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
         <item quantity="one">Wiadomości są usuwane automatycznie %1$d dzień po przeniesieniu do kosza.</item>

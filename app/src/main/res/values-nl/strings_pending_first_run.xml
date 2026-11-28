@@ -20,6 +20,6 @@
     <string name="recovery_codes_refresh_body">Je herstelcodes zijn verouderd. Haal nieuwe codes op en bewaar ze op een veilige plek. Zodra je de nieuwe codes hebt, werken de oude niet meer.</string>
     <string name="recovery_codes_refresh_action">Nieuwe codes ophalen</string>
     <string name="recovery_phrase_migrate_title">Overstappen op herstelcodes</string>
-    <string name="recovery_phrase_migrate_body">Herstelzinnen verdwijnen. Haal nu herstelcodes op zodat je je account nog kunt herstellen.</string>
+    <string name="recovery_phrase_migrate_body">Aster vervangt herstelzinnen door herstelcodes. Haal nu herstelcodes op, zodat je je account kunt blijven herstellen.</string>
     <string name="recovery_phrase_migrate_action">Codes ophalen</string>
 </resources>

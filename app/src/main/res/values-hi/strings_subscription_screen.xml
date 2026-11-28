@@ -6,5 +6,5 @@
     <string name="billing_source_crypto">क्रिप्टो से भुगतान किया गया</string>
     <string name="billing_status_trial">ट्रायल</string>
     <string name="billing_top_plan_title">आपके पास सबसे ऊंचा प्लान है</string>
-    <string name="billing_section_load_failed">Aster यह सेक्शन लोड नहीं कर सका।</string>
+    <string name="billing_section_load_failed">यह सेक्शन लोड नहीं हो सका। फिर से कोशिश करें।</string>
 </resources>

@@ -24,10 +24,10 @@
     <string name="settings_feat_auto_responder">Automatyczna odpowiedź</string>
     <string name="settings_feat_alias_avatars">Obrazki aliasów</string>
     <string name="settings_feat_instant_alias_delete">Natychmiastowe usuwanie aliasów w domenach Aster</string>
-    <string name="alias_too_new_title">Ten alias jest za nowy, aby go usunąć</string>
-    <string name="alias_too_new_message">Nowe aliasy w domenach Aster pozostają aktywne przez 30 dni, zanim możesz je usunąć. Ten możesz usunąć od %1$s. Aby usuwać je od razu, przejdź na Supernova.</string>
-    <string name="ghost_alias_too_new_title">Ten alias widmo jest za nowy, aby mógł wygasnąć</string>
-    <string name="ghost_alias_too_new_message">Nowe ghost aliasy pozostają aktywne przez 30 dni, zanim będzie można je wygasić. Ten można wygasić od %1$s. Przejdź na Supernova, aby natychmiast wygaszać ghost aliasy.</string>
+    <string name="alias_too_new_title">Tego aliasu nie można jeszcze usunąć</string>
+    <string name="alias_too_new_message">Nowe aliasy w domenach Aster pozostają aktywne przez 30 dni. Ten możesz usunąć od %1$s lub przejść na Supernova, aby usuwać aliasy od razu.</string>
+    <string name="ghost_alias_too_new_title">Ten alias widmo nie może jeszcze wygasnąć</string>
+    <string name="ghost_alias_too_new_message">Nowe aliasy widmo pozostają aktywne przez 30 dni. Ten możesz wygasić od %1$s lub przejść na Supernova, aby wygaszać aliasy widmo od razu.</string>
     <string name="ghost_alias_max_extension_toast">Ten alias-duch osiągnął już maksymalny czas życia wynoszący 90 dni i nie można go dalej przedłużyć.</string>
     <string name="settings_feat_folders">Foldery</string>
     <string name="settings_feat_labels">Etykiety</string>
@@ -87,7 +87,7 @@
     <string name="settings_diagnostics_clip_label">Diagnostyka</string>
     <string name="settings_diagnostics_secure_storage">Bezpieczne przechowywanie</string>
     <string name="settings_diagnostics_storage_ok">Sprawne</string>
-    <string name="settings_diagnostics_storage_degraded">Uszkodzone, wyloguj się i zaloguj ponownie</string>
+    <string name="settings_diagnostics_storage_degraded">Uszkodzone. Wyloguj się i zaloguj ponownie.</string>
     <string name="settings_crash_reports_title">Wysyłaj raporty o awariach</string>
     <string name="settings_crash_reports_subtitle">Wyłączone, dopóki tego nie włączysz. Raporty nigdy nie zawierają Twojego konta, wiadomości ani kontaktów.</string>
     <string name="settings_crash_reports_info">Gdy to ustawienie jest włączone, Aster Mail wysyła do Aster anonimowy raport, jeśli aplikacja ulegnie awarii, przestanie odpowiadać lub nie może połączyć się z funkcją. Raport zawiera typ błędu, wersję aplikacji i miejsce w kodzie aplikacji, w którym wystąpił błąd. Nigdy nie zawiera Twojego adresu, wiadomości, kontaktów ani niczego, co identyfikuje Twoje konto. Gdy to ustawienie jest wyłączone, Aster Mail nie wysyła żadnych raportów.</string>

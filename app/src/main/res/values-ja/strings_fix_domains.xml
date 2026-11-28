@@ -32,7 +32,7 @@
     <string name="domain_bimi_row_inactive">ブランドロゴを追加するには、このドメインの設定を完了してください。</string>
     <string name="domain_bimi_state_draft">未公開</string>
     <string name="domain_bimi_state_pending">DNS 待ち</string>
-    <string name="domain_bimi_state_live">公開中</string>
+    <string name="domain_bimi_state_live">公開済み</string>
     <string name="domain_bimi_state_attention">要対応</string>
     <string name="domain_bimi_state_external">外部で管理</string>
     <string name="domain_bimi_set_up">設定</string>

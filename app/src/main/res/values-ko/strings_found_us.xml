@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="found_us_banner_message">Aster Mail을 처음 어떻게 알게 되셨나요? 질문은 하나이며 선택 사항입니다.</string>
+    <string name="found_us_banner_message">Aster Mail을 처음 어떻게 알게 되셨나요? 답변은 선택 사항입니다.</string>
     <string name="found_us_banner_answer">답변하기</string>
     <string name="found_us_banner_dismiss">닫기</string>
     <string name="found_us_remind_later">다음 주에 다시 알림</string>

@@ -81,9 +81,9 @@
         <item quantity="other">L\'accès sera limité dans %1$d jours.</item>
     </plurals>
     <plurals name="templates_decrypt_failed_count">
-        <item quantity="one">Impossible de lire %1$d modèle sur cet appareil. Il a été enregistré avec une clé que cet appareil ne possède pas actuellement.</item>
-        <item quantity="many">Impossible de lire %1$d modèles sur cet appareil. Ils ont été enregistrés avec une clé que cet appareil ne possède pas actuellement.</item>
-        <item quantity="other">Impossible de lire %1$d modèles sur cet appareil. Ils ont été enregistrés avec une clé que cet appareil ne possède pas actuellement.</item>
+        <item quantity="one">Impossible de lire %1$d modèle sur cet appareil, car il a été enregistré avec une clé que cet appareil ne possède pas.</item>
+        <item quantity="many">Impossible de lire %1$d modèles sur cet appareil, car ils ont été enregistrés avec une clé que cet appareil ne possède pas.</item>
+        <item quantity="other">Impossible de lire %1$d modèles sur cet appareil, car ils ont été enregistrés avec une clé que cet appareil ne possède pas.</item>
     </plurals>
     <plurals name="contact_trash_days_left">
         <item quantity="one">%1$d jour restant</item>

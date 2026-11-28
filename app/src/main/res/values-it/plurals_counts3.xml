@@ -36,9 +36,9 @@
         <item quantity="other">%1$d email</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
-        <item quantity="one">Gli elementi nello spam vengono eliminati automaticamente dopo %1$d giorno.</item>
-        <item quantity="many">Gli elementi nello spam vengono eliminati automaticamente dopo %1$d giorni.</item>
-        <item quantity="other">Gli elementi nello spam vengono eliminati automaticamente dopo %1$d giorni.</item>
+        <item quantity="one">I messaggi nello Spam vengono eliminati automaticamente dopo %1$d giorno.</item>
+        <item quantity="many">I messaggi nello Spam vengono eliminati automaticamente dopo %1$d giorni.</item>
+        <item quantity="other">I messaggi nello Spam vengono eliminati automaticamente dopo %1$d giorni.</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
         <item quantity="one">I messaggi vengono eliminati automaticamente %1$d giorno dopo lo spostamento nel cestino.</item>

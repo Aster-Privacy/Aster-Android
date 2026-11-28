@@ -21,6 +21,6 @@
     <string name="schedule_tomorrow_afternoon">明天下午</string>
     <string name="schedule_monday_morning">周一上午</string>
     <string name="schedule_pick_date_time">选择日期和时间</string>
-    <string name="too_many_recipients_in_field">收件人、抄送和密送每个字段最多容纳 %1$d 个地址。将其中一部分移到第二封邮件即可发送这一封。</string>
-    <string name="too_many_recipients_in_message">一封邮件在收件人、抄送和密送中最多送达 %1$d 个地址。把名单拆成多封较小的邮件即可发送。</string>
+    <string name="too_many_recipients_in_field">收件人、抄送和密送每个字段最多容纳 %1$d 个地址。要发送此邮件，请将部分地址移到第二封邮件中。</string>
+    <string name="too_many_recipients_in_message">一封邮件在收件人、抄送和密送中最多可送达 %1$d 个地址。要发送此邮件，请将名单拆分成多封较小的邮件。</string>
 </resources>

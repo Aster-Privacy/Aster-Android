@@ -2,7 +2,7 @@
 <resources>
     <string name="fix_enc_codes_share_title">リカバリーコード</string>
     <string name="fix_enc_codes_file_note">各コードは 1 回だけ使えます。このファイルは安全な場所に保管してください。</string>
-    <string name="fix_enc_codes_save_failed">今はファイルを保存できません。代わりにコードをコピーしてください。</string>
+    <string name="fix_enc_codes_save_failed">ファイルを保存できませんでした。代わりにコードをコピーしてください。</string>
     <string name="enc_hero_status_protected">保護済み</string>
     <string name="enc_hero_status_attention">対応が必要です</string>
     <string name="enc_hero_summary">メッセージは、あなただけが持つ鍵でエンドツーエンド暗号化されています。</string>

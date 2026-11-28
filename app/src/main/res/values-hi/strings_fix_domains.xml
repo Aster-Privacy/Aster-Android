@@ -32,7 +32,7 @@
     <string name="domain_bimi_row_inactive">ब्रैंड लोगो जोड़ने के लिए इस डोमेन का सेटअप पूरा करें।</string>
     <string name="domain_bimi_state_draft">पब्लिश नहीं हुआ</string>
     <string name="domain_bimi_state_pending">DNS का इंतज़ार</string>
-    <string name="domain_bimi_state_live">लाइव</string>
+    <string name="domain_bimi_state_live">प्रकाशित</string>
     <string name="domain_bimi_state_attention">ध्यान देने की ज़रूरत</string>
     <string name="domain_bimi_state_external">कहीं और मैनेज किया जाता है</string>
     <string name="domain_bimi_set_up">सेट अप करें</string>

@@ -13,12 +13,12 @@
     <string name="guard_approve_device">Gerät</string>
     <string name="guard_approve_place">Ort</string>
     <string name="guard_approve_time">Zeit</string>
-    <string name="guard_approve_failed">Aster konnte deine Antwort nicht senden. Prüfe deine Verbindung und versuche es erneut.</string>
+    <string name="guard_approve_failed">Ihre Antwort konnte nicht gesendet werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.</string>
     <string name="guard_approve_action">Bestätigen</string>
     <string name="guard_approve_try_again">Erneut versuchen</string>
     <string name="guard_approve_close">Schließen</string>
     <string name="guard_code_title">Guard-Code</string>
-    <string name="guard_setup_failed">Aster Guard konnte nicht aktiviert werden. Prüfe deine Verbindung und versuche es erneut.</string>
+    <string name="guard_setup_failed">Aster Guard konnte nicht aktiviert werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.</string>
     <string name="guard_setup_retry">Erneut versuchen</string>
     <string name="guard_setup_already_on_title">Aster Guard ist aktiviert</string>
     <string name="guard_setup_choose_title">Wähle deinen Schutz</string>
@@ -83,11 +83,11 @@
     <string name="guard_veto_done_title">Sie haben die Rettung gestoppt</string>
     <string name="guard_veto_done_body">Sie haben die Rettung gestoppt, daher bleibt Aster Guard aktiviert. Wenn Sie sie nicht gestartet haben, kennt möglicherweise jemand Ihr Passwort. Ändern Sie es jetzt, um Ihr Konto zu schützen.</string>
     <string name="guard_veto_invalid">Dieser Link ist abgelaufen oder wurde bereits verwendet.</string>
-    <string name="guard_veto_error">Die Rettung konnte nicht gestoppt werden. Versuche es erneut oder melde dich auf einem bestätigten Gerät an, um sie zu stoppen.</string>
+    <string name="guard_veto_error">Die Rettung konnte nicht gestoppt werden. Versuchen Sie es erneut, oder melden Sie sich auf einem bestätigten Gerät an, um sie zu stoppen.</string>
     <string name="guard_rescue_banner">Jemand hat eine Rettung gestartet, die Aster Guard deaktiviert.</string>
     <string name="guard_rescue_banner_stop">Rettung stoppen</string>
     <string name="guard_wait_body">Öffne Aster auf einem Gerät, auf dem Aster Guard aktiviert ist, etwa im Browser oder in der Desktop-App, mit der du es aktiviert hast. Öffne dort die Anfrage und gib diese Zahl ein, um sie zu bestätigen.</string>
-    <string name="guard_wait_expired">Diese Anfrage ist abgelaufen. Melden Sie sich erneut an, um es noch einmal zu versuchen.</string>
+    <string name="guard_wait_expired">Diese Anfrage ist abgelaufen. Um fortzufahren, melden Sie sich erneut an.</string>
     <string name="guard_wait_denied">Diese Anmeldung wurde auf einem anderen Gerät abgelehnt.</string>
     <string name="guard_wait_held">Sie können die Anmeldung auf diesem Telefon nach %1$s abschließen.</string>
     <string name="guard_wait_retry">Zu viele Versuche. Versuchen Sie es in %1$s erneut.</string>
@@ -97,7 +97,7 @@
     <string name="guard_wait_code_submit">Code senden</string>
     <string name="guard_wait_wrong_code">Dieser Code stimmt nicht. Prüfen Sie den Code und versuchen Sie es erneut.</string>
     <string name="guard_wait_needs_password">Diese Anmeldung wurde bestätigt. Geben Sie zum Abschließen Ihr Passwort erneut ein.</string>
-    <string name="guard_wait_failed">Aster konnte diese Anmeldung nicht abschließen. Um es erneut zu versuchen, melde dich erneut an.</string>
+    <string name="guard_wait_failed">Diese Anmeldung konnte nicht abgeschlossen werden. Um fortzufahren, melden Sie sich erneut an.</string>
     <string name="guard_number_description">Zahl, die Sie auf Ihrem anderen Telefon eingeben: %1$d</string>
     <string name="guard_prompt_resume_subtitle">Mit Aster Guard auf diesem Telefon anmelden</string>
     <string name="notif_channel_guard_name">Aster Guard</string>

@@ -4,7 +4,7 @@
     <string name="rules_section_recipients">Destinatarios</string>
     <string name="rules_section_content">Contenido</string>
     <string name="rules_section_attachments_flags">Adjuntos e indicadores</string>
-    <string name="rules_section_numeric_date_auth">Numérico, fecha y autenticación</string>
+    <string name="rules_section_numeric_date_auth">Números, fechas y autenticación</string>
 
     <string name="rules_op_is">es</string>
     <string name="rules_op_is_not">no es</string>
@@ -80,10 +80,10 @@
     <string name="no_custom_categories">Aún no hay categorías personalizadas.</string>
     <string name="category_name_required">Introduce un nombre para esta categoría.</string>
     <string name="category_rule_required">Añade al menos un dominio o palabra clave para la coincidencia.</string>
-    <string name="category_domains_invalid">Dominios no válidos: %1$s. Usa un dominio real como example.com.</string>
-    <string name="category_keywords_invalid">Palabras clave no válidas: %1$s. Usa solo palabras normales.</string>
+    <string name="category_domains_invalid">Estos dominios no son válidos: %1$s. Usa un dominio como example.com.</string>
+    <string name="category_keywords_invalid">Estas palabras clave no son válidas: %1$s. Usa solo palabras normales.</string>
     <string name="delete_category_title">¿Eliminar la categoría?</string>
-    <string name="delete_category_description">¿Seguro que quieres eliminar \"%1$s\"? Esta acción no se puede deshacer.</string>
+    <string name="delete_category_description">¿Eliminar \"%1$s\"? No se puede deshacer.</string>
     <string name="custom_categories_locked">Las categorías personalizadas no están disponibles en tu plan actual.</string>
     <string name="custom_categories_limit_reached">Has alcanzado el límite de categorías personalizadas de tu plan. Mejora tu plan para tener más.</string>
     <string name="edit_custom_category">Editar la categoría</string>
@@ -97,7 +97,7 @@
     <string name="category_match_keywords">Coincidir con palabras clave del asunto</string>
     <string name="category_match_keywords_placeholder">boletín, resumen</string>
     <string name="category_match_keywords_help">Palabras separadas por comas. Si alguna aparece en el asunto, el correo irá a esta categoría.</string>
-    <string name="category_tutorial_text">Consejo: una categoría personalizada coincide si el dominio del remitente o el asunto contiene alguna de tus palabras clave. Las categorías personalizadas se comprueban antes que las integradas, así que siempre tienen prioridad.</string>
+    <string name="category_tutorial_text">Una categoría personalizada coincide cuando el dominio del remitente o el asunto contiene alguna de tus palabras clave. Las categorías personalizadas se comprueban antes que las integradas, así que siempre tienen prioridad.</string>
     <string name="rules_create_first_folder_hint">Crea una carpeta y esta regla podrá mover allí los correos coincidentes.</string>
     <string name="rules_create_first_label_hint">Crea una etiqueta y esta regla podrá aplicarla a los correos coincidentes.</string>
     <string name="muted_categories">Categorías silenciadas</string>

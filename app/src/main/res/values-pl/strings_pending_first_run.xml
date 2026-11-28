@@ -20,6 +20,6 @@
     <string name="recovery_codes_refresh_body">Twoje kody odzyskiwania są nieaktualne. Pobierz nowe kody i zapisz je w bezpiecznym miejscu. Gdy otrzymasz nowe kody, stare przestaną działać.</string>
     <string name="recovery_codes_refresh_action">Pobierz nowe kody</string>
     <string name="recovery_phrase_migrate_title">Przejdź na kody odzyskiwania</string>
-    <string name="recovery_phrase_migrate_body">Frazy odzyskiwania zostaną wycofane. Uzyskaj teraz kody odzyskiwania, aby nadal móc odzyskać konto.</string>
+    <string name="recovery_phrase_migrate_body">Aster zastępuje frazy odzyskiwania kodami odzyskiwania. Aby zachować możliwość odzyskania konta, uzyskaj teraz kody odzyskiwania.</string>
     <string name="recovery_phrase_migrate_action">Uzyskaj kody</string>
 </resources>

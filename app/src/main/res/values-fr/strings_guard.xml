@@ -13,12 +13,12 @@
     <string name="guard_approve_device">Appareil</string>
     <string name="guard_approve_place">Lieu</string>
     <string name="guard_approve_time">Heure</string>
-    <string name="guard_approve_failed">Aster n\'a pas pu envoyer votre réponse. Vérifiez votre connexion et réessayez.</string>
+    <string name="guard_approve_failed">Impossible d\'envoyer votre réponse. Vérifiez votre connexion et réessayez.</string>
     <string name="guard_approve_action">Approuver</string>
     <string name="guard_approve_try_again">Réessayer</string>
     <string name="guard_approve_close">Fermer</string>
     <string name="guard_code_title">Code Guard</string>
-    <string name="guard_setup_failed">Aster Guard n\'a pas pu être activé. Vérifiez votre connexion et réessayez.</string>
+    <string name="guard_setup_failed">Impossible d\'activer Aster Guard. Vérifiez votre connexion et réessayez.</string>
     <string name="guard_setup_retry">Réessayer</string>
     <string name="guard_setup_already_on_title">Aster Guard est activé</string>
     <string name="guard_setup_choose_title">Choisissez vos protections</string>
@@ -87,7 +87,7 @@
     <string name="guard_rescue_banner">Quelqu\'un a lancé un secours qui désactive Aster Guard.</string>
     <string name="guard_rescue_banner_stop">Arrêter le secours</string>
     <string name="guard_wait_body">Ouvrez Aster sur un appareil où Aster Guard est activé, comme le navigateur ou l\'app de bureau que vous avez utilisés pour l\'activer. Ouvrez-y la demande et saisissez ce nombre pour l\'approuver.</string>
-    <string name="guard_wait_expired">Cette demande a expiré. Pour réessayer, connectez-vous à nouveau.</string>
+    <string name="guard_wait_expired">Cette demande a expiré. Pour continuer, reconnectez-vous.</string>
     <string name="guard_wait_denied">Cette connexion a été refusée sur un autre appareil.</string>
     <string name="guard_wait_held">Vous pourrez terminer la connexion sur ce téléphone après %1$s.</string>
     <string name="guard_wait_retry">Trop de tentatives. Réessayez dans %1$s.</string>
@@ -97,7 +97,7 @@
     <string name="guard_wait_code_submit">Envoyer le code</string>
     <string name="guard_wait_wrong_code">Ce code ne correspond pas. Vérifiez le code et réessayez.</string>
     <string name="guard_wait_needs_password">Cette connexion a été approuvée. Pour terminer, saisissez à nouveau votre mot de passe.</string>
-    <string name="guard_wait_failed">Aster n\'a pas pu terminer cette connexion. Pour réessayer, connectez-vous de nouveau.</string>
+    <string name="guard_wait_failed">Impossible de terminer cette connexion. Pour continuer, reconnectez-vous.</string>
     <string name="guard_number_description">Nombre à saisir sur votre autre téléphone : %1$d</string>
     <string name="guard_prompt_resume_subtitle">Se connecter avec Aster Guard sur ce téléphone</string>
     <string name="notif_channel_guard_name">Aster Guard</string>

@@ -21,6 +21,6 @@
     <string name="schedule_tomorrow_afternoon">بعد ظهر الغد</string>
     <string name="schedule_monday_morning">صباح الاثنين</string>
     <string name="schedule_pick_date_time">اختر التاريخ والوقت</string>
-    <string name="too_many_recipients_in_field">يتسع كل حقل من إلى ونسخة ونسخة مخفية لـ %1$d عنوانا كحد أقصى. انقل بعضها إلى رسالة ثانية لإرسال هذه الرسالة.</string>
-    <string name="too_many_recipients_in_message">تصل الرسالة الواحدة إلى %1$d عنوانا كحد أقصى عبر إلى ونسخة ونسخة مخفية. تقسيم القائمة إلى رسائل أصغر سينجح.</string>
+    <string name="too_many_recipients_in_field">يتسع كل حقل من حقول إلى ونسخة ونسخة مخفية لـ %1$d عنوانًا كحد أقصى. لإرسال هذه الرسالة، انقل بعض العناوين إلى رسالة ثانية.</string>
+    <string name="too_many_recipients_in_message">يمكن للرسالة الواحدة أن تصل إلى %1$d عنوانًا كحد أقصى عبر إلى ونسخة ونسخة مخفية. لإرسالها، قسّم القائمة إلى رسائل أصغر.</string>
 </resources>

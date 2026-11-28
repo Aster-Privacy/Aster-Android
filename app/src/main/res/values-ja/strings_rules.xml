@@ -80,8 +80,8 @@
     <string name="no_custom_categories">カスタムカテゴリはまだありません。</string>
     <string name="category_name_required">このカテゴリの名前を入力してください。</string>
     <string name="category_rule_required">一致させるドメインまたはキーワードを少なくとも1つ追加してください。</string>
-    <string name="category_domains_invalid">無効なドメイン: %1$s。example.com のような実際のドメインを使用してください。</string>
-    <string name="category_keywords_invalid">無効なキーワード: %1$s。通常の単語のみを使用してください。</string>
+    <string name="category_domains_invalid">次のドメインは無効です: %1$s。example.com のようなドメインを使用してください。</string>
+    <string name="category_keywords_invalid">次のキーワードは無効です: %1$s。通常の単語のみを使用してください。</string>
     <string name="delete_category_title">カテゴリを削除しますか？</string>
     <string name="delete_category_description">「%1$s」を削除しますか？この操作は元に戻せません。</string>
     <string name="custom_categories_locked">カスタムカテゴリは現在のプランではご利用いただけません。</string>
@@ -97,7 +97,7 @@
     <string name="category_match_keywords">件名のキーワードを一致させる</string>
     <string name="category_match_keywords_placeholder">ニュースレター, ダイジェスト</string>
     <string name="category_match_keywords_help">カンマ区切りの単語を入力してください。件名にいずれかが含まれる場合、そのメールはこのカテゴリに分類されます。</string>
-    <string name="category_tutorial_text">ヒント：送信者のドメインまたは件名にいずれかのキーワードが含まれると、カスタムカテゴリに一致します。カスタムカテゴリは標準のカテゴリより先に判定されるため、常に優先されます。</string>
+    <string name="category_tutorial_text">送信者のドメインまたは件名にいずれかのキーワードが含まれると、カスタムカテゴリに一致します。カスタムカテゴリは標準のカテゴリより先に判定されるため、常に優先されます。</string>
     <string name="rules_create_first_folder_hint">フォルダを作成すると、このルールで一致するメールを移動できます。</string>
     <string name="rules_create_first_label_hint">ラベルを作成すると、このルールで一致するメールに適用できます。</string>
     <string name="muted_categories">ミュート中のカテゴリ</string>

@@ -24,10 +24,10 @@
     <string name="settings_feat_auto_responder">自动回复</string>
     <string name="settings_feat_alias_avatars">别名头像</string>
     <string name="settings_feat_instant_alias_delete">即时删除 Aster 域名上的别名</string>
-    <string name="alias_too_new_title">该别名创建时间过短，暂无法删除</string>
-    <string name="alias_too_new_message">Aster 域名上的新别名在创建后会保留 30 天才能删除。这个别名从 %1$s 开始可以删除。如需立即删除，请升级到 Supernova。</string>
-    <string name="ghost_alias_too_new_title">该幽灵别名创建时间过短，暂无法停用</string>
-    <string name="ghost_alias_too_new_message">新的幽灵别名在创建后会保留 30 天才能停用，这一个从 %1$s 开始可以停用。升级到 Supernova 即可立即停用幽灵别名。</string>
+    <string name="alias_too_new_title">该别名暂时无法删除</string>
+    <string name="alias_too_new_message">Aster 域名上的新别名会保持有效 30 天。您可以从 %1$s 开始删除此别名，或升级到 Supernova 以立即删除别名。</string>
+    <string name="ghost_alias_too_new_title">该幽灵别名暂时无法停用</string>
+    <string name="ghost_alias_too_new_message">新的幽灵别名会保持有效 30 天。您可以从 %1$s 开始停用此别名，或升级到 Supernova 以立即停用幽灵别名。</string>
     <string name="ghost_alias_max_extension_toast">此幽灵别名已达到 90 天的最长有效期，无法再延长。</string>
     <string name="settings_feat_folders">文件夹</string>
     <string name="settings_feat_labels">标签</string>
@@ -87,7 +87,7 @@
     <string name="settings_diagnostics_clip_label">诊断信息</string>
     <string name="settings_diagnostics_secure_storage">安全存储</string>
     <string name="settings_diagnostics_storage_ok">正常</string>
-    <string name="settings_diagnostics_storage_degraded">异常，请退出登录后重新登录</string>
+    <string name="settings_diagnostics_storage_degraded">异常。请退出登录后重新登录。</string>
     <string name="settings_crash_reports_title">发送崩溃报告</string>
     <string name="settings_crash_reports_subtitle">除非你开启，否则保持关闭。报告绝不包含你的账户、邮件或联系人。</string>
     <string name="settings_crash_reports_info">开启此设置后，如果应用崩溃、停止响应或无法访问某项功能，Aster Mail 会向 Aster 发送一份匿名报告。报告包含错误类型、应用版本以及应用代码中发生错误的位置。报告绝不包含你的地址、邮件、联系人或任何可识别你账户的信息。关闭此设置后，Aster Mail 不会发送任何报告。</string>

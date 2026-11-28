@@ -20,6 +20,6 @@
     <string name="recovery_codes_refresh_body">رموز الاسترداد الحالية لديك قديمة. احصل على رموز جديدة واحفظها في مكان آمن. بعد حصولك على الرموز الجديدة، تتوقف الرموز القديمة عن العمل.</string>
     <string name="recovery_codes_refresh_action">الحصول على رموز جديدة</string>
     <string name="recovery_phrase_migrate_title">انتقل إلى رموز الاسترداد</string>
-    <string name="recovery_phrase_migrate_body">سيتوقف العمل بعبارات الاسترداد. احصل على رموز الاسترداد الآن حتى تظل قادرًا على استرداد حسابك.</string>
+    <string name="recovery_phrase_migrate_body">يستبدل Aster عبارات الاسترداد برموز الاسترداد. للاحتفاظ بطريقة لاسترداد حسابك، احصل على رموز الاسترداد الآن.</string>
     <string name="recovery_phrase_migrate_action">الحصول على الرموز</string>
 </resources>

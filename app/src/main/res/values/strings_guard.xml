@@ -24,7 +24,7 @@
     <string name="guard_wait_body">Open Aster on a device where Aster Guard is on, such as the browser or desktop app you used to turn it on. Open the request there and enter this number to approve it.</string>
     <string name="guard_wait_code_action">Use a Guard code instead</string>
     <string name="guard_wait_rescue_action">Use your rescue code</string>
-    <string name="guard_wait_expired">This request expired. To try again, sign in again.</string>
+    <string name="guard_wait_expired">This request expired. To continue, sign in again.</string>
     <string name="guard_wait_denied">This sign-in was denied on another device.</string>
     <string name="guard_wait_held">You can finish signing in on this phone after %1$s.</string>
     <string name="guard_wait_retry">Too many attempts. Try again in %1$s.</string>
@@ -35,7 +35,7 @@
     <string name="guard_wait_code_submit">Submit code</string>
     <string name="guard_wait_wrong_code">That code doesn\'t match. Check the code and try again.</string>
     <string name="guard_wait_needs_password">This sign-in was approved. To finish, enter your password again.</string>
-    <string name="guard_wait_failed">Aster couldn\'t finish this sign-in. To try again, sign in again.</string>
+    <string name="guard_wait_failed">Couldn\'t finish this sign-in. To continue, sign in again.</string>
     <string name="guard_wait_back">Start over</string>
     <string name="guard_number_description">Number to enter on your other phone: %1$d</string>
     <string name="guard_prompt_title">Confirm it\'s you</string>
@@ -73,7 +73,7 @@
     <string name="guard_approve_number_label">Number on the new device</string>
     <string name="guard_approve_number_help">Enter the 2-digit number.</string>
     <string name="guard_approve_wrong_number">That number doesn\'t match. Check the number on the other device.</string>
-    <string name="guard_approve_failed">Aster couldn\'t send your answer. Check your connection and try again.</string>
+    <string name="guard_approve_failed">Couldn\'t send your answer. Check your connection and try again.</string>
     <string name="guard_approve_action">Approve</string>
     <string name="guard_deny_action">Deny, this wasn\'t me</string>
     <string name="guard_approve_unlock_first">Aster Guard keeps your approval key locked until you unlock Aster Mail. Unlock it to review this sign-in.</string>
@@ -98,7 +98,7 @@
     <string name="guard_setup_start">Set up Aster Guard</string>
     <string name="guard_setup_working">This takes a moment.</string>
     <string name="guard_setup_unavailable">Aster Guard isn\'t available for your account yet.</string>
-    <string name="guard_setup_failed">Aster Guard couldn\'t turn on. Check your connection and try again.</string>
+    <string name="guard_setup_failed">Couldn\'t turn on Aster Guard. Check your connection and try again.</string>
     <string name="guard_setup_retry">Try again</string>
     <string name="guard_setup_already_on_title">Aster Guard is on</string>
     <string name="guard_setup_already_on_body">This phone already approves sign-ins and changes for your account.</string>
@@ -313,7 +313,7 @@
     <string name="guard_veto_done_title">You stopped the rescue</string>
     <string name="guard_veto_done_body">You stopped the rescue, so Aster Guard stays on. If you didn\'t start it, someone may know your password. Change it now to keep your account safe.</string>
     <string name="guard_veto_invalid">This link has expired or was already used.</string>
-    <string name="guard_veto_error">The rescue couldn\'t be stopped. Try again, or sign in on an approved device to stop it.</string>
+    <string name="guard_veto_error">Couldn\'t stop the rescue. Try again, or sign in on an approved device to stop it.</string>
     <string name="guard_rescue_banner">Someone started a rescue that turns off Aster Guard.</string>
     <string name="guard_rescue_banner_stop">Stop rescue</string>
     <string name="guard_intro_lead">Aster Guard is for high-risk accounts. Every new sign-in needs approval from a device you already approved, so a stolen password isn\'t enough.</string>

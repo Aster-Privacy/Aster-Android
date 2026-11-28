@@ -29,8 +29,8 @@
         <item quantity="other">%1$d emails</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
-        <item quantity="one">Items in spam will be automatically deleted after %1$d day.</item>
-        <item quantity="other">Items in spam will be automatically deleted after %1$d days.</item>
+        <item quantity="one">Messages in Spam are deleted automatically after %1$d day.</item>
+        <item quantity="other">Messages in Spam are deleted automatically after %1$d days.</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
         <item quantity="one">Messages are deleted %1$d day after they move to Trash.</item>
@@ -45,8 +45,8 @@
         <item quantity="other">%1$d years</item>
     </plurals>
     <plurals name="domain_purchase_years_line">
-        <item quantity="one">%1$d year registration</item>
-        <item quantity="other">%1$d year registration</item>
+        <item quantity="one">%1$d-year registration</item>
+        <item quantity="other">%1$d-year registration</item>
     </plurals>
     <plurals name="app_lock_try_again_in">
         <item quantity="one">Try again in %d second</item>

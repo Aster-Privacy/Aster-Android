@@ -12,11 +12,11 @@
     <string name="notif_login_alert_action_revoke">Pas moi</string>
     <string name="notif_login_alert_revoking">Déconnexion de la nouvelle session…</string>
     <string name="notif_login_alert_revoked">Session déconnectée</string>
-    <string name="notif_login_alert_revoked_body">La nouvelle session a été déconnectée. Pensez à changer votre mot de passe dans les paramètres de sécurité.</string>
+    <string name="notif_login_alert_revoked_body">La nouvelle session a été déconnectée. Pour protéger votre compte, changez votre mot de passe dans les paramètres de sécurité.</string>
     <string name="notif_login_alert_revoke_failed">Impossible de déconnecter la session</string>
     <string name="notif_login_alert_revoke_failed_body">Ouvrez l\'application pour vérifier vos sessions actives.</string>
     <string name="notif_battery_opt_title">Activité en arrière-plan illimitée</string>
-    <string name="notif_battery_opt_subtitle">Requis pour des notifications fiables. Appuyez pour activer dans les paramètres système.</string>
+    <string name="notif_battery_opt_subtitle">Requis pour des notifications fiables. Appuyez pour l\'activer dans les paramètres système.</string>
     <string name="notif_blocked_title">Les notifications sont désactivées</string>
     <string name="notif_blocked_subtitle">Aster Mail ne peut pas afficher de notifications tant que vous ne les autorisez pas. Appuyez pour ouvrir les paramètres système.</string>
     <string name="mute_folder_notifications">Désactiver les notifications du dossier</string>

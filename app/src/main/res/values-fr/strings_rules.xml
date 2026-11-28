@@ -4,7 +4,7 @@
     <string name="rules_section_recipients">Destinataires</string>
     <string name="rules_section_content">Contenu</string>
     <string name="rules_section_attachments_flags">Pièces jointes et indicateurs</string>
-    <string name="rules_section_numeric_date_auth">Numérique, date et authentification</string>
+    <string name="rules_section_numeric_date_auth">Nombres, dates et authentification</string>
 
     <string name="rules_op_is">est</string>
     <string name="rules_op_is_not">n\'est pas</string>
@@ -80,10 +80,10 @@
     <string name="no_custom_categories">Aucune catégorie personnalisée pour l\'instant.</string>
     <string name="category_name_required">Saisissez un nom pour cette catégorie.</string>
     <string name="category_rule_required">Ajoutez au moins un domaine ou un mot-clé à faire correspondre.</string>
-    <string name="category_domains_invalid">Domaines non valides : %1$s. Utilisez un domaine réel comme example.com.</string>
-    <string name="category_keywords_invalid">Mots-clés non valides : %1$s. Utilisez uniquement des mots simples.</string>
+    <string name="category_domains_invalid">Ces domaines ne sont pas valides : %1$s. Utilisez un domaine comme example.com.</string>
+    <string name="category_keywords_invalid">Ces mots-clés ne sont pas valides : %1$s. Utilisez uniquement des mots simples.</string>
     <string name="delete_category_title">Supprimer la catégorie ?</string>
-    <string name="delete_category_description">Voulez-vous vraiment supprimer « %1$s » ? Cette action est irréversible.</string>
+    <string name="delete_category_description">Supprimer « %1$s » ? Cette action est irréversible.</string>
     <string name="custom_categories_locked">Les catégories personnalisées ne sont pas disponibles avec votre forfait actuel.</string>
     <string name="custom_categories_limit_reached">Vous avez atteint la limite de catégories personnalisées de votre forfait. Passez à un forfait supérieur pour en obtenir davantage.</string>
     <string name="edit_custom_category">Modifier la catégorie</string>
@@ -97,7 +97,7 @@
     <string name="category_match_keywords">Faire correspondre les mots-clés de l\'objet</string>
     <string name="category_match_keywords_placeholder">newsletter, résumé</string>
     <string name="category_match_keywords_help">Mots séparés par des virgules. Si l\'un d\'eux apparaît dans l\'objet, l\'e-mail ira dans cette catégorie.</string>
-    <string name="category_tutorial_text">Astuce : une catégorie personnalisée correspond si le domaine de l\'expéditeur OU l\'objet contient l\'un de vos mots-clés. Les catégories personnalisées sont vérifiées avant les catégories intégrées et sont donc toujours prioritaires.</string>
+    <string name="category_tutorial_text">Une catégorie personnalisée correspond lorsque le domaine de l\'expéditeur ou l\'objet contient l\'un de vos mots-clés. Les catégories personnalisées sont vérifiées avant les catégories intégrées et sont donc toujours prioritaires.</string>
     <string name="rules_create_first_folder_hint">Créez un dossier et cette règle pourra y déplacer les e-mails correspondants.</string>
     <string name="rules_create_first_label_hint">Créez un libellé et cette règle pourra l\'appliquer aux e-mails correspondants.</string>
     <string name="muted_categories">Catégories en sourdine</string>

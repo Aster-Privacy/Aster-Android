@@ -13,7 +13,7 @@
     <string name="guard_approve_device">デバイス</string>
     <string name="guard_approve_place">場所</string>
     <string name="guard_approve_time">時刻</string>
-    <string name="guard_approve_failed">Aster は応答を送信できませんでした。接続を確認してもう一度お試しください。</string>
+    <string name="guard_approve_failed">応答を送信できませんでした。接続を確認してもう一度お試しください。</string>
     <string name="guard_approve_action">承認</string>
     <string name="guard_approve_try_again">再試行</string>
     <string name="guard_approve_close">閉じる</string>
@@ -87,7 +87,7 @@
     <string name="guard_rescue_banner">Aster Guard をオフにするレスキューが開始されました。</string>
     <string name="guard_rescue_banner_stop">レスキューを停止</string>
     <string name="guard_wait_body">Aster Guard がオンのデバイス（オンにするときに使ったブラウザやデスクトップアプリなど）で Aster を開いてください。そこでリクエストを開き、この番号を入力して承認します。</string>
-    <string name="guard_wait_expired">このリクエストは期限切れです。もう一度試すには、再度サインインしてください。</string>
+    <string name="guard_wait_expired">このリクエストは期限切れです。続けるには、もう一度サインインしてください。</string>
     <string name="guard_wait_denied">このサインインは別のデバイスで拒否されました。</string>
     <string name="guard_wait_held">%1$s 以降に、このスマートフォンでサインインを完了できます。</string>
     <string name="guard_wait_retry">試行回数が多すぎます。%1$s 後にもう一度お試しください。</string>
@@ -97,7 +97,7 @@
     <string name="guard_wait_code_submit">コードを送信</string>
     <string name="guard_wait_wrong_code">コードが一致しません。コードを確認して、もう一度お試しください。</string>
     <string name="guard_wait_needs_password">このサインインは承認されました。完了するには、パスワードをもう一度入力してください。</string>
-    <string name="guard_wait_failed">Aster はこのサインインを完了できませんでした。もう一度試すには、サインインし直してください。</string>
+    <string name="guard_wait_failed">このサインインを完了できませんでした。続けるには、もう一度サインインしてください。</string>
     <string name="guard_number_description">もう一方のスマートフォンで入力する番号: %1$d</string>
     <string name="guard_prompt_resume_subtitle">このスマートフォンで Aster Guard を使ってサインイン</string>
     <string name="notif_channel_guard_name">Aster Guard</string>

@@ -20,6 +20,6 @@
     <string name="recovery_codes_refresh_body">Vos codes de récupération sont obsolètes. Obtenez de nouveaux codes et conservez-les en lieu sûr. Une fois les nouveaux codes obtenus, les anciens ne fonctionnent plus.</string>
     <string name="recovery_codes_refresh_action">Obtenir de nouveaux codes</string>
     <string name="recovery_phrase_migrate_title">Passez aux codes de récupération</string>
-    <string name="recovery_phrase_migrate_body">Les phrases de récupération vont disparaître. Obtenez des codes de récupération maintenant pour pouvoir encore récupérer votre compte.</string>
+    <string name="recovery_phrase_migrate_body">Aster remplace les phrases de récupération par des codes de récupération. Pour conserver un moyen de récupérer votre compte, obtenez des codes de récupération maintenant.</string>
     <string name="recovery_phrase_migrate_action">Obtenir des codes</string>
 </resources>

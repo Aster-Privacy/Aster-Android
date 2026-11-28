@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="found_us_banner_message">Как вы впервые узнали об Aster Mail? Всего один вопрос, отвечать необязательно.</string>
+    <string name="found_us_banner_message">Как вы впервые узнали об Aster Mail? Отвечать необязательно.</string>
     <string name="found_us_banner_answer">Ответить</string>
     <string name="found_us_banner_dismiss">Закрыть</string>
     <string name="found_us_remind_later">Напомнить через неделю</string>

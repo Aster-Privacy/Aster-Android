@@ -24,10 +24,10 @@
     <string name="settings_feat_auto_responder">Otomatik yanıtlayıcı</string>
     <string name="settings_feat_alias_avatars">Takma ad görselleri</string>
     <string name="settings_feat_instant_alias_delete">Aster alan adlarındaki rumuzları anında silme</string>
-    <string name="alias_too_new_title">Bu takma ad silinemeyecek kadar yeni</string>
-    <string name="alias_too_new_message">Aster alan adlarındaki yeni takma adlar, silebilmeniz için 30 gün boyunca aktif kalır. Bunu %1$s tarihinden itibaren silebilirsiniz. Hemen silmek için Supernova\'ya geçin.</string>
-    <string name="ghost_alias_too_new_title">Bu ghost takma ad süresini doldurmaya henüz çok yeni</string>
-    <string name="ghost_alias_too_new_message">Yeni ghost takma adlar süresi dolmadan önce 30 gün boyunca aktif kalır. Bu, %1$s tarihinden itibaren süresi doldurulabilir. Ghost takma adları anında sonlandırmak için Supernova\'ya geçin.</string>
+    <string name="alias_too_new_title">Bu takma ad henüz silinemez</string>
+    <string name="alias_too_new_message">Aster alan adlarındaki yeni takma adlar 30 gün boyunca aktif kalır. Bunu %1$s tarihinden itibaren silebilir veya takma adları hemen silmek için Supernova\'ya geçebilirsiniz.</string>
+    <string name="ghost_alias_too_new_title">Bu ghost takma adın süresi henüz sonlandırılamaz</string>
+    <string name="ghost_alias_too_new_message">Yeni ghost takma adlar 30 gün boyunca aktif kalır. Bunun süresini %1$s tarihinden itibaren sonlandırabilir veya ghost takma adların süresini hemen sonlandırmak için Supernova\'ya geçebilirsiniz.</string>
     <string name="ghost_alias_max_extension_toast">Bu hayalet takma ad zaten 90 günlük azami ömrüne ulaştı ve daha fazla uzatılamaz.</string>
     <string name="settings_feat_folders">Klasörler</string>
     <string name="settings_feat_labels">Etiketler</string>
@@ -87,7 +87,7 @@
     <string name="settings_diagnostics_clip_label">Tanılama</string>
     <string name="settings_diagnostics_secure_storage">Güvenli depolama</string>
     <string name="settings_diagnostics_storage_ok">Sağlıklı</string>
-    <string name="settings_diagnostics_storage_degraded">Bozulmuş, oturumu kapatıp yeniden açın</string>
+    <string name="settings_diagnostics_storage_degraded">Bozulmuş. Oturumu kapatıp tekrar giriş yapın.</string>
     <string name="settings_crash_reports_title">Çökme raporları gönder</string>
     <string name="settings_crash_reports_subtitle">Siz açmadıkça kapalıdır. Raporlar hiçbir zaman hesabınızı, iletilerinizi veya kişilerinizi içermez.</string>
     <string name="settings_crash_reports_info">Bu ayar açık olduğunda, uygulama çökerse, yanıt vermeyi durdurursa veya bir özelliğe ulaşamazsa Aster Mail, Aster\'a anonim bir rapor gönderir. Rapor; hata türünü, uygulama sürümünü ve uygulama kodunda hatanın oluştuğu yeri içerir. Hiçbir zaman adresinizi, iletilerinizi, kişilerinizi veya hesabınızı tanımlayan herhangi bir bilgiyi içermez. Bu ayar kapalı olduğunda Aster Mail hiçbir rapor göndermez.</string>

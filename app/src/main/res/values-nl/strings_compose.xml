@@ -22,5 +22,5 @@
     <string name="schedule_monday_morning">Maandagochtend</string>
     <string name="schedule_pick_date_time">Datum &amp; tijd kiezen</string>
     <string name="too_many_recipients_in_field">Elk veld Aan, Cc en Bcc bevat maximaal %1$d adressen. Verplaats een deel naar een tweede bericht om dit bericht te versturen.</string>
-    <string name="too_many_recipients_in_message">Eén bericht bereikt maximaal %1$d adressen in Aan, Cc en Bcc samen. De lijst opsplitsen in kleinere berichten werkt wel.</string>
+    <string name="too_many_recipients_in_message">Eén bericht kan maximaal %1$d adressen bereiken in Aan, Cc en Bcc samen. Splits de lijst op in kleinere berichten om het te versturen.</string>
 </resources>

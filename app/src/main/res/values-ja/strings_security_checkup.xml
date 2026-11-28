@@ -10,7 +10,7 @@
     <string name="two_factor_on_with_security_key">セキュリティキーで有効</string>
     <string name="two_factor_on_with_app_and_key">認証アプリとセキュリティキーで有効</string>
     <string name="no_passkeys_recommendation">デバイスの生体認証やPINを使ったより速く安全なサインインのために、パスキーを追加してください。</string>
-    <string name="login_alerts_off_recommendation">新しいデバイスでアカウントにサインインした際に通知を受け取るには、ログインアラートをオンにしてください。</string>
+    <string name="login_alerts_off_recommendation">新しいデバイスでアカウントにサインインしたときに通知を受け取るには、サインイン通知をオンにしてください。</string>
     <string name="billing_usage_title">使用状況の概要</string>
     <plurals name="security_actions_remaining">
         <item quantity="other">推奨される操作: %1$d 件</item>

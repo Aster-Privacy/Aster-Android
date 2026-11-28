@@ -49,7 +49,7 @@
         <item quantity="other">%1$d일 후에 액세스가 제한됩니다.</item>
     </plurals>
     <plurals name="templates_decrypt_failed_count">
-        <item quantity="other">이 기기에서 템플릿 %1$d개를 읽지 못했습니다. 현재 이 기기에 없는 키로 저장되었습니다.</item>
+        <item quantity="other">템플릿 %1$d개가 이 기기에 없는 키로 저장되어 이 기기에서 읽을 수 없습니다.</item>
     </plurals>
     <plurals name="contact_trash_days_left">
         <item quantity="other">%1$d일 남음</item>

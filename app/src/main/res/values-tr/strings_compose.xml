@@ -21,6 +21,6 @@
     <string name="schedule_tomorrow_afternoon">Yarın öğleden sonra</string>
     <string name="schedule_monday_morning">Pazartesi sabahı</string>
     <string name="schedule_pick_date_time">Tarih ve saat seçin</string>
-    <string name="too_many_recipients_in_field">Kime, Bilgi ve Gizli alanlarının her biri en fazla %1$d adres alır. Bir kısmını ikinci bir iletiye taşıdığınızda bu ileti gönderilir.</string>
-    <string name="too_many_recipients_in_message">Bir ileti Kime, Bilgi ve Gizli alanlarında toplam en fazla %1$d adrese ulaşır. Listeyi daha küçük iletilere bölerek gönderebilirsiniz.</string>
+    <string name="too_many_recipients_in_field">Kime, Bilgi ve Gizli alanlarının her biri en fazla %1$d adres alır. Bu iletiyi göndermek için bazı adresleri ikinci bir iletiye taşıyın.</string>
+    <string name="too_many_recipients_in_message">Bir ileti Kime, Bilgi ve Gizli alanlarında toplam en fazla %1$d adrese ulaşabilir. Göndermek için listeyi daha küçük iletilere bölün.</string>
 </resources>

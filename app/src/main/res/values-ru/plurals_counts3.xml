@@ -43,10 +43,10 @@
         <item quantity="other">%1$d письма</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
-        <item quantity="one">Элементы в спаме удаляются автоматически через %1$d день.</item>
-        <item quantity="few">Элементы в спаме удаляются автоматически через %1$d дня.</item>
-        <item quantity="many">Элементы в спаме удаляются автоматически через %1$d дней.</item>
-        <item quantity="other">Элементы в спаме удаляются автоматически через %1$d дней.</item>
+        <item quantity="one">Письма в папке «Спам» удаляются автоматически через %1$d день.</item>
+        <item quantity="few">Письма в папке «Спам» удаляются автоматически через %1$d дня.</item>
+        <item quantity="many">Письма в папке «Спам» удаляются автоматически через %1$d дней.</item>
+        <item quantity="other">Письма в папке «Спам» удаляются автоматически через %1$d дня.</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
         <item quantity="one">Письма удаляются автоматически через %1$d день после перемещения в корзину.</item>

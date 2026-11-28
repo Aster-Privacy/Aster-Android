@@ -26,10 +26,10 @@
     <string name="settings_feat_auto_responder">Réponse automatique</string>
     <string name="settings_feat_alias_avatars">Avatars d\'alias</string>
     <string name="settings_feat_instant_alias_delete">Suppression instantanée des alias sur les domaines Aster</string>
-    <string name="alias_too_new_title">Cet alias est trop récent pour être supprimé</string>
-    <string name="alias_too_new_message">Les nouveaux alias sur les domaines Aster restent actifs 30 jours avant que vous puissiez les supprimer. Vous pouvez supprimer celui-ci à partir du %1$s. Pour les supprimer tout de suite, passez à Supernova.</string>
-    <string name="ghost_alias_too_new_title">Cet alias fantôme est trop récent pour expirer</string>
-    <string name="ghost_alias_too_new_message">Les nouveaux alias fantômes restent actifs 30 jours avant de pouvoir expirer. Celui-ci peut expirer à partir du %1$s. Passez à Supernova pour faire expirer les alias fantômes instantanément.</string>
+    <string name="alias_too_new_title">Cet alias ne peut pas encore être supprimé</string>
+    <string name="alias_too_new_message">Les nouveaux alias sur les domaines Aster restent actifs pendant 30 jours. Vous pouvez supprimer celui-ci à partir du %1$s, ou passer à Supernova pour supprimer des alias tout de suite.</string>
+    <string name="ghost_alias_too_new_title">Cet alias fantôme ne peut pas encore expirer</string>
+    <string name="ghost_alias_too_new_message">Les nouveaux alias fantômes restent actifs pendant 30 jours. Vous pouvez faire expirer celui-ci à partir du %1$s, ou passer à Supernova pour faire expirer des alias fantômes tout de suite.</string>
     <string name="ghost_alias_max_extension_toast">Cet alias fantôme a atteint sa durée de vie maximale de 90 jours et ne peut plus être prolongé.</string>
     <string name="settings_feat_folders">Dossiers</string>
     <string name="settings_feat_labels">Libellés</string>
@@ -140,14 +140,14 @@
     <string name="settings_save_amount">%1$.2f $</string>
     <string name="settings_billing_monthly">Mensuel</string>
     <string name="settings_billing_yearly">Annuel</string>
-    <string name="settings_prices_usd_note">Prix affichés en USD. Le montant final est déterminé lors du paiement.</string>
+    <string name="settings_prices_usd_note">Les prix sont en USD. Le montant final est confirmé lors du paiement.</string>
     <string name="settings_prices_currency_note">Prix en %1$s. Le montant final est confirmé lors du paiement.</string>
     <string name="settings_interval_default">mois</string>
 
     <string name="settings_diagnostics_clip_label">Diagnostics</string>
     <string name="settings_diagnostics_secure_storage">Stockage sécurisé</string>
     <string name="settings_diagnostics_storage_ok">Sain</string>
-    <string name="settings_diagnostics_storage_degraded">Dégradé, déconnectez-vous puis reconnectez-vous</string>
+    <string name="settings_diagnostics_storage_degraded">Dégradé. Déconnectez-vous puis reconnectez-vous.</string>
     <string name="settings_crash_reports_title">Envoyer les rapports de plantage</string>
     <string name="settings_crash_reports_subtitle">Désactivé sauf si vous l\'activez. Les rapports n\'incluent jamais votre compte, vos messages ni vos contacts.</string>
     <string name="settings_crash_reports_info">Lorsque ce réglage est activé, Aster Mail envoie à Aster un rapport anonyme si l\'app plante, ne répond plus ou ne parvient pas à accéder à une fonctionnalité. Un rapport contient le type d\'erreur, la version de l\'app et l\'endroit du code de l\'app où l\'erreur s\'est produite. Il ne contient jamais votre adresse, vos messages, vos contacts ni rien qui identifie votre compte. Lorsque ce réglage est désactivé, Aster Mail n\'envoie aucun rapport.</string>

@@ -20,6 +20,6 @@
     <string name="recovery_codes_refresh_body">現在のリカバリーコードは古くなっています。新しいコードを取得して、安全な場所に保存してください。新しいコードを取得すると、古いコードは使えなくなります。</string>
     <string name="recovery_codes_refresh_action">新しいコードを取得</string>
     <string name="recovery_phrase_migrate_title">リカバリーコードに切り替え</string>
-    <string name="recovery_phrase_migrate_body">リカバリーフレーズは廃止されます。今のうちにリカバリーコードを取得して、アカウントを復旧できるようにしてください。</string>
+    <string name="recovery_phrase_migrate_body">Aster ではリカバリーフレーズがリカバリーコードに置き換わります。アカウントを復旧する手段を確保するため、今すぐリカバリーコードを取得してください。</string>
     <string name="recovery_phrase_migrate_action">コードを取得</string>
 </resources>

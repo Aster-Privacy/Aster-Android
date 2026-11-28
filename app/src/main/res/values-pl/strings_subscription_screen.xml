@@ -6,5 +6,5 @@
     <string name="billing_source_crypto">Opłacone kryptowalutą</string>
     <string name="billing_status_trial">Okres próbny</string>
     <string name="billing_top_plan_title">Masz najwyższy plan</string>
-    <string name="billing_section_load_failed">Aster nie mógł wczytać tej sekcji.</string>
+    <string name="billing_section_load_failed">Nie udało się wczytać tej sekcji. Spróbuj ponownie.</string>
 </resources>

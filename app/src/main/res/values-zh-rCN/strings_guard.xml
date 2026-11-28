@@ -13,7 +13,7 @@
     <string name="guard_approve_device">设备</string>
     <string name="guard_approve_place">地点</string>
     <string name="guard_approve_time">时间</string>
-    <string name="guard_approve_failed">Aster 无法发送你的回应。请检查网络连接后重试。</string>
+    <string name="guard_approve_failed">无法发送您的回应。请检查网络连接后重试。</string>
     <string name="guard_approve_action">批准</string>
     <string name="guard_approve_try_again">重试</string>
     <string name="guard_approve_close">关闭</string>
@@ -87,7 +87,7 @@
     <string name="guard_rescue_banner">有人发起了将关闭 Aster Guard 的救援。</string>
     <string name="guard_rescue_banner_stop">停止救援</string>
     <string name="guard_wait_body">在已开启 Aster Guard 的设备上打开 Aster，例如你开启它时使用的浏览器或桌面应用。在那里打开请求并输入此数字以批准。</string>
-    <string name="guard_wait_expired">此请求已过期。如需重试，请重新登录。</string>
+    <string name="guard_wait_expired">此请求已过期。要继续，请重新登录。</string>
     <string name="guard_wait_denied">此次登录已在另一台设备上被拒绝。</string>
     <string name="guard_wait_held">您可以在 %1$s 之后在此手机上完成登录。</string>
     <string name="guard_wait_retry">尝试次数过多。请在 %1$s 后重试。</string>
@@ -97,7 +97,7 @@
     <string name="guard_wait_code_submit">发送代码</string>
     <string name="guard_wait_wrong_code">该代码不匹配。请检查代码后重试。</string>
     <string name="guard_wait_needs_password">此次登录已获批准。如需完成，请再次输入您的密码。</string>
-    <string name="guard_wait_failed">Aster 无法完成此次登录。要重试，请重新登录。</string>
+    <string name="guard_wait_failed">无法完成此次登录。要继续，请重新登录。</string>
     <string name="guard_number_description">需在另一台手机上输入的数字：%1$d</string>
     <string name="guard_prompt_resume_subtitle">在此手机上使用 Aster Guard 登录</string>
     <string name="notif_channel_guard_name">Aster Guard</string>

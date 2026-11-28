@@ -10,7 +10,7 @@
     <string name="two_factor_on_with_security_key">مفعّل باستخدام مفتاح أمان</string>
     <string name="two_factor_on_with_app_and_key">مفعّل باستخدام تطبيق مصادقة ومفتاح أمان</string>
     <string name="no_passkeys_recommendation">أضف مفتاح مرور لتسجيل دخول أسرع وأكثر أمانًا باستخدام القياسات الحيوية أو رمز PIN لجهازك.</string>
-    <string name="login_alerts_off_recommendation">فعّل تنبيهات تسجيل الدخول لتصلك إشعارات عند تسجيل دخول جهاز جديد إلى حسابك.</string>
+    <string name="login_alerts_off_recommendation">لتصلك إشعارات عند تسجيل دخول جهاز جديد إلى حسابك، فعّل تنبيهات تسجيل الدخول.</string>
     <string name="billing_usage_title">نظرة عامة على الاستخدام</string>
     <plurals name="security_actions_remaining">
         <item quantity="zero">الإجراءات الموصى بها: %1$d</item>

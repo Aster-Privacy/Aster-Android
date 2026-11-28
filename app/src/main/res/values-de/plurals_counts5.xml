@@ -65,8 +65,8 @@
         <item quantity="other">Zugriff wird in %1$d Tagen eingeschränkt.</item>
     </plurals>
     <plurals name="templates_decrypt_failed_count">
-        <item quantity="one">%1$d Vorlage konnte auf diesem Gerät nicht gelesen werden. Sie wurde mit einem Schlüssel gespeichert, den dieses Gerät derzeit nicht besitzt.</item>
-        <item quantity="other">%1$d Vorlagen konnten auf diesem Gerät nicht gelesen werden. Sie wurden mit einem Schlüssel gespeichert, den dieses Gerät derzeit nicht besitzt.</item>
+        <item quantity="one">%1$d Vorlage kann auf diesem Gerät nicht gelesen werden, da sie mit einem Schlüssel gespeichert wurde, den dieses Gerät nicht hat.</item>
+        <item quantity="other">%1$d Vorlagen können auf diesem Gerät nicht gelesen werden, da sie mit einem Schlüssel gespeichert wurden, den dieses Gerät nicht hat.</item>
     </plurals>
     <plurals name="contact_trash_days_left">
         <item quantity="one">Noch %1$d Tag</item>

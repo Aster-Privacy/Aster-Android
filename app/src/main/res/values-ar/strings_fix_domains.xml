@@ -32,7 +32,7 @@
     <string name="domain_bimi_row_inactive">أكمل إعداد هذا النطاق لإضافة شعار العلامة التجارية.</string>
     <string name="domain_bimi_state_draft">غير منشور</string>
     <string name="domain_bimi_state_pending">بانتظار DNS</string>
-    <string name="domain_bimi_state_live">نشط</string>
+    <string name="domain_bimi_state_live">منشور</string>
     <string name="domain_bimi_state_attention">يحتاج إلى انتباه</string>
     <string name="domain_bimi_state_external">مُدار في مكان آخر</string>
     <string name="domain_bimi_set_up">إعداد</string>
