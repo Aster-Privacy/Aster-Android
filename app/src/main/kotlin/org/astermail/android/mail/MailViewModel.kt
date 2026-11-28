@@ -66,6 +66,7 @@ import org.astermail.android.api.send.ExternalAttachmentPayload
 import org.astermail.android.ui.mail.MessageAttachment
 
 private const val INBOX_FETCH_BACKSTOP_MS = 50_000L
+internal const val WARM_CACHE_READ_TIMEOUT_MS = 4_000L
 private const val REACTION_WARM_TIMEOUT_MS = 1_500L
 private const val RESOLVED_REACTION_CACHE_SIZE = 512
 private const val PULL_REFRESH_BACKSTOP_MS = 20_000L
@@ -1819,7 +1820,11 @@ class MailViewModel @Inject constructor(
                 val warm_is_usable = warm_age in 0..WARM_CACHE_STALE_MAX_AGE_MS
                 val warm_window = if (warm_is_fresh) WARM_CACHE_WINDOW else page_size
                 val persisted = if (list_order == null && folder == "inbox" && warm_is_usable) {
-                    runCatching { search_index_manager.get_warm_items(warm_window) }.getOrNull().orEmpty()
+                    runCatching {
+                        kotlinx.coroutines.withTimeoutOrNull(WARM_CACHE_READ_TIMEOUT_MS) {
+                            search_index_manager.get_warm_items(warm_window)
+                        }
+                    }.getOrNull().orEmpty()
                 } else {
                     emptyList()
                 }

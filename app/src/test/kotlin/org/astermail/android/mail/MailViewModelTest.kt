@@ -292,6 +292,26 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `a stalled warm cache read does not hold the inbox on the skeleton`() = runTest {
+        every { search_index_manager.last_inbox_sync_at() } returns System.currentTimeMillis()
+        coEvery { search_index_manager.get_warm_items(any()) } coAnswers {
+            kotlinx.coroutines.awaitCancellation()
+        }
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(fake_inbox_page(3))
+
+        vm.load_inbox("inbox", force = true)
+        advanceTimeBy(WARM_CACHE_READ_TIMEOUT_MS - 1)
+        assertTrue(vm.inbox_state.value.is_loading)
+
+        advanceUntilIdle()
+
+        val state = vm.inbox_state.value
+        assertFalse(state.is_loading)
+        assertFalse(state.initial)
+        assertEquals(3, state.items.size)
+    }
+
+    @Test
     fun `a sent load cancelled by refresh resolves the skeleton`() = runTest {
         coEvery { repository.fetch_sent(any(), any()) } coAnswers {
             kotlinx.coroutines.awaitCancellation()
