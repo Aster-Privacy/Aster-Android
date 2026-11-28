@@ -114,6 +114,7 @@ import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
 import org.astermail.android.mail.InboxItem
 import org.astermail.android.mail.MailViewModel
+import org.astermail.android.mail.is_reportable
 import org.astermail.android.ui.mail.EmailRow
 import org.astermail.android.ui.mail.ThreadInboxRow
 import org.astermail.android.ui.mail.ThreadRow
@@ -198,10 +199,30 @@ private class search_corpus_lookup(
     val trashed_ids: Set<String>,
 )
 
+enum class search_report_mode(val overflow_folder: String) {
+    report("inbox"),
+    not_spam("spam"),
+    hidden("sent");
+
+    fun toolbar_allows(action_id: String): Boolean = when (action_id) {
+        "spam" -> this == report
+        "phishing" -> this != hidden
+        else -> true
+    }
+}
+
+fun search_report_mode_of(any_reportable: Boolean, all_spam: Boolean): search_report_mode = when {
+    !any_reportable -> search_report_mode.hidden
+    all_spam -> search_report_mode.not_spam
+    else -> search_report_mode.report
+}
+
 private class search_selection_flags(
     val all_starred: Boolean,
     val all_read: Boolean,
     val delete_plan: org.astermail.android.mail.SelectionDeletePlan,
+    val any_reportable: Boolean = false,
+    val all_spam: Boolean = false,
 )
 
 private val EMPTY_FILTERED = search_filtered_results(emptyList(), emptySet())
@@ -223,6 +244,8 @@ private fun search_selection_flags_of(
     return search_selection_flags(
         all_starred = picked.isNotEmpty() && picked.all { it.is_starred },
         all_read = picked.isNotEmpty() && picked.all { it.is_read },
+        any_reportable = picked.isEmpty() || picked.any { it.is_reportable },
+        all_spam = picked.isNotEmpty() && picked.all { it.is_spam },
         delete_plan = org.astermail.android.mail.plan_selection_delete(
             rows = selection.associateWith { expand(listOf(it)) },
             shown_ids = shown_ids,
@@ -759,6 +782,7 @@ fun SearchScreen(
     }
     val selection_all_starred = selection_flags.all_starred
     val selection_all_read = selection_flags.all_read
+    val selection_report_mode = search_report_mode_of(selection_flags.any_reportable, selection_flags.all_spam)
 
     LaunchedEffect(result_threads, results_pending, search_refreshing) {
         if (select_mode && !results_pending && !search_refreshing) {
@@ -815,6 +839,12 @@ fun SearchScreen(
         exit_select_mode()
     }
 
+    fun unmark_spam_selected() {
+        val ids = expand_selection(selected_ids.toList())
+        mail_vm.unmark_spam(ids)
+        exit_select_mode()
+    }
+
     fun report_phishing_selected() {
         val ids = expand_selection(selected_ids.toList())
         val in_spam = visible_corpus.filter { it.id in ids }.let { it.isNotEmpty() && it.all { item -> item.is_spam } }
@@ -830,6 +860,7 @@ fun SearchScreen(
             "archive" -> archive_selected()
             "star" -> star_selected()
             "spam" -> mark_spam_selected()
+            "not_spam" -> unmark_spam_selected()
             "phishing" -> report_phishing_selected()
             "folder" -> {
                 if (settings_state.labels.isEmpty()) settings_vm.load_labels()
@@ -1105,6 +1136,7 @@ fun SearchScreen(
                             selection_all_starred = selection_all_starred,
                             selection_all_read = selection_all_read,
                             selection_all_trashed = selection_all_trashed,
+                            report_mode = selection_report_mode,
                         )
                     }
                 }
@@ -1144,6 +1176,7 @@ fun SearchScreen(
                 run_selection_action(id)
             },
             selection_all_starred = selection_all_starred,
+            current_folder = selection_report_mode.overflow_folder,
             delete_is_permanent = selection_all_trashed,
         )
     }
@@ -1780,6 +1813,7 @@ internal fun search_select_bottom_bar(
     selection_all_starred: Boolean = false,
     selection_all_read: Boolean = false,
     selection_all_trashed: Boolean = false,
+    report_mode: search_report_mode = search_report_mode.report,
     modifier: Modifier = Modifier,
 ) {
     val colors = AsterMaterial.colors
@@ -1807,6 +1841,7 @@ internal fun search_select_bottom_bar(
                     selection_all_starred,
                     selection_all_read,
                     selection_all_trashed,
+                    is_available = { id -> report_mode.toolbar_allows(id) },
                 ).forEach { action ->
                     val action_id = action.id
                     search_select_action(

@@ -1089,6 +1089,10 @@ fun MailDetailScreen(
     }
 
     val messages = remember(email_id, api_messages) { api_messages.distinctBy { it.id } }
+    val report_list_item = api_item ?: inbox_state_for_folder.items.firstOrNull { it.id == email_id }
+    val report_target = remember(messages, email_id, report_list_item, inbox_state_for_folder.current_folder) {
+        thread_report_target(messages, email_id, report_list_item, inbox_state_for_folder.current_folder)
+    }
     var translated_thread_subject by remember(email_id) { mutableStateOf<String?>(null) }
     val subject_translation_owner = remember(email_id, messages) {
         messages.firstOrNull { it.id == email_id }?.id ?: messages.lastOrNull()?.id
@@ -1550,6 +1554,7 @@ fun MailDetailScreen(
                 email = email,
                 api_item = api_item,
                 messages = messages,
+                report_target = report_target,
                 translated_thread_subject = translated_thread_subject,
                 show_topbar_subject_state = show_topbar_subject_state,
                 thread_settled = thread_settled,
@@ -2072,6 +2077,7 @@ fun MailDetailScreen(
                 flags = detail_flags,
                 email_id = email_id,
                 messages = messages,
+                report_target = report_target,
                 thread_state = thread_state,
                 api_item = api_item,
                 inbox_state_for_folder = inbox_state_for_folder,
@@ -2100,6 +2106,7 @@ fun MailDetailScreen(
         email_id = email_id,
         email = email,
         messages = messages,
+        report_target = report_target,
         api_item = api_item,
         inbox_state_for_folder = inbox_state_for_folder,
         settings_state = settings_state,
@@ -2171,6 +2178,7 @@ private fun detail_top_bar(
     email: Email?,
     api_item: org.astermail.android.mail.InboxItem?,
     messages: List<ThreadMessage>,
+    report_target: ReportTarget?,
     translated_thread_subject: String?,
     show_topbar_subject_state: androidx.compose.runtime.State<Boolean>,
     thread_settled: Boolean,
@@ -2440,14 +2448,14 @@ private fun detail_top_bar(
                     show_raw_source_dialog = true
                 }
                 detail_menu_divider()
-                detail_menu_action(
+                if (report_target != null) detail_menu_action(
                     icon = spam_action_icon(is_spam),
                     text = if (is_spam) stringResource(R.string.swipe_not_spam) else stringResource(R.string.report_spam),
                     tint = if (is_spam) colors.accent_blue else colors.danger,
+                    test_tag = if (is_spam) "not_spam" else "report_spam",
                 ) {
                     show_topbar_menu = false
-                    val spam_sender_hint =
-                        listOfNotNull(messages.lastOrNull()?.sender_email)
+                    val spam_sender_hint = listOfNotNull(report_target.sender_email)
                     if (is_spam) {
                         is_spam_override = false
                         mail_vm.unmark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
@@ -2458,8 +2466,7 @@ private fun detail_top_bar(
                     on_back()
                 }
                 val reported_phishing by mail_vm.reported_phishing_ids.collectAsStateWithLifecycle()
-                val phishing_target = messages.lastOrNull { it.can_report_phishing }
-                if (phishing_target != null && email_id !in reported_phishing) {
+                if (report_target != null && email_id !in reported_phishing) {
                     detail_menu_action(
                         icon = TablerIcons.ShieldX,
                         text = stringResource(R.string.report_phishing),
@@ -2469,7 +2476,7 @@ private fun detail_top_bar(
                         show_topbar_menu = false
                         mail_vm.report_phishing(
                             listOf(email_id),
-                            sender_emails_hint = listOf(phishing_target.sender_email),
+                            sender_emails_hint = listOfNotNull(report_target.sender_email),
                             in_spam = is_spam,
                         )
                         if (!is_spam) {
@@ -2522,6 +2529,7 @@ private fun detail_bottom_bar(
     flags: detail_screen_flags,
     email_id: String,
     messages: List<ThreadMessage>,
+    report_target: ReportTarget?,
     thread_state: org.astermail.android.mail.ThreadUiState,
     api_item: org.astermail.android.mail.InboxItem?,
     inbox_state_for_folder: org.astermail.android.mail.InboxUiState,
@@ -2720,12 +2728,12 @@ private fun detail_bottom_bar(
                         "snooze" -> bottom_action(TablerIcons.Clock, stringResource(R.string.snooze)) {
                             show_snooze_sheet = true
                         }
-                        "spam" -> bottom_action(
+                        "spam" -> if (report_target != null) bottom_action(
                             spam_action_icon(is_spam),
                             if (is_spam) stringResource(R.string.swipe_not_spam) else stringResource(R.string.report_spam),
                             test_tag = "toolbar_spam",
                         ) {
-                            val spam_sender_hint = listOfNotNull(messages.lastOrNull()?.sender_email)
+                            val spam_sender_hint = listOfNotNull(report_target.sender_email)
                             if (is_spam) {
                                 is_spam_override = false
                                 mail_vm.unmark_spam(listOf(email_id), sender_emails_hint = spam_sender_hint)
@@ -2759,6 +2767,7 @@ private fun detail_overlays(
     email_id: String,
     email: Email?,
     messages: List<ThreadMessage>,
+    report_target: ReportTarget?,
     api_item: org.astermail.android.mail.InboxItem?,
     inbox_state_for_folder: org.astermail.android.mail.InboxUiState,
     settings_state: org.astermail.android.settings.SettingsUiState,
@@ -2819,9 +2828,13 @@ private fun detail_overlays(
         val message_scope = action_target_id != null
         val target_trashed = message_is_trashed(item_target)
         val reported_phishing by mail_vm.reported_phishing_ids.collectAsStateWithLifecycle()
-        val phishing_message = (
-            if (message_scope) messages.firstOrNull { it.id == item_target } else messages.lastOrNull { it.can_report_phishing }
-        )?.takeIf { it.can_report_phishing && item_target !in reported_phishing && email_id !in reported_phishing }
+        val sheet_report_target = if (message_scope) {
+            message_report_target(messages.firstOrNull { it.id == item_target })
+        } else {
+            report_target
+        }
+        val phishing_target = sheet_report_target
+            ?.takeIf { item_target !in reported_phishing && email_id !in reported_phishing }
         val destructive_action = org.astermail.android.mail.destructive_action_for(
             is_trashed = target_trashed,
             is_draft = inbox_state_for_folder.current_folder == "drafts",
@@ -2879,10 +2892,10 @@ private fun detail_overlays(
                     on_delete()
                 }
             },
+            show_spam = sheet_report_target != null,
             on_spam = {
                 show_action_sheet = false
-                val target_message = messages.firstOrNull { it.id == item_target } ?: messages.lastOrNull()
-                val spam_sender_hint = listOfNotNull(target_message?.sender_email)
+                val spam_sender_hint = listOfNotNull(sheet_report_target?.sender_email)
                 if (is_spam) {
                     is_spam_override = false
                     mail_vm.unmark_spam(listOf(item_target), sender_emails_hint = spam_sender_hint)
@@ -2893,12 +2906,12 @@ private fun detail_overlays(
                 on_back()
             },
             is_spam = is_spam,
-            on_report_phishing = phishing_message?.let { target_message ->
+            on_report_phishing = phishing_target?.let { target ->
                 {
                     show_action_sheet = false
                     mail_vm.report_phishing(
                         listOf(item_target),
-                        sender_emails_hint = listOf(target_message.sender_email),
+                        sender_emails_hint = listOfNotNull(target.sender_email),
                         in_spam = is_spam,
                     )
                     if (!is_spam) {
@@ -6212,6 +6225,7 @@ internal fun action_menu_sheet(
     on_trash: () -> Unit,
     on_spam: () -> Unit,
     is_spam: Boolean = false,
+    show_spam: Boolean = true,
     on_report_phishing: (() -> Unit)? = null,
     on_snooze: () -> Unit = {},
     on_label: () -> Unit = {},
@@ -6301,14 +6315,14 @@ internal fun action_menu_sheet(
                                 icon = if (is_archived) TablerIcons.Inbox else TablerIcons.Archive,
                             )
                         }
-                        if (is_spam) {
+                        if (show_spam && is_spam) {
                             aster_menu_item(
                                 stringResource(R.string.swipe_not_spam),
                                 on_spam,
                                 icon = spam_action_icon(is_spam = true),
                                 tint = colors.accent_blue,
                             )
-                        } else {
+                        } else if (show_spam) {
                             aster_menu_item(
                                 stringResource(R.string.report_spam),
                                 on_spam,

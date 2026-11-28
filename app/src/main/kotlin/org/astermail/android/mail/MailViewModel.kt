@@ -5540,6 +5540,7 @@ class MailViewModel @Inject constructor(
 
     fun unmark_spam(item_ids: List<String>, sender_emails_hint: List<String> = emptyList()) {
         if (item_ids.isEmpty()) return
+        _reported_phishing_ids.update { it - item_ids.toSet() }
         val previous = _inbox_state.value.items
         val removed_items = previous.filter { it.id in item_ids }
         val thread_tokens = conversation_thread_tokens(item_ids)

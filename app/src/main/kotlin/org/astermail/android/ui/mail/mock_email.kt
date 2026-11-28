@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import org.astermail.android.R
 import org.astermail.android.mail.clamp_subject
+import org.astermail.android.mail.is_reportable
 import org.astermail.android.security.EmailAuthVerdict
 import org.astermail.android.security.SenderTrustMessage
 import org.astermail.android.security.summarize_email_authentication
@@ -283,7 +284,31 @@ val ThreadMessage.is_own_copy: Boolean
     get() = item_type == "sent" || item_type == "scheduled"
 
 val ThreadMessage.can_report_phishing: Boolean
-    get() = item_type == "received"
+    get() = org.astermail.android.mail.is_reportable_item_type(item_type)
+
+class ReportTarget(val sender_email: String?)
+
+fun thread_report_target(
+    messages: List<ThreadMessage>,
+    opened_id: String,
+    item: org.astermail.android.mail.InboxItem?,
+    folder: String,
+): ReportTarget? {
+    val folder_reportable = org.astermail.android.mail.folder_offers_report_actions(folder)
+    if (messages.isNotEmpty()) {
+        val received = messages.lastOrNull { it.can_report_phishing } ?: return null
+        val opened = messages.firstOrNull { it.id == opened_id }
+        if (!folder_reportable && opened != null && !opened.can_report_phishing) return null
+        return ReportTarget(received.sender_email)
+    }
+    if (item != null) {
+        return if (item.is_reportable) ReportTarget(item.sender_email) else null
+    }
+    return if (folder_reportable) ReportTarget(null) else null
+}
+
+fun message_report_target(message: ThreadMessage?): ReportTarget? =
+    message?.takeIf { it.can_report_phishing }?.let { ReportTarget(it.sender_email) }
 
 val ThreadMessage.has_end_to_end_pgp: Boolean
     get() = pgp_encrypted &&
