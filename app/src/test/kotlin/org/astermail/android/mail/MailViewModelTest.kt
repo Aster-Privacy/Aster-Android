@@ -1216,6 +1216,44 @@ class MailViewModelTest {
     }
 
     @Test
+    fun `report_phishing in spam keeps the item and reports the sender`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.report_spam_senders(any()) } returns Unit
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.report_phishing(listOf("id_1"), in_spam = true)
+        advanceUntilIdle()
+
+        assertEquals(3, vm.inbox_state.value.items.size)
+        assertTrue("id_1" in vm.reported_phishing_ids.value)
+        clear_dispatcher_records()
+        io.mockk.unmockkStatic(Dispatchers::class)
+        coVerify(exactly = 0) { repository.mark_spam(any(), any(), any()) }
+        coVerify { repository.report_spam_senders(listOf(page.items.first { it.id == "id_1" }.sender_email)) }
+    }
+
+    @Test
+    fun `report_phishing outside spam moves the item to spam`() = runTest {
+        val page = fake_inbox_page(3)
+        coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)
+        coEvery { repository.mark_spam(any(), any(), any()) } returns Result.success(Unit)
+
+        vm.load_inbox()
+        advanceUntilIdle()
+
+        vm.report_phishing(listOf("id_1"), in_spam = false)
+        advanceUntilIdle()
+
+        assertTrue(vm.inbox_state.value.items.none { it.id == "id_1" })
+        assertTrue("id_1" in vm.reported_phishing_ids.value)
+        clear_dispatcher_records()
+        coVerify { repository.mark_spam(eq(listOf("id_1")), any(), any()) }
+    }
+
+    @Test
     fun `mark_read_bulk marks multiple items read and calls repository`() = runTest {
         val page = fake_inbox_page(5)
         coEvery { repository.fetch_inbox(any(), any(), any(), any()) } returns Result.success(page)

@@ -225,6 +225,8 @@
     <string name="print_not_available">Печать пока недоступна</string>
     <string name="report_spam">Сообщить о спаме</string>
     <string name="reported_as_spam">Отмечено как спам</string>
+    <string name="report_phishing">Сообщить о фишинге</string>
+    <string name="reported_as_phishing">Отмечено как фишинг</string>
     <string name="block_sender">Заблокировать отправителя</string>
     <string name="message_unavailable">Сообщение недоступно</string>
     <string name="message_replaced_or_deleted">Это сообщение удалено или заменено более новой копией. Чтобы найти его, вернитесь назад и повторите поиск.</string>

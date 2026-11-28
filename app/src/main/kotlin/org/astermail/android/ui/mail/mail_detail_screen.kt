@@ -2457,6 +2457,27 @@ private fun detail_top_bar(
                     }
                     on_back()
                 }
+                val reported_phishing by mail_vm.reported_phishing_ids.collectAsStateWithLifecycle()
+                val phishing_target = messages.lastOrNull { it.can_report_phishing }
+                if (phishing_target != null && email_id !in reported_phishing) {
+                    detail_menu_action(
+                        icon = TablerIcons.ShieldX,
+                        text = stringResource(R.string.report_phishing),
+                        tint = colors.danger,
+                        test_tag = "report_phishing",
+                    ) {
+                        show_topbar_menu = false
+                        mail_vm.report_phishing(
+                            listOf(email_id),
+                            sender_emails_hint = listOf(phishing_target.sender_email),
+                            in_spam = is_spam,
+                        )
+                        if (!is_spam) {
+                            is_spam_override = true
+                            on_back()
+                        }
+                    }
+                }
                 detail_menu_action(
                     icon = TablerIcons.Ban,
                     text = stringResource(R.string.block_sender),
@@ -2797,6 +2818,10 @@ private fun detail_overlays(
         val item_target = action_target_id ?: email_id
         val message_scope = action_target_id != null
         val target_trashed = message_is_trashed(item_target)
+        val reported_phishing by mail_vm.reported_phishing_ids.collectAsStateWithLifecycle()
+        val phishing_message = (
+            if (message_scope) messages.firstOrNull { it.id == item_target } else messages.lastOrNull { it.can_report_phishing }
+        )?.takeIf { it.can_report_phishing && item_target !in reported_phishing && email_id !in reported_phishing }
         val destructive_action = org.astermail.android.mail.destructive_action_for(
             is_trashed = target_trashed,
             is_draft = inbox_state_for_folder.current_folder == "drafts",
@@ -2868,6 +2893,20 @@ private fun detail_overlays(
                 on_back()
             },
             is_spam = is_spam,
+            on_report_phishing = phishing_message?.let { target_message ->
+                {
+                    show_action_sheet = false
+                    mail_vm.report_phishing(
+                        listOf(item_target),
+                        sender_emails_hint = listOf(target_message.sender_email),
+                        in_spam = is_spam,
+                    )
+                    if (!is_spam) {
+                        is_spam_override = true
+                        on_back()
+                    }
+                }
+            },
             on_snooze = {
                 show_action_sheet = false
                 show_snooze_sheet = true
@@ -6173,6 +6212,7 @@ internal fun action_menu_sheet(
     on_trash: () -> Unit,
     on_spam: () -> Unit,
     is_spam: Boolean = false,
+    on_report_phishing: (() -> Unit)? = null,
     on_snooze: () -> Unit = {},
     on_label: () -> Unit = {},
     on_customize_toolbar: () -> Unit = {},
@@ -6273,6 +6313,14 @@ internal fun action_menu_sheet(
                                 stringResource(R.string.report_spam),
                                 on_spam,
                                 icon = spam_action_icon(is_spam = false),
+                                destructive = true,
+                            )
+                        }
+                        if (on_report_phishing != null) {
+                            aster_menu_item(
+                                stringResource(R.string.report_phishing),
+                                on_report_phishing,
+                                icon = TablerIcons.ShieldX,
                                 destructive = true,
                             )
                         }

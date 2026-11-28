@@ -225,6 +225,8 @@
     <string name="print_not_available">印刷はまだ利用できません</string>
     <string name="report_spam">スパムを報告</string>
     <string name="reported_as_spam">スパムとして報告しました</string>
+    <string name="report_phishing">フィッシングを報告</string>
+    <string name="reported_as_phishing">フィッシングとして報告しました</string>
     <string name="block_sender">送信者をブロック</string>
     <string name="message_unavailable">メッセージは利用できません</string>
     <string name="message_replaced_or_deleted">このメッセージは削除されたか、新しいコピーに置き換えられました。見つけるには、戻ってもう一度検索してください。</string>

@@ -235,6 +235,8 @@
     <string name="print_not_available">Impression pas encore disponible</string>
     <string name="report_spam">Signaler comme indésirable</string>
     <string name="reported_as_spam">Signalé comme indésirable</string>
+    <string name="report_phishing">Signaler l\'hameçonnage</string>
+    <string name="reported_as_phishing">Signalé comme hameçonnage</string>
     <string name="block_sender">Bloquer l\'expéditeur</string>
     <string name="message_unavailable">Message indisponible</string>
     <string name="message_replaced_or_deleted">Ce message a été supprimé ou remplacé par une copie plus récente. Pour le retrouver, revenez en arrière et relancez la recherche.</string>

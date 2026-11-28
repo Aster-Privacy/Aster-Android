@@ -225,6 +225,8 @@
     <string name="print_not_available">الطباعة غير متاحة بعد</string>
     <string name="report_spam">الإبلاغ عن بريد مزعج</string>
     <string name="reported_as_spam">تم الإبلاغ عنها كرسالة مزعجة</string>
+    <string name="report_phishing">الإبلاغ عن تصيد احتيالي</string>
+    <string name="reported_as_phishing">تم الإبلاغ عنه كتصيد احتيالي</string>
     <string name="block_sender">حظر المرسل</string>
     <string name="message_unavailable">الرسالة غير متاحة</string>
     <string name="message_replaced_or_deleted">تم حذف هذه الرسالة أو استبدالها بنسخة أحدث. للعثور عليها، ارجع وابحث مرة أخرى.</string>

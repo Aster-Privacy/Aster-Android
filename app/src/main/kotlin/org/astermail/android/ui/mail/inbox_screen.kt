@@ -2037,6 +2037,21 @@ fun InboxScreen(
         exit_select_mode()
     }
 
+    fun report_phishing_selected() {
+        if (org.astermail.android.mail.is_unmovable_mail_folder(current_folder)) {
+            exit_select_mode()
+            return
+        }
+        val thread_count = selected_ids.size
+        val to_remove = selected_ids.toSet()
+        val in_spam = current_folder == "spam"
+        with_selection_ids { ids ->
+            mail_vm.report_phishing(ids, maxOf(thread_count, ids.size), in_spam = in_spam)
+            if (!in_spam) emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        }
+        exit_select_mode()
+    }
+
     fun delete_permanent_selected() {
         val ids = selected_email_ids()
         val to_remove = selected_ids.toSet()
@@ -2186,6 +2201,7 @@ fun InboxScreen(
             "snooze" -> show_bulk_snooze_sheet = true
             "unsnooze" -> unsnooze_selected()
             "spam" -> mark_spam_selected()
+            "phishing" -> report_phishing_selected()
         }
     }
 
@@ -4658,6 +4674,9 @@ internal fun selection_overflow_sheet(
             }
             if (!in_spam && !unmovable) {
                 overflow_sheet_row("spam", spam_action_icon(is_spam = false), stringResource(R.string.report_spam), colors.danger) { on_action("spam") }
+            }
+            if (!unmovable && current_folder != "sent") {
+                overflow_sheet_row("phishing", TablerIcons.ShieldX, stringResource(R.string.report_phishing), colors.danger) { on_action("phishing") }
             }
             if (on_customize != null) {
                 AsterDivider()

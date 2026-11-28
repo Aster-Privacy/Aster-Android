@@ -225,6 +225,8 @@
     <string name="print_not_available">A impressão ainda não está disponível</string>
     <string name="report_spam">Denunciar spam</string>
     <string name="reported_as_spam">Denunciado como spam</string>
+    <string name="report_phishing">Denunciar phishing</string>
+    <string name="reported_as_phishing">Denunciado como phishing</string>
     <string name="block_sender">Bloquear remetente</string>
     <string name="message_unavailable">Mensagem indisponível</string>
     <string name="message_replaced_or_deleted">Esta mensagem foi eliminada ou substituída por uma cópia mais recente. Para a encontrar, volte atrás e pesquise novamente.</string>

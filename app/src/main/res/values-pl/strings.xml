@@ -225,6 +225,8 @@
     <string name="print_not_available">Drukowanie jeszcze niedostępne</string>
     <string name="report_spam">Zgłoś spam</string>
     <string name="reported_as_spam">Zgłoszono jako spam</string>
+    <string name="report_phishing">Zgłoś phishing</string>
+    <string name="reported_as_phishing">Zgłoszono jako phishing</string>
     <string name="block_sender">Zablokuj nadawcę</string>
     <string name="message_unavailable">Wiadomość niedostępna</string>
     <string name="message_replaced_or_deleted">Ta wiadomość została usunięta lub zastąpiona nowszą kopią. Aby ją znaleźć, wróć i wyszukaj ponownie.</string>

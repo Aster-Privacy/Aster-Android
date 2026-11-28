@@ -815,6 +815,13 @@ fun SearchScreen(
         exit_select_mode()
     }
 
+    fun report_phishing_selected() {
+        val ids = expand_selection(selected_ids.toList())
+        val in_spam = visible_corpus.filter { it.id in ids }.let { it.isNotEmpty() && it.all { item -> item.is_spam } }
+        mail_vm.report_phishing(ids, selected_ids.size, in_spam = in_spam)
+        exit_select_mode()
+    }
+
     fun run_selection_action(action_id: String) {
         when (action_id) {
             "read" -> mark_read_selected()
@@ -823,6 +830,7 @@ fun SearchScreen(
             "archive" -> archive_selected()
             "star" -> star_selected()
             "spam" -> mark_spam_selected()
+            "phishing" -> report_phishing_selected()
             "folder" -> {
                 if (settings_state.labels.isEmpty()) settings_vm.load_labels()
                 show_folder_sheet = true
