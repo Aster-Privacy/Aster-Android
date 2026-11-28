@@ -3018,24 +3018,24 @@ private fun detail_overlays(
                 confirm_label = stringResource(R.string.open),
                 cancel_label = stringResource(R.string.cancel),
                 on_confirm = open_external_link,
-                secondary_label = stringResource(R.string.copy_link),
-                on_secondary = {
-                    copy_external_link(
-                        link = link,
-                        write_clip = { label, text ->
-                            write_to_clipboard(context, android.content.ClipData.newPlainText(label, text))
-                        },
-                        on_copied = { show_toast(context.getString(R.string.link_copied)) },
-                        on_failed = { show_copy_failed_toast(context) },
-                    )
-                },
                 extra_content = {
-                    Text(
-                        text = link,
-                        color = colors.accent_blue,
-                        fontSize = 13.sp,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
+                    external_link_destination_card(
+                        link = link,
+                        on_copy = {
+                            var copied = false
+                            copy_external_link(
+                                link = link,
+                                write_clip = { label, text ->
+                                    write_to_clipboard(context, android.content.ClipData.newPlainText(label, text))
+                                },
+                                on_copied = {
+                                    copied = true
+                                    show_toast(context.getString(R.string.link_copied))
+                                },
+                                on_failed = { show_copy_failed_toast(context) },
+                            )
+                            copied
+                        },
                     )
                 },
             )
