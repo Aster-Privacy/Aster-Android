@@ -8,7 +8,7 @@
     <string name="notif_login_alert_action_revoke">ليس أنا</string>
     <string name="notif_login_alert_revoking">جارٍ تسجيل خروج الجلسة الجديدة…</string>
     <string name="notif_login_alert_revoked">تم تسجيل خروج الجلسة</string>
-    <string name="notif_login_alert_revoked_body">تم تسجيل خروج الجلسة الجديدة. ننصح بتغيير كلمة المرور من إعدادات الأمان.</string>
+    <string name="notif_login_alert_revoked_body">تم تسجيل خروج الجلسة الجديدة. لحماية حسابك، غيّر كلمة المرور من إعدادات الأمان.</string>
     <string name="notif_login_alert_revoke_failed">تعذر تسجيل خروج الجلسة</string>
     <string name="notif_login_alert_revoke_failed_body">افتح التطبيق لمراجعة جلساتك النشطة.</string>
     <string name="mute_folder_notifications">كتم إشعارات المجلد</string>

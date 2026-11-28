@@ -13,7 +13,7 @@
     <string name="guard_approve_device">Dispositivo</string>
     <string name="guard_approve_place">Localização</string>
     <string name="guard_approve_time">Hora</string>
-    <string name="guard_approve_failed">O Aster não conseguiu enviar a sua resposta. Verifique a ligação e tente novamente.</string>
+    <string name="guard_approve_failed">Não foi possível enviar a sua resposta. Verifique a ligação e tente novamente.</string>
     <string name="guard_approve_action">Aprovar</string>
     <string name="guard_approve_try_again">Tentar novamente</string>
     <string name="guard_approve_close">Fechar</string>
@@ -87,7 +87,7 @@
     <string name="guard_rescue_banner">Alguém iniciou um resgate que desativa o Aster Guard.</string>
     <string name="guard_rescue_banner_stop">Parar resgate</string>
     <string name="guard_wait_body">Abra o Aster num dispositivo com o Aster Guard ativado, como o navegador ou a app para computador que usou para o ativar. Abra lá o pedido e introduza este número para o aprovar.</string>
-    <string name="guard_wait_expired">Este pedido expirou. Para tentar novamente, inicie sessão outra vez.</string>
+    <string name="guard_wait_expired">Este pedido expirou. Para continuar, inicie sessão novamente.</string>
     <string name="guard_wait_denied">Este início de sessão foi recusado noutro dispositivo.</string>
     <string name="guard_wait_held">Pode concluir o início de sessão neste telemóvel depois de %1$s.</string>
     <string name="guard_wait_retry">Demasiadas tentativas. Tente novamente dentro de %1$s.</string>
@@ -97,7 +97,7 @@
     <string name="guard_wait_code_submit">Enviar código</string>
     <string name="guard_wait_wrong_code">Esse código não corresponde. Verifique o código e tente novamente.</string>
     <string name="guard_wait_needs_password">Este início de sessão foi aprovado. Para concluir, introduza novamente a sua palavra-passe.</string>
-    <string name="guard_wait_failed">O Aster não conseguiu concluir este início de sessão. Para tentar novamente, inicie sessão de novo.</string>
+    <string name="guard_wait_failed">Não foi possível concluir este início de sessão. Para continuar, inicie sessão novamente.</string>
     <string name="guard_number_description">Número a introduzir no seu outro telemóvel: %1$d</string>
     <string name="guard_prompt_resume_subtitle">Iniciar sessão com o Aster Guard neste telemóvel</string>
     <string name="notif_channel_guard_name">Aster Guard</string>

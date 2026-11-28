@@ -13,7 +13,7 @@
     <string name="guard_approve_device">Устройство</string>
     <string name="guard_approve_place">Место</string>
     <string name="guard_approve_time">Время</string>
-    <string name="guard_approve_failed">Aster не смог отправить ваш ответ. Проверьте подключение и повторите попытку.</string>
+    <string name="guard_approve_failed">Не удалось отправить ваш ответ. Проверьте подключение и повторите попытку.</string>
     <string name="guard_approve_action">Подтвердить</string>
     <string name="guard_approve_try_again">Повторить</string>
     <string name="guard_approve_close">Закрыть</string>
@@ -87,7 +87,7 @@
     <string name="guard_rescue_banner">Кто-то начал восстановление, которое выключит Aster Guard.</string>
     <string name="guard_rescue_banner_stop">Остановить восстановление</string>
     <string name="guard_wait_body">Откройте Aster на устройстве, где включен Aster Guard, например в браузере или приложении для компьютера, в котором вы его включили. Откройте там запрос и введите это число, чтобы подтвердить его.</string>
-    <string name="guard_wait_expired">Срок действия этого запроса истек. Чтобы повторить попытку, войдите снова.</string>
+    <string name="guard_wait_expired">Срок действия этого запроса истёк. Чтобы продолжить, войдите снова.</string>
     <string name="guard_wait_denied">Этот вход был отклонен на другом устройстве.</string>
     <string name="guard_wait_held">Вы сможете завершить вход на этом телефоне после %1$s.</string>
     <string name="guard_wait_retry">Слишком много попыток. Повторите попытку через %1$s.</string>
@@ -97,7 +97,7 @@
     <string name="guard_wait_code_submit">Отправить код</string>
     <string name="guard_wait_wrong_code">Код не совпадает. Проверьте код и повторите попытку.</string>
     <string name="guard_wait_needs_password">Этот вход одобрен. Чтобы завершить, снова введите пароль.</string>
-    <string name="guard_wait_failed">Aster не смог завершить этот вход. Чтобы повторить попытку, войдите снова.</string>
+    <string name="guard_wait_failed">Не удалось завершить этот вход. Чтобы продолжить, войдите снова.</string>
     <string name="guard_number_description">Число для ввода на другом телефоне: %1$d</string>
     <string name="guard_prompt_resume_subtitle">Войти с помощью Aster Guard на этом телефоне</string>
     <string name="notif_channel_guard_name">Aster Guard</string>

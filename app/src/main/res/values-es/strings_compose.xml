@@ -21,6 +21,6 @@
     <string name="schedule_tomorrow_afternoon">Mañana por la tarde</string>
     <string name="schedule_monday_morning">Lunes por la mañana</string>
     <string name="schedule_pick_date_time">Elegir fecha y hora</string>
-    <string name="too_many_recipients_in_field">Cada campo Para, Cc y Cco admite un máximo de %1$d direcciones. Mueve algunas a un segundo mensaje para enviar este.</string>
-    <string name="too_many_recipients_in_message">Un mensaje llega a un máximo de %1$d direcciones entre Para, Cc y Cco. Dividir la lista en mensajes más pequeños permitirá enviarlo.</string>
+    <string name="too_many_recipients_in_field">Cada campo Para, Cc y Cco admite un máximo de %1$d direcciones. Para enviar este mensaje, mueve algunas direcciones a un segundo mensaje.</string>
+    <string name="too_many_recipients_in_message">Un mensaje puede llegar a un máximo de %1$d direcciones entre Para, Cc y Cco. Para enviarlo, divide la lista en mensajes más pequeños.</string>
 </resources>

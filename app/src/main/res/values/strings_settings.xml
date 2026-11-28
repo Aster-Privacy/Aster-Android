@@ -26,10 +26,10 @@
     <string name="settings_feat_auto_responder">Auto-responder</string>
     <string name="settings_feat_alias_avatars">Alias avatars</string>
     <string name="settings_feat_instant_alias_delete">Instant deletion of aliases on Aster domains</string>
-    <string name="alias_too_new_title">This alias is too new to delete</string>
-    <string name="alias_too_new_message">New aliases on Aster domains stay live for 30 days before you can delete them. You can delete this one starting %1$s. To delete them right away, upgrade to Supernova.</string>
-    <string name="ghost_alias_too_new_title">This ghost alias is too new to expire</string>
-    <string name="ghost_alias_too_new_message">New ghost aliases stay live for 30 days before they can be expired. This one can be expired starting %1$s. Upgrade to Supernova to expire ghost aliases instantly.</string>
+    <string name="alias_too_new_title">This alias can\'t be deleted yet</string>
+    <string name="alias_too_new_message">New aliases on Aster domains stay active for 30 days. You can delete this one starting %1$s, or upgrade to Supernova to delete aliases right away.</string>
+    <string name="ghost_alias_too_new_title">This ghost alias can\'t expire yet</string>
+    <string name="ghost_alias_too_new_message">New ghost aliases stay active for 30 days. You can expire this one starting %1$s, or upgrade to Supernova to expire ghost aliases right away.</string>
     <string name="ghost_alias_max_extension_toast">This ghost alias is already at its maximum lifetime of 90 days and can\'t be extended further.</string>
     <string name="settings_feat_folders">Folders</string>
     <string name="settings_feat_labels">Labels</string>
@@ -42,12 +42,12 @@
     <string name="settings_feat_recovery_codes">Recovery codes</string>
     <string name="settings_feat_password_folders">Password-protected folders</string>
     <string name="settings_feat_session_mgmt">Session management</string>
-    <string name="settings_feat_login_notifs">Login notifications</string>
+    <string name="settings_feat_login_notifs">Sign-in notifications</string>
     <string name="settings_feat_encrypted_exports">Encrypted exports</string>
     <string name="settings_feat_hardware_keys">Hardware security keys</string>
     <string name="settings_feat_no_ads">No ads</string>
     <string name="settings_feat_no_tracking">No tracking</string>
-    <string name="settings_feat_anonymous_signup">Anonymous signup</string>
+    <string name="settings_feat_anonymous_signup">Anonymous sign-up</string>
     <string name="settings_feat_tor_support">Tor support</string>
     <string name="settings_feat_link_tracking">Link tracking protection</string>
     <string name="settings_feat_tracker_protection">Tracker protection</string>
@@ -140,14 +140,14 @@
     <string name="settings_save_amount">$%1$.2f</string>
     <string name="settings_billing_monthly">Monthly</string>
     <string name="settings_billing_yearly">Yearly</string>
-    <string name="settings_prices_usd_note">Prices shown in USD. Final amount determined at checkout.</string>
+    <string name="settings_prices_usd_note">Prices are in USD. Your final amount is confirmed at checkout.</string>
     <string name="settings_prices_currency_note">Prices shown in %1$s. Your final amount is confirmed at checkout.</string>
     <string name="settings_interval_default">mo</string>
 
     <string name="settings_diagnostics_clip_label">Diagnostics</string>
     <string name="settings_diagnostics_secure_storage">Secure storage</string>
     <string name="settings_diagnostics_storage_ok">Healthy</string>
-    <string name="settings_diagnostics_storage_degraded">Degraded, sign out and sign back in</string>
+    <string name="settings_diagnostics_storage_degraded">Degraded. Sign out and sign in again.</string>
     <string name="settings_crash_reports_title">Send crash reports</string>
     <string name="settings_crash_reports_subtitle">Off unless you turn it on. Reports never include your account, messages, or contacts.</string>
     <string name="settings_crash_reports_info">When this setting is on, Aster Mail sends Aster an anonymous report if the app crashes, stops responding, or can\'t reach a feature. A report contains the type of error, the app version, and the place in the app\'s code where the error happened. It never contains your address, your messages, your contacts, or anything that identifies your account. When this setting is off, Aster Mail sends no reports.</string>

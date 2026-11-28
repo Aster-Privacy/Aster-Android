@@ -32,7 +32,7 @@
     <string name="domain_bimi_row_inactive">Marka logosu eklemek için bu alan adının kurulumunu tamamlayın.</string>
     <string name="domain_bimi_state_draft">Yayımlanmadı</string>
     <string name="domain_bimi_state_pending">DNS bekleniyor</string>
-    <string name="domain_bimi_state_live">Etkin</string>
+    <string name="domain_bimi_state_live">Yayımlandı</string>
     <string name="domain_bimi_state_attention">İlgilenmeniz gerekiyor</string>
     <string name="domain_bimi_state_external">Başka yerde yönetiliyor</string>
     <string name="domain_bimi_set_up">Kur</string>

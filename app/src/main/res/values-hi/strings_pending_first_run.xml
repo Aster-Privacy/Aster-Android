@@ -20,6 +20,6 @@
     <string name="recovery_codes_refresh_body">आपके रिकवरी कोड पुराने हो चुके हैं। नए कोड पाएं और उन्हें किसी सुरक्षित जगह पर सहेजें। नए कोड मिलने के बाद पुराने कोड काम नहीं करते।</string>
     <string name="recovery_codes_refresh_action">नए कोड पाएं</string>
     <string name="recovery_phrase_migrate_title">रिकवरी कोड पर जाएं</string>
-    <string name="recovery_phrase_migrate_body">रिकवरी फ़्रेज़ हटाए जा रहे हैं। अभी रिकवरी कोड पाएं ताकि आप आगे भी अपना खाता रिकवर कर सकें।</string>
+    <string name="recovery_phrase_migrate_body">Aster रिकवरी फ़्रेज़ की जगह रिकवरी कोड ला रहा है। अपना खाता रिकवर करने का तरीका बनाए रखने के लिए अभी रिकवरी कोड पाएं।</string>
     <string name="recovery_phrase_migrate_action">कोड पाएं</string>
 </resources>

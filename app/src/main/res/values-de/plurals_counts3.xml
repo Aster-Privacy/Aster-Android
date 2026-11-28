@@ -29,8 +29,8 @@
         <item quantity="other">%1$d E-Mails</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
-        <item quantity="one">Elemente im Spam werden nach %1$d Tag automatisch gelöscht.</item>
-        <item quantity="other">Elemente im Spam werden nach %1$d Tagen automatisch gelöscht.</item>
+        <item quantity="one">Nachrichten im Spam werden nach %1$d Tag automatisch gelöscht.</item>
+        <item quantity="other">Nachrichten im Spam werden nach %1$d Tagen automatisch gelöscht.</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
         <item quantity="one">Nachrichten werden %1$d Tag nach dem Verschieben in den Papierkorb automatisch gelöscht.</item>

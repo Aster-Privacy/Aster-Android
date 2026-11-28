@@ -2,7 +2,7 @@
 <resources>
     <string name="fix_enc_codes_share_title">Herstelcodes</string>
     <string name="fix_enc_codes_file_note">Elke code werkt één keer. Bewaar dit bestand op een veilige plek.</string>
-    <string name="fix_enc_codes_save_failed">Je kunt het bestand nu niet opslaan. Kopieer de codes in plaats daarvan.</string>
+    <string name="fix_enc_codes_save_failed">Het bestand kon niet worden opgeslagen. Kopieer de codes in plaats daarvan.</string>
     <string name="enc_hero_status_protected">Beschermd</string>
     <string name="enc_hero_status_attention">Actie vereist</string>
     <string name="enc_hero_summary">Je berichten zijn end-to-end versleuteld met een sleutel die alleen jij hebt.</string>

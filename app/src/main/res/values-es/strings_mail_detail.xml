@@ -26,5 +26,5 @@
     <string name="no_raw_headers">No hay encabezados sin procesar para este mensaje.</string>
     <string name="copy_headers">Copiar los encabezados</string>
     <string name="headers_copied">Encabezados copiados</string>
-    <string name="print_failed">No se puede imprimir este correo. Inténtalo otra vez.</string>
+    <string name="print_failed">No se pudo imprimir este correo. Inténtalo de nuevo.</string>
 </resources>

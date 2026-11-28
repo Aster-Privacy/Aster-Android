@@ -21,6 +21,6 @@
     <string name="schedule_tomorrow_afternoon">Demain après-midi</string>
     <string name="schedule_monday_morning">Lundi matin</string>
     <string name="schedule_pick_date_time">Choisir date et heure</string>
-    <string name="too_many_recipients_in_field">Chaque champ À, Cc et Cci accepte au maximum %1$d adresses. Déplacez-en une partie vers un second message pour envoyer celui-ci.</string>
-    <string name="too_many_recipients_in_message">Un message atteint au maximum %1$d adresses entre À, Cc et Cci. Répartir la liste en messages plus petits permettra l\'envoi.</string>
+    <string name="too_many_recipients_in_field">Chaque champ À, Cc et Cci accepte au maximum %1$d adresses. Pour envoyer ce message, déplacez certaines adresses vers un second message.</string>
+    <string name="too_many_recipients_in_message">Un message peut atteindre au maximum %1$d adresses entre À, Cc et Cci. Pour l\'envoyer, répartissez la liste en messages plus petits.</string>
 </resources>

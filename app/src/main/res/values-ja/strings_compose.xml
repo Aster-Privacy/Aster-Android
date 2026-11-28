@@ -21,6 +21,6 @@
     <string name="schedule_tomorrow_afternoon">明日の午後</string>
     <string name="schedule_monday_morning">月曜の朝</string>
     <string name="schedule_pick_date_time">日時を選択</string>
-    <string name="too_many_recipients_in_field">宛先、Cc、Bcc の各欄に入るのは最大 %1$d 件です。一部を 2 通目に移すと、このメールを送信できます。</string>
-    <string name="too_many_recipients_in_message">1 通のメールが届くのは、宛先、Cc、Bcc を合わせて最大 %1$d 件です。宛先を分けて複数のメールにすると送信できます。</string>
+    <string name="too_many_recipients_in_field">宛先、Cc、Bcc の各欄に入るのは最大 %1$d 件です。このメールを送信するには、一部のアドレスを 2 通目に移してください。</string>
+    <string name="too_many_recipients_in_message">1 通のメールで送信できるのは、宛先、Cc、Bcc を合わせて最大 %1$d 件です。送信するには、宛先を分けて複数のメールにしてください。</string>
 </resources>

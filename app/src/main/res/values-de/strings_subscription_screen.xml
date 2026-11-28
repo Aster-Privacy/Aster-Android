@@ -6,5 +6,5 @@
     <string name="billing_source_crypto">Mit Krypto bezahlt</string>
     <string name="billing_status_trial">Testphase</string>
     <string name="billing_top_plan_title">Sie haben den höchsten Tarif</string>
-    <string name="billing_section_load_failed">Aster konnte diesen Bereich nicht laden.</string>
+    <string name="billing_section_load_failed">Dieser Bereich konnte nicht geladen werden. Versuchen Sie es erneut.</string>
 </resources>

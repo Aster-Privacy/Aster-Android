@@ -8,7 +8,7 @@
     <string name="notif_login_alert_action_revoke">Niet ik</string>
     <string name="notif_login_alert_revoking">Nieuwe sessie wordt uitgelogd…</string>
     <string name="notif_login_alert_revoked">Sessie uitgelogd</string>
-    <string name="notif_login_alert_revoked_body">De nieuwe sessie is uitgelogd. Overweeg je wachtwoord te wijzigen in de beveiligingsinstellingen.</string>
+    <string name="notif_login_alert_revoked_body">De nieuwe sessie is uitgelogd. Wijzig je wachtwoord in de beveiligingsinstellingen om je account te beschermen.</string>
     <string name="notif_login_alert_revoke_failed">De sessie kon niet worden uitgelogd</string>
     <string name="notif_login_alert_revoke_failed_body">Open de app om je actieve sessies te bekijken.</string>
     <string name="mute_folder_notifications">Mapmeldingen dempen</string>

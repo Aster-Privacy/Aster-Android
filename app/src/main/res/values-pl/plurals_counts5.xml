@@ -97,10 +97,10 @@
         <item quantity="other">Dostęp zostanie ograniczony za %1$d dni.</item>
     </plurals>
     <plurals name="templates_decrypt_failed_count">
-        <item quantity="one">Nie udało się odczytać niektórych szablonów na tym urządzeniu (%1$d). Zapisano je kluczem, którego to urządzenie obecnie nie ma.</item>
-        <item quantity="few">Nie udało się odczytać niektórych szablonów na tym urządzeniu (%1$d). Zapisano je kluczem, którego to urządzenie obecnie nie ma.</item>
-        <item quantity="many">Nie udało się odczytać niektórych szablonów na tym urządzeniu (%1$d). Zapisano je kluczem, którego to urządzenie obecnie nie ma.</item>
-        <item quantity="other">Nie udało się odczytać niektórych szablonów na tym urządzeniu (%1$d). Zapisano je kluczem, którego to urządzenie obecnie nie ma.</item>
+        <item quantity="one">Nie można odczytać %1$d szablonu na tym urządzeniu, ponieważ zapisano go kluczem, którego to urządzenie nie ma.</item>
+        <item quantity="few">Nie można odczytać %1$d szablonów na tym urządzeniu, ponieważ zapisano je kluczem, którego to urządzenie nie ma.</item>
+        <item quantity="many">Nie można odczytać %1$d szablonów na tym urządzeniu, ponieważ zapisano je kluczem, którego to urządzenie nie ma.</item>
+        <item quantity="other">Nie można odczytać %1$d szablonu na tym urządzeniu, ponieważ zapisano je kluczem, którego to urządzenie nie ma.</item>
     </plurals>
     <plurals name="contact_trash_days_left">
         <item quantity="one">Pozostało dni: %1$d</item>

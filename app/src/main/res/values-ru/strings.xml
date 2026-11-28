@@ -62,7 +62,7 @@
     <string name="requirement_uppercase">Одна заглавная буква</string>
     <string name="requirement_lowercase">Одна строчная буква</string>
     <string name="requirement_number">Одна цифра</string>
-    <string name="backup_email_description">Добавьте резервный адрес электронной почты от другого провайдера. Это необязательно, но рекомендуется для восстановления аккаунта.</string>
+    <string name="backup_email_description">Добавьте резервный адрес электронной почты от другого провайдера. Это необязательно, но поможет восстановить аккаунт.</string>
     <string name="recovery_email">Адрес для восстановления</string>
     <string name="recovery_email_placeholder">backup@email.com</string>
     <string name="backup_email_short">Добавить резервную почту</string>
@@ -124,7 +124,7 @@
     <string name="strength_good">Хороший</string>
     <string name="strength_strong">Надёжный</string>
     <string name="recovering_your_account">Восстановление вашего аккаунта</string>
-    <string name="please_dont_close_app">Пожалуйста, не закрывайте приложение</string>
+    <string name="please_dont_close_app">Не закрывайте приложение</string>
     <string name="save_new_recovery_codes">Сохраните новые коды восстановления</string>
     <string name="old_codes_invalidated">Прежние коды восстановления больше не работают. Храните новые в надежном месте, например в менеджере паролей или в распечатанном виде. Каждый код работает один раз.</string>
     <string name="show_codes">Показать коды</string>
@@ -153,16 +153,16 @@
     <string name="drafts_working_here">Черновики, над которыми вы работаете, появятся здесь</string>
     <string name="nothing_starred">Нет избранных сообщений</string>
     <string name="star_important">Отмечайте важные письма звёздочкой, чтобы быстро их находить</string>
-    <string name="nothing_here_clear">Корзина пуста</string>
+    <string name="nothing_here_clear">Здесь пусто</string>
     <string name="deleted_emails_here">Удалённые письма будут отображаться здесь</string>
     <string name="no_spam">Нет спама</string>
-    <string name="suspicious_caught_here">Подозрительные письма будут перехвачены здесь</string>
+    <string name="suspicious_caught_here">Здесь появляются подозрительные письма</string>
     <string name="nothing_archived">Ничего не архивировано</string>
     <string name="archive_to_clean">Архивируйте письма, чтобы поддерживать порядок во входящих</string>
     <string name="no_scheduled">Нет запланированных сообщений</string>
     <string name="scheduled_messages_here">Запланированные сообщения появятся здесь</string>
     <string name="nothing_snoozed">Ничего не отложено</string>
-    <string name="snoozed_wake_here">Отложенные письма появятся здесь</string>
+    <string name="snoozed_wake_here">Отложенные письма появятся здесь в назначенное время</string>
     <string name="no_messages">Нет сообщений</string>
     <string name="nothing_here_yet">Здесь пока ничего нет</string>
     <string name="sort_newest">Сначала новые</string>
@@ -176,10 +176,10 @@
     <string name="empty_trash">Очистить корзину</string>
     <string name="empty_trash_confirm">Безвозвратно удалить все сообщения в корзине? Это действие нельзя отменить.</string>
     <string name="delete_all">Удалить все</string>
-    <string name="open_drawer">открыть меню</string>
+    <string name="open_drawer">Открыть меню</string>
     <string name="compose">Написать</string>
-    <string name="sort">сортировка</string>
-    <string name="switch_folder">сменить папку</string>
+    <string name="sort">Сортировка</string>
+    <string name="switch_folder">Сменить папку</string>
     <string name="more_options">Другие параметры</string>
     <string name="exit_selection">Отменить выбор</string>
     <string name="mark_read_action">Прочитано</string>
@@ -233,7 +233,7 @@
     <string name="message_unavailable_offline">Это сообщение недоступно офлайн. Оно откроется, когда вы снова будете в сети.</string>
     <string name="no_subject">(без темы)</string>
     <string name="open_external_link">Открыть внешнюю ссылку?</string>
-    <string name="leaving_aster_warning">Вы собираетесь покинуть Aster и открыть эту ссылку в браузере:</string>
+    <string name="leaving_aster_warning">Эта ссылка откроется в браузере, за пределами Aster:</string>
     <string name="reply">Ответить</string>
     <string name="reply_all">Ответить всем</string>
     <string name="forward">Переслать</string>
@@ -242,19 +242,19 @@
     <string name="decrypt_failed_body">Это устройство сейчас не может расшифровать сообщение. Повторите попытку чуть позже.</string>
     <string name="decrypt_locked_by_reset_title">Заблокировано после сброса пароля</string>
     <string name="decrypt_locked_by_reset_body">Это сообщение зашифровано ключами, которые использовались до сброса пароля. Чтобы разблокировать его, введите прежний пароль или код восстановления, сохранённый до сброса.</string>
-    <string name="e2e_encryption_failed">Не удалось отправить: сбой сквозного шифрования. Сообщение не отправлено.</string>
-    <string name="attachment_prepare_failed">Не удалось отправить: не удалось подготовить "%1$s". Сообщение не отправлено.</string>
-    <string name="e2e_keys_not_ready">Не удалось отправить: ключи шифрования ещё не готовы. Сообщение не отправлено.</string>
-    <string name="e2e_recipient_key_missing">Не удалось отправить: у получателя нет ключа шифрования. Сообщение не отправлено.</string>
+    <string name="e2e_encryption_failed">Не удалось отправить сообщение: сбой сквозного шифрования.</string>
+    <string name="attachment_prepare_failed">Не удалось отправить сообщение: не удалось подготовить «%1$s».</string>
+    <string name="e2e_keys_not_ready">Не удалось отправить сообщение: ваши ключи шифрования ещё не готовы.</string>
+    <string name="e2e_recipient_key_missing">Не удалось отправить сообщение: у получателя нет ключа шифрования.</string>
     <string name="recipient_not_on_aster">Ни одна учётная запись Aster Mail не использует %1$s. Проверьте написание и повторите попытку. Черновик сохранён.</string>
-    <string name="e2e_no_key_description">Это сообщение зашифровано ключом, которого нет на этом устройстве. Откройте его в веб-приложении Aster, чтобы прочитать.</string>
+    <string name="e2e_no_key_description">Это сообщение зашифровано ключом, которого пока нет на этом устройстве. Чтобы прочитать его, откройте его в веб-приложении Aster.</string>
     <string name="no_body">(нет текста)</string>
     <string name="attachment_unnamed">Вложение</string>
     <string name="attachment_locked">Это вложение нельзя открыть, потому что ключ шифрования недоступен на этом устройстве.</string>
     <string name="attachment_content_mismatch">Это вложение не соответствует сообщению, с которым оно пришло, поэтому оно не было открыто.</string>
     <string name="download_complete">Загрузка завершена</string>
-    <string name="cannot_decode_image">Не удаётся декодировать изображение</string>
-    <string name="no_app_to_open">Нет приложения для открытия этого файла</string>
+    <string name="cannot_decode_image">Не удалось открыть это изображение</string>
+    <string name="no_app_to_open">Нет приложения, которое может открыть этот файл</string>
     <string name="download">Скачать</string>
     <string name="open_with">Открыть с помощью...</string>
     <string name="could_not_unsubscribe">Не удалось отписаться</string>
@@ -268,7 +268,7 @@
     <string name="move_to_trash">Переместить в корзину</string>
     <string name="archived">Архивировано</string>
     <string name="unstarred">Убрано из избранного</string>
-    <string name="dismiss">закрыть</string>
+    <string name="dismiss">Закрыть</string>
 
     <string name="no_messages_in">Нет сообщений в %s</string>
     <string name="type_folder">папка</string>
@@ -304,7 +304,7 @@
     <string name="undo">Отменить</string>
     <string name="save_draft">Сохранить черновик</string>
     <string name="discard">Удалить</string>
-    <string name="toggle_cc_bcc">Показать копию/скрытую копию</string>
+    <string name="toggle_cc_bcc">Показать или скрыть поля «Копия» и «Скрытая копия»</string>
     <string name="add_recipient">Добавить получателя</string>
     <string name="add_another_recipient">Добавить ещё</string>
     <string name="compose_attachments">Вложения</string>
@@ -333,8 +333,8 @@
 
     <string name="search_mail">Поиск почты</string>
     <string name="send_problem_title">Проблема с отправкой почты</string>
-    <string name="send_problem_message">Ваше сообщение пока не удалось отправить. Приложение продолжит попытки в фоновом режиме.</string>
-    <string name="send_problem_failed_message">Не удалось отправить сообщение. Можно повторить попытку или удалить его.</string>
+    <string name="send_problem_message">Сообщение ещё не отправлено. Aster Mail продолжает попытки в фоновом режиме.</string>
+    <string name="send_problem_failed_message">Не удалось отправить сообщение. Повторите попытку или удалите его.</string>
     <string name="search_aliases">Поиск псевдонимов</string>
     <string name="filter_has_attachment">С вложением</string>
     <string name="filter_unread">Непрочитанные</string>
@@ -367,7 +367,7 @@
     <string name="op_label_desc">Поиск по метке</string>
     <string name="op_negate">-from:</string>
     <string name="op_negate_desc">Отрицание любого оператора</string>
-    <string name="search_privacy_note">Все поисковые запросы зашифрованы сквозным шифрованием. Ваша почта расшифровывается локально на этом устройстве - ничего не отправляется на сервер.</string>
+    <string name="search_privacy_note">Все поисковые запросы защищены сквозным шифрованием. Почта расшифровывается на этом устройстве, и ничего не отправляется на сервер.</string>
     <string name="no_results_found">Результаты не найдены</string>
 
     <string name="contacts">Контакты</string>
@@ -380,7 +380,7 @@
     <string name="alias_note_add">Добавить заметку</string>
     <string name="alias_note_updated">Заметка обновлена</string>
     <string name="tab_favorites">Избранные</string>
-    <string name="sync_contacts_description">Aster прочитает контакты на вашем устройстве и импортирует их. Контакты шифруются перед сохранением.</string>
+    <string name="sync_contacts_description">Aster читает контакты на вашем устройстве и импортирует их. Контакты шифруются перед сохранением.</string>
     <string name="sync">Синхронизировать</string>
     <string name="new_contact">Новый контакт</string>
     <string name="contact_unavailable">Контакт недоступен</string>
@@ -431,13 +431,13 @@
     <string name="create_label">Создать метку</string>
     <string name="label_name">Название метки</string>
     <string name="create_alias">Создать псевдоним</string>
-    <string name="create_alias_invalid_chars">Допустимые символы: буквы, цифры, точки, подчёркивания и дефисы.</string>
+    <string name="create_alias_invalid_chars">Используйте только буквы, цифры, точки, подчёркивания и дефисы.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">Аккаунты</string>
     <string name="switch_workspace">Сменить рабочее пространство</string>
-    <string name="collapse">свернуть</string>
-    <string name="expand">развернуть</string>
-    <string name="add">добавить</string>
+    <string name="collapse">Свернуть</string>
+    <string name="expand">Развернуть</string>
+    <string name="add">Добавить</string>
     <string name="storage_used">ИСПОЛЬЗОВАНО ХРАНИЛИЩА</string>
     <string name="refer_a_friend">Пригласить друга</string>
 
@@ -463,7 +463,7 @@
     <string name="smtp_tokens_upgrade_title">Отправляйте из своих приложений</string>
     <string name="smtp_tokens_upgrade_description">Создавайте учётные данные SMTP только для отправки для ваших подтверждённых собственных доменов. Доступно в тарифе Star и выше.</string>
     <string name="smtp_tokens_no_domain_title">Сначала добавьте подтверждённый собственный домен</string>
-    <string name="smtp_tokens_no_domain_description">Токены SMTP можно привязать только к подтверждённому адресу на собственном домене. Добавьте и подтвердите собственный домен, чтобы начать.</string>
+    <string name="smtp_tokens_no_domain_description">Токены SMTP можно привязать только к подтверждённому адресу на собственном домене. Чтобы создать токен, добавьте и подтвердите собственный домен.</string>
     <string name="smtp_token_generate">Создать токен</string>
     <string name="smtp_token_create_title">Создать токен SMTP</string>
     <string name="smtp_token_name_label">Имя</string>
@@ -479,7 +479,7 @@
     <string name="smtp_token_copy_all">Скопировать всё</string>
     <string name="smtp_token_never_used">Никогда</string>
     <string name="smtp_token_revoke_title">Отозвать токен?</string>
-    <string name="smtp_token_revoke_message">Это безвозвратно отзовёт %1$s. Любое приложение, использующее его, больше не сможет отправлять почту.</string>
+    <string name="smtp_token_revoke_message">Токен %1$s будет безвозвратно отозван. Приложения, которые его используют, больше не смогут отправлять почту.</string>
     <string name="smtp_token_revoked_toast">Токен SMTP отозван</string>
     <string name="smtp_token_setup_details">Параметры подключения</string>
     <string name="smtp_token_setup_description">Используйте эти настройки, чтобы подключить ваш почтовый клиент или приложение.</string>
@@ -545,7 +545,7 @@
     <string name="color_theme_pink">Розовый</string>
     <string name="color_theme_black">Чёрный</string>
     <string name="custom_theme_base_color">Базовый цвет</string>
-    <string name="custom_theme_base_color_subtitle">Выберите цвет, и мы построим на его основе полную палитру</string>
+    <string name="custom_theme_base_color_subtitle">Выберите цвет, и Aster построит на его основе полную палитру</string>
     <string name="custom_theme_hex_placeholder">#3b82f6</string>
     <string name="custom_theme_hex_invalid">Введите корректный HEX-код цвета, например #3b82f6</string>
     <string name="custom_theme_colors_title">Цвета темы</string>
@@ -560,7 +560,7 @@
     <string name="custom_theme_reset_role">Сбросить на автоматический</string>
     <string name="custom_theme_reset_all">Сбросить всё на автоматический</string>
     <string name="custom_theme_upgrade_title">Своя тема</string>
-    <string name="custom_theme_upgrade_description">Создайте собственную цветовую тему на основе любого базового цвета. Улучшите тариф, чтобы разблокировать её.</string>
+    <string name="custom_theme_upgrade_description">Создайте собственную цветовую тему на основе любого базового цвета. Улучшите тариф, чтобы пользоваться ею.</string>
     <string name="font">Шрифт</string>
     <string name="font_option_default">Стандартный Aster</string>
     <string name="font_option_system">Системный шрифт</string>
@@ -647,7 +647,7 @@
     <string name="profile">Профиль</string>
     <string name="saving">Сохранение...</string>
     <string name="saved">Сохранено</string>
-    <string name="error_try_again">Ошибка - попробуйте снова</string>
+    <string name="error_try_again">Не удалось сохранить. Попробуйте ещё раз.</string>
     <string name="your_name">Ваше имя</string>
     <string name="display_name">Отображаемое имя</string>
     <string name="primary_address">Основной адрес</string>
@@ -657,7 +657,7 @@
     <string name="change_password">Изменить пароль</string>
     <string name="change_password_subtitle">Обновите пароль аккаунта</string>
     <string name="two_factor_auth">Двухфакторная аутентификация</string>
-    <string name="two_factor_subtitle_add">Добавить второй фактор</string>
+    <string name="two_factor_subtitle_add">Добавить второй уровень защиты</string>
     <string name="active_sessions">Активные сеансы</string>
     <string name="devices_signed_in">Устройства с активным входом</string>
     <string name="backup_access">Резервный доступ</string>
@@ -740,7 +740,7 @@
 
     <string name="ghost_aliases">Ghost-псевдонимы</string>
     <string name="ghost_aliases_about">О функции</string>
-    <string name="ghost_aliases_description">Одноразовые адреса, которые пересылают письма во входящие. Удалите любой из них, не затрагивая остальные.</string>
+    <string name="ghost_aliases_description">Одноразовые адреса, которые пересылают письма во входящие. Отзовите любой из них, не затрагивая остальные.</string>
     <string name="no_ghost_aliases">Нет призрачных псевдонимов</string>
     <string name="no_ghost_aliases_subtitle">Чтобы создать призрачный псевдоним, начните новое письмо и выберите его в качестве отправителя</string>
     <string name="expired">Истёк</string>
@@ -769,7 +769,7 @@
     <string name="referral_step_2">Они регистрируются по вашей ссылке и оформляют платную подписку.</string>
     <string name="referral_step_3">Вы получаете долю с каждого их платежа, она автоматически зачисляется на ваш баланс.</string>
     <string name="rewards">Награды</string>
-    <string name="share_text">Попробуйте Aster - конфиденциальная почта, которая действительно работает.</string>
+    <string name="share_text">Попробуйте Aster: приватная зашифрованная почта.</string>
     <string name="share_referral">Поделиться реферальной ссылкой</string>
     <string name="referral_history">История приглашений</string>
     <string name="no_referrals_yet">Пока нет приглашённых</string>
@@ -867,10 +867,10 @@
     <string name="template_content">Содержимое</string>
     <string name="template_content_placeholder">Введите текст шаблона...</string>
     <string name="template_content_required">Добавьте содержимое шаблона.</string>
-    <string name="template_placeholders_hint">Используйте заполнители, такие как [Имя], [Дата] и т. д., для настройки при использовании.</string>
+    <string name="template_placeholders_hint">Используйте заполнители, например [Имя] и [Дата], и заполняйте их при использовании шаблона.</string>
     <string name="template_category_general">Общие</string>
     <string name="delete_template_title">Удалить шаблон</string>
-    <string name="delete_template_message">Вы уверены, что хотите удалить %1$s? Это действие нельзя отменить.</string>
+    <string name="delete_template_message">Удалить %1$s? Это действие нельзя отменить.</string>
     <string name="unnamed_template">(без названия)</string>
     <string name="unnamed_folder">(без названия)</string>
     <string name="new_label">Новый</string>
@@ -905,7 +905,7 @@
     <string name="category_idea">Идея</string>
     <string name="category_bug">Ошибка</string>
     <string name="message">Сообщение</string>
-    <string name="feedback_placeholder">Опишите, что вам нравится, чего не хватает или что не работает.</string>
+    <string name="feedback_placeholder">Опишите, что работает хорошо, чего не хватает или что не работает.</string>
     <string name="feedback_privacy_note">Ваш адрес электронной почты будет прикреплён, чтобы мы могли ответить. Мы никогда не делимся отзывами.</string>
     <string name="feedback_support_notice">Эта форма предназначена для отзывов, идей и сообщений об ошибках. С вопросами или за помощью с аккаунтом пишите в службу поддержки по адресу %1$s.</string>
     <string name="send_feedback">Отправить отзыв</string>
@@ -946,7 +946,7 @@
     <string name="ext_save_changes">Сохранить изменения</string>
     <string name="ext_password_keep">Оставьте поле пустым, чтобы сохранить текущий пароль.</string>
     <string name="ext_account_updated">Аккаунт обновлён</string>
-    <string name="ext_error_update_failed">Изменения не сохранены. Попробуйте ещё раз.</string>
+    <string name="ext_error_update_failed">Не удалось сохранить изменения. Попробуйте ещё раз.</string>
     <string name="ext_error_toggle_failed">Не удалось изменить эту настройку. Попробуйте ещё раз.</string>
     <string name="ext_gmail_wizard_title">Настройка Gmail</string>
     <string name="ext_gmail_wizard_progress">Шаг %1$d из %2$d</string>
@@ -972,13 +972,13 @@
     <string name="ext_sync_now">Синхронизировать</string>
     <string name="ext_delete">Удалить</string>
     <string name="ext_disconnect_title">Отключить аккаунт</string>
-    <string name="ext_disconnect_confirm">Вы уверены, что хотите отключить этот аккаунт? Все синхронизированные письма останутся во входящих, если вы не удалите их.</string>
+    <string name="ext_disconnect_confirm">Отключить этот аккаунт? Все синхронизированные из него письма останутся во входящих, если вы не решите их удалить.</string>
     <string name="ext_disconnect_button">Отключить</string>
     <string name="ext_disconnect_delete_messages">Также удалить импортированные сообщения</string>
     <string name="ext_error_load_failed">Не удалось загрузить связанные аккаунты. Потяните для повтора.</string>
     <string name="ext_error_oauth_failed">Не удалось начать вход. Проверьте соединение и повторите попытку.</string>
     <string name="ext_error_manual_failed">Не удалось сохранить аккаунт. Проверьте хост, порт и учётные данные.</string>
-    <string name="ext_error_no_session">Сеанс истёк. Выйдите и войдите снова, чтобы продолжить.</string>
+    <string name="ext_error_no_session">Сеанс истёк. Чтобы продолжить, выйдите и войдите снова.</string>
     <string name="ext_error_sync_failed">Не удалось синхронизировать. Проверьте учётные данные аккаунта и повторите попытку.</string>
     <string name="ext_manual_saved">Аккаунт добавлен. Начинается синхронизация…</string>
     <string name="ext_last_sync">Последняя синхронизация: %1$s</string>
@@ -1069,10 +1069,10 @@
     <string name="no_folders_subtitle">Вы ещё не создали папок</string>
     <string name="delete_folder">Удалить папку</string>
     <string name="delete_folder_confirm_title">Удалить папку?</string>
-    <string name="delete_folder_confirm_message">Папка «%1$s» будет удалена, и отменить это нельзя. Письма из неё останутся в аккаунте, но больше не будут находиться в этой папке.</string>
+    <string name="delete_folder_confirm_message">Папка «%1$s» будет удалена. Отменить это нельзя. Письма из неё останутся в аккаунте, но больше не будут находиться в этой папке.</string>
     <string name="delete_folder_confirm_subfolders">Подпапки будут перемещены на верхний уровень.</string>
     <string name="delete_label_confirm_title">Удалить метку?</string>
-    <string name="delete_label_confirm_message">Метка «%1$s» будет снята со всех писем, и отменить это нельзя. Сами письма останутся в аккаунте.</string>
+    <string name="delete_label_confirm_message">Метка «%1$s» будет снята со всех писем. Отменить это нельзя. Сами письма останутся в аккаунте.</string>
 
     <string name="api_keys">API-ключи</string>
     <string name="no_api_keys">Нет API-ключей</string>
@@ -1120,16 +1120,16 @@
     <string name="error_password_min_length">Пароль должен содержать не менее 12 символов</string>
     <string name="error_passwords_no_match">Пароли не совпадают</string>
     <string name="error_invalid_credentials">Неверное имя пользователя или пароль</string>
-    <string name="error_captcha_failed">Проверка капчи не пройдена. Попробуйте снова.</string>
+    <string name="error_captcha_failed">Не удалось пройти проверку капчи. Попробуйте снова.</string>
     <string name="error_access_denied">Доступ запрещён</string>
     <string name="error_account_not_found">Аккаунт не найден</string>
     <string name="error_no_connection">Не удалось подключиться к серверу. Проверьте интернет-соединение.</string>
-    <string name="error_server">Ошибка сервера. Попробуйте позже.</string>
+    <string name="error_server">Что-то пошло не так на сервере. Попробуйте позже.</string>
     <string name="error_invalid_request">Неверный запрос</string>
     <string name="error_timeout">Время соединения истекло. Попробуйте снова.</string>
-    <string name="error_ssl">Ошибка безопасного соединения. Попробуйте снова.</string>
+    <string name="error_ssl">Не удалось установить безопасное соединение. Попробуйте снова.</string>
     <string name="error_generic">Что-то пошло не так. Попробуйте ещё раз.</string>
-    <string name="error_too_many_attempts">Слишком много попыток. Подождите немного и повторите попытку.</string>
+    <string name="error_too_many_attempts">Слишком много попыток. Подождите немного, затем повторите попытку.</string>
     <string name="error_username_taken">Это имя пользователя уже занято. Выберите другое.</string>
 
     <string name="error_send_recovery">Не удалось отправить письмо для восстановления</string>
@@ -1175,7 +1175,7 @@
     <string name="icon_label">ЗНАЧОК</string>
     <string name="loading_identity_key">Загрузка ключа идентификации...</string>
     <string name="message_expires_in">Сообщение истекает через %s</string>
-    <string name="message_expiry_subtitle">Получатели потеряют доступ после выбранного срока.</string>
+    <string name="message_expiry_subtitle">Получатели теряют доступ по истечении выбранного срока.</string>
     <string name="moved_to_inbox">Перемещено во входящие</string>
     <string name="nothing_to_print">Нечего печатать</string>
     <string name="pgp_identity_fingerprint">Отпечаток PGP-идентификации</string>
@@ -1212,7 +1212,7 @@
     <string name="failed_change_password">Не удалось изменить пароль</string>
     <string name="enter_account_password">Введите пароль аккаунта</string>
     <string name="something_went_wrong">Что-то пошло не так</string>
-    <string name="name_cannot_be_empty">Имя не может быть пустым</string>
+    <string name="name_cannot_be_empty">Введите имя</string>
     <string name="session_revoked">Сеанс завершён</string>
     <string name="failed_revoke_session">Не удалось завершить сеанс</string>
     <string name="all_other_sessions_signed_out">Все другие сеансы завершены</string>
@@ -1255,11 +1255,11 @@
     <string name="clipboard_label_identity_fingerprint">Отпечаток идентификации</string>
     <string name="clipboard_label_identity_public_key">Публичный ключ идентификации</string>
     <string name="clipboard_label_recovery_key">Ключ восстановления</string>
-    <string name="failed_to_load">Ошибка загрузки</string>
+    <string name="failed_to_load">Не удалось загрузить</string>
     <string name="scan_failed">Не удалось выполнить сканирование</string>
     <string name="toast_unsubscribed">Вы отписались</string>
     <string name="unsubscribe_failed">Не удалось отписаться</string>
-    <string name="unsubscribe_manual_required">Этот отправитель не поддерживает автоматическую отписку. Ссылка в письме позволяет отписаться вручную.</string>
+    <string name="unsubscribe_manual_required">Этот отправитель не поддерживает автоматическую отписку. Чтобы отписаться, воспользуйтесь ссылкой в письме.</string>
     <string name="bulk_unsubscribe_failed">Не удалось выполнить массовую отписку</string>
     <string name="unsubscribe_in_progress">Отмена подписки</string>
     <string name="subscription_hero_summary">Активные отправители: %1$s, отписано: %2$s, писем: %3$s</string>
@@ -1348,7 +1348,7 @@
     <string name="settings_plan_bullet_free_aliases">5 псевдонимов электронной почты</string>
     <string name="settings_billing_monthly">Ежемесячно</string>
     <string name="settings_billing_yearly">Ежегодно</string>
-    <string name="settings_prices_usd_note">Цены указаны в долларах США. Итоговая сумма определяется при оплате.</string>
+    <string name="settings_prices_usd_note">Цены указаны в долларах США. Итоговая сумма подтверждается при оплате.</string>
     <string name="settings_prices_currency_note">Цены указаны в %1$s. Итоговая сумма подтверждается при оплате.</string>
     <string name="settings_suffix_per_mo">/мес.</string>
     <string name="settings_suffix_per_yr">/год</string>
@@ -1374,7 +1374,7 @@
     <string name="alias_available">Этот псевдоним доступен.</string>
     <string name="alias_not_available">Этот псевдоним уже занят.</string>
     <string name="alias_check_failed">Не удалось проверить доступность. Вы всё равно можете попытаться создать его.</string>
-    <string name="csrf_unavailable">Этот сеанс повреждён. Войдите снова.</string>
+    <string name="csrf_unavailable">Не удалось проверить этот сеанс. Войдите снова.</string>
     <string name="received_on_label">Получено на</string>
     <string name="forwarded_by_label">Переслано через</string>
     <string name="forwarded_via_domain">через %1$s</string>
@@ -1511,9 +1511,9 @@
     <string name="mail_rules_field_advanced">Расширенное условие</string>
     <string name="mail_rules_action_unsupported">Неподдерживаемое действие</string>
     <string name="mail_rules_advanced_notice">В этом правиле используются расширенные условия. Откройте его в веб-приложении, чтобы изменить.</string>
-    <string name="mail_rules_regex_empty">Перед сохранением нужен шаблон regex.</string>
-    <string name="mail_rules_regex_too_long">Этот regex слишком длинный. Подойдёт сокращённая версия.</string>
-    <string name="mail_rules_regex_invalid">В этом шаблоне regex есть ошибка. Проверьте синтаксис.</string>
+    <string name="mail_rules_regex_empty">Перед сохранением введите шаблон regex.</string>
+    <string name="mail_rules_regex_too_long">Этот regex слишком длинный. Сократите его и попробуйте снова.</string>
+    <string name="mail_rules_regex_invalid">Этот шаблон regex недопустим. Проверьте синтаксис и попробуйте снова.</string>
     <string name="mail_rules_regex_backreference">Обратные ссылки вида \1 не поддерживаются. Перепишите шаблон без них.</string>
     <string name="mail_rules_regex_lookaround">Опережающая и ретроспективная проверки не поддерживаются. Перепишите шаблон без них.</string>
     <string name="tap_again_to_exit">Нажмите ещё раз, чтобы выйти</string>
@@ -1569,7 +1569,7 @@
     <string name="yesterday">Вчера</string>
     <string name="onboarding_skip">Пропустить</string>
     <string name="onboarding_slide1_title">Добро пожаловать в Aster</string>
-    <string name="onboarding_slide1_body">Приватная почта, которая действительно вас защищает.</string>
+    <string name="onboarding_slide1_body">Приватная почта, которая вас защищает.</string>
     <string name="onboarding_slide2_title">Сквозное шифрование</string>
     <string name="onboarding_slide2_body">Каждое сообщение шифруется вашими ключами до отправки с устройства. Даже Aster не может прочитать вашу почту.</string>
     <string name="onboarding_slide3_title">Никакого отслеживания</string>
@@ -1648,7 +1648,7 @@
     <string name="delete_draft">Удалить черновик</string>
     <string name="discard_draft">Удалить черновик</string>
     <string name="delete_draft_question">Удалить черновик?</string>
-    <string name="delete_draft_confirm_description">Этот черновик удаляется навсегда, и восстановить его нельзя.</string>
+    <string name="delete_draft_confirm_description">Черновик будет удалён навсегда. Восстановить его нельзя.</string>
     <string name="to_label_prefix">кому %s</string>
     <string name="failed_to_delete_draft">Не удалось удалить черновик</string>
     <string name="trash_already_empty">Корзина уже пуста</string>
@@ -1750,7 +1750,7 @@
     <string name="import_no_jobs">Импортов пока нет</string>
     <string name="import_chunk_progress">Загрузка части %1$d из %2$d</string>
     <string name="import_job_created">Импорт запущен</string>
-    <string name="import_file_too_large">Файл слишком большой (до 10 ГиБ)</string>
+    <string name="import_file_too_large">Размер файла превышает 10 ГиБ</string>
     <string name="attachment_too_large">\"%1$s\" превышает лимит %2$s на один файл</string>
     <string name="attachment_too_large_upgradable">«%1$s» превышает лимит %2$s на файл в вашем тарифе. Переход на более высокий тариф увеличит его до %3$s.</string>
     <string name="attachment_total_too_large">Вложения превышают общий лимит %1$s</string>
@@ -1796,7 +1796,7 @@
     <string name="use_template">Использовать шаблон</string>
     <string name="pick_template">Выберите шаблон</string>
     <string name="template_inserted">Шаблон вставлен</string>
-    <string name="leave_us_feedback">Оставьте отзыв</string>
+    <string name="leave_us_feedback">Отправьте нам отзыв</string>
     <string name="ext_label_google_account">Аккаунт Gmail</string>
     <string name="ext_label_microsoft_account">Аккаунт Outlook</string>
     <string name="ext_label_yahoo_account">Аккаунт Yahoo</string>
@@ -1807,7 +1807,7 @@
     <string name="import_section_file">Загрузить файл</string>
     <string name="import_section_sync">Внешняя синхронизация</string>
     <string name="import_connect_title">Синхронизация с другим сервисом</string>
-    <string name="import_connect_description">Войдите один раз, и мы будем синхронизировать ваш другой почтовый ящик.</string>
+    <string name="import_connect_description">Войдите один раз, и Aster будет синхронизировать ваш другой почтовый ящик.</string>
     <string name="import_provider_other_imap">Другой (IMAP)</string>
     <string name="import_sync_title">Внешняя синхронизация</string>
     <string name="import_kind_external_sync">Внешняя синхронизация</string>
@@ -1817,7 +1817,7 @@
     <string name="import_state_queued">В очереди</string>
     <string name="import_state_running">Выполняется</string>
     <string name="import_state_paused_quota">Приостановлено (квота)</string>
-    <string name="import_state_needs_reauth">Нужна повторная авторизация</string>
+    <string name="import_state_needs_reauth">Требуется вход</string>
     <string name="import_state_done">Готово</string>
     <string name="import_state_failed">Не удалось</string>
     <string name="import_state_cancelled">Отменено</string>
@@ -1849,11 +1849,11 @@
     <string name="storage_cleanup_title">%1$s (%2$s)</string>
     <string name="storage_free_up_note">Очистка папки удаляет письма навсегда и освобождает занятое ими место.</string>
     <string name="quiet_hours_paywall_description">Отключайте уведомления в заданные часы каждый день. Доступно в тарифе Star и выше.</string>
-    <string name="snooze_limit_reached">Бесплатный тариф позволяет отложить до 15 писем. Перейдите на платный тариф, чтобы снять ограничение.</string>
+    <string name="snooze_limit_reached">Бесплатный тариф позволяет отложить до 15 писем. Перейдите на платный тариф, чтобы откладывать письма без ограничений.</string>
     <string name="external_accounts_paywall_description">Подключайте Gmail, Outlook, Yahoo и другие аккаунты по IMAP. Доступно в тарифе Star и выше.</string>
     <string name="upgrade_in_browser_note">Управляйте тарифом в браузере.</string>
     <string name="buy_more_storage">Купить больше места</string>
-    <string name="buy_more_storage_note">Расширение места покупается через браузер.</string>
+    <string name="buy_more_storage_note">Дополнительное место покупается в браузере.</string>
     <string name="api_key_default_name">API-ключ</string>
     <string name="delete_account">Удалить аккаунт</string>
     <string name="delete_account_subtitle">Безвозвратно удалить аккаунт и данные</string>
@@ -1869,7 +1869,7 @@
     <string name="totp_code_optional">Код двухэтапной проверки (если она включена)</string>
     <string name="totp_code_required_label">Код из приложения или резервный код</string>
     <string name="totp_code_required_error">Введите 6-значный код из приложения аутентификации или один из резервных кодов</string>
-    <string name="preferences_locked_retry">Сейчас не удалось разблокировать ваши настройки. Показаны значения по умолчанию. Вернитесь назад и откройте их снова.</string>
+    <string name="preferences_locked_retry">Не удалось разблокировать настройки, поэтому показаны значения по умолчанию. Чтобы повторить попытку, вернитесь назад и снова откройте этот экран.</string>
     <string name="encrypted_edit_locked_retry">Aster Mail ещё разблокирует этот элемент, поэтому ваше изменение не сохранено. Повторите попытку через мгновение.</string>
     <string name="plan_name_star">Отметить звёздочкой</string>
     <string name="plan_name_nova">Nova</string>
@@ -1881,7 +1881,7 @@
     <string name="ghost_expired_toast">Призрачный псевдоним деактивирован</string>
     <string name="ghost_action_failed">Не удалось обновить призрачный псевдоним</string>
     <string name="upgrade_modal_title">Улучшите тариф</string>
-    <string name="upgrade_modal_description_generic">Вы достигли лимита текущего тарифа. Перейдите на более высокий, чтобы продолжить.</string>
+    <string name="upgrade_modal_description_generic">Вы достигли лимита текущего тарифа. Перейдите на более высокий, чтобы получить больше.</string>
     <string name="upgrade_modal_description_specific">Достигнут лимит %1$s в тарифе %2$s. Перейдите на более высокий тариф, чтобы получить больше.</string>
     <string name="upgrade_view_plans">Посмотреть тарифы</string>
     <string name="upgrade_buy_storage">Добавить место</string>
@@ -1907,7 +1907,7 @@
     <string name="usage_unlimited">Без ограничений</string>
     <string name="usage_storage">Хранилище</string>
     <string name="upgrade_inline_card_title">Перейдите на платный тариф</string>
-    <string name="upgrade_inline_card_description">Достигнут предел бесплатного тарифа. Платный тариф снимает ограничения.</string>
+    <string name="upgrade_inline_card_description">Достигнут лимит бесплатного тарифа. Перейдите на платный тариф, чтобы получить больше.</string>
     <string name="your_key">Ваш ключ</string>
     <string name="recovery_codes">Коды восстановления</string>
     <string name="low">Мало</string>
@@ -1936,7 +1936,7 @@
     <string name="publish_to_keyservers_sub">Публикует ваш ключ на публичных серверах ключей</string>
     <string name="alias_pgp_title">Использовать PGP с псевдонимами</string>
     <string name="alias_pgp_sub">Если этот параметр выключен, письма, отправленные с псевдонима, не содержат подписи PGP и сведений о ключе, которые связывают их с вашим аккаунтом.</string>
-    <string name="keyserver_publish_failed">Публичный ключ не опубликован на сервере ключей. Повторная попытка обычно помогает.</string>
+    <string name="keyserver_publish_failed">Не удалось опубликовать публичный ключ на сервере ключей. Попробуйте ещё раз.</string>
     <string name="public_key_copied">Открытый ключ скопирован</string>
     <string name="created_at_format">Создан %1$s</string>
     <string name="identity_key_unavailable_hint">Войдите снова, чтобы восстановить ключевой материал.</string>
@@ -2048,7 +2048,7 @@
     <string name="login_alerts">Оповещения о входе</string>
     <string name="login_alerts_subtitle">Получать уведомления, когда в аккаунт входит новое устройство</string>
     <string name="login_alerts_info_title">Оповещения о входе</string>
-    <string name="login_alerts_info_desc">Отправляет письмо каждый раз, когда в ваш аккаунт входят с нового устройства или места. Помогает раано обнаружить несанкционированный доступ.</string>
+    <string name="login_alerts_info_desc">Отправляет письмо каждый раз, когда в ваш аккаунт входят с нового устройства или из нового места, чтобы вы могли вовремя обнаружить несанкционированный доступ.</string>
     <string name="passkeys_security_keys">Ключи доступа и ключи безопасности</string>
     <string name="passkeys_none_subtitle">Ключей доступа пока нет</string>
     <string name="section_trusted_devices">Доверенные устройства</string>
@@ -2068,7 +2068,7 @@
     <string name="remote_image_keep_subtitle">Сохраняет загруженные изображения в зашифрованном виде, поэтому при повторном открытии письма отправителю ничего не отправляется.</string>
     <string name="remote_image_prefetch_title">Загружать изображения при получении почты</string>
     <string name="remote_image_prefetch_subtitle">Получает изображения через Aster при поступлении почты, поэтому отправители не узнают, когда вы её открываете. Работает только по Wi-Fi.</string>
-    <string name="remote_image_prefetch_needs_always">Чтобы использовать эту функцию, выберите для загрузки удалённых изображений вариант «Всегда загружать».</string>
+    <string name="remote_image_prefetch_needs_always">Чтобы использовать эту функцию, выберите для параметра «Загрузка внешних изображений» вариант «Всегда загружать».</string>
     <string name="remote_image_clear_title">Очистить сохранённые изображения</string>
     <string name="remote_image_clear_subtitle">Удаляет изображения, сохранённые на этом устройстве.</string>
     <string name="remote_image_cache_cleared">Сохранённые изображения удалены</string>
@@ -2086,7 +2086,7 @@
     <string name="warn_suspicious_links_info_desc">Показывает предупреждение перед открытием любой ссылки за пределами Aster. Помогает распознать фишинг до нажатия.</string>
     <string name="section_privacy_security">Конфиденциальность</string>
     <string name="strip_exif_info_title">Что такое метаданные изображения?</string>
-    <string name="strip_exif_info_desc">Фотографии с телефонов и камер содержат скрытые данные: GPS-координаты, модель устройства, временную метку и данные объектива. Aster удаляет их перед отправкой, чтобы получатели видели только пиксели.</string>
+    <string name="strip_exif_info_desc">Фотографии с телефонов и камер содержат скрытые данные, например GPS-координаты, модель устройства, время съёмки и сведения об объективе. При отправке изображения эти данные передаются вместе с ним. Aster удаляет их перед загрузкой, поэтому получатели видят только само изображение.</string>
     <string name="section_recent_activity">Недавние действия</string>
     <string name="no_recent_activity">Недавних действий нет</string>
     <string name="no_recent_activity_subtitle">Здесь появятся события безопасности</string>
@@ -2237,14 +2237,14 @@
     <string name="export_complete">Экспорт завершён</string>
     <string name="export_emails_exported">Экспортировано писем</string>
     <string name="export_file_size">Размер файла</string>
-    <string name="export_share_save">Поделиться / Сохранить</string>
+    <string name="export_share_save">Поделиться или сохранить</string>
     <string name="export_private_key_dialog_title">Экспортировать закрытый ключ</string>
     <string name="export_private_key_message">Закрытый ключ будет экспортирован в текстовом формате PGP (ASCII armor). Введите пароль от аккаунта, чтобы подтвердить экспорт.</string>
     <string name="export_private_key_password_label">Пароль аккаунта</string>
     <string name="export_private_key_exporting">Экспортируем...</string>
     <string name="export_private_key_button">Экспортировать</string>
     <string name="toast_private_key_copied">Закрытый ключ скопирован в буфер обмена</string>
-    <string name="error_private_key_export">Неверный пароль или ошибка экспорта</string>
+    <string name="error_private_key_export">Не удалось экспортировать ключ. Проверьте пароль и попробуйте снова.</string>
     <string name="storage_addons_title">Дополнительное место</string>
     <string name="storage_addons_description">Добавьте место к любому тарифу. Дополнения суммируются.</string>
     <string name="payment_method_card">Кредитная или дебетовая карта</string>
@@ -2288,7 +2288,7 @@
     <string name="crypto_native_unavailable">Не удалось загрузить платёж</string>
     <string name="crypto_native_unavailable_body">Не удалось связаться с сервером. Проверьте подключение и попробуйте снова. На ваш платёж это не повлияло.</string>
     <string name="crypto_native_manual_review">На проверке</string>
-    <string name="crypto_native_manual_review_body">Этот платёж требует быстрой ручной проверки. Обычно она занимает несколько часов, после чего тариф зачисляется автоматически.</string>
+    <string name="crypto_native_manual_review_body">Этот платёж требует ручной проверки. Обычно она занимает несколько часов, после чего тариф зачисляется автоматически.</string>
     <string name="crypto_native_transaction">Транзакция</string>
     <string name="crypto_native_status_title">Статус платежа</string>
     <string name="crypto_native_awaiting_hint">Ожидание вашего перевода</string>
@@ -2680,7 +2680,7 @@
     <string name="domain_purchase_pay_with">Оплатить</string>
     <string name="domain_purchase_pay_card">Картой</string>
     <string name="domain_purchase_buy">Купить за %1$s</string>
-    <string name="domain_purchase_error">Покупка не удалась. Попробуйте ещё раз.</string>
+    <string name="domain_purchase_error">Не удалось завершить покупку. Попробуйте ещё раз.</string>
     <string name="domain_purchase_error_taken">Этот домен только что заняли. Выберите другой.</string>
     <string name="domain_purchase_error_limit">Вы достигли лимита доменов для вашего тарифа. Перейдите на более высокий тариф, чтобы добавить ещё.</string>
     <string name="domain_purchase_error_slow_down">Сейчас слишком много заказов доменов. Завершите текущие или дождитесь их обработки.</string>
@@ -2698,8 +2698,8 @@
     <string name="domain_purchase_order_expired">Этот заказ истёк до оплаты. Начните новую покупку, чтобы получить домен.</string>
     <string name="domain_purchase_order_lapsed">Срок действия этого домена истёк, он больше не активен. Купите его снова, чтобы вернуть.</string>
     <string name="domain_purchase_try_instead">Попробуйте один из этих вариантов</string>
-    <string name="domain_purchase_empty_subtitle">Введите слово, имя или полный домен. Мы проверим все продаваемые окончания и покажем, что свободно.</string>
-    <string name="domain_purchase_search_failed">Поиск не удался. Попробуйте ещё раз.</string>
+    <string name="domain_purchase_empty_subtitle">Введите слово, имя или полный домен. Мы проверим все продаваемые окончания и покажем, какие из них доступны.</string>
+    <string name="domain_purchase_search_failed">Не удалось выполнить поиск. Попробуйте ещё раз.</string>
     <string name="domain_purchase_more_suggestions">Предложить ещё варианты</string>
     <string name="domain_purchase_order_summary">Сводка заказа</string>
     <string name="domain_purchase_summary_whois">Приватность WHOIS</string>
@@ -2722,7 +2722,7 @@
     <string name="domain_purchase_detail_privacy">Приватность по умолчанию</string>
     <string name="domain_purchase_detail_public_whois">Публичные данные WHOIS</string>
     <string name="domain_purchase_whois_public_notice">Реестр .%1$s не разрешает приватность WHOIS. Aster регистрирует домен на контактные данные компании, поэтому ваши личные данные не публикуются.</string>
-    <string name="domain_purchase_detail_setup">Ноль настроек</string>
+    <string name="domain_purchase_detail_setup">Настройка не требуется</string>
     <string name="domain_purchase_detail_instant">Готов за секунды</string>
     <string name="domain_purchase_detail_ownership">Полностью ваш</string>
     <string name="domain_purchase_awaiting_payment">Ожидание оплаты</string>
@@ -2961,14 +2961,14 @@
     <string name="error_plan_limit_reached">Достигнут лимит текущего тарифа. Чтобы продолжить, улучшите тариф или удалите часть элементов.</string>
     <string name="error_account_limit_reached_count">Лимит аккаунтов, в которые можно войти на этом устройстве по вашему тарифу: %1$d. Чтобы войти в этот аккаунт, выйдите из другого аккаунта на этом устройстве или улучшите тариф.</string>
     <string name="error_account_limit_reached">Достигнут лимит аккаунтов, в которые можно войти на этом устройстве по вашему тарифу. Чтобы войти в этот аккаунт, выйдите из другого аккаунта на этом устройстве или улучшите тариф.</string>
-    <string name="error_sign_in_code_invalid">Этот код больше не действителен. Запросите новый, чтобы продолжить вход.</string>
+    <string name="error_sign_in_code_invalid">Этот код больше не действителен. Запросите новый код и попробуйте снова.</string>
     <string name="error_sign_in_domain_unsupported">Войдите с адресом astermail.org или aster.cx, с которым вы регистрировались. Адреса на вашем домене ведут в тот же аккаунт.</string>
     <string name="error_storage_full">Хранилище заполнено. Чтобы освободить место, повысьте тариф или удалите часть писем.</string>
     <string name="error_unsupported_email_domain">Введите адрес, который заканчивается на astermail.org или aster.cx.</string>
     <string name="error_upload_too_large">Загрузка слишком велика. Чтобы продолжить, удалите файл или уменьшите его размер и повторите попытку.</string>
     <string name="expiring_not_with_schedule">Сообщение можно либо запланировать, либо сделать исчезающим, но не оба варианта сразу. Отключите один из них, чтобы продолжить.</string>
     <string name="failed_load_dns_records">Не удалось загрузить DNS-записи</string>
-    <string name="failed_to_move_items">Не удалось переместить</string>
+    <string name="failed_to_move_items">Не удалось переместить элементы</string>
     <string name="folder_name_taken">Папка с таким именем уже существует.</string>
     <string name="hardware_key_remove_confirm">Вы больше не сможете входить с этим ключом безопасности.</string>
     <string name="hardware_key_remove_last_title">Удалить этот ключ безопасности?</string>
@@ -3010,7 +3010,7 @@
     <string name="send_refusal_attachments_too_large">Общий размер вложений превышает %1$s, а это максимум для одного письма в вашем тарифе. Удалите или уменьшите файл, чтобы отправить письмо. Черновик сохранён.</string>
     <string name="send_refusal_recipient_concentration">Вы уже отправили письма на максимально допустимое за час число адресов на %1$s. Массовая отправка одному провайдеру приводит к блокировке наших почтовых серверов. Попробуйте позже. Черновик сохранён.</string>
     <string name="send_refusal_that_provider">этого провайдера</string>
-    <string name="send_refusal_too_many_attachments">В этом письме больше %1$d вложений, а это максимум для одного письма. Удалите несколько, и письмо отправится. Черновик сохранён.</string>
+    <string name="send_refusal_too_many_attachments">В этом письме больше %1$d вложений, а это максимум для одного письма. Чтобы отправить его, удалите часть вложений. Черновик сохранён.</string>
     <string name="send_refusal_too_many_recipients">В этом письме больше получателей, чем можно охватить одним письмом. Ваш аккаунт может отправлять %1$d за раз, и этот предел растёт в течение первой недели. Отправьте письмо небольшими группами. Черновик сохранён.</string>
     <string name="settings_save_failed_banner">Изменения не сохранены. Проверьте подключение и повторите попытку.</string>
     <string name="show_email_preview">Текст предпросмотра</string>
@@ -3027,8 +3027,8 @@
     <string name="vacation_date_not_set">Не задано</string>
     <string name="vacation_end_date">Дата окончания</string>
     <string name="vacation_start_date">Дата начала</string>
-    <string name="wkd_publish_failed">Публичный ключ не опубликован в Web Key Directory. Повторная попытка обычно помогает.</string>
-    <string name="wkd_unpublish_failed">Публичный ключ всё ещё в Web Key Directory. Повторная попытка обычно помогает.</string>
+    <string name="wkd_publish_failed">Не удалось опубликовать публичный ключ в Web Key Directory. Попробуйте ещё раз.</string>
+    <string name="wkd_unpublish_failed">Не удалось удалить публичный ключ из Web Key Directory. Попробуйте ещё раз.</string>
     <string name="text_color">Цвет текста</string>
     <string name="highlight_color">Цвет выделения</string>
     <string name="remove_highlight">Убрать выделение</string>
@@ -3038,7 +3038,7 @@
     <string name="app_lock_biometric_failed">Биометрическая разблокировка недоступна. Введите PIN-код.</string>
     <string name="app_lock_biometric_error">Биометрическая разблокировка не сработала. Повторите попытку или введите PIN-код.</string>
     <string name="app_lock_biometric_reset">Aster Mail отключил биометрическую разблокировку. Чтобы снова включить её, введите PIN-код.</string>
-    <string name="applied_to_loaded_only">Применено к %1$d из %2$d - это действие затрагивает только загруженные письма</string>
+    <string name="applied_to_loaded_only">Применено к %1$d из %2$d. Это действие применяется только к загруженным письмам.</string>
     <string name="audit_event_2fa_disabled">Двухфакторная аутентификация отключена</string>
     <string name="audit_event_2fa_enabled">Двухфакторная аутентификация включена</string>
     <string name="audit_event_account_locked">Аккаунт заблокирован</string>
@@ -3060,7 +3060,7 @@
     <string name="domain_status_failed">Проверка не пройдена</string>
     <string name="domain_status_suspended">Приостановлен</string>
     <string name="domain_status_verifying">Проверка</string>
-    <string name="generate_ghost_alias_message">Aster создаёт случайный адрес, который пересылает письма в ваши «Входящие». Вы можете удалить его в любой момент, не затрагивая другие адреса.</string>
+    <string name="generate_ghost_alias_message">Aster создаёт случайный адрес, который пересылает письма в ваши «Входящие». Вы можете отозвать его в любой момент, не затрагивая другие адреса.</string>
     <string name="identity_changed_description">Ключ шифрования для %1$s отличается от того, который вы видели ранее. Так бывает, когда человек входит с нового устройства или сбрасывает аккаунт, но это может означать и то, что кто-то перехватывает ваши сообщения. Подтвердите это по другому каналу, прежде чем доверять этой переписке.</string>
     <string name="identity_changed_dismiss">Проверено</string>
     <string name="identity_changed_title">Ключ шифрования изменился</string>
@@ -3116,7 +3116,7 @@
     <string name="contact_support">Связаться с поддержкой</string>
     <string name="domain_purchase_manage">Управление</string>
     <string name="domain_purchase_cancel_payment_title">Отменить этот платёж?</string>
-    <string name="domain_purchase_cancel_payment_message">Вы действительно хотите отменить этот платёж за пользовательский домен?</string>
+    <string name="domain_purchase_cancel_payment_message">Отменить платёж за пользовательский домен?</string>
     <string name="domain_purchase_cancel_payment_confirm">Отменить платёж</string>
     <string name="domain_purchase_cancel_payment_keep">Оставить платёж</string>
     <string name="domain_purchase_manage_description">Проверьте эту регистрацию и продлите ее до окончания срока.</string>
@@ -3218,7 +3218,7 @@
     <string name="alias_unpin">Открепить псевдоним</string>
     <string name="alias_pinned_toast">Псевдоним закреплён</string>
     <string name="alias_unpinned_toast">Псевдоним откреплён</string>
-    <string name="e2e_identity_changed_blocked">Не удалось отправить: ключ шифрования получателя изменился. Подтвердите изменение во входящих, затем отправьте снова. Сообщение не отправлено.</string>
+    <string name="e2e_identity_changed_blocked">Не удалось отправить сообщение: ключ шифрования получателя изменился. Подтвердите изменение во входящих, затем отправьте снова.</string>
     <string name="link_device_fingerprint_label">Отпечаток устройства</string>
     <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
     <string name="link_device_fingerprint_hint">Введите отпечаток устройства, показанный в приложении, которое вы привязываете. В некоторых приложениях он называется кодом подтверждения.</string>
@@ -3794,7 +3794,7 @@
     <string name="reply_from_mismatch_banner">Это письмо получено на %1$s, но ваш ответ будет отправлен с %2$s.</string>
     <string name="reply_from_mismatch_send_from">Отправить с %1$s</string>
     <string name="reply_from_mismatch_dismiss">Закрыть</string>
-    <string name="error_alias_sending_disabled">Отправка с этого псевдонима отключена. Сначала включите её.</string>
+    <string name="error_alias_sending_disabled">Отправка с этого псевдонима отключена. Чтобы отправлять с него письма, сначала включите отправку.</string>
     <string name="open_group_description">Открыть группу %1$s, %2$s</string>
     <string name="group_empty_title">В этой группе нет контактов</string>
     <string name="group_empty_hint">Чтобы добавить контакты в эту группу, нажмите «Добавить участников».</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="found_us_banner_message">您最初是从哪里了解到 Aster Mail 的？只有一个问题，可以不答。</string>
+    <string name="found_us_banner_message">您最初是从哪里了解到 Aster Mail 的？此问题为选答。</string>
     <string name="found_us_banner_answer">回答</string>
     <string name="found_us_banner_dismiss">关闭</string>
     <string name="found_us_remind_later">下周再提醒我</string>
@@ -31,5 +31,5 @@
     <string name="found_us_skip">跳过</string>
     <string name="found_us_send">发送</string>
     <string name="found_us_thanks">感谢您告诉我们。</string>
-    <string name="found_us_send_failed">回答未能发送。请稍后再试。</string>
+    <string name="found_us_send_failed">无法发送您的回答。请稍后再试。</string>
 </resources>

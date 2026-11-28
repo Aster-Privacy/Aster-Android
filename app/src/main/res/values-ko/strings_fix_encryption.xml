@@ -2,7 +2,7 @@
 <resources>
     <string name="fix_enc_codes_share_title">복구 코드</string>
     <string name="fix_enc_codes_file_note">각 코드는 한 번만 사용할 수 있습니다. 이 파일을 안전한 곳에 보관하세요.</string>
-    <string name="fix_enc_codes_save_failed">지금은 파일을 저장할 수 없습니다. 대신 코드를 복사하세요.</string>
+    <string name="fix_enc_codes_save_failed">파일을 저장하지 못했습니다. 대신 코드를 복사하세요.</string>
     <string name="enc_hero_status_protected">보호됨</string>
     <string name="enc_hero_status_attention">확인 필요</string>
     <string name="enc_hero_summary">메시지는 나만 가진 키로 엔드투엔드 암호화됩니다.</string>

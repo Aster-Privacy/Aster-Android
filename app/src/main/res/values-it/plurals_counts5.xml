@@ -81,9 +81,9 @@
         <item quantity="other">L\'accesso sarà limitato tra %1$d giorni.</item>
     </plurals>
     <plurals name="templates_decrypt_failed_count">
-        <item quantity="one">Non è stato possibile leggere %1$d modello su questo dispositivo. È stato salvato con una chiave che questo dispositivo al momento non possiede.</item>
-        <item quantity="many">Non è stato possibile leggere %1$d modelli su questo dispositivo. Sono stati salvati con una chiave che questo dispositivo al momento non possiede.</item>
-        <item quantity="other">Non è stato possibile leggere %1$d modelli su questo dispositivo. Sono stati salvati con una chiave che questo dispositivo al momento non possiede.</item>
+        <item quantity="one">Impossibile leggere %1$d modello su questo dispositivo perché è stato salvato con una chiave che questo dispositivo non ha.</item>
+        <item quantity="many">Impossibile leggere %1$d modelli su questo dispositivo perché sono stati salvati con una chiave che questo dispositivo non ha.</item>
+        <item quantity="other">Impossibile leggere %1$d modelli su questo dispositivo perché sono stati salvati con una chiave che questo dispositivo non ha.</item>
     </plurals>
     <plurals name="contact_trash_days_left">
         <item quantity="one">%1$d giorno rimasto</item>

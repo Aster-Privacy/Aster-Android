@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="found_us_banner_message">Aster Mail\'i ilk nereden duydunuz? Tek bir soru ve yanıtlamak isteğe bağlı.</string>
+    <string name="found_us_banner_message">Aster Mail\'i ilk nereden duydunuz? Yanıtlamak isteğe bağlıdır.</string>
     <string name="found_us_banner_answer">Yanıtla</string>
     <string name="found_us_banner_dismiss">Kapat</string>
     <string name="found_us_remind_later">Haftaya hatırlat</string>

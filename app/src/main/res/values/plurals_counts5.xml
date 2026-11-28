@@ -65,8 +65,8 @@
         <item quantity="other">Access limited in %1$d days.</item>
     </plurals>
     <plurals name="templates_decrypt_failed_count">
-        <item quantity="one">%1$d template could not be read on this device. It was saved with a key this device does not currently hold.</item>
-        <item quantity="other">%1$d templates could not be read on this device. They were saved with a key this device does not currently hold.</item>
+        <item quantity="one">%1$d template can\'t be read on this device because it was saved with a key this device doesn\'t have.</item>
+        <item quantity="other">%1$d templates can\'t be read on this device because they were saved with a key this device doesn\'t have.</item>
     </plurals>
     <plurals name="contact_trash_days_left">
         <item quantity="one">%1$d day left</item>

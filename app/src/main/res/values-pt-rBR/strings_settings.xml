@@ -24,10 +24,10 @@
     <string name="settings_feat_auto_responder">Resposta automática</string>
     <string name="settings_feat_alias_avatars">Avatares de alias</string>
     <string name="settings_feat_instant_alias_delete">Exclusão instantânea de aliases em domínios Aster</string>
-    <string name="alias_too_new_title">Este alias é muito recente para ser excluído</string>
-    <string name="alias_too_new_message">Aliases novos em domínios Aster ficam ativos por 30 dias antes que você possa excluí-los. Você pode excluir este a partir de %1$s. Para excluí-los na hora, faça upgrade para o Supernova.</string>
-    <string name="ghost_alias_too_new_title">Este alias fantasma é muito recente para expirar</string>
-    <string name="ghost_alias_too_new_message">Aliases fantasma novos ficam ativos por 30 dias antes de poderem expirar. Este pode expirar a partir de %1$s. Faça upgrade para o Supernova para expirar aliases fantasma na hora.</string>
+    <string name="alias_too_new_title">Este alias ainda não pode ser excluído</string>
+    <string name="alias_too_new_message">Aliases novos em domínios Aster ficam ativos por 30 dias. Você pode excluir este a partir de %1$s ou fazer upgrade para o Supernova para excluir aliases na hora.</string>
+    <string name="ghost_alias_too_new_title">Este alias fantasma ainda não pode expirar</string>
+    <string name="ghost_alias_too_new_message">Aliases fantasma novos ficam ativos por 30 dias. Você pode fazer este expirar a partir de %1$s ou fazer upgrade para o Supernova para expirar aliases fantasma na hora.</string>
     <string name="ghost_alias_max_extension_toast">Este alias fantasma já atingiu a vida útil máxima de 90 dias e não pode ser estendido.</string>
     <string name="settings_feat_folders">Pastas</string>
     <string name="settings_feat_labels">Etiquetas</string>
@@ -40,7 +40,7 @@
     <string name="settings_feat_recovery_codes">Códigos de recuperação</string>
     <string name="settings_feat_password_folders">Pastas com senha</string>
     <string name="settings_feat_session_mgmt">Gerenciamento de sessões</string>
-    <string name="settings_feat_login_notifs">Avisos de login</string>
+    <string name="settings_feat_login_notifs">Notificações de entrada</string>
     <string name="settings_feat_encrypted_exports">Exportações criptografadas</string>
     <string name="settings_feat_hardware_keys">Chaves de segurança físicas</string>
     <string name="settings_feat_no_ads">Sem anúncios</string>
@@ -87,7 +87,7 @@
     <string name="settings_diagnostics_clip_label">Diagnóstico</string>
     <string name="settings_diagnostics_secure_storage">Armazenamento seguro</string>
     <string name="settings_diagnostics_storage_ok">Saudável</string>
-    <string name="settings_diagnostics_storage_degraded">Degradado. Saia e entre novamente</string>
+    <string name="settings_diagnostics_storage_degraded">Degradado. Saia e entre novamente.</string>
     <string name="settings_crash_reports_title">Enviar relatórios de falhas</string>
     <string name="settings_crash_reports_subtitle">Desativado, a menos que você ative. Os relatórios nunca incluem sua conta, suas mensagens ou seus contatos.</string>
     <string name="settings_crash_reports_info">Quando esta configuração está ativada, o Aster Mail envia à Aster um relatório anônimo se o app falhar, parar de responder ou não conseguir acessar um recurso. O relatório contém o tipo de erro, a versão do app e o local no código do app onde o erro ocorreu. Ele nunca contém seu endereço, suas mensagens, seus contatos nem nada que identifique sua conta. Quando esta configuração está desativada, o Aster Mail não envia relatórios.</string>

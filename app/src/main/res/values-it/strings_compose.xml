@@ -21,6 +21,6 @@
     <string name="schedule_tomorrow_afternoon">Domani pomeriggio</string>
     <string name="schedule_monday_morning">Lunedì mattina</string>
     <string name="schedule_pick_date_time">Scegli data e ora</string>
-    <string name="too_many_recipients_in_field">Ogni campo A, Cc e Ccn contiene al massimo %1$d indirizzi. Ne sposti una parte in un secondo messaggio per inviare questo.</string>
-    <string name="too_many_recipients_in_message">Un messaggio raggiunge al massimo %1$d indirizzi tra A, Cc e Ccn. Suddividere l\'elenco in messaggi più piccoli consentirà l\'invio.</string>
+    <string name="too_many_recipients_in_field">Ogni campo A, Cc e Ccn contiene al massimo %1$d indirizzi. Per inviare questo messaggio, sposta alcuni indirizzi in un secondo messaggio.</string>
+    <string name="too_many_recipients_in_message">Un messaggio può raggiungere al massimo %1$d indirizzi tra A, Cc e Ccn. Per inviarlo, suddividi l\'elenco in messaggi più piccoli.</string>
 </resources>

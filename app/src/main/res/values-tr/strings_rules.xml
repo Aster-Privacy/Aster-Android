@@ -80,8 +80,8 @@
     <string name="no_custom_categories">Henüz özel kategori yok.</string>
     <string name="category_name_required">Bu kategori için bir ad girin.</string>
     <string name="category_rule_required">Eşleştirmek için en az bir alan adı veya anahtar kelime ekleyin.</string>
-    <string name="category_domains_invalid">Geçersiz alan adları: %1$s. example.com gibi gerçek bir alan adı kullanın.</string>
-    <string name="category_keywords_invalid">Geçersiz anahtar kelimeler: %1$s. Yalnızca düz kelimeler kullanın.</string>
+    <string name="category_domains_invalid">Bu alan adları geçerli değil: %1$s. example.com gibi bir alan adı kullanın.</string>
+    <string name="category_keywords_invalid">Bu anahtar kelimeler geçerli değil: %1$s. Yalnızca düz kelimeler kullanın.</string>
     <string name="delete_category_title">Kategori silinsin mi?</string>
     <string name="delete_category_description">\"%1$s\" silinsin mi? Bu işlem geri alınamaz.</string>
     <string name="custom_categories_locked">Özel kategoriler mevcut planınızda kullanılamıyor.</string>
@@ -97,7 +97,7 @@
     <string name="category_match_keywords">Konu anahtar kelimelerini eşleştir</string>
     <string name="category_match_keywords_placeholder">bülten, özet</string>
     <string name="category_match_keywords_help">Virgülle ayrılmış kelimeler. Herhangi biri konu satırında görünürse, e-posta bu kategoriye girer.</string>
-    <string name="category_tutorial_text">İpucu: Gönderenin alan adı veya konu, anahtar sözcüklerinizden herhangi birini içeriyorsa özel kategori eşleşir. Özel kategoriler yerleşik kategorilerden önce denetlenir, bu yüzden her zaman önceliklidir.</string>
+    <string name="category_tutorial_text">Gönderenin alan adı veya konu, anahtar sözcüklerinizden herhangi birini içerdiğinde özel kategori eşleşir. Özel kategoriler yerleşik kategorilerden önce denetlenir, bu yüzden her zaman önceliklidir.</string>
     <string name="rules_create_first_folder_hint">Bir klasör oluşturun, bu kural eşleşen e-postaları oraya taşıyabilsin.</string>
     <string name="rules_create_first_label_hint">Bir etiket oluşturun, bu kural eşleşen e-postalara uygulayabilsin.</string>
     <string name="muted_categories">Sessize alınan kategoriler</string>

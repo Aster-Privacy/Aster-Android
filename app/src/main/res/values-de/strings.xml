@@ -63,7 +63,7 @@
     <string name="requirement_uppercase">Ein Großbuchstabe</string>
     <string name="requirement_lowercase">Ein Kleinbuchstabe</string>
     <string name="requirement_number">Eine Zahl</string>
-    <string name="backup_email_description">Fügen Sie eine Wiederherstellungs-E-Mail von einem anderen Anbieter hinzu. Dies ist optional, wird aber zur Kontowiederherstellung empfohlen.</string>
+    <string name="backup_email_description">Fügen Sie eine Wiederherstellungs-E-Mail von einem anderen Anbieter hinzu. Dies ist optional, hilft Ihnen aber, Ihr Konto wiederherzustellen.</string>
     <string name="recovery_email">Wiederherstellungs-E-Mail</string>
     <string name="recovery_email_placeholder">backup@email.com</string>
     <string name="backup_email_short">Backup-E-Mail hinzufügen</string>
@@ -72,7 +72,7 @@
     <string name="recovery_email_remove">Wiederherstellungs-E-Mail entfernen</string>
     <string name="recovery_email_resend">Bestätigungs-E-Mail erneut senden</string>
     <string name="recovery_email_resent">Bestätigungs-E-Mail gesendet</string>
-    <string name="recovery_email_resend_cooldown">Bitte warten Sie einen Moment, bevor Sie erneut senden</string>
+    <string name="recovery_email_resend_cooldown">Warten Sie einen Moment, bevor Sie erneut senden</string>
     <string name="recovery_email_already_in_use">Diese Adresse schützt bereits die maximal möglichen 10 Aster-Konten. Verwenden Sie eine andere Adresse.</string>
     <string name="recovery_email_saved">Wiederherstellungs-E-Mail gespeichert</string>
     <string name="recovery_email_status_verified">Verifiziert</string>
@@ -81,7 +81,7 @@
     <string name="skip_for_now">Vorerst überspringen</string>
     <string name="copy_to_clipboard">In Zwischenablage kopieren</string>
     <string name="choose_your_plan">Tarif wählen</string>
-    <string name="plan_subtitle">Starten Sie kostenlos oder schalten Sie mit einem kostenpflichtigen Tarif mehr frei. Sie können jederzeit wechseln.</string>
+    <string name="plan_subtitle">Starten Sie kostenlos oder erhalten Sie mehr mit einem kostenpflichtigen Tarif. Sie können Ihren Tarif jederzeit wechseln.</string>
     <string name="loading_plans">Tarife werden geladen...</string>
     <string name="plan_free">Kostenlos</string>
     <string name="continue_with_free">Mit dem kostenlosen Tarif fortfahren</string>
@@ -125,7 +125,7 @@
     <string name="strength_good">Gut</string>
     <string name="strength_strong">Stark</string>
     <string name="recovering_your_account">Ihr Konto wird wiederhergestellt</string>
-    <string name="please_dont_close_app">Bitte schließen Sie die App nicht</string>
+    <string name="please_dont_close_app">Schließen Sie die App nicht</string>
     <string name="save_new_recovery_codes">Neue Wiederherstellungscodes speichern</string>
     <string name="old_codes_invalidated">Ihre alten Wiederherstellungscodes funktionieren nicht mehr. Bewahren Sie diese an einem sicheren Ort auf, etwa in einem Passwort-Manager oder als Ausdruck. Jeder Code funktioniert einmal.</string>
     <string name="show_codes">Codes anzeigen</string>
@@ -154,16 +154,16 @@
     <string name="drafts_working_here">Entwürfe, an denen Sie arbeiten, erscheinen hier</string>
     <string name="nothing_starred">Keine markierten Nachrichten</string>
     <string name="star_important">Markieren Sie wichtige E-Mails, um sie schnell wiederzufinden</string>
-    <string name="nothing_here_clear">Papierkorb ist leer</string>
+    <string name="nothing_here_clear">Hier ist nichts</string>
     <string name="deleted_emails_here">Gelöschte E-Mails erscheinen hier</string>
     <string name="no_spam">Kein Spam</string>
-    <string name="suspicious_caught_here">Verdächtige E-Mails werden hier abgefangen</string>
+    <string name="suspicious_caught_here">Verdächtige E-Mails erscheinen hier</string>
     <string name="nothing_archived">Nichts archiviert</string>
     <string name="archive_to_clean">Archivieren Sie E-Mails, um Ihren Posteingang aufgeräumt zu halten</string>
     <string name="no_scheduled">Keine geplanten Nachrichten</string>
     <string name="scheduled_messages_here">Geplante Nachrichten erscheinen hier</string>
     <string name="nothing_snoozed">Nichts zurückgestellt</string>
-    <string name="snoozed_wake_here">Zurückgestellte E-Mails erscheinen hier wieder</string>
+    <string name="snoozed_wake_here">Zurückgestellte E-Mails erscheinen hier, sobald sie fällig sind</string>
     <string name="no_messages">Keine Nachrichten</string>
     <string name="nothing_here_yet">Hier gibt es noch nichts anzuzeigen</string>
     <string name="sort_newest">Neueste zuerst</string>
@@ -234,7 +234,7 @@
     <string name="message_unavailable_offline">Diese Nachricht ist offline nicht verfügbar. Sie wird geöffnet, sobald du wieder online bist.</string>
     <string name="no_subject">(kein Betreff)</string>
     <string name="open_external_link">Externen Link öffnen?</string>
-    <string name="leaving_aster_warning">Sie verlassen Aster und öffnen diesen Link in Ihrem Browser:</string>
+    <string name="leaving_aster_warning">Dieser Link wird außerhalb von Aster in Ihrem Browser geöffnet:</string>
     <string name="reply">Antworten</string>
     <string name="reply_all">Allen antworten</string>
     <string name="forward">Weiterleiten</string>
@@ -243,10 +243,10 @@
     <string name="decrypt_failed_body">Dieses Gerät kann diese Nachricht gerade nicht entschlüsseln. Versuchen Sie es in Kürze erneut.</string>
     <string name="decrypt_locked_by_reset_title">Durch Zurücksetzen des Passworts gesperrt</string>
     <string name="decrypt_locked_by_reset_body">Diese Nachricht ist mit Schlüsseln aus der Zeit vor dem Zurücksetzen Ihres Passworts verschlüsselt. Um sie zu entsperren, geben Sie Ihr vorheriges Passwort oder einen Wiederherstellungscode ein, den Sie vor dem Zurücksetzen gespeichert haben.</string>
-    <string name="e2e_encryption_failed">Senden fehlgeschlagen: Ende-zu-Ende-Verschlüsselung fehlgeschlagen. Die Nachricht wurde nicht gesendet.</string>
-    <string name="attachment_prepare_failed">Senden fehlgeschlagen: "%1$s" konnte nicht vorbereitet werden. Die Nachricht wurde nicht gesendet.</string>
-    <string name="e2e_keys_not_ready">Senden fehlgeschlagen: Verschlüsselungsschlüssel sind noch nicht bereit. Die Nachricht wurde nicht gesendet.</string>
-    <string name="e2e_recipient_key_missing">Senden fehlgeschlagen: Für einen Empfänger gibt es keinen Verschlüsselungsschlüssel. Die Nachricht wurde nicht gesendet.</string>
+    <string name="e2e_encryption_failed">Die Nachricht konnte nicht gesendet werden, da die Ende-zu-Ende-Verschlüsselung fehlgeschlagen ist.</string>
+    <string name="attachment_prepare_failed">Die Nachricht konnte nicht gesendet werden, da "%1$s" nicht vorbereitet werden konnte.</string>
+    <string name="e2e_keys_not_ready">Die Nachricht konnte nicht gesendet werden, da Ihre Verschlüsselungsschlüssel noch nicht bereit sind.</string>
+    <string name="e2e_recipient_key_missing">Die Nachricht konnte nicht gesendet werden, da ein Empfänger keinen Verschlüsselungsschlüssel hat.</string>
     <string name="recipient_not_on_aster">Kein Aster Mail-Konto verwendet %1$s. Prüfen Sie die Schreibweise und versuchen Sie es dann erneut. Ihr Entwurf ist gespeichert.</string>
     <string name="e2e_no_key_description">Diese Nachricht ist mit einem Schlüssel verschlüsselt, den dieses Gerät noch nicht besitzt. Öffnen Sie sie in der Aster-Web-App, um sie zu lesen.</string>
     <string name="no_body">(kein Inhalt)</string>
@@ -254,16 +254,16 @@
     <string name="attachment_locked">Dieser Anhang kann nicht geöffnet werden, weil sein Verschlüsselungsschlüssel auf diesem Gerät nicht verfügbar ist.</string>
     <string name="attachment_content_mismatch">Dieser Anhang stimmt nicht mit der Nachricht überein, mit der er gesendet wurde, und wurde deshalb nicht geöffnet.</string>
     <string name="download_complete">Download abgeschlossen</string>
-    <string name="cannot_decode_image">Bild kann nicht decodiert werden</string>
-    <string name="no_app_to_open">Keine App zum Öffnen dieser Datei</string>
+    <string name="cannot_decode_image">Dieses Bild konnte nicht geöffnet werden</string>
+    <string name="no_app_to_open">Keine App kann diese Datei öffnen</string>
     <string name="download">Herunterladen</string>
     <string name="open_with">Öffnen mit...</string>
     <string name="could_not_unsubscribe">Abmeldung fehlgeschlagen</string>
     <string name="failed_to_load_preview">Vorschau konnte nicht geladen werden</string>
     <string name="downloading_file">%s wird heruntergeladen...</string>
     <string name="saved_file">%s gespeichert</string>
-    <string name="failed_to_save">Speichern fehlgeschlagen</string>
-    <string name="failed_to_download">Download von %s fehlgeschlagen</string>
+    <string name="failed_to_save">Die Datei konnte nicht gespeichert werden</string>
+    <string name="failed_to_download">%s konnte nicht heruntergeladen werden</string>
     <string name="could_not_open_link">Link konnte nicht geöffnet werden</string>
     <string name="open_address_in_maps">In Karten-App öffnen</string>
     <string name="move_to_trash">In den Papierkorb verschieben</string>
@@ -305,7 +305,7 @@
     <string name="undo">Rückgängig</string>
     <string name="save_draft">Entwurf speichern</string>
     <string name="discard">Verwerfen</string>
-    <string name="toggle_cc_bcc">Cc/Bcc umschalten</string>
+    <string name="toggle_cc_bcc">Cc und Bcc ein- oder ausblenden</string>
     <string name="add_recipient">Empfänger hinzufügen</string>
     <string name="add_another_recipient">Weitere hinzufügen</string>
     <string name="compose_attachments">Anhänge</string>
@@ -334,8 +334,8 @@
 
     <string name="search_mail">E-Mails durchsuchen</string>
     <string name="send_problem_title">Problem beim Senden der E-Mail</string>
-    <string name="send_problem_message">Ihre Nachricht konnte noch nicht gesendet werden. Die App versucht es im Hintergrund weiter.</string>
-    <string name="send_problem_failed_message">Ihre Nachricht konnte nicht gesendet werden. Sie können es erneut versuchen oder sie verwerfen.</string>
+    <string name="send_problem_message">Ihre Nachricht wurde noch nicht gesendet. Aster Mail versucht es im Hintergrund weiter.</string>
+    <string name="send_problem_failed_message">Ihre Nachricht konnte nicht gesendet werden. Versuchen Sie es erneut oder verwerfen Sie sie.</string>
     <string name="search_aliases">Aliase durchsuchen</string>
     <string name="filter_has_attachment">Mit Anhang</string>
     <string name="filter_unread">Ungelesen</string>
@@ -368,7 +368,7 @@
     <string name="op_label_desc">Nach Label suchen</string>
     <string name="op_negate">-from:</string>
     <string name="op_negate_desc">Operator negieren</string>
-    <string name="search_privacy_note">Alle Suchen sind Ende-zu-Ende-verschlüsselt. Ihre E-Mails werden lokal auf diesem Gerät entschlüsselt - nichts wird an den Server gesendet.</string>
+    <string name="search_privacy_note">Alle Suchen sind Ende-zu-Ende-verschlüsselt. Ihre E-Mails werden auf diesem Gerät entschlüsselt, und nichts wird an den Server gesendet.</string>
     <string name="no_results_found">Keine Ergebnisse gefunden</string>
 
     <string name="contacts">Kontakte</string>
@@ -381,7 +381,7 @@
     <string name="alias_note_add">Notiz hinzufügen</string>
     <string name="alias_note_updated">Notiz aktualisiert</string>
     <string name="tab_favorites">Favoriten</string>
-    <string name="sync_contacts_description">Dies liest Kontakte von Ihrem Gerät und importiert sie in Aster. Ihre Kontakte werden vor der Speicherung verschlüsselt.</string>
+    <string name="sync_contacts_description">Aster liest die Kontakte auf Ihrem Gerät und importiert sie. Ihre Kontakte werden verschlüsselt, bevor sie gespeichert werden.</string>
     <string name="sync">Synchronisieren</string>
     <string name="new_contact">Neuer Kontakt</string>
     <string name="contact_unavailable">Kontakt nicht verfügbar</string>
@@ -432,7 +432,7 @@
     <string name="create_label">Label erstellen</string>
     <string name="label_name">Labelname</string>
     <string name="create_alias">Alias erstellen</string>
-    <string name="create_alias_invalid_chars">Buchstaben, Zahlen, Punkte, Unterstriche und Bindestriche sind erlaubte Zeichen.</string>
+    <string name="create_alias_invalid_chars">Verwenden Sie nur Buchstaben, Zahlen, Punkte, Unterstriche und Bindestriche.</string>
     <string name="alias_placeholder">benutzername@astermail.org</string>
     <string name="accounts">Konten</string>
     <string name="switch_workspace">Arbeitsbereich wechseln</string>
@@ -464,14 +464,14 @@
     <string name="smtp_tokens_upgrade_title">Aus Ihren eigenen Apps senden</string>
     <string name="smtp_tokens_upgrade_description">Erstellen Sie reine Versand-SMTP-Zugangsdaten für Ihre verifizierten eigenen Domains. Verfügbar ab Star.</string>
     <string name="smtp_tokens_no_domain_title">Fügen Sie zuerst eine verifizierte eigene Domain hinzu</string>
-    <string name="smtp_tokens_no_domain_description">SMTP-Token können nur an eine verifizierte Adresse auf einer eigenen Domain gebunden werden. Fügen Sie eine eigene Domain hinzu und verifizieren Sie sie, um zu beginnen.</string>
+    <string name="smtp_tokens_no_domain_description">SMTP-Token können nur an eine verifizierte Adresse auf einer eigenen Domain gebunden werden. Um ein Token zu erstellen, fügen Sie eine eigene Domain hinzu und verifizieren Sie sie.</string>
     <string name="smtp_token_generate">Token erstellen</string>
     <string name="smtp_token_create_title">SMTP-Token erstellen</string>
     <string name="smtp_token_name_label">Name</string>
     <string name="smtp_token_name_placeholder">z. B. Newsletter-Versand</string>
     <string name="smtp_token_address_label">Senden von</string>
     <string name="smtp_token_ready_title">Token erstellt</string>
-    <string name="smtp_token_ready_description">Kopieren Sie diese Einstellungen jetzt in Ihren Mail-Client oder Ihre App. Das Passwort wird nur einmal angezeigt und kann nicht erneut abgerufen werden.</string>
+    <string name="smtp_token_ready_description">Kopieren Sie diese Einstellungen jetzt in Ihren Mail-Client oder Ihre App. Das Passwort wird nur einmal angezeigt und kann nicht erneut angezeigt werden.</string>
     <string name="smtp_token_host">Host</string>
     <string name="smtp_token_port">Port</string>
     <string name="smtp_token_security">Sicherheit</string>
@@ -480,7 +480,7 @@
     <string name="smtp_token_copy_all">Alle kopieren</string>
     <string name="smtp_token_never_used">Nie</string>
     <string name="smtp_token_revoke_title">Token widerrufen?</string>
-    <string name="smtp_token_revoke_message">Dadurch wird %1$s dauerhaft widerrufen. Jede App, die ihn verwendet, kann dann keine E-Mails mehr senden.</string>
+    <string name="smtp_token_revoke_message">Dadurch wird %1$s dauerhaft widerrufen. Apps, die ihn verwenden, können keine E-Mails mehr senden.</string>
     <string name="smtp_token_revoked_toast">SMTP-Token widerrufen</string>
     <string name="smtp_token_setup_details">Einrichtungsdetails</string>
     <string name="smtp_token_setup_description">Verwenden Sie diese Einstellungen, um Ihren Mail-Client oder Ihre App zu verbinden.</string>
@@ -546,7 +546,7 @@
     <string name="color_theme_pink">Pink</string>
     <string name="color_theme_black">Schwarz</string>
     <string name="custom_theme_base_color">Basisfarbe</string>
-    <string name="custom_theme_base_color_subtitle">Wählen Sie eine Farbe, und wir erstellen eine passende Palette daraus</string>
+    <string name="custom_theme_base_color_subtitle">Wählen Sie eine Farbe, und Aster erstellt daraus eine vollständige Palette</string>
     <string name="custom_theme_hex_placeholder">#3b82f6</string>
     <string name="custom_theme_hex_invalid">Geben Sie einen gültigen Hex-Farbcode ein, z. B. #3b82f6</string>
     <string name="custom_theme_colors_title">Designfarben</string>
@@ -561,7 +561,7 @@
     <string name="custom_theme_reset_role">Auf automatisch zurücksetzen</string>
     <string name="custom_theme_reset_all">Alle auf automatisch zurücksetzen</string>
     <string name="custom_theme_upgrade_title">Eigenes Design</string>
-    <string name="custom_theme_upgrade_description">Erstellen Sie Ihr eigenes Farbdesign aus einer beliebigen Grundfarbe. Führen Sie ein Upgrade durch, um es freizuschalten.</string>
+    <string name="custom_theme_upgrade_description">Erstellen Sie Ihr eigenes Farbdesign aus einer beliebigen Grundfarbe. Führen Sie ein Upgrade durch, um es zu verwenden.</string>
     <string name="font">Schriftart</string>
     <string name="font_option_default">Aster Standard</string>
     <string name="font_option_system">System-UI</string>
@@ -648,7 +648,7 @@
     <string name="profile">Profil</string>
     <string name="saving">Wird gespeichert...</string>
     <string name="saved">Gespeichert</string>
-    <string name="error_try_again">Fehler - erneut versuchen</string>
+    <string name="error_try_again">Speichern fehlgeschlagen. Versuchen Sie es erneut.</string>
     <string name="your_name">Ihr Name</string>
     <string name="display_name">Anzeigename</string>
     <string name="primary_address">Primäre Adresse</string>
@@ -741,9 +741,9 @@
 
     <string name="ghost_aliases">Ghost-Aliase</string>
     <string name="ghost_aliases_about">Info</string>
-    <string name="ghost_aliases_description">Einweg-Adressen, die an Ihren Posteingang weiterleiten. Löschen Sie eine, ohne die anderen zu beeinträchtigen.</string>
+    <string name="ghost_aliases_description">Einweg-Adressen, die an Ihren Posteingang weiterleiten. Lassen Sie eine ablaufen, ohne die anderen zu beeinträchtigen.</string>
     <string name="no_ghost_aliases">Keine Ghost-Aliase</string>
-    <string name="no_ghost_aliases_subtitle">Verfassen Sie eine Nachricht und wählen Sie einen Ghost-Alias als Absender, um einen zu generieren</string>
+    <string name="no_ghost_aliases_subtitle">Um einen zu erstellen, verfassen Sie eine Nachricht und wählen Sie einen Ghost-Alias als Absender</string>
     <string name="expired">Abgelaufen</string>
     <string name="expire">Ablaufen lassen</string>
 
@@ -770,7 +770,7 @@
     <string name="referral_step_2">Die Person meldet sich über Ihren Link an und abonniert einen kostenpflichtigen Tarif.</string>
     <string name="referral_step_3">Sie verdienen einen Anteil an jeder Zahlung dieser Person, der Ihrem Guthaben automatisch gutgeschrieben wird.</string>
     <string name="rewards">Belohnungen</string>
-    <string name="share_text">Probieren Sie Aster aus, einen privaten E-Mail-Dienst, der wirklich funktioniert.</string>
+    <string name="share_text">Probieren Sie Aster für private, verschlüsselte E-Mails aus.</string>
     <string name="share_referral">Empfehlung teilen</string>
     <string name="referral_history">Empfehlungsverlauf</string>
     <string name="no_referrals_yet">Noch keine Empfehlungen</string>
@@ -781,7 +781,7 @@
     <string name="referral_reward_info">Ihr Freund erhält einen Rabatt auf die erste Zahlung, und Sie verdienen an jeder seiner Zahlungen.</string>
 
     <string name="billing">Abrechnung</string>
-    <string name="aster_plan">Aster Plan</string>
+    <string name="aster_plan">Aster-Tarif</string>
     <string name="cancels">Endet</string>
     <string name="ends_date">Endet am %s</string>
     <string name="storage">Speicher</string>
@@ -868,10 +868,10 @@
     <string name="template_content">Inhalt</string>
     <string name="template_content_placeholder">Geben Sie den Text Ihrer Vorlage ein…</string>
     <string name="template_content_required">Fügen Sie Inhalt für diese Vorlage hinzu.</string>
-    <string name="template_placeholders_hint">Verwenden Sie Platzhalter wie [Name], [Datum] usw. zur Anpassung bei der Verwendung.</string>
+    <string name="template_placeholders_hint">Verwenden Sie Platzhalter wie [Name] und [Datum], und füllen Sie sie aus, wenn Sie die Vorlage verwenden.</string>
     <string name="template_category_general">Allgemein</string>
     <string name="delete_template_title">Vorlage löschen</string>
-    <string name="delete_template_message">Möchten Sie %1$s wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="delete_template_message">%1$s löschen? Das lässt sich nicht rückgängig machen.</string>
     <string name="unnamed_template">(unbenannt)</string>
     <string name="unnamed_folder">(unbenannt)</string>
     <string name="new_label">Neu</string>
@@ -906,7 +906,7 @@
     <string name="category_idea">Idee</string>
     <string name="category_bug">Fehler</string>
     <string name="message">Nachricht</string>
-    <string name="feedback_placeholder">Beschreiben Sie, was Ihnen gefällt, was fehlt oder was nicht funktioniert.</string>
+    <string name="feedback_placeholder">Beschreiben Sie, was gut läuft, was fehlt oder was nicht funktioniert.</string>
     <string name="feedback_privacy_note">Ihre Konto-E-Mail wird angehängt, damit wir antworten können. Wir teilen Feedback niemals.</string>
     <string name="feedback_support_notice">Dieses Formular ist für Feedback, Ideen und Fehlerberichte gedacht. Bei Fragen oder für Hilfe mit Ihrem Konto senden Sie stattdessen eine E-Mail an das Support-Team unter %1$s.</string>
     <string name="send_feedback">Feedback senden</string>
@@ -947,8 +947,8 @@
     <string name="ext_save_changes">Änderungen speichern</string>
     <string name="ext_password_keep">Lassen Sie das Feld leer, um Ihr aktuelles Passwort zu behalten.</string>
     <string name="ext_account_updated">Konto aktualisiert</string>
-    <string name="ext_error_update_failed">Ihre Änderungen wurden nicht gespeichert. Versuchen Sie es noch einmal.</string>
-    <string name="ext_error_toggle_failed">Diese Einstellung konnte nicht geändert werden. Versuchen Sie es noch einmal.</string>
+    <string name="ext_error_update_failed">Ihre Änderungen konnten nicht gespeichert werden. Versuchen Sie es erneut.</string>
+    <string name="ext_error_toggle_failed">Diese Einstellung konnte nicht geändert werden. Versuchen Sie es erneut.</string>
     <string name="ext_gmail_wizard_title">Gmail einrichten</string>
     <string name="ext_gmail_wizard_progress">Schritt %1$d von %2$d</string>
     <string name="ext_gmail_wizard_step_1_title">Bestätigung in zwei Schritten aktivieren</string>
@@ -973,13 +973,13 @@
     <string name="ext_sync_now">Jetzt synchronisieren</string>
     <string name="ext_delete">Entfernen</string>
     <string name="ext_disconnect_title">Konto trennen</string>
-    <string name="ext_disconnect_confirm">Möchten Sie dieses Konto wirklich trennen? Alle synchronisierten E-Mails von diesem Konto verbleiben in Ihrem Posteingang, es sei denn, Sie löschen sie.</string>
+    <string name="ext_disconnect_confirm">Dieses Konto trennen? Alle synchronisierten E-Mails von diesem Konto bleiben in Ihrem Posteingang, es sei denn, Sie löschen sie.</string>
     <string name="ext_disconnect_button">Trennen</string>
     <string name="ext_disconnect_delete_messages">Importierte Nachrichten ebenfalls löschen</string>
     <string name="ext_error_load_failed">Verknüpfte Konten konnten nicht geladen werden. Zum Wiederholen ziehen.</string>
     <string name="ext_error_oauth_failed">Anmeldung konnte nicht gestartet werden. Verbindung prüfen und erneut versuchen.</string>
     <string name="ext_error_manual_failed">Konto konnte nicht gespeichert werden. Host, Port und Zugangsdaten prüfen.</string>
-    <string name="ext_error_no_session">Sitzung abgelaufen. Abmelden und neu anmelden, um fortzufahren.</string>
+    <string name="ext_error_no_session">Ihre Sitzung ist abgelaufen. Um fortzufahren, melden Sie sich ab und erneut an.</string>
     <string name="ext_error_sync_failed">Synchronisierung fehlgeschlagen. Zugangsdaten des Kontos prüfen und erneut versuchen.</string>
     <string name="ext_manual_saved">Konto hinzugefügt. Synchronisierung beginnt…</string>
     <string name="ext_last_sync">Letzte Synchronisierung: %1$s</string>
@@ -1021,7 +1021,7 @@
     <string name="billing_changed_to">Abrechnung geändert auf %s</string>
     <string name="default_payment_updated">Standard-Zahlungsmethode aktualisiert</string>
     <string name="payment_method_removed">Zahlungsmethode entfernt</string>
-    <string name="session_expired_sign_in">Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.</string>
+    <string name="session_expired_sign_in">Ihre Sitzung ist abgelaufen. Melden Sie sich erneut an.</string>
     <string name="vault_open_failed_notice">Ihre Schlüssel konnten auf diesem Gerät nicht entsperrt werden, daher lassen sich einige E-Mails hier möglicherweise nicht öffnen. Um Ihre Schlüssel zu reparieren, melden Sie sich bei Aster Mail im Web an und danach erneut auf diesem Gerät.</string>
     <string name="storage_key_update_pending_notice">Aster Mail konnte den Schlüssel, der Ihre gespeicherten Daten schützt, nicht vollständig aktualisieren. Ihre Änderungen werden weiterhin gespeichert, und Aster Mail versucht es im Hintergrund weiter.</string>
     <string name="could_not_start_checkout">Bezahlvorgang konnte nicht gestartet werden</string>
@@ -1070,10 +1070,10 @@
     <string name="no_folders_subtitle">Sie haben noch keine Ordner erstellt</string>
     <string name="delete_folder">Ordner löschen</string>
     <string name="delete_folder_confirm_title">Ordner löschen?</string>
-    <string name="delete_folder_confirm_message">„%1$s“ wird entfernt, und es lässt sich nicht rückgängig machen. Die enthaltenen E-Mails bleiben in Ihrem Konto, sie sind nur nicht mehr unter diesem Ordner abgelegt.</string>
+    <string name="delete_folder_confirm_message">Dadurch wird „%1$s“ entfernt. Dies lässt sich nicht rückgängig machen. Die enthaltenen E-Mails bleiben in Ihrem Konto, sind aber nicht mehr in diesem Ordner abgelegt.</string>
     <string name="delete_folder_confirm_subfolders">Unterordner werden auf die oberste Ebene verschoben.</string>
     <string name="delete_label_confirm_title">Label löschen?</string>
-    <string name="delete_label_confirm_message">„%1$s“ wird von allen E-Mails entfernt, und es lässt sich nicht rückgängig machen. Die E-Mails selbst bleiben in Ihrem Konto.</string>
+    <string name="delete_label_confirm_message">Dadurch wird „%1$s“ von allen E-Mails entfernt, die dieses Label haben. Dies lässt sich nicht rückgängig machen. Die E-Mails bleiben in Ihrem Konto.</string>
 
     <string name="api_keys">API-Schlüssel</string>
     <string name="no_api_keys">Keine API-Schlüssel</string>
@@ -1121,16 +1121,16 @@
     <string name="error_password_min_length">Passwort muss mindestens 12 Zeichen lang sein</string>
     <string name="error_passwords_no_match">Passwörter stimmen nicht überein</string>
     <string name="error_invalid_credentials">Benutzername oder Passwort ungültig</string>
-    <string name="error_captcha_failed">Captcha-Überprüfung fehlgeschlagen. Bitte versuchen Sie es erneut.</string>
+    <string name="error_captcha_failed">Das Captcha konnte nicht überprüft werden. Versuchen Sie es erneut.</string>
     <string name="error_access_denied">Zugriff verweigert</string>
     <string name="error_account_not_found">Konto nicht gefunden</string>
     <string name="error_no_connection">Verbindung zum Server nicht möglich. Überprüfen Sie Ihre Internetverbindung.</string>
-    <string name="error_server">Serverfehler. Bitte versuchen Sie es später erneut.</string>
+    <string name="error_server">Auf dem Server ist ein Fehler aufgetreten. Versuchen Sie es später erneut.</string>
     <string name="error_invalid_request">Ungültige Anfrage</string>
-    <string name="error_timeout">Verbindung abgelaufen. Bitte versuchen Sie es erneut.</string>
-    <string name="error_ssl">Sichere Verbindung fehlgeschlagen. Bitte versuchen Sie es erneut.</string>
-    <string name="error_generic">Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.</string>
-    <string name="error_too_many_attempts">Zu viele Versuche. Bitte warten Sie einen Moment und versuchen Sie es erneut.</string>
+    <string name="error_timeout">Die Verbindung hat das Zeitlimit überschritten. Versuchen Sie es erneut.</string>
+    <string name="error_ssl">Es konnte keine sichere Verbindung hergestellt werden. Versuchen Sie es erneut.</string>
+    <string name="error_generic">Etwas ist schiefgelaufen. Versuchen Sie es erneut.</string>
+    <string name="error_too_many_attempts">Zu viele Versuche. Warten Sie einen Moment und versuchen Sie es dann erneut.</string>
     <string name="error_username_taken">Dieser Benutzername ist bereits vergeben. Wähle einen anderen.</string>
 
     <string name="error_send_recovery">Wiederherstellungs-E-Mail konnte nicht gesendet werden</string>
@@ -1159,7 +1159,7 @@
     <string name="failed_mark_all_read">Alle als gelesen markieren fehlgeschlagen</string>
     <string name="failed_mark_all_unread">Alle als ungelesen markieren fehlgeschlagen</string>
     <string name="failed_mark_read">Als gelesen markieren fehlgeschlagen</string>
-    <string name="failed_remove_spam">Aus Spam entfernen fehlgeschlagen</string>
+    <string name="failed_remove_spam">Entfernen aus Spam fehlgeschlagen</string>
     <string name="failed_report_spam">Spam-Meldung fehlgeschlagen</string>
     <string name="failed_to_archive">Archivieren fehlgeschlagen</string>
     <string name="failed_to_delete">Löschen fehlgeschlagen</string>
@@ -1197,7 +1197,7 @@
     <string name="totp_verify_title">Zwei-Faktor-Bestätigung</string>
     <string name="trash_emptied">Papierkorb geleert</string>
     <string name="unpin">Loslösen</string>
-    <string name="unpin_failed">Loslösen fehlgeschlagen</string>
+    <string name="unpin_failed">Anheften konnte nicht aufgehoben werden</string>
     <string name="unpinned">Nicht mehr angeheftet</string>
     <plurals name="new_mail_notification">
         <item quantity="one">%d neue Nachricht</item>
@@ -1208,14 +1208,14 @@
     <string name="new_password_max_length">Neues Passwort darf höchstens 128 Zeichen lang sein</string>
     <string name="new_password_mismatch">Neues Passwort und Bestätigung stimmen nicht überein</string>
     <string name="new_password_must_differ">Neues Passwort muss sich vom aktuellen unterscheiden</string>
-    <string name="failed_change_password">Passwort konnte nicht geändert werden</string>
+    <string name="failed_change_password">Ihr Passwort konnte nicht geändert werden</string>
     <string name="enter_account_password">Geben Sie Ihr Kontopasswort ein</string>
     <string name="something_went_wrong">Etwas ist schiefgelaufen</string>
-    <string name="name_cannot_be_empty">Name darf nicht leer sein</string>
+    <string name="name_cannot_be_empty">Geben Sie einen Namen ein</string>
     <string name="session_revoked">Sitzung widerrufen</string>
     <string name="failed_revoke_session">Sitzung konnte nicht widerrufen werden</string>
     <string name="all_other_sessions_signed_out">Alle anderen Sitzungen abgemeldet</string>
-    <string name="failed_sign_out_other_sessions">Abmeldung anderer Sitzungen fehlgeschlagen</string>
+    <string name="failed_sign_out_other_sessions">Andere Sitzungen konnten nicht abgemeldet werden</string>
     <string name="scan_complete">Scan abgeschlossen</string>
     <string name="current_password_incorrect">Aktuelles Passwort ist falsch</string>
     <string name="password_change_background_reencrypt_failed">Ihr Passwort wurde geändert. Aster Mail verschlüsselt einen Teil Ihrer gesendeten Nachrichten noch neu und schließt das im Hintergrund ab.</string>
@@ -1256,7 +1256,7 @@
     <string name="scan_failed">Scan fehlgeschlagen</string>
     <string name="toast_unsubscribed">Abbestellt</string>
     <string name="unsubscribe_failed">Abmeldung fehlgeschlagen</string>
-    <string name="unsubscribe_manual_required">Dieser Absender unterstützt keine automatische Abmeldung. Über den Link in der E-Mail können Sie sich selbst abmelden.</string>
+    <string name="unsubscribe_manual_required">Dieser Absender unterstützt keine automatische Abmeldung. Verwenden Sie zum Abmelden den Link in der E-Mail.</string>
     <string name="bulk_unsubscribe_failed">Massenabmeldung fehlgeschlagen</string>
     <string name="unsubscribe_in_progress">Abmeldung läuft</string>
     <string name="subscription_hero_summary">%1$s aktive Absender, %2$s abbestellt, %3$s E-Mails</string>
@@ -1275,7 +1275,7 @@
         <item quantity="other">%d Absender abgemeldet</item>
     </plurals>
     <string name="enter_six_digit_code">Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein</string>
-    <string name="session_unavailable_sign_in_again">Sitzung nicht verfügbar - bitte erneut anmelden</string>
+    <string name="session_unavailable_sign_in_again">Ihre Sitzung ist nicht verfügbar. Melden Sie sich erneut an.</string>
     <string name="vacation_default_subject">Abwesend</string>
     <string name="vacation_default_body">Ich bin derzeit abwesend und werde antworten, sobald ich zurück bin.</string>
     <string name="subject_required">Betreff ist erforderlich</string>
@@ -1339,7 +1339,7 @@
     <string name="settings_plan_bullet_free_aliases">5 E-Mail-Aliasse</string>
     <string name="settings_billing_monthly">Monatlich</string>
     <string name="settings_billing_yearly">Jährlich</string>
-    <string name="settings_prices_usd_note">Preise in USD angegeben. Der endgültige Betrag wird an der Kasse ermittelt.</string>
+    <string name="settings_prices_usd_note">Preise in USD. Der endgültige Betrag wird an der Kasse bestätigt.</string>
     <string name="settings_prices_currency_note">Preise in %1$s. Der endgültige Betrag wird beim Bezahlen bestätigt.</string>
     <string name="settings_suffix_per_mo">/Monat</string>
     <string name="settings_suffix_per_yr">/Jahr</string>
@@ -1359,13 +1359,13 @@
     <string name="pending_deletion_keep">Mein Konto behalten</string>
     <string name="pending_deletion_sign_out">Abmelden</string>
     <string name="pending_deletion_restoring">Wird wiederhergestellt…</string>
-    <string name="pending_deletion_error">Ihr Konto konnte nicht wiederhergestellt werden. Bitte versuchen Sie es erneut.</string>
+    <string name="pending_deletion_error">Ihr Konto konnte nicht wiederhergestellt werden. Versuchen Sie es erneut.</string>
     <string name="image_blocked">Bild blockiert</string>
     <string name="tracking_pixel_blocked">Tracking-Pixel blockiert</string>
     <string name="alias_available">Dieser Alias ist verfügbar.</string>
     <string name="alias_not_available">Dieser Alias ist bereits vergeben.</string>
     <string name="alias_check_failed">Verfügbarkeit konnte nicht geprüft werden. Sie können dennoch versuchen, ihn zu erstellen.</string>
-    <string name="csrf_unavailable">Diese Sitzung ist fehlerhaft. Bitte melden Sie sich erneut an.</string>
+    <string name="csrf_unavailable">Diese Sitzung kann nicht überprüft werden. Melden Sie sich erneut an.</string>
     <string name="received_on_label">Empfangen an</string>
     <string name="forwarded_by_label">Weitergeleitet von</string>
     <string name="forwarded_via_domain">über %1$s</string>
@@ -1502,13 +1502,13 @@
     <string name="mail_rules_field_advanced">Erweiterte Bedingung</string>
     <string name="mail_rules_action_unsupported">Nicht unterstützte Aktion</string>
     <string name="mail_rules_advanced_notice">Diese Regel verwendet erweiterte Bedingungen. Öffnen Sie sie in der Web-App, um sie zu bearbeiten.</string>
-    <string name="mail_rules_regex_empty">Ein Regex-Muster wird vor dem Speichern benötigt.</string>
-    <string name="mail_rules_regex_too_long">Dieses Regex ist zu lang. Eine gekürzte Version funktioniert.</string>
-    <string name="mail_rules_regex_invalid">Dieses Regex-Muster enthält einen Fehler. Prüfen Sie die Syntax.</string>
+    <string name="mail_rules_regex_empty">Geben Sie vor dem Speichern ein Regex-Muster ein.</string>
+    <string name="mail_rules_regex_too_long">Dieses Regex ist zu lang. Kürzen Sie es und versuchen Sie es erneut.</string>
+    <string name="mail_rules_regex_invalid">Dieses Regex-Muster ist ungültig. Prüfen Sie die Syntax und versuchen Sie es erneut.</string>
     <string name="mail_rules_regex_backreference">Rückverweise wie \1 werden nicht unterstützt. Formulieren Sie das Muster ohne sie.</string>
     <string name="mail_rules_regex_lookaround">Lookahead und Lookbehind werden nicht unterstützt. Formulieren Sie das Muster ohne sie.</string>
     <string name="tap_again_to_exit">Zum Beenden erneut tippen</string>
-    <string name="action_failed">Aktion fehlgeschlagen. Bitte erneut versuchen.</string>
+    <string name="action_failed">Diese Aktion konnte nicht abgeschlossen werden. Versuchen Sie es erneut.</string>
     <string name="version_copied">Version kopiert</string>
     <string name="hold_to_copy_version">Zum Kopieren gedrückt halten</string>
     <string name="name_copied">Name kopiert</string>
@@ -1558,7 +1558,7 @@
     <string name="yesterday">Gestern</string>
     <string name="onboarding_skip">Überspringen</string>
     <string name="onboarding_slide1_title">Willkommen bei Aster</string>
-    <string name="onboarding_slide1_body">Private E-Mail, die Sie wirklich schützt.</string>
+    <string name="onboarding_slide1_body">Private E-Mail, die Sie schützt.</string>
     <string name="onboarding_slide2_title">Ende-zu-Ende-verschlüsselt</string>
     <string name="onboarding_slide2_body">Jede Nachricht wird mit Ihren Schlüsseln verschlüsselt, bevor sie Ihr Gerät verlässt. Nicht einmal Aster kann Ihre E-Mails lesen.</string>
     <string name="onboarding_slide3_title">Kein Tracking</string>
@@ -1637,7 +1637,7 @@
     <string name="delete_draft">Entwurf löschen</string>
     <string name="discard_draft">Entwurf verwerfen</string>
     <string name="delete_draft_question">Entwurf löschen?</string>
-    <string name="delete_draft_confirm_description">Dieser Entwurf wird endgültig gelöscht und kann nicht wiederhergestellt werden.</string>
+    <string name="delete_draft_confirm_description">Dadurch wird der Entwurf endgültig gelöscht. Sie können ihn nicht wiederherstellen.</string>
     <string name="to_label_prefix">an %s</string>
     <string name="failed_to_delete_draft">Entwurf konnte nicht gelöscht werden</string>
     <string name="trash_already_empty">Der Papierkorb ist bereits leer</string>
@@ -1739,7 +1739,7 @@
     <string name="import_no_jobs">Noch keine Importe</string>
     <string name="import_chunk_progress">Teil %1$d von %2$d wird hochgeladen</string>
     <string name="import_job_created">Import gestartet</string>
-    <string name="import_file_too_large">Datei ist zu groß (max. 10 GiB)</string>
+    <string name="import_file_too_large">Diese Datei ist größer als 10 GiB</string>
     <string name="attachment_too_large">\"%1$s\" liegt über dem Einzeldateilimit von %2$s</string>
     <string name="attachment_too_large_upgradable">\"%1$s\" überschreitet das Limit von %2$s pro Datei in Ihrem Tarif. Ein Upgrade erhöht es auf %3$s.</string>
     <string name="attachment_total_too_large">Ihre Anhänge liegen über dem Gesamtlimit von %1$s</string>
@@ -1785,7 +1785,7 @@
     <string name="use_template">Vorlage verwenden</string>
     <string name="pick_template">Vorlage wählen</string>
     <string name="template_inserted">Vorlage eingefügt</string>
-    <string name="leave_us_feedback">Feedback geben</string>
+    <string name="leave_us_feedback">Feedback senden</string>
     <string name="ext_label_google_account">Gmail-Konto</string>
     <string name="ext_label_microsoft_account">Outlook-Konto</string>
     <string name="ext_label_yahoo_account">Yahoo-Konto</string>
@@ -1796,7 +1796,7 @@
     <string name="import_section_file">Datei hochladen</string>
     <string name="import_section_sync">Externe Synchronisierung</string>
     <string name="import_connect_title">Von einem anderen Anbieter synchronisieren</string>
-    <string name="import_connect_description">Melden Sie sich einmal an, und wir halten Ihr anderes Postfach synchron.</string>
+    <string name="import_connect_description">Melden Sie sich einmal an, und Aster hält Ihr anderes Postfach synchron.</string>
     <string name="import_provider_other_imap">Andere (IMAP)</string>
     <string name="import_sync_title">Externe Synchronisierung</string>
     <string name="import_kind_external_sync">Externe Synchronisierung</string>
@@ -1853,12 +1853,12 @@
     <string name="delete_account_confirm_mismatch">Geben Sie zur Bestätigung genau DELETE ein</string>
     <string name="delete_account_button">Mein Konto löschen</string>
     <string name="deleting_account">Konto wird gelöscht…</string>
-    <string name="failed_delete_account">Konto konnte nicht gelöscht werden</string>
+    <string name="failed_delete_account">Ihr Konto konnte nicht gelöscht werden</string>
     <string name="delete_account_grace_note">Die Löschung ist in 30 Tagen geplant. Melden Sie sich vorher wieder an, um sie abzubrechen.</string>
     <string name="totp_code_optional">Zwei-Faktor-Code (falls aktiv)</string>
     <string name="totp_code_required_label">Authenticator- oder Backup-Code</string>
     <string name="totp_code_required_error">Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App oder einen Ihrer Backup-Codes ein</string>
-    <string name="preferences_locked_retry">Ihre Einstellungen ließen sich gerade nicht entsperren. Es werden Standardwerte angezeigt. Gehen Sie zurück und öffnen Sie sie erneut.</string>
+    <string name="preferences_locked_retry">Ihre Einstellungen konnten nicht entsperrt werden, daher werden Standardwerte angezeigt. Um es erneut zu versuchen, gehen Sie zurück und öffnen Sie diese Seite erneut.</string>
     <string name="encrypted_edit_locked_retry">Aster Mail entsperrt dieses Element noch, daher wurde Ihre Änderung nicht gespeichert. Versuchen Sie es gleich noch einmal.</string>
     <string name="plan_name_star">Stern</string>
     <string name="plan_name_nova">Nova</string>
@@ -1870,7 +1870,7 @@
     <string name="ghost_expired_toast">Ghost-Alias beendet</string>
     <string name="ghost_action_failed">Ghost-Alias konnte nicht aktualisiert werden</string>
     <string name="upgrade_modal_title">Tarif upgraden</string>
-    <string name="upgrade_modal_description_generic">Sie haben das Limit Ihres aktuellen Tarifs erreicht. Führen Sie ein Upgrade durch, um weiterzumachen.</string>
+    <string name="upgrade_modal_description_generic">Sie haben das Limit Ihres aktuellen Tarifs erreicht. Führen Sie ein Upgrade durch, um mehr zu erhalten.</string>
     <string name="upgrade_modal_description_specific">Sie haben Ihr %1$s-Limit im Tarif %2$s erreicht. Führen Sie ein Upgrade durch, um mehr zu erhalten.</string>
     <string name="upgrade_view_plans">Tarife ansehen</string>
     <string name="upgrade_buy_storage">Speicher hinzufügen</string>
@@ -1896,7 +1896,7 @@
     <string name="usage_unlimited">Unbegrenzt</string>
     <string name="usage_storage">Speicher</string>
     <string name="upgrade_inline_card_title">Upgrade für mehr</string>
-    <string name="upgrade_inline_card_description">Sie haben das Limit des kostenlosen Tarifs erreicht. Mit einem kostenpflichtigen Tarif schalten Sie mehr frei.</string>
+    <string name="upgrade_inline_card_description">Sie haben das Limit des kostenlosen Tarifs erreicht. Wechseln Sie zu einem kostenpflichtigen Tarif, um mehr zu erhalten.</string>
     <string name="your_key">Ihr Schlüssel</string>
     <string name="recovery_codes">Wiederherstellungscodes</string>
     <string name="low">Niedrig</string>
@@ -1925,7 +1925,7 @@
     <string name="publish_to_keyservers_sub">Ihren Schlüssel auf öffentlichen Keyservern veröffentlichen</string>
     <string name="alias_pgp_title">PGP mit Aliassen verwenden</string>
     <string name="alias_pgp_sub">Wenn diese Option deaktiviert ist, enthalten E-Mails, die Sie von einem Alias senden, keine PGP-Signatur und keine Schlüsseldetails, die sie mit Ihrem Konto verknüpfen.</string>
-    <string name="keyserver_publish_failed">Ihr öffentlicher Schlüssel wurde nicht auf dem Keyserver veröffentlicht. Ein erneuter Versuch genügt meist.</string>
+    <string name="keyserver_publish_failed">Ihr öffentlicher Schlüssel konnte nicht auf dem Keyserver veröffentlicht werden. Versuchen Sie es erneut.</string>
     <string name="public_key_copied">Öffentlicher Schlüssel kopiert</string>
     <string name="created_at_format">Erstellt am %1$s</string>
     <string name="identity_key_unavailable_hint">Melden Sie sich erneut an, um Ihr Schlüsselmaterial wiederherzustellen.</string>
@@ -2037,7 +2037,7 @@
     <string name="login_alerts">Anmeldehinweise</string>
     <string name="login_alerts_subtitle">Benachrichtigung, wenn sich ein neues Gerät anmeldet</string>
     <string name="login_alerts_info_title">Anmeldehinweise</string>
-    <string name="login_alerts_info_desc">Sendet Ihnen eine E-Mail, wenn sich jemand von einem neuen Gerät oder Ort in Ihr Konto einloggt. Gut, um unbefugten Zugriff früh zu erkennen.</string>
+    <string name="login_alerts_info_desc">Sendet Ihnen eine E-Mail, wenn Ihr Konto von einem neuen Gerät oder Ort aus angemeldet wird, damit Sie unbefugten Zugriff früh erkennen.</string>
     <string name="passkeys_security_keys">Passkeys und Sicherheitsschlüssel</string>
     <string name="passkeys_none_subtitle">Noch keine Passkeys</string>
     <string name="section_trusted_devices">Vertraute Geräte</string>
@@ -2057,7 +2057,7 @@
     <string name="remote_image_keep_subtitle">Speichert geladene Bilder verschlüsselt, damit beim erneuten Öffnen der Nachricht nichts an den Absender gesendet wird.</string>
     <string name="remote_image_prefetch_title">Bilder beim Eingang von E-Mails laden</string>
     <string name="remote_image_prefetch_subtitle">Ruft Bilder über Aster ab, sobald E-Mails eingehen, sodass Absender nicht erkennen, wann du sie öffnest. Läuft nur über WLAN.</string>
-    <string name="remote_image_prefetch_needs_always">Stelle dazu das Laden externer Bilder auf „Immer laden“.</string>
+    <string name="remote_image_prefetch_needs_always">Stellen Sie dazu „Laden externer Bilder“ auf „Immer laden“.</string>
     <string name="remote_image_clear_title">Gespeicherte Bilder löschen</string>
     <string name="remote_image_clear_subtitle">Löscht die auf diesem Gerät gespeicherten Bilder.</string>
     <string name="remote_image_cache_cleared">Gespeicherte Bilder gelöscht</string>
@@ -2065,7 +2065,7 @@
     <string name="block_remote_images_info_title">Externe Bilder blockieren</string>
     <string name="block_remote_images_info_desc">E-Mails können Bilder von fremden Servern laden. Beim Laden sieht der Server des Absenders Ihre IP-Adresse und weiß, dass Sie die Nachricht geöffnet haben. Diese Option verhindert das Laden solcher Bilder.</string>
     <string name="block_tracking_pixels_subtitle_security">Unsichtbare Tracking-Pixel blockieren, die Absender benachrichtigen, wenn Sie eine E-Mail öffnen</string>
-    <string name="block_tracking_pixels_info_title">Was sind Spy-Pixel?</string>
+    <string name="block_tracking_pixels_info_title">Was sind Spionage-Pixel?</string>
     <string name="block_tracking_pixels_info_desc">Unsichtbare 1x1-Bilder in E-Mails. Beim Laden sieht der Absender Ihre IP, wann Sie die Nachricht geöffnet haben und Ihren Gerätetyp. Aster entfernt sie, bevor sie laden können.</string>
     <string name="block_tracking_links_subtitle">Tracking-Parameter aus Links in E-Mails entfernen</string>
     <string name="block_tracking_links_info_title">Tracking-Links</string>
@@ -2075,7 +2075,7 @@
     <string name="warn_suspicious_links_info_desc">Zeigt eine Warnung, bevor ein Link außerhalb von Aster geöffnet wird. So erkennen Sie Phishing-Versuche, bevor Sie tippen.</string>
     <string name="section_privacy_security">Privatsphäre</string>
     <string name="strip_exif_info_title">Was sind Bild-Metadaten?</string>
-    <string name="strip_exif_info_desc">Mit Smartphones und Kameras aufgenommene Fotos enthalten versteckte Daten wie GPS-Koordinaten, Gerätemodell, Zeitstempel und Objektivdaten. Aster entfernt diese Daten vor dem Hochladen, damit Empfänger nur die Pixel sehen.</string>
+    <string name="strip_exif_info_desc">Mit Smartphones und Kameras aufgenommene Fotos enthalten versteckte Daten wie GPS-Koordinaten, Gerätemodell, Zeitstempel und Objektivdaten. Wenn Sie ein Bild senden, werden diese Daten mitgesendet. Aster entfernt sie vor dem Hochladen, sodass Empfänger nur das Bild sehen.</string>
     <string name="section_recent_activity">Letzte Aktivität</string>
     <string name="no_recent_activity">Keine aktuelle Aktivität</string>
     <string name="no_recent_activity_subtitle">Sicherheitsereignisse erscheinen hier</string>
@@ -2224,17 +2224,17 @@
     <string name="export_complete">Export abgeschlossen</string>
     <string name="export_emails_exported">Exportierte E-Mails</string>
     <string name="export_file_size">Dateigröße</string>
-    <string name="export_share_save">Teilen / Speichern</string>
+    <string name="export_share_save">Teilen oder speichern</string>
     <string name="export_private_key_dialog_title">Privaten Schlüssel exportieren</string>
     <string name="export_private_key_message">Ihr privater Schlüssel wird im ASCII-Armor-PGP-Format exportiert. Geben Sie Ihr Kontopasswort ein, um den Export freizugeben.</string>
     <string name="export_private_key_password_label">Kontopasswort</string>
     <string name="export_private_key_exporting">Wird exportiert...</string>
     <string name="export_private_key_button">Exportieren</string>
     <string name="toast_private_key_copied">Privater Schlüssel in die Zwischenablage kopiert</string>
-    <string name="error_private_key_export">Falsches Passwort oder Export fehlgeschlagen</string>
+    <string name="error_private_key_export">Der Schlüssel konnte nicht exportiert werden. Prüfen Sie Ihr Passwort und versuchen Sie es erneut.</string>
     <string name="storage_addons_title">Speicher-Add-ons</string>
     <string name="storage_addons_description">Erweitern Sie jeden Tarif um zusätzlichen Speicher. Diese Add-ons lassen sich kombinieren.</string>
-    <string name="payment_method_card">Kredit- / Debitkarte</string>
+    <string name="payment_method_card">Kredit- oder Debitkarte</string>
     <string name="payment_method_card_subtitle">Mit Stripe bezahlen</string>
     <string name="payment_method_crypto">Kryptowährung</string>
     <string name="payment_method_crypto_subtitle">Mit Krypto bezahlen</string>
@@ -2263,7 +2263,7 @@
     <string name="crypto_native_cancel_invoice">Diese Rechnung stornieren</string>
     <string name="crypto_native_cancel_confirm_title">Diese Rechnung stornieren?</string>
     <string name="crypto_native_cancel_confirm_body">Die Zahlungsadresse wird nicht mehr überwacht. Senden Sie nach dem Stornieren keine Gelder mehr an sie. Sie können jederzeit eine neue Zahlung starten.</string>
-    <string name="crypto_native_cancel_failed">Diese Zahlung konnte nicht abgebrochen werden. Bitte versuchen Sie es erneut.</string>
+    <string name="crypto_native_cancel_failed">Diese Zahlung konnte nicht abgebrochen werden. Versuchen Sie es erneut.</string>
     <string name="crypto_native_paid_title">Zahlung abgeschlossen</string>
     <string name="crypto_native_paid_body">Ihr Tarif ist jetzt aktiv. Danke, dass Sie private E-Mail unterstützen.</string>
     <string name="crypto_native_cancelled_title">Zahlung abgebrochen</string>
@@ -2273,9 +2273,9 @@
     <string name="crypto_native_not_found">Zahlung nicht gefunden</string>
     <string name="crypto_native_not_found_body">Diese Zahlung konnte nicht geladen werden. Sie ist möglicherweise abgelaufen oder wurde entfernt.</string>
     <string name="crypto_native_unavailable">Zahlung konnte nicht geladen werden</string>
-    <string name="crypto_native_unavailable_body">Wir konnten den Server nicht erreichen. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut. Ihre Zahlung ist davon nicht betroffen.</string>
+    <string name="crypto_native_unavailable_body">Der Server konnte nicht erreicht werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut. Ihre Zahlung ist davon nicht betroffen.</string>
     <string name="crypto_native_manual_review">In Prüfung</string>
-    <string name="crypto_native_manual_review_body">Diese Zahlung braucht eine kurze manuelle Prüfung. Das dauert meist wenige Stunden, danach wird Ihr Tarif automatisch gutgeschrieben.</string>
+    <string name="crypto_native_manual_review_body">Diese Zahlung muss manuell geprüft werden. Das dauert meist wenige Stunden, danach wird Ihr Tarif automatisch gutgeschrieben.</string>
     <string name="crypto_native_transaction">Transaktion</string>
     <string name="crypto_native_status_title">Zahlungsstatus</string>
     <string name="crypto_native_awaiting_hint">Warten auf Ihre Überweisung</string>
@@ -2377,7 +2377,7 @@
     <string name="kids_link_copied">Einrichtungslink kopiert</string>
     <string name="kids_link_regenerated">Neuer Link erzeugt</string>
     <string name="kids_released">Reservierung freigegeben</string>
-    <string name="kids_action_failed">Aktion fehlgeschlagen. Bitte versuchen Sie es erneut.</string>
+    <string name="kids_action_failed">Diese Aktion konnte nicht abgeschlossen werden. Versuchen Sie es erneut.</string>
     <string name="image_failed_placeholder">[Bild konnte nicht geladen werden]</string>
     <string name="image_lightbox_title">Bildvorschau</string>
     <string name="image_lightbox_failed">Dieses Bild konnte nicht geöffnet werden.</string>
@@ -2647,11 +2647,11 @@
     <string name="domain_purchase_pay_with">Bezahlen mit</string>
     <string name="domain_purchase_pay_card">Karte</string>
     <string name="domain_purchase_buy">Für %1$s kaufen</string>
-    <string name="domain_purchase_error">Kauf fehlgeschlagen. Bitte versuchen Sie es erneut.</string>
+    <string name="domain_purchase_error">Der Kauf konnte nicht abgeschlossen werden. Versuchen Sie es erneut.</string>
     <string name="domain_purchase_error_taken">Diese Domain wurde gerade vergeben. Bitte wählen Sie eine andere.</string>
     <string name="domain_purchase_error_limit">Sie haben das Domain-Limit Ihres Tarifs erreicht. Führen Sie ein Upgrade durch, um weitere hinzuzufügen.</string>
     <string name="domain_purchase_error_slow_down">Zu viele Domain-Bestellungen gleichzeitig. Schließen Sie die laufenden ab oder warten Sie kurz.</string>
-    <string name="domain_purchase_error_paused">Domain-Käufe sind für ein paar Minuten pausiert. Bitte versuchen Sie es gleich noch einmal.</string>
+    <string name="domain_purchase_error_paused">Domain-Käufe sind für ein paar Minuten pausiert. Versuchen Sie es gleich noch einmal.</string>
     <string name="domain_purchase_error_not_allowed">Ihr Konto kann diesen Kauf derzeit nicht abschließen. Wenden Sie sich an den Support, um Hilfe zu erhalten.</string>
     <string name="domain_purchase_progress_title">%1$s wird eingerichtet</string>
     <string name="domain_purchase_step_payment">Zahlung eingegangen</string>
@@ -2665,8 +2665,8 @@
     <string name="domain_purchase_order_expired">Diese Bestellung ist abgelaufen, bevor sie bezahlt wurde. Starten Sie einen neuen Kauf, um die Domain zu erhalten.</string>
     <string name="domain_purchase_order_lapsed">Diese Domain hat ihr Ablaufdatum erreicht und ist nicht mehr aktiv. Kaufen Sie sie erneut, um sie zurückzuholen.</string>
     <string name="domain_purchase_try_instead">Versuchen Sie stattdessen eine dieser Alternativen</string>
-    <string name="domain_purchase_empty_subtitle">Geben Sie ein Wort, einen Namen oder eine vollständige Domain ein. Wir prüfen jede Endung, die wir anbieten, und zeigen Ihnen, was frei ist.</string>
-    <string name="domain_purchase_search_failed">Die Suche ist fehlgeschlagen. Bitte versuchen Sie es erneut.</string>
+    <string name="domain_purchase_empty_subtitle">Geben Sie ein Wort, einen Namen oder eine vollständige Domain ein. Wir prüfen jede Endung, die wir anbieten, und zeigen Ihnen, welche verfügbar sind.</string>
+    <string name="domain_purchase_search_failed">Die Suche konnte nicht abgeschlossen werden. Versuchen Sie es erneut.</string>
     <string name="domain_purchase_more_suggestions">Weitere Ideen generieren</string>
     <string name="domain_purchase_order_summary">Bestellübersicht</string>
     <string name="domain_purchase_summary_whois">WHOIS-Datenschutz</string>
@@ -2689,7 +2689,7 @@
     <string name="domain_purchase_detail_privacy">Standardmäßig privat</string>
     <string name="domain_purchase_detail_public_whois">Öffentlicher WHOIS-Eintrag</string>
     <string name="domain_purchase_whois_public_notice">Die Registry für .%1$s erlaubt keinen WHOIS-Datenschutz. Aster registriert die Domain mit den Kontaktdaten des Unternehmens, sodass Ihre persönlichen Daten nicht veröffentlicht werden.</string>
-    <string name="domain_purchase_detail_setup">Null Einrichtung</string>
+    <string name="domain_purchase_detail_setup">Keine Einrichtung nötig</string>
     <string name="domain_purchase_detail_instant">In Sekunden bereit</string>
     <string name="domain_purchase_detail_ownership">Gehört Ihnen</string>
     <string name="domain_purchase_awaiting_payment">Zahlung ausstehend</string>
@@ -2803,7 +2803,7 @@
     <string name="alias_restore_placeholder">Adresse</string>
     <string name="alias_restore_confirm">Wiederherstellen</string>
     <string name="alias_restore_mismatch">Diese Adresse passt nicht zu diesem Alias. Sehen Sie in der Kopfzeile einer zugestellten Nachricht nach.</string>
-    <string name="alias_restore_failed">Der Alias wurde nicht wiederhergestellt. Versuchen Sie es erneut.</string>
+    <string name="alias_restore_failed">Der Alias konnte nicht wiederhergestellt werden. Versuchen Sie es erneut.</string>
     <string name="password_change_web_required">Um das Passwort für dieses Konto zu ändern, verwenden Sie die Web-App von Aster Mail.</string>
     <string name="switch_yearly_due_today">%1$s ist heute fällig, anteilig für den Rest Ihres aktuellen Abrechnungszeitraums. Danach kostet Ihr Tarif %2$s pro Jahr, was %3$d %% gegenüber der monatlichen Abrechnung spart.</string>
     <string name="plan_change_preview_loading">Der heute fällige Betrag wird berechnet…</string>
@@ -2820,7 +2820,7 @@
     <string name="cancel_reason_switched_provider">Zu einem anderen Anbieter gewechselt</string>
     <string name="cancel_reason_bugs">Zu viele Fehler oder Probleme</string>
     <string name="cancel_reason_privacy_trust">Bedenken bei Datenschutz oder Vertrauen</string>
-    <string name="cancel_reason_just_testing">Ich habe es nur ausprobiert</string>
+    <string name="cancel_reason_just_testing">Ich habe es ausprobiert</string>
     <string name="cancel_reason_other">Etwas anderes</string>
     <string name="cancel_reason_text_placeholder">Möchten Sie etwas ergänzen? (optional)</string>
     <string name="change_plan_failed">Tarif konnte nicht geändert werden</string>
@@ -2915,17 +2915,17 @@
     <string name="error_passkey_failed">Ihr Passkey konnte nicht geprüft werden. Versuchen Sie es erneut oder nutzen Sie eine andere Anmeldemethode.</string>
     <string name="error_invalid_backup_code">Dieser Backup-Code stimmt nicht. Jeder Code funktioniert nur einmal. Probieren Sie daher den nächsten unbenutzten Code aus Ihrer Liste.</string>
     <string name="error_invalid_recovery_phrase">Diese Wiederherstellungsphrase stimmt nicht. Prüfen Sie die Reihenfolge der Wörter und die Schreibweise und versuchen Sie es erneut.</string>
-    <string name="error_plan_limit_reached">Sie haben das Limit Ihres aktuellen Tarifs erreicht. Eine Erweiterung oder das Entfernen einiger Einträge schafft wieder Raum.</string>
+    <string name="error_plan_limit_reached">Sie haben das Limit Ihres aktuellen Tarifs erreicht. Um fortzufahren, führen Sie ein Upgrade durch oder entfernen Sie einige Einträge.</string>
     <string name="error_account_limit_reached_count">Ihr Tarif erlaubt auf diesem Gerät höchstens %1$d angemeldete Konten. Um sich bei diesem Konto anzumelden, melden Sie sich auf diesem Gerät von einem anderen Konto ab oder erweitern Sie Ihren Tarif.</string>
     <string name="error_account_limit_reached">Sie haben die Höchstzahl angemeldeter Konten für Ihren Tarif auf diesem Gerät erreicht. Um sich bei diesem Konto anzumelden, melden Sie sich auf diesem Gerät von einem anderen Konto ab oder erweitern Sie Ihren Tarif.</string>
-    <string name="error_sign_in_code_invalid">Dieser Code ist nicht mehr gültig. Fordern Sie einen neuen an, um sich weiter anzumelden.</string>
+    <string name="error_sign_in_code_invalid">Dieser Code ist nicht mehr gültig. Fordern Sie einen neuen Code an und versuchen Sie es dann erneut.</string>
     <string name="error_sign_in_domain_unsupported">Melden Sie sich mit der astermail.org- oder aster.cx-Adresse an, mit der Sie sich registriert haben. Adressen auf Ihrer eigenen Domain führen zum selben Konto.</string>
     <string name="error_storage_full">Ihr Speicher ist voll. Um Platz zu schaffen, erweitern Sie Ihren Tarif oder entfernen Sie einige Mails.</string>
     <string name="error_unsupported_email_domain">Geben Sie eine Adresse ein, die auf astermail.org oder aster.cx endet.</string>
     <string name="error_upload_too_large">Der Upload ist zu groß. Entfernen oder verkleinern Sie eine Datei, um fortzufahren.</string>
     <string name="expiring_not_with_schedule">Sie können eine Nachricht planen oder ablaufen lassen, aber nicht beides. Schalten Sie eine Option aus, um fortzufahren.</string>
     <string name="failed_load_dns_records">DNS-Einträge konnten nicht geladen werden</string>
-    <string name="failed_to_move_items">Verschieben nicht möglich</string>
+    <string name="failed_to_move_items">Elemente konnten nicht verschoben werden</string>
     <string name="folder_name_taken">Ein Ordner mit diesem Namen existiert bereits.</string>
     <string name="hardware_key_remove_confirm">Sie können sich mit diesem Sicherheitsschlüssel dann nicht mehr anmelden.</string>
     <string name="hardware_key_remove_last_title">Diesen Sicherheitsschlüssel entfernen?</string>
@@ -2964,17 +2964,17 @@
     <string name="scheduled_send_time">Geplant für %1$s</string>
     <string name="scheduled_sending_now">Wird jetzt gesendet</string>
     <string name="scheduled_to">An: %1$s</string>
-    <string name="send_refusal_attachments_too_large">Diese Anhänge ergeben zusammen mehr als %1$s, mehr kann eine Nachricht in Ihrem Tarif nicht enthalten. Entfernen oder verkleinern Sie eine Datei, dann kann die Nachricht gesendet werden. Ihr Entwurf ist gespeichert.</string>
+    <string name="send_refusal_attachments_too_large">Diese Anhänge ergeben zusammen mehr als %1$s, mehr kann eine Nachricht in Ihrem Tarif nicht enthalten. Um sie zu senden, entfernen oder verkleinern Sie eine Datei. Ihr Entwurf ist gespeichert.</string>
     <string name="send_refusal_recipient_concentration">Sie haben an so viele Adressen bei %1$s geschrieben, wie wir pro Stunde zulassen. So viele Nachrichten auf einmal an einen einzelnen Anbieter führen zur Sperrung unserer Mailserver. Versuchen Sie es später erneut. Ihr Entwurf ist gespeichert.</string>
     <string name="send_refusal_that_provider">diesem Anbieter</string>
-    <string name="send_refusal_too_many_attachments">Diese Nachricht hat mehr als %1$d Anhänge, mehr kann eine Nachricht nicht enthalten. Entfernen Sie einige, dann kann die Nachricht gesendet werden. Ihr Entwurf ist gespeichert.</string>
+    <string name="send_refusal_too_many_attachments">Diese Nachricht hat mehr als %1$d Anhänge, mehr kann eine Nachricht nicht enthalten. Um sie zu senden, entfernen Sie einige Anhänge. Ihr Entwurf ist gespeichert.</string>
     <string name="send_refusal_too_many_recipients">Diese Nachricht hat mehr Empfänger, als eine Nachricht erreichen kann. Ihr Konto kann %1$d auf einmal anschreiben, und dieses Limit steigt in Ihrer ersten Woche. Senden Sie sie in kleineren Gruppen. Ihr Entwurf ist gespeichert.</string>
     <string name="settings_save_failed_banner">Ihre Änderungen wurden nicht gespeichert. Verbindung prüfen und erneut versuchen.</string>
     <string name="show_email_preview">Vorschautext</string>
     <string name="show_email_preview_subtitle">Eine Zeile des Nachrichtentexts in der Posteingangsliste anzeigen</string>
     <string name="signature_hint_content">Geben Sie den Signaturtext ein.</string>
     <string name="signature_set_default">Als Standardsignatur verwenden</string>
-    <string name="star_failed">Markieren fehlgeschlagen</string>
+    <string name="star_failed">Die Nachricht konnte nicht markiert werden</string>
     <string name="tab_label_with_count">%1$s (%2$d)</string>
     <string name="time_format">Zeitformat</string>
     <string name="time_format_12h">12-Stunden (1:30 PM)</string>
@@ -2984,8 +2984,8 @@
     <string name="vacation_date_not_set">Nicht festgelegt</string>
     <string name="vacation_end_date">Enddatum</string>
     <string name="vacation_start_date">Startdatum</string>
-    <string name="wkd_publish_failed">Ihr öffentlicher Schlüssel wurde nicht im Web Key Directory veröffentlicht. Ein erneuter Versuch genügt meist.</string>
-    <string name="wkd_unpublish_failed">Ihr öffentlicher Schlüssel ist weiterhin im Web Key Directory. Ein erneuter Versuch entfernt ihn meist.</string>
+    <string name="wkd_publish_failed">Ihr öffentlicher Schlüssel konnte nicht im Web Key Directory veröffentlicht werden. Versuchen Sie es erneut.</string>
+    <string name="wkd_unpublish_failed">Ihr öffentlicher Schlüssel konnte nicht aus dem Web Key Directory entfernt werden. Versuchen Sie es erneut.</string>
     <string name="text_color">Textfarbe</string>
     <string name="highlight_color">Hervorhebungsfarbe</string>
     <string name="remove_highlight">Hervorhebung entfernen</string>
@@ -2995,7 +2995,7 @@
     <string name="app_lock_biometric_failed">Biometrisches Entsperren ist nicht verfügbar. Geben Sie Ihre PIN ein.</string>
     <string name="app_lock_biometric_error">Biometrisches Entsperren hat nicht funktioniert. Versuchen Sie es erneut oder geben Sie Ihre PIN ein.</string>
     <string name="app_lock_biometric_reset">Aster Mail hat das biometrische Entsperren deaktiviert. Geben Sie Ihre PIN ein, um es wieder zu aktivieren.</string>
-    <string name="applied_to_loaded_only">Auf %1$d von %2$d angewendet - diese Aktion gilt nur für geladene Nachrichten</string>
+    <string name="applied_to_loaded_only">Auf %1$d von %2$d angewendet. Diese Aktion gilt nur für geladene Nachrichten.</string>
     <string name="audit_event_2fa_disabled">Zwei-Faktor-Authentifizierung deaktiviert</string>
     <string name="audit_event_2fa_enabled">Zwei-Faktor-Authentifizierung aktiviert</string>
     <string name="audit_event_account_locked">Konto gesperrt</string>
@@ -3017,7 +3017,7 @@
     <string name="domain_status_failed">Überprüfung fehlgeschlagen</string>
     <string name="domain_status_suspended">Gesperrt</string>
     <string name="domain_status_verifying">Wird überprüft</string>
-    <string name="generate_ghost_alias_message">Aster erstellt eine zufällige Adresse, die an Ihren Posteingang weiterleitet. Sie können sie jederzeit löschen, ohne Ihre anderen Adressen zu beeinträchtigen.</string>
+    <string name="generate_ghost_alias_message">Aster erstellt eine zufällige Adresse, die an Ihren Posteingang weiterleitet. Sie können sie jederzeit ablaufen lassen, ohne Ihre anderen Adressen zu beeinträchtigen.</string>
     <string name="identity_changed_description">Der Verschlüsselungsschlüssel für %1$s unterscheidet sich von dem, den Sie zuvor gesehen haben. Das passiert, wenn sich jemand auf einem neuen Gerät anmeldet oder sein Konto zurücksetzt, es kann aber auch bedeuten, dass jemand Ihre Nachrichten abfängt. Bestätigen Sie es über einen anderen Kanal, bevor Sie dieser Unterhaltung vertrauen.</string>
     <string name="identity_changed_dismiss">Ich habe das überprüft</string>
     <string name="identity_changed_title">Verschlüsselungsschlüssel geändert</string>
@@ -3069,7 +3069,7 @@
     <string name="contact_support">Support kontaktieren</string>
     <string name="domain_purchase_manage">Verwalten</string>
     <string name="domain_purchase_cancel_payment_title">Diese Zahlung abbrechen?</string>
-    <string name="domain_purchase_cancel_payment_message">Möchten Sie diese Zahlung für die eigene Domain wirklich abbrechen?</string>
+    <string name="domain_purchase_cancel_payment_message">Ihre Zahlung für die eigene Domain abbrechen?</string>
     <string name="domain_purchase_cancel_payment_confirm">Zahlung abbrechen</string>
     <string name="domain_purchase_cancel_payment_keep">Zahlung behalten</string>
     <string name="domain_purchase_manage_description">Prüfen Sie diese Registrierung und verlängern Sie sie, bevor sie abläuft.</string>
@@ -3165,7 +3165,7 @@
     <string name="alias_unpin">Alias lösen</string>
     <string name="alias_pinned_toast">Alias angeheftet</string>
     <string name="alias_unpinned_toast">Alias gelöst</string>
-    <string name="e2e_identity_changed_blocked">Senden nicht möglich: Der Verschlüsselungsschlüssel eines Empfängers hat sich geändert. Bestätigen Sie die Änderung in Ihrem Posteingang und senden Sie die Nachricht erneut. Die Nachricht wurde nicht gesendet.</string>
+    <string name="e2e_identity_changed_blocked">Die Nachricht konnte nicht gesendet werden, da sich der Verschlüsselungsschlüssel eines Empfängers geändert hat. Bestätigen Sie die Änderung in Ihrem Posteingang und senden Sie sie dann erneut.</string>
     <string name="link_device_fingerprint_label">Gerätefingerabdruck</string>
     <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
     <string name="link_device_fingerprint_hint">Geben Sie den Gerätefingerabdruck ein, der in der App angezeigt wird, die Sie verknüpfen. Manche Apps nennen ihn Bestätigungscode.</string>
@@ -3735,7 +3735,7 @@
     <string name="reply_from_mismatch_banner">Diese E-Mail wurde an %1$s empfangen, Ihre Antwort wird aber von %2$s gesendet.</string>
     <string name="reply_from_mismatch_send_from">Von %1$s senden</string>
     <string name="reply_from_mismatch_dismiss">Schließen</string>
-    <string name="error_alias_sending_disabled">Das Senden von diesem Alias ist deaktiviert. Aktivieren Sie es zuerst.</string>
+    <string name="error_alias_sending_disabled">Das Senden von diesem Alias ist deaktiviert. Um davon zu senden, aktivieren Sie zuerst das Senden.</string>
     <string name="open_group_description">Gruppe %1$s öffnen, %2$s</string>
     <string name="group_empty_title">Keine Kontakte in dieser Gruppe</string>
     <string name="group_empty_hint">Um Kontakte zu dieser Gruppe hinzuzufügen, tippe auf Mitglieder hinzufügen.</string>

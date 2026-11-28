@@ -81,9 +81,9 @@
         <item quantity="other">El acceso se limitará en %1$d días.</item>
     </plurals>
     <plurals name="templates_decrypt_failed_count">
-        <item quantity="one">No se pudo leer %1$d plantilla en este dispositivo. Se guardó con una clave que este dispositivo no tiene actualmente.</item>
-        <item quantity="many">No se pudieron leer %1$d plantillas en este dispositivo. Se guardaron con una clave que este dispositivo no tiene actualmente.</item>
-        <item quantity="other">No se pudieron leer %1$d plantillas en este dispositivo. Se guardaron con una clave que este dispositivo no tiene actualmente.</item>
+        <item quantity="one">No se puede leer %1$d plantilla en este dispositivo porque se guardó con una clave que este dispositivo no tiene.</item>
+        <item quantity="many">No se pueden leer %1$d plantillas en este dispositivo porque se guardaron con una clave que este dispositivo no tiene.</item>
+        <item quantity="other">No se pueden leer %1$d plantillas en este dispositivo porque se guardaron con una clave que este dispositivo no tiene.</item>
     </plurals>
     <plurals name="contact_trash_days_left">
         <item quantity="one">Queda %1$d día</item>

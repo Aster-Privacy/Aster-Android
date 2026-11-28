@@ -62,7 +62,7 @@
     <string name="requirement_uppercase">Eén hoofdletter</string>
     <string name="requirement_lowercase">Eén kleine letter</string>
     <string name="requirement_number">Eén cijfer</string>
-    <string name="backup_email_description">Voeg een herstel-e-mailadres toe van een andere provider. Dit is optioneel maar aanbevolen voor accountherstel.</string>
+    <string name="backup_email_description">Voeg een herstel-e-mailadres van een andere provider toe. Dit is optioneel, maar het helpt je om je account te herstellen.</string>
     <string name="recovery_email">Herstel-e-mailadres</string>
     <string name="recovery_email_placeholder">backup@email.com</string>
     <string name="backup_email_short">Voeg een back-up-e-mailadres toe</string>
@@ -80,7 +80,7 @@
     <string name="skip_for_now">Voorlopig overslaan</string>
     <string name="copy_to_clipboard">Naar klembord kopiëren</string>
     <string name="choose_your_plan">Kies je abonnement</string>
-    <string name="plan_subtitle">Begin gratis of ontgrendel meer met een betaald abonnement. Je kunt dit altijd wijzigen.</string>
+    <string name="plan_subtitle">Begin gratis of krijg meer met een betaald abonnement. Je kunt je abonnement altijd wijzigen.</string>
     <string name="loading_plans">Abonnementen laden...</string>
     <string name="plan_free">Gratis</string>
     <string name="continue_with_free">Doorgaan met Gratis</string>
@@ -153,16 +153,16 @@
     <string name="drafts_working_here">Concepten waar je aan werkt verschijnen hier</string>
     <string name="nothing_starred">Geen berichten met ster</string>
     <string name="star_important">Markeer belangrijke e-mails met een ster om ze snel terug te vinden</string>
-    <string name="nothing_here_clear">Prullenbak is leeg</string>
+    <string name="nothing_here_clear">Hier staat niets</string>
     <string name="deleted_emails_here">Verwijderde e-mails verschijnen hier</string>
     <string name="no_spam">Geen spam</string>
-    <string name="suspicious_caught_here">Verdachte e-mails worden hier onderschept</string>
+    <string name="suspicious_caught_here">Verdachte e-mails verschijnen hier</string>
     <string name="nothing_archived">Niets gearchiveerd</string>
     <string name="archive_to_clean">Archiveer e-mails om je inbox schoon te houden</string>
     <string name="no_scheduled">Geen geplande berichten</string>
     <string name="scheduled_messages_here">Berichten die je plant verschijnen hier</string>
-    <string name="nothing_snoozed">Er slaapt nu niets</string>
-    <string name="snoozed_wake_here">Uitgestelde e-mails worden hier weer wakker</string>
+    <string name="nothing_snoozed">Niets uitgesteld</string>
+    <string name="snoozed_wake_here">Uitgestelde e-mails verschijnen hier wanneer het tijd is</string>
     <string name="no_messages">Geen berichten</string>
     <string name="nothing_here_yet">Nog niets om hier te tonen</string>
     <string name="sort_newest">Nieuwste eerst</string>
@@ -176,10 +176,10 @@
     <string name="empty_trash">Prullenbak legen</string>
     <string name="empty_trash_confirm">Alle berichten in de prullenbak permanent verwijderen? Dit kan niet ongedaan worden gemaakt.</string>
     <string name="delete_all">Alles verwijderen</string>
-    <string name="open_drawer">menu openen</string>
+    <string name="open_drawer">Menu openen</string>
     <string name="compose">Opstellen</string>
-    <string name="sort">sorteren</string>
-    <string name="switch_folder">map wisselen</string>
+    <string name="sort">Sorteren</string>
+    <string name="switch_folder">Map wisselen</string>
     <string name="more_options">Meer opties</string>
     <string name="exit_selection">Selectie verlaten</string>
     <string name="mark_read_action">Als gelezen markeren</string>
@@ -216,13 +216,13 @@
     <string name="mark_as_unread">Als ongelezen markeren</string>
     <string name="marked_as_unread">Als ongelezen gemarkeerd</string>
     <string name="pin_to_top">Bovenaan vastpinnen</string>
-    <string name="pin_not_available">Vastpinnen nog niet beschikbaar</string>
+    <string name="pin_not_available">Vastpinnen is nog niet beschikbaar</string>
     <string name="snooze">Uitstellen</string>
-    <string name="snooze_not_available">Uitstellen nog niet beschikbaar</string>
+    <string name="snooze_not_available">Uitstellen is nog niet beschikbaar</string>
     <string name="move_to_folder">Naar map verplaatsen</string>
     <string name="add_label">Label toevoegen</string>
     <string name="print">Afdrukken</string>
-    <string name="print_not_available">Afdrukken nog niet beschikbaar</string>
+    <string name="print_not_available">Afdrukken is nog niet beschikbaar</string>
     <string name="report_spam">Als spam melden</string>
     <string name="reported_as_spam">Als spam gemeld</string>
     <string name="report_phishing">Phishing melden</string>
@@ -233,7 +233,7 @@
     <string name="message_unavailable_offline">Dit bericht is offline niet beschikbaar. Het wordt geopend zodra je weer online bent.</string>
     <string name="no_subject">(geen onderwerp)</string>
     <string name="open_external_link">Externe link openen?</string>
-    <string name="leaving_aster_warning">Je staat op het punt Aster te verlaten en deze link in je browser te openen:</string>
+    <string name="leaving_aster_warning">Deze link wordt buiten Aster in je browser geopend:</string>
     <string name="reply">Beantwoorden</string>
     <string name="reply_all">Allen beantwoorden</string>
     <string name="forward">Doorsturen</string>
@@ -242,19 +242,19 @@
     <string name="decrypt_failed_body">Dit apparaat kan dit bericht nu niet ontsleutelen. Probeer het zo opnieuw.</string>
     <string name="decrypt_locked_by_reset_title">Vergrendeld door een wachtwoordreset</string>
     <string name="decrypt_locked_by_reset_body">Dit bericht is versleuteld met sleutels van vóór je wachtwoordreset. Voer je vorige wachtwoord of een herstelcode in die je vóór de reset hebt opgeslagen om het te ontgrendelen.</string>
-    <string name="e2e_encryption_failed">Verzenden mislukt: end-to-end-versleuteling mislukt. Het bericht is niet verzonden.</string>
-    <string name="attachment_prepare_failed">Verzenden mislukt: "%1$s" kon niet worden voorbereid. Het bericht is niet verzonden.</string>
-    <string name="e2e_keys_not_ready">Verzenden mislukt: versleutelingssleutels zijn nog niet gereed. Het bericht is niet verzonden.</string>
-    <string name="e2e_recipient_key_missing">Verzenden mislukt: een ontvanger heeft geen versleutelingssleutel. Het bericht is niet verzonden.</string>
+    <string name="e2e_encryption_failed">Het bericht kon niet worden verzonden, omdat de end-to-end-versleuteling is mislukt.</string>
+    <string name="attachment_prepare_failed">Het bericht kon niet worden verzonden, omdat "%1$s" niet kon worden voorbereid.</string>
+    <string name="e2e_keys_not_ready">Het bericht kon niet worden verzonden, omdat je versleutelingssleutels nog niet gereed zijn.</string>
+    <string name="e2e_recipient_key_missing">Het bericht kon niet worden verzonden, omdat een ontvanger geen versleutelingssleutel heeft.</string>
     <string name="recipient_not_on_aster">Geen enkel Aster Mail-account gebruikt %1$s. Controleer de spelling en probeer het opnieuw. Je concept is opgeslagen.</string>
-    <string name="e2e_no_key_description">Dit bericht is versleuteld met een sleutel die dit apparaat nog niet heeft. Open het in de Aster-webapp om te lezen.</string>
+    <string name="e2e_no_key_description">Dit bericht is versleuteld met een sleutel die dit apparaat nog niet heeft. Open het in de Aster-webapp om het te lezen.</string>
     <string name="no_body">(geen inhoud)</string>
     <string name="attachment_unnamed">Bijlage</string>
     <string name="attachment_locked">Deze bijlage kan niet worden geopend omdat de versleutelingssleutel niet beschikbaar is op dit apparaat.</string>
     <string name="attachment_content_mismatch">Deze bijlage komt niet overeen met het bericht waarmee ze is ontvangen en is daarom niet geopend.</string>
     <string name="download_complete">Download voltooid</string>
-    <string name="cannot_decode_image">Kan afbeelding niet decoderen</string>
-    <string name="no_app_to_open">Geen app om dit bestand te openen</string>
+    <string name="cannot_decode_image">Kan deze afbeelding niet openen</string>
+    <string name="no_app_to_open">Er is geen app die dit bestand kan openen</string>
     <string name="download">Downloaden</string>
     <string name="open_with">Openen met...</string>
     <string name="could_not_unsubscribe">Uitschrijven mislukt</string>
@@ -268,7 +268,7 @@
     <string name="move_to_trash">Naar prullenbak verplaatsen</string>
     <string name="archived">Gearchiveerd</string>
     <string name="unstarred">Ster verwijderd</string>
-    <string name="dismiss">negeren</string>
+    <string name="dismiss">Negeren</string>
 
     <string name="no_messages_in">Geen berichten in %s</string>
     <string name="type_folder">map</string>
@@ -304,7 +304,7 @@
     <string name="undo">Ongedaan maken</string>
     <string name="save_draft">Concept opslaan</string>
     <string name="discard">Verwijderen</string>
-    <string name="toggle_cc_bcc">Cc/bcc in-/uitschakelen</string>
+    <string name="toggle_cc_bcc">Cc en Bcc tonen of verbergen</string>
     <string name="add_recipient">Ontvanger toevoegen</string>
     <string name="add_another_recipient">Nog een toevoegen</string>
     <string name="compose_attachments">Bijlagen</string>
@@ -333,8 +333,8 @@
 
     <string name="search_mail">E-mail zoeken</string>
     <string name="send_problem_title">Probleem bij het verzenden van e-mail</string>
-    <string name="send_problem_message">Je bericht kon nog niet worden verzonden. De app blijft het op de achtergrond proberen.</string>
-    <string name="send_problem_failed_message">Je bericht kon niet worden verzonden. Je kunt het opnieuw proberen of verwijderen.</string>
+    <string name="send_problem_message">Je bericht is nog niet verzonden. Aster Mail blijft het op de achtergrond proberen.</string>
+    <string name="send_problem_failed_message">Je bericht kon niet worden verzonden. Probeer het opnieuw of verwijder het.</string>
     <string name="search_aliases">Aliassen zoeken</string>
     <string name="filter_has_attachment">Heeft bijlage</string>
     <string name="filter_unread">Ongelezen</string>
@@ -367,7 +367,7 @@
     <string name="op_label_desc">Zoeken op label</string>
     <string name="op_negate">-from:</string>
     <string name="op_negate_desc">Keer een operator om</string>
-    <string name="search_privacy_note">Alle zoekopdrachten zijn end-to-end versleuteld. Je e-mail wordt lokaal op dit apparaat ontsleuteld - er wordt niets naar de server gestuurd.</string>
+    <string name="search_privacy_note">Alle zoekopdrachten zijn end-to-end versleuteld. Je e-mail wordt op dit apparaat ontsleuteld en er wordt niets naar de server gestuurd.</string>
     <string name="no_results_found">Geen resultaten gevonden</string>
 
     <string name="contacts">Contacten</string>
@@ -380,7 +380,7 @@
     <string name="alias_note_add">Notitie toevoegen</string>
     <string name="alias_note_updated">Notitie bijgewerkt</string>
     <string name="tab_favorites">Favorieten</string>
-    <string name="sync_contacts_description">Hiermee worden contacten van je apparaat gelezen en in Aster geïmporteerd. Je contacten worden versleuteld voordat ze worden opgeslagen.</string>
+    <string name="sync_contacts_description">Aster leest de contacten op je apparaat en importeert ze. Je contacten worden versleuteld voordat ze worden opgeslagen.</string>
     <string name="sync">Synchroniseren</string>
     <string name="new_contact">Nieuw contact</string>
     <string name="contact_unavailable">Contact niet beschikbaar</string>
@@ -431,13 +431,13 @@
     <string name="create_label">Label aanmaken</string>
     <string name="label_name">Labelnaam</string>
     <string name="create_alias">Alias aanmaken</string>
-    <string name="create_alias_invalid_chars">Letters, cijfers, punten, underscores en koppeltekens zijn de toegestane tekens.</string>
+    <string name="create_alias_invalid_chars">Gebruik alleen letters, cijfers, punten, underscores en koppeltekens.</string>
     <string name="alias_placeholder">username@astermail.org</string>
     <string name="accounts">Accounts</string>
     <string name="switch_workspace">Werkruimte wisselen</string>
-    <string name="collapse">samenvouwen</string>
-    <string name="expand">uitvouwen</string>
-    <string name="add">toevoegen</string>
+    <string name="collapse">Samenvouwen</string>
+    <string name="expand">Uitvouwen</string>
+    <string name="add">Toevoegen</string>
     <string name="storage_used">OPSLAG GEBRUIKT</string>
     <string name="refer_a_friend">Nodig een vriend uit</string>
 
@@ -463,14 +463,14 @@
     <string name="smtp_tokens_upgrade_title">Verzenden vanuit je eigen apps</string>
     <string name="smtp_tokens_upgrade_description">Genereer alleen-verzenden SMTP-inloggegevens voor je geverifieerde eigen domeinen. Beschikbaar vanaf Star.</string>
     <string name="smtp_tokens_no_domain_title">Voeg eerst een geverifieerd eigen domein toe</string>
-    <string name="smtp_tokens_no_domain_description">SMTP-tokens kunnen alleen worden gekoppeld aan een geverifieerd adres op een eigen domein. Voeg een eigen domein toe en verifieer het om te beginnen.</string>
+    <string name="smtp_tokens_no_domain_description">SMTP-tokens kunnen alleen worden gekoppeld aan een geverifieerd adres op een eigen domein. Voeg een eigen domein toe en verifieer het om een token te maken.</string>
     <string name="smtp_token_generate">Token genereren</string>
     <string name="smtp_token_create_title">SMTP-token genereren</string>
     <string name="smtp_token_name_label">Naam</string>
     <string name="smtp_token_name_placeholder">bijv. Nieuwsbriefverzender</string>
     <string name="smtp_token_address_label">Verzenden vanaf</string>
     <string name="smtp_token_ready_title">Token aangemaakt</string>
-    <string name="smtp_token_ready_description">Kopieer deze instellingen nu naar je mailclient of app. Het wachtwoord wordt slechts eenmaal getoond en kan niet opnieuw worden opgehaald.</string>
+    <string name="smtp_token_ready_description">Kopieer deze instellingen nu naar je mailclient of app. Het wachtwoord wordt slechts eenmaal getoond en kan niet opnieuw worden getoond.</string>
     <string name="smtp_token_host">Host</string>
     <string name="smtp_token_port">Poort</string>
     <string name="smtp_token_security">Beveiliging</string>
@@ -479,7 +479,7 @@
     <string name="smtp_token_copy_all">Alles kopiëren</string>
     <string name="smtp_token_never_used">Nooit</string>
     <string name="smtp_token_revoke_title">Token intrekken?</string>
-    <string name="smtp_token_revoke_message">Hiermee wordt %1$s permanent ingetrokken. Elke app die deze gebruikt, kan dan geen e-mail meer verzenden.</string>
+    <string name="smtp_token_revoke_message">Hiermee wordt %1$s definitief ingetrokken. Apps die deze gebruiken, kunnen geen e-mail meer verzenden.</string>
     <string name="smtp_token_revoked_toast">SMTP-token ingetrokken</string>
     <string name="smtp_token_setup_details">Installatiegegevens</string>
     <string name="smtp_token_setup_description">Gebruik deze instellingen om je mailclient of app te verbinden.</string>
@@ -545,7 +545,7 @@
     <string name="color_theme_pink">Roze</string>
     <string name="color_theme_black">Zwart</string>
     <string name="custom_theme_base_color">Basiskleur</string>
-    <string name="custom_theme_base_color_subtitle">Kies een kleur en we bouwen er een volledig kleurenpalet omheen</string>
+    <string name="custom_theme_base_color_subtitle">Kies een kleur en Aster bouwt er een volledig kleurenpalet omheen</string>
     <string name="custom_theme_hex_placeholder">#3b82f6</string>
     <string name="custom_theme_hex_invalid">Voer een geldige hexadecimale kleur in, zoals #3b82f6</string>
     <string name="custom_theme_colors_title">Themakleuren</string>
@@ -560,7 +560,7 @@
     <string name="custom_theme_reset_role">Terugzetten naar automatisch</string>
     <string name="custom_theme_reset_all">Alles terugzetten naar automatisch</string>
     <string name="custom_theme_upgrade_title">Aangepast thema</string>
-    <string name="custom_theme_upgrade_description">Maak je eigen kleurenthema vanuit elke basiskleur. Upgrade om het te ontgrendelen.</string>
+    <string name="custom_theme_upgrade_description">Maak je eigen kleurenthema vanuit elke basiskleur. Upgrade om het te gebruiken.</string>
     <string name="font">Lettertype</string>
     <string name="font_option_default">Aster-standaard</string>
     <string name="font_option_system">Systeem-UI</string>
@@ -612,7 +612,7 @@
     <string name="reply_to_all">Allen antwoorden</string>
     <string name="block_remote_images">Externe afbeeldingen blokkeren</string>
     <string name="block_tracking_pixels">Spionpixels blokkeren</string>
-    <string name="block_tracking_links">Traceerlinks blokkeren</string>
+    <string name="block_tracking_links">Traceerlinks opschonen</string>
     <string name="sending">Verzenden</string>
     <string name="send">Verzenden</string>
     <string name="auto_save_recipients">Ontvangers automatisch opslaan bij contacten</string>
@@ -647,7 +647,7 @@
     <string name="profile">Profiel</string>
     <string name="saving">Opslaan...</string>
     <string name="saved">Opgeslagen</string>
-    <string name="error_try_again">Fout - probeer het opnieuw</string>
+    <string name="error_try_again">Opslaan mislukt. Probeer het opnieuw.</string>
     <string name="your_name">Je naam</string>
     <string name="display_name">Weergavenaam</string>
     <string name="primary_address">Primair adres</string>
@@ -657,7 +657,7 @@
     <string name="change_password">Wachtwoord wijzigen</string>
     <string name="change_password_subtitle">Je accountwachtwoord bijwerken</string>
     <string name="two_factor_auth">Tweefactorauthenticatie</string>
-    <string name="two_factor_subtitle_add">Voeg een tweede laag toe</string>
+    <string name="two_factor_subtitle_add">Voeg een tweede beveiligingslaag toe</string>
     <string name="active_sessions">Actieve sessies</string>
     <string name="devices_signed_in">Ingelogde apparaten</string>
     <string name="backup_access">Back-uptoegang</string>
@@ -740,9 +740,9 @@
 
     <string name="ghost_aliases">Ghost-aliassen</string>
     <string name="ghost_aliases_about">Over</string>
-    <string name="ghost_aliases_description">Wegwerpadressen die doorsturen naar je inbox. Verwijder er een zonder de rest te beïnvloeden.</string>
+    <string name="ghost_aliases_description">Wegwerpadressen die doorsturen naar je inbox. Laat er een verlopen zonder de rest te beïnvloeden.</string>
     <string name="no_ghost_aliases">Geen ghost-aliassen</string>
-    <string name="no_ghost_aliases_subtitle">Stel een bericht op en selecteer een ghost-alias als afzender om er een te genereren</string>
+    <string name="no_ghost_aliases_subtitle">Stel een bericht op en kies een ghost-alias als afzender om er een te maken</string>
     <string name="expired">Verlopen</string>
     <string name="expire">Laten verlopen</string>
 
@@ -769,7 +769,7 @@
     <string name="referral_step_2">Ze melden zich aan met je link en nemen een betaald abonnement.</string>
     <string name="referral_step_3">Je verdient een deel van elke betaling, automatisch bijgeschreven op je saldo.</string>
     <string name="rewards">Beloningen</string>
-    <string name="share_text">Probeer Aster, privé-e-mail die echt werkt.</string>
+    <string name="share_text">Probeer Aster voor privé en versleutelde e-mail.</string>
     <string name="share_referral">Verwijzing delen</string>
     <string name="referral_history">Verwijzingsgeschiedenis</string>
     <string name="no_referrals_yet">Nog geen verwijzingen</string>
@@ -905,7 +905,7 @@
     <string name="category_idea">Idee</string>
     <string name="category_bug">Bug</string>
     <string name="message">Bericht</string>
-    <string name="feedback_placeholder">Beschrijf wat je goed vindt, wat er mist of wat er niet werkt.</string>
+    <string name="feedback_placeholder">Beschrijf wat goed werkt, wat er ontbreekt of wat er niet werkt.</string>
     <string name="feedback_privacy_note">Je account-e-mailadres wordt bijgevoegd zodat we kunnen antwoorden. We delen feedback nooit.</string>
     <string name="feedback_support_notice">Dit formulier is bedoeld voor feedback, ideeën en bugmeldingen. Stuur voor vragen of hulp met je account in plaats daarvan een e-mail naar het supportteam via %1$s.</string>
     <string name="send_feedback">Feedback verzenden</string>
@@ -972,13 +972,13 @@
     <string name="ext_sync_now">Nu synchroniseren</string>
     <string name="ext_delete">Verwijderen</string>
     <string name="ext_disconnect_title">Verbinding verbreken</string>
-    <string name="ext_disconnect_confirm">Weet je zeker dat je de verbinding met dit account wilt verbreken? Alle gesynchroniseerde e-mails van dit account blijven in je inbox, tenzij je ervoor kiest ze te verwijderen.</string>
+    <string name="ext_disconnect_confirm">De verbinding met dit account verbreken? Alle gesynchroniseerde e-mails ervan blijven in je inbox, tenzij je ervoor kiest ze te verwijderen.</string>
     <string name="ext_disconnect_button">Verbinding verbreken</string>
     <string name="ext_disconnect_delete_messages">Alle gesynchroniseerde berichten verwijderen</string>
     <string name="ext_error_load_failed">Gekoppelde accounts konden niet worden geladen. Trek omlaag om het opnieuw te proberen.</string>
     <string name="ext_error_oauth_failed">Inloggen kon niet worden gestart. Controleer je verbinding en probeer het opnieuw.</string>
     <string name="ext_error_manual_failed">Account kon niet worden opgeslagen. Controleer host, poort en inloggegevens.</string>
-    <string name="ext_error_no_session">Je sessie is verlopen. Log uit en weer in om door te gaan.</string>
+    <string name="ext_error_no_session">Je sessie is verlopen. Log uit en log opnieuw in om door te gaan.</string>
     <string name="ext_error_sync_failed">Synchroniseren mislukt. Controleer de accountgegevens en probeer het opnieuw.</string>
     <string name="ext_manual_saved">Account toegevoegd. Synchronisatie gestart…</string>
     <string name="ext_last_sync">Laatste synchronisatie: %1$s</string>
@@ -1069,10 +1069,10 @@
     <string name="no_folders_subtitle">Je hebt nog geen mappen aangemaakt</string>
     <string name="delete_folder">Map verwijderen</string>
     <string name="delete_folder_confirm_title">Map verwijderen?</string>
-    <string name="delete_folder_confirm_message">“%1$s” wordt verwijderd en je kunt dit niet ongedaan maken. De e-mails erin blijven in je account, maar staan niet langer in deze map.</string>
+    <string name="delete_folder_confirm_message">Hiermee wordt “%1$s” verwijderd. Je kunt dit niet ongedaan maken. De e-mails erin blijven in je account, maar staan niet langer in deze map.</string>
     <string name="delete_folder_confirm_subfolders">Submappen worden naar het hoogste niveau verplaatst.</string>
     <string name="delete_label_confirm_title">Label verwijderen?</string>
-    <string name="delete_label_confirm_message">“%1$s” wordt van alle e-mails met dit label verwijderd en je kunt dit niet ongedaan maken. De e-mails zelf blijven in je account.</string>
+    <string name="delete_label_confirm_message">Hiermee wordt “%1$s” verwijderd van alle e-mails met dit label. Je kunt dit niet ongedaan maken. De e-mails blijven in je account.</string>
 
     <string name="api_keys">API-sleutels</string>
     <string name="no_api_keys">Geen API-sleutels</string>
@@ -1124,10 +1124,10 @@
     <string name="error_access_denied">Toegang geweigerd</string>
     <string name="error_account_not_found">Account niet gevonden</string>
     <string name="error_no_connection">Kan geen verbinding maken met de server. Controleer je internetverbinding.</string>
-    <string name="error_server">Serverfout. Probeer het later opnieuw.</string>
+    <string name="error_server">Er ging iets mis op de server. Probeer het later opnieuw.</string>
     <string name="error_invalid_request">Ongeldig verzoek</string>
     <string name="error_timeout">Time-out van verbinding. Probeer het opnieuw.</string>
-    <string name="error_ssl">Beveiligde verbinding mislukt. Probeer het opnieuw.</string>
+    <string name="error_ssl">Kan geen beveiligde verbinding maken. Probeer het opnieuw.</string>
     <string name="error_generic">Er ging iets mis. Probeer het opnieuw.</string>
     <string name="error_too_many_attempts">Te veel pogingen. Wacht even en probeer het opnieuw.</string>
     <string name="error_username_taken">Deze gebruikersnaam is al in gebruik. Kies een andere.</string>
@@ -1158,14 +1158,14 @@
     <string name="failed_mark_all_read">Alles als gelezen markeren mislukt</string>
     <string name="failed_mark_all_unread">Alles als ongelezen markeren mislukt</string>
     <string name="failed_mark_read">Markeren als gelezen mislukt</string>
-    <string name="failed_remove_spam">Verwijderen uit spam mislukt</string>
+    <string name="failed_remove_spam">Verwijderen uit Spam mislukt</string>
     <string name="failed_report_spam">Spam melden mislukt</string>
     <string name="failed_to_archive">Archiveren mislukt</string>
     <string name="failed_to_delete">Verwijderen mislukt</string>
     <string name="failed_to_restore">Herstellen mislukt</string>
     <string name="failed_to_save_draft">Concept opslaan mislukt</string>
     <string name="email_saved_as_draft">E-mail opgeslagen als concept</string>
-    <string name="failed_to_trash">Naar prullenbak verplaatsen mislukt</string>
+    <string name="failed_to_trash">Naar Prullenbak verplaatsen mislukt</string>
     <string name="failed_to_unarchive">Uit archief halen mislukt</string>
     <string name="feature">Functie</string>
     <string name="fingerprint_copied">Vingerafdruk gekopieerd</string>
@@ -1175,7 +1175,7 @@
     <string name="icon_label">PICTOGRAM</string>
     <string name="loading_identity_key">Identiteitssleutel wordt geladen...</string>
     <string name="message_expires_in">Bericht verloopt over %s</string>
-    <string name="message_expiry_subtitle">Ontvangers verliezen toegang na het gekozen tijdvak.</string>
+    <string name="message_expiry_subtitle">Ontvangers verliezen toegang na de tijd die je kiest.</string>
     <string name="moved_to_inbox">Naar inbox verplaatst</string>
     <string name="nothing_to_print">Niets om af te drukken</string>
     <string name="pgp_identity_fingerprint">PGP-identiteitsvingerafdruk</string>
@@ -1210,7 +1210,7 @@
     <string name="failed_change_password">Wachtwoord wijzigen mislukt</string>
     <string name="enter_account_password">Voer je accountwachtwoord in</string>
     <string name="something_went_wrong">Er is iets misgegaan</string>
-    <string name="name_cannot_be_empty">Naam mag niet leeg zijn</string>
+    <string name="name_cannot_be_empty">Voer een naam in</string>
     <string name="session_revoked">Sessie ingetrokken</string>
     <string name="failed_revoke_session">Sessie intrekken mislukt</string>
     <string name="all_other_sessions_signed_out">Alle andere sessies zijn afgemeld</string>
@@ -1255,7 +1255,7 @@
     <string name="scan_failed">Scan mislukt</string>
     <string name="toast_unsubscribed">Uitgeschreven</string>
     <string name="unsubscribe_failed">Uitschrijven mislukt</string>
-    <string name="unsubscribe_manual_required">Deze afzender ondersteunt geen automatisch uitschrijven. Via de link in de e-mail kun je je zelf uitschrijven.</string>
+    <string name="unsubscribe_manual_required">Deze afzender ondersteunt geen automatisch uitschrijven. Gebruik de link in de e-mail om je uit te schrijven.</string>
     <string name="bulk_unsubscribe_failed">Bulksgewijs uitschrijven mislukt</string>
     <string name="unsubscribe_in_progress">Afmelden</string>
     <string name="subscription_hero_summary">%1$s actieve afzenders, %2$s afgemeld, %3$s e-mails</string>
@@ -1274,7 +1274,7 @@
         <item quantity="other">%d afzenders uitgeschreven</item>
     </plurals>
     <string name="enter_six_digit_code">Voer de 6-cijferige code van je authenticator-app in</string>
-    <string name="session_unavailable_sign_in_again">Sessie niet beschikbaar - log opnieuw in</string>
+    <string name="session_unavailable_sign_in_again">Je sessie is niet beschikbaar. Log opnieuw in.</string>
     <string name="vacation_default_subject">Afwezig</string>
     <string name="vacation_default_body">Ik ben momenteel afwezig en antwoord zodra ik terug ben.</string>
     <string name="subject_required">Onderwerp is verplicht</string>
@@ -1338,7 +1338,7 @@
     <string name="settings_plan_bullet_free_aliases">5 e-mailaliassen</string>
     <string name="settings_billing_monthly">Maandelijks</string>
     <string name="settings_billing_yearly">Jaarlijks</string>
-    <string name="settings_prices_usd_note">Prijzen weergegeven in USD. Het definitieve bedrag wordt bepaald bij het afrekenen.</string>
+    <string name="settings_prices_usd_note">Prijzen zijn in USD. Je definitieve bedrag wordt bij het afrekenen bevestigd.</string>
     <string name="settings_prices_currency_note">Prijzen worden getoond in %1$s. Het eindbedrag wordt bij het afrekenen bevestigd.</string>
     <string name="settings_suffix_per_mo">/mnd</string>
     <string name="settings_suffix_per_yr">/jr</string>
@@ -1364,7 +1364,7 @@
     <string name="alias_available">Deze alias is beschikbaar.</string>
     <string name="alias_not_available">Deze alias is al in gebruik.</string>
     <string name="alias_check_failed">Beschikbaarheid kon niet worden gecontroleerd. Je kunt de alias toch proberen aan te maken.</string>
-    <string name="csrf_unavailable">Deze sessie is beschadigd. Log opnieuw in.</string>
+    <string name="csrf_unavailable">Deze sessie kan niet worden geverifieerd. Log opnieuw in.</string>
     <string name="received_on_label">Ontvangen op</string>
     <string name="forwarded_by_label">Doorgestuurd door</string>
     <string name="forwarded_via_domain">via %1$s</string>
@@ -1501,13 +1501,13 @@
     <string name="mail_rules_field_advanced">Geavanceerde voorwaarde</string>
     <string name="mail_rules_action_unsupported">Niet-ondersteunde actie</string>
     <string name="mail_rules_advanced_notice">Deze regel gebruikt geavanceerde voorwaarden. Open hem in de web-app om hem te bewerken.</string>
-    <string name="mail_rules_regex_empty">Er is een regex-patroon nodig voor het opslaan.</string>
-    <string name="mail_rules_regex_too_long">Deze regex is te lang. Een kortere versie werkt.</string>
-    <string name="mail_rules_regex_invalid">Dit regex-patroon bevat een fout. Controleer de syntaxis.</string>
+    <string name="mail_rules_regex_empty">Voer een regex-patroon in voordat je opslaat.</string>
+    <string name="mail_rules_regex_too_long">Deze regex is te lang. Maak hem korter en probeer het opnieuw.</string>
+    <string name="mail_rules_regex_invalid">Dit regex-patroon is niet geldig. Controleer de syntaxis en probeer het opnieuw.</string>
     <string name="mail_rules_regex_backreference">Terugverwijzingen zoals \1 worden niet ondersteund. Herschrijf het patroon zonder deze.</string>
     <string name="mail_rules_regex_lookaround">Lookahead en lookbehind worden niet ondersteund. Herschrijf het patroon zonder deze.</string>
     <string name="tap_again_to_exit">Tik nogmaals om de app te sluiten</string>
-    <string name="action_failed">Actie mislukt. Probeer het opnieuw.</string>
+    <string name="action_failed">Deze actie kon niet worden voltooid. Probeer het opnieuw.</string>
     <string name="version_copied">Versie gekopieerd</string>
     <string name="hold_to_copy_version">Houd vast om te kopiëren</string>
     <string name="name_copied">Naam gekopieerd</string>
@@ -1557,7 +1557,7 @@
     <string name="yesterday">Gisteren</string>
     <string name="onboarding_skip">Overslaan</string>
     <string name="onboarding_slide1_title">Welkom bij Aster</string>
-    <string name="onboarding_slide1_body">Privé-e-mail die je echt beschermt.</string>
+    <string name="onboarding_slide1_body">Privé-e-mail die je beschermt.</string>
     <string name="onboarding_slide2_title">End-to-end versleuteld</string>
     <string name="onboarding_slide2_body">Elk bericht wordt met jouw sleutels versleuteld voordat het je apparaat verlaat. Zelfs Aster kan je mail niet lezen.</string>
     <string name="onboarding_slide3_title">Geen tracking</string>
@@ -1738,7 +1738,7 @@
     <string name="import_no_jobs">Nog geen imports</string>
     <string name="import_chunk_progress">Deel %1$d van %2$d wordt geüpload</string>
     <string name="import_job_created">Import gestart</string>
-    <string name="import_file_too_large">Bestand is te groot (max. 10 GiB)</string>
+    <string name="import_file_too_large">Dit bestand is groter dan 10 GiB</string>
     <string name="attachment_too_large">\"%1$s\" gaat over de limiet van %2$s per bestand</string>
     <string name="attachment_too_large_upgradable">\"%1$s\" overschrijdt de limiet van %2$s per bestand in je abonnement. Upgraden verhoogt dit naar %3$s.</string>
     <string name="attachment_total_too_large">Je bijlagen gaan over de totale limiet van %1$s</string>
@@ -1784,7 +1784,7 @@
     <string name="use_template">Sjabloon gebruiken</string>
     <string name="pick_template">Kies een sjabloon</string>
     <string name="template_inserted">Sjabloon ingevoegd</string>
-    <string name="leave_us_feedback">Laat feedback achter</string>
+    <string name="leave_us_feedback">Stuur ons feedback</string>
     <string name="ext_label_google_account">Gmail-account</string>
     <string name="ext_label_microsoft_account">Outlook-account</string>
     <string name="ext_label_yahoo_account">Yahoo-account</string>
@@ -1795,7 +1795,7 @@
     <string name="import_section_file">Bestand uploaden</string>
     <string name="import_section_sync">Externe synchronisatie</string>
     <string name="import_connect_title">Synchroniseren vanaf een andere provider</string>
-    <string name="import_connect_description">Log één keer in en wij houden je andere postvak synchroon.</string>
+    <string name="import_connect_description">Log één keer in en Aster houdt je andere postvak synchroon.</string>
     <string name="import_provider_other_imap">Anders (IMAP)</string>
     <string name="import_sync_title">Externe synchronisatie</string>
     <string name="import_kind_external_sync">Externe synchronisatie</string>
@@ -1837,7 +1837,7 @@
     <string name="storage_cleanup_title">%1$s (%2$s)</string>
     <string name="storage_free_up_note">Als je een map leegt, worden die berichten definitief verwijderd en komt de ruimte vrij.</string>
     <string name="quiet_hours_paywall_description">Zet meldingen uit tijdens een dagelijks rustmoment. Beschikbaar vanaf Star.</string>
-    <string name="snooze_limit_reached">Het gratis abonnement staat 15 uitgestelde e-mails toe. Upgrade voor onbeperkt.</string>
+    <string name="snooze_limit_reached">Het gratis abonnement bevat 15 uitgestelde e-mails. Upgrade voor onbeperkt uitstellen.</string>
     <string name="external_accounts_paywall_description">Koppel Gmail, Outlook, Yahoo en andere IMAP-accounts. Beschikbaar vanaf Star.</string>
     <string name="upgrade_in_browser_note">Beheer je abonnement in je browser.</string>
     <string name="buy_more_storage">Meer opslag kopen</string>
@@ -1857,7 +1857,7 @@
     <string name="totp_code_optional">Tweefactorcode (als je die gebruikt)</string>
     <string name="totp_code_required_label">Authenticator- of back-upcode</string>
     <string name="totp_code_required_error">Voer de 6-cijferige code uit je authenticator-app in, of een van je back-upcodes</string>
-    <string name="preferences_locked_retry">Je instellingen konden nu niet worden ontgrendeld. We tonen standaardwaarden, ga terug en open opnieuw.</string>
+    <string name="preferences_locked_retry">Je instellingen konden niet worden ontgrendeld, dus de standaardwaarden worden getoond. Ga terug en open dit scherm opnieuw om het nog eens te proberen.</string>
     <string name="encrypted_edit_locked_retry">Aster Mail ontgrendelt dit item nog, dus je wijziging is niet opgeslagen. Probeer het zo opnieuw.</string>
     <string name="plan_name_star">Ster</string>
     <string name="plan_name_nova">Nova</string>
@@ -1869,7 +1869,7 @@
     <string name="ghost_expired_toast">Ghost-alias verlopen</string>
     <string name="ghost_action_failed">Ghost-alias kon niet worden bijgewerkt</string>
     <string name="upgrade_modal_title">Abonnement upgraden</string>
-    <string name="upgrade_modal_description_generic">Je hebt de limiet van je huidige abonnement bereikt. Upgrade om verder te gaan.</string>
+    <string name="upgrade_modal_description_generic">Je hebt de limiet van je huidige abonnement bereikt. Upgrade voor meer.</string>
     <string name="upgrade_modal_description_specific">Je hebt de limiet voor %1$s van het abonnement %2$s bereikt. Upgrade voor meer.</string>
     <string name="upgrade_view_plans">Abonnementen bekijken</string>
     <string name="upgrade_buy_storage">Opslag toevoegen</string>
@@ -1895,7 +1895,7 @@
     <string name="usage_unlimited">Onbeperkt</string>
     <string name="usage_storage">Opslag</string>
     <string name="upgrade_inline_card_title">Upgrade om meer toe te voegen</string>
-    <string name="upgrade_inline_card_description">Je hebt de limiet van het gratis abonnement bereikt. Met een betaald abonnement ontgrendel je meer.</string>
+    <string name="upgrade_inline_card_description">Je hebt de limiet van het gratis abonnement bereikt. Upgrade naar een betaald abonnement voor meer.</string>
     <string name="your_key">Jouw sleutel</string>
     <string name="recovery_codes">Herstelcodes</string>
     <string name="low">Laag</string>
@@ -1924,7 +1924,7 @@
     <string name="publish_to_keyservers_sub">Publiceert je sleutel op openbare keyservers</string>
     <string name="alias_pgp_title">PGP gebruiken met aliassen</string>
     <string name="alias_pgp_sub">Als dit uit staat, bevat mail die je vanaf een alias verstuurt geen PGP-handtekening of sleutelgegevens die hem aan je account koppelen.</string>
-    <string name="keyserver_publish_failed">Je openbare sleutel is niet gepubliceerd op de keyserver. Een nieuwe poging zou moeten werken.</string>
+    <string name="keyserver_publish_failed">Je openbare sleutel kon niet worden gepubliceerd op de keyserver. Probeer het opnieuw.</string>
     <string name="public_key_copied">Publieke sleutel gekopieerd</string>
     <string name="created_at_format">Aangemaakt op %1$s</string>
     <string name="identity_key_unavailable_hint">Log opnieuw in om je sleutelmateriaal te herstellen.</string>
@@ -2074,7 +2074,7 @@
     <string name="warn_suspicious_links_info_desc">Toont een waarschuwing voordat een link buiten Aster wordt geopend. Zo herken je phishingpogingen voordat je tikt.</string>
     <string name="section_privacy_security">Privacy</string>
     <string name="strip_exif_info_title">Wat zijn afbeeldingsmetagegevens?</string>
-    <string name="strip_exif_info_desc">Foto\'s genomen met telefoons en camera\'s bevatten verborgen gegevens zoals GPS-coördinaten, apparaatmodel, tijdstempel en lensgegevens. Aster verwijdert deze voor verzending zodat ontvangers alleen de pixels zien.</string>
+    <string name="strip_exif_info_desc">Foto\'s die met telefoons en camera\'s zijn gemaakt, bevatten verborgen gegevens, zoals GPS-coördinaten, apparaatmodel, tijdstempel en lensgegevens. Wanneer je een afbeelding verstuurt, gaan deze gegevens mee. Aster verwijdert ze vóór het uploaden, zodat ontvangers alleen de afbeelding zien.</string>
     <string name="section_recent_activity">Recente activiteit</string>
     <string name="no_recent_activity">Geen recente activiteit</string>
     <string name="no_recent_activity_subtitle">Beveiligingsgebeurtenissen verschijnen hier</string>
@@ -2223,17 +2223,17 @@
     <string name="export_complete">Export voltooid</string>
     <string name="export_emails_exported">Geëxporteerde e-mails</string>
     <string name="export_file_size">Bestandsgrootte</string>
-    <string name="export_share_save">Delen / Opslaan</string>
+    <string name="export_share_save">Delen of opslaan</string>
     <string name="export_private_key_dialog_title">Privésleutel exporteren</string>
     <string name="export_private_key_message">Je privésleutel wordt in armored PGP-formaat geëxporteerd. Voer je accountwachtwoord in om de export goed te keuren.</string>
     <string name="export_private_key_password_label">Accountwachtwoord</string>
     <string name="export_private_key_exporting">Exporteren...</string>
     <string name="export_private_key_button">Exporteren</string>
     <string name="toast_private_key_copied">Privésleutel naar het klembord gekopieerd</string>
-    <string name="error_private_key_export">Verkeerd wachtwoord of de export is mislukt</string>
+    <string name="error_private_key_export">Kan de sleutel niet exporteren. Controleer je wachtwoord en probeer het opnieuw.</string>
     <string name="storage_addons_title">Opslaguitbreidingen</string>
     <string name="storage_addons_description">Voeg extra opslag toe aan elk abonnement. Je kunt meerdere uitbreidingen combineren.</string>
-    <string name="payment_method_card">Krediet- / debetkaart</string>
+    <string name="payment_method_card">Krediet- of debetkaart</string>
     <string name="payment_method_card_subtitle">Betalen met Stripe</string>
     <string name="payment_method_crypto">Cryptovaluta</string>
     <string name="payment_method_crypto_subtitle">Betalen met crypto</string>
@@ -2270,11 +2270,11 @@
     <string name="crypto_native_expired_title">Betaling verlopen</string>
     <string name="crypto_native_expired_body">Dit betaalvenster is gesloten. Start een nieuwe betaling vanuit facturering om door te gaan.</string>
     <string name="crypto_native_not_found">Betaling niet gevonden</string>
-    <string name="crypto_native_not_found_body">We konden deze betaling niet laden. Mogelijk is die verlopen of verwijderd.</string>
+    <string name="crypto_native_not_found_body">Deze betaling kon niet worden geladen. Mogelijk is die verlopen of verwijderd.</string>
     <string name="crypto_native_unavailable">Kon betaling niet laden</string>
-    <string name="crypto_native_unavailable_body">We konden de server niet bereiken. Controleer je verbinding en probeer het opnieuw. Je betaling is niet beïnvloed.</string>
+    <string name="crypto_native_unavailable_body">De server kon niet worden bereikt. Controleer je verbinding en probeer het opnieuw. Je betaling is niet beïnvloed.</string>
     <string name="crypto_native_manual_review">In beoordeling</string>
-    <string name="crypto_native_manual_review_body">Deze betaling vereist een korte handmatige controle. Dat duurt meestal een paar uur en je abonnement wordt automatisch bijgeschreven.</string>
+    <string name="crypto_native_manual_review_body">Deze betaling vereist een handmatige controle. Dat duurt meestal een paar uur en je abonnement wordt automatisch bijgeschreven.</string>
     <string name="crypto_native_transaction">Transactie</string>
     <string name="crypto_native_status_title">Betalingsstatus</string>
     <string name="crypto_native_awaiting_hint">Wachten op je overboeking</string>
@@ -2376,7 +2376,7 @@
     <string name="kids_link_copied">Instellink gekopieerd</string>
     <string name="kids_link_regenerated">Nieuwe link gegenereerd</string>
     <string name="kids_released">Reservering vrijgegeven</string>
-    <string name="kids_action_failed">Actie mislukt. Probeer het opnieuw.</string>
+    <string name="kids_action_failed">Deze actie kon niet worden voltooid. Probeer het opnieuw.</string>
     <string name="image_failed_placeholder">[Afbeelding kon niet worden geladen]</string>
     <string name="image_lightbox_title">Voorbeeld van afbeelding</string>
     <string name="image_lightbox_failed">Deze afbeelding kon niet worden geopend.</string>
@@ -2646,7 +2646,7 @@
     <string name="domain_purchase_pay_with">Betalen met</string>
     <string name="domain_purchase_pay_card">Kaart</string>
     <string name="domain_purchase_buy">Kopen voor %1$s</string>
-    <string name="domain_purchase_error">Aankoop mislukt. Probeer het opnieuw.</string>
+    <string name="domain_purchase_error">De aankoop kon niet worden voltooid. Probeer het opnieuw.</string>
     <string name="domain_purchase_error_taken">Dit domein is zojuist geregistreerd. Kies een ander domein.</string>
     <string name="domain_purchase_error_limit">Je hebt de domeinlimiet van je abonnement bereikt. Upgrade om er meer toe te voegen.</string>
     <string name="domain_purchase_error_slow_down">Te veel domeinbestellingen tegelijk. Rond de lopende bestellingen af of wacht even.</string>
@@ -2664,7 +2664,7 @@
     <string name="domain_purchase_order_expired">Deze bestelling is verlopen voordat er betaald werd. Start een nieuwe aankoop om het domein te krijgen.</string>
     <string name="domain_purchase_order_lapsed">Dit domein heeft zijn vervaldatum bereikt en is niet meer actief. Koop het opnieuw om het terug te halen.</string>
     <string name="domain_purchase_try_instead">Probeer een van deze alternatieven</string>
-    <string name="domain_purchase_empty_subtitle">Voer een woord, een naam of een volledig domein in. We controleren elke extensie die we verkopen en laten zien wat vrij is.</string>
+    <string name="domain_purchase_empty_subtitle">Voer een woord, een naam of een volledig domein in. We controleren elke extensie die we verkopen en laten zien welke beschikbaar zijn.</string>
     <string name="domain_purchase_search_failed">De zoekopdracht is mislukt. Probeer het opnieuw.</string>
     <string name="domain_purchase_more_suggestions">Meer ideeën genereren</string>
     <string name="domain_purchase_order_summary">Besteloverzicht</string>
@@ -2688,7 +2688,7 @@
     <string name="domain_purchase_detail_privacy">Standaard privé</string>
     <string name="domain_purchase_detail_public_whois">Openbare WHOIS-gegevens</string>
     <string name="domain_purchase_whois_public_notice">Het register van .%1$s staat geen WHOIS-privacy toe. Aster registreert het domein met de contactgegevens van het bedrijf, dus je persoonlijke gegevens worden niet gepubliceerd.</string>
-    <string name="domain_purchase_detail_setup">Nul instellingen</string>
+    <string name="domain_purchase_detail_setup">Geen installatie nodig</string>
     <string name="domain_purchase_detail_instant">Klaar in seconden</string>
     <string name="domain_purchase_detail_ownership">Van jou</string>
     <string name="domain_purchase_awaiting_payment">Wacht op betaling</string>
@@ -2699,7 +2699,7 @@
     <string name="change_label_color">Kleur wijzigen</string>
     <string name="change_label_icon">Pictogram wijzigen</string>
     <string name="failed_update_label">Label kon niet worden bijgewerkt</string>
-    <string name="tracking_protection_enabled">Trackerbeveiliging ingeschakeld</string>
+    <string name="tracking_protection_enabled">Trackerbeveiliging inschakelen</string>
     <string name="tracking_protection_enabled_subtitle">Geavanceerde bescherming tegen e-mailtracking</string>
     <string name="block_remote_fonts">Externe lettertypen blokkeren</string>
     <string name="block_remote_fonts_subtitle">Voorkom dat e-mails lettertypen laden van externe servers</string>
@@ -2802,7 +2802,7 @@
     <string name="alias_restore_placeholder">Adres</string>
     <string name="alias_restore_confirm">Herstellen</string>
     <string name="alias_restore_mismatch">Dit adres komt niet overeen met deze alias. Kijk in de header van een bezorgd bericht.</string>
-    <string name="alias_restore_failed">De alias is niet hersteld. Probeer het opnieuw.</string>
+    <string name="alias_restore_failed">De alias kon niet worden hersteld. Probeer het opnieuw.</string>
     <string name="password_change_web_required">Gebruik de Aster Mail-webapp om het wachtwoord van dit account te wijzigen.</string>
     <string name="switch_yearly_due_today">Vandaag betaal je %1$s, naar rato van de rest van je huidige periode. Daarna kost je abonnement %2$s per jaar, wat %3$d%% bespaart ten opzichte van maandelijkse facturering.</string>
     <string name="plan_change_preview_loading">Het bedrag dat je vandaag betaalt wordt berekend…</string>
@@ -2819,7 +2819,7 @@
     <string name="cancel_reason_switched_provider">Overgestapt naar een andere aanbieder</string>
     <string name="cancel_reason_bugs">Te veel bugs of problemen</string>
     <string name="cancel_reason_privacy_trust">Zorgen over privacy of vertrouwen</string>
-    <string name="cancel_reason_just_testing">Ik was het alleen aan het uitproberen</string>
+    <string name="cancel_reason_just_testing">Ik was het aan het uitproberen</string>
     <string name="cancel_reason_other">Iets anders</string>
     <string name="cancel_reason_text_placeholder">Wil je iets toevoegen? (optioneel)</string>
     <string name="change_plan_failed">Abonnement kon niet worden gewijzigd</string>
@@ -2914,17 +2914,17 @@
     <string name="error_passkey_failed">Je toegangssleutel kon niet worden geverifieerd. Probeer het opnieuw of gebruik een andere inlogmethode.</string>
     <string name="error_invalid_backup_code">Deze back-upcode komt niet overeen. Elke code werkt maar één keer, dus probeer de volgende ongebruikte code uit je lijst.</string>
     <string name="error_invalid_recovery_phrase">Deze herstelzin komt niet overeen. Controleer de volgorde van de woorden en de spelling en probeer het opnieuw.</string>
-    <string name="error_plan_limit_reached">Je hebt de limiet van je huidige abonnement bereikt. Upgrade of verwijder wat items om ruimte te maken, dan kun je weer verder.</string>
+    <string name="error_plan_limit_reached">Je hebt de limiet van je huidige abonnement bereikt. Upgrade je abonnement of verwijder wat items om door te gaan.</string>
     <string name="error_account_limit_reached_count">De limiet voor aangemelde accounts op dit apparaat voor je abonnement is %1$d. Als je je wilt aanmelden bij dit account, meld je dan op dit apparaat af bij een ander account of upgrade je abonnement.</string>
     <string name="error_account_limit_reached">Je hebt de limiet voor aangemelde accounts op dit apparaat voor je abonnement bereikt. Als je je wilt aanmelden bij dit account, meld je dan op dit apparaat af bij een ander account of upgrade je abonnement.</string>
-    <string name="error_sign_in_code_invalid">Deze code is niet meer geldig. Vraag een nieuwe aan om verder te gaan met inloggen.</string>
+    <string name="error_sign_in_code_invalid">Deze code is niet meer geldig. Vraag een nieuwe code aan en probeer het opnieuw.</string>
     <string name="error_sign_in_domain_unsupported">Meld je aan met het astermail.org- of aster.cx-adres waarmee je je hebt geregistreerd. Adressen op je eigen domein komen op hetzelfde account uit.</string>
     <string name="error_storage_full">Je opslag is vol. Upgrade je abonnement of verwijder wat e-mails om ruimte te maken.</string>
     <string name="error_unsupported_email_domain">Voer een adres in dat eindigt op astermail.org of aster.cx.</string>
     <string name="error_upload_too_large">De upload is te groot. Verwijder of verklein een bestand om verder te gaan.</string>
     <string name="expiring_not_with_schedule">Je kunt een bericht plannen of laten verlopen, maar niet allebei. Schakel een optie uit om door te gaan.</string>
     <string name="failed_load_dns_records">DNS-records konden niet worden geladen</string>
-    <string name="failed_to_move_items">Verplaatsen mislukt</string>
+    <string name="failed_to_move_items">Items verplaatsen mislukt</string>
     <string name="folder_name_taken">Er bestaat al een map met deze naam.</string>
     <string name="hardware_key_remove_confirm">Je kunt daarna niet meer met deze beveiligingssleutel inloggen.</string>
     <string name="hardware_key_remove_last_title">Deze beveiligingssleutel verwijderen?</string>
@@ -2983,8 +2983,8 @@
     <string name="vacation_date_not_set">Niet ingesteld</string>
     <string name="vacation_end_date">Einddatum</string>
     <string name="vacation_start_date">Startdatum</string>
-    <string name="wkd_publish_failed">Je openbare sleutel is niet gepubliceerd in de Web Key Directory. Een nieuwe poging zou moeten werken.</string>
-    <string name="wkd_unpublish_failed">Je openbare sleutel staat nog in de Web Key Directory. Een nieuwe poging zou hem moeten verwijderen.</string>
+    <string name="wkd_publish_failed">Je openbare sleutel kon niet worden gepubliceerd in de Web Key Directory. Probeer het opnieuw.</string>
+    <string name="wkd_unpublish_failed">Je openbare sleutel kon niet uit de Web Key Directory worden verwijderd. Probeer het opnieuw.</string>
     <string name="text_color">Tekstkleur</string>
     <string name="highlight_color">Markeerkleur</string>
     <string name="remove_highlight">Markering verwijderen</string>
@@ -2994,7 +2994,7 @@
     <string name="app_lock_biometric_failed">Biometrisch ontgrendelen is niet beschikbaar. Voer je pincode in.</string>
     <string name="app_lock_biometric_error">Biometrisch ontgrendelen werkte niet. Probeer het opnieuw of voer je pincode in.</string>
     <string name="app_lock_biometric_reset">Aster Mail heeft biometrisch ontgrendelen uitgeschakeld. Voer je pincode in om het weer in te schakelen.</string>
-    <string name="applied_to_loaded_only">Toegepast op %1$d van %2$d - deze actie geldt alleen voor geladen berichten</string>
+    <string name="applied_to_loaded_only">Toegepast op %1$d van %2$d. Deze actie geldt alleen voor geladen berichten.</string>
     <string name="audit_event_2fa_disabled">Tweefactorauthenticatie uitgeschakeld</string>
     <string name="audit_event_2fa_enabled">Tweefactorauthenticatie ingeschakeld</string>
     <string name="audit_event_account_locked">Account vergrendeld</string>
@@ -3016,7 +3016,7 @@
     <string name="domain_status_failed">Verificatie mislukt</string>
     <string name="domain_status_suspended">Opgeschort</string>
     <string name="domain_status_verifying">Verifiëren</string>
-    <string name="generate_ghost_alias_message">Aster maakt een willekeurig adres dat doorstuurt naar je Postvak IN. Je kunt het op elk moment verwijderen zonder gevolgen voor je andere adressen.</string>
+    <string name="generate_ghost_alias_message">Aster maakt een willekeurig adres dat doorstuurt naar je Postvak IN. Je kunt het op elk moment laten verlopen zonder gevolgen voor je andere adressen.</string>
     <string name="identity_changed_description">De versleutelingssleutel voor %1$s verschilt van de sleutel die je eerder zag. Dit gebeurt wanneer iemand inlogt op een nieuw apparaat of zijn account herstelt, maar het kan ook betekenen dat iemand je berichten onderschept. Bevestig dit via een ander kanaal voordat je dit gesprek vertrouwt.</string>
     <string name="identity_changed_dismiss">Ik heb dit geverifieerd</string>
     <string name="identity_changed_title">Versleutelingssleutel gewijzigd</string>
@@ -3068,7 +3068,7 @@
     <string name="contact_support">Contact opnemen met support</string>
     <string name="domain_purchase_manage">Beheren</string>
     <string name="domain_purchase_cancel_payment_title">Deze betaling annuleren?</string>
-    <string name="domain_purchase_cancel_payment_message">Weet je zeker dat je deze betaling voor het eigen domein wilt annuleren?</string>
+    <string name="domain_purchase_cancel_payment_message">Je betaling voor het eigen domein annuleren?</string>
     <string name="domain_purchase_cancel_payment_confirm">Betaling annuleren</string>
     <string name="domain_purchase_cancel_payment_keep">Betaling behouden</string>
     <string name="domain_purchase_manage_description">Bekijk deze registratie en verleng die voordat ze verloopt.</string>
@@ -3164,7 +3164,7 @@
     <string name="alias_unpin">Alias losmaken</string>
     <string name="alias_pinned_toast">Alias vastgezet</string>
     <string name="alias_unpinned_toast">Alias losgemaakt</string>
-    <string name="e2e_identity_changed_blocked">Verzenden mislukt: de versleutelingssleutel van een ontvanger is gewijzigd. Bevestig de wijziging in je inbox en verstuur het bericht opnieuw. Het bericht is niet verzonden.</string>
+    <string name="e2e_identity_changed_blocked">Het bericht kon niet worden verzonden, omdat de versleutelingssleutel van een ontvanger is gewijzigd. Bevestig de wijziging in je inbox en verstuur het bericht opnieuw.</string>
     <string name="link_device_fingerprint_label">Apparaatvingerafdruk</string>
     <string name="link_device_fingerprint_placeholder">XXXX XXXX XXXX XXXX XXXX</string>
     <string name="link_device_fingerprint_hint">Voer de apparaatvingerafdruk in die in de app staat die je koppelt. Sommige apps noemen dit een verificatiecode.</string>
@@ -3734,7 +3734,7 @@
     <string name="reply_from_mismatch_banner">Deze e-mail is ontvangen op %1$s, maar je antwoord wordt verzonden vanaf %2$s.</string>
     <string name="reply_from_mismatch_send_from">Verzenden vanaf %1$s</string>
     <string name="reply_from_mismatch_dismiss">Sluiten</string>
-    <string name="error_alias_sending_disabled">Verzenden vanaf deze alias is uitgeschakeld. Schakel het eerst in.</string>
+    <string name="error_alias_sending_disabled">Verzenden vanaf deze alias is uitgeschakeld. Schakel eerst verzenden in om vanaf deze alias te versturen.</string>
     <string name="open_group_description">Groep %1$s openen, %2$s</string>
     <string name="group_empty_title">Geen contacten in deze groep</string>
     <string name="group_empty_hint">Tik op Leden toevoegen om contacten aan deze groep toe te voegen.</string>

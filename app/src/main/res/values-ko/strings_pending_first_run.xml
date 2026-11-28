@@ -20,6 +20,6 @@
     <string name="recovery_codes_refresh_body">현재 복구 코드는 오래된 코드입니다. 새 코드를 받아 안전한 곳에 저장하세요. 새 코드를 받으면 이전 코드는 더 이상 작동하지 않습니다.</string>
     <string name="recovery_codes_refresh_action">새 코드 받기</string>
     <string name="recovery_phrase_migrate_title">복구 코드로 전환</string>
-    <string name="recovery_phrase_migrate_body">복구 문구는 곧 사라집니다. 계정을 계속 복구할 수 있도록 지금 복구 코드를 받으세요.</string>
+    <string name="recovery_phrase_migrate_body">Aster는 복구 문구를 복구 코드로 대체하고 있습니다. 계정을 복구할 방법을 유지하려면 지금 복구 코드를 받으세요.</string>
     <string name="recovery_phrase_migrate_action">코드 받기</string>
 </resources>

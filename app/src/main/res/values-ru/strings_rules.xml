@@ -4,7 +4,7 @@
     <string name="rules_section_recipients">Получатели</string>
     <string name="rules_section_content">Содержимое</string>
     <string name="rules_section_attachments_flags">Вложения и признаки</string>
-    <string name="rules_section_numeric_date_auth">Числа, дата и аутентификация</string>
+    <string name="rules_section_numeric_date_auth">Числа, даты и аутентификация</string>
 
     <string name="rules_op_is">равно</string>
     <string name="rules_op_is_not">не равно</string>
@@ -80,8 +80,8 @@
     <string name="no_custom_categories">Пользовательских категорий пока нет.</string>
     <string name="category_name_required">Введите название для этой категории.</string>
     <string name="category_rule_required">Добавьте хотя бы один домен или ключевое слово для сопоставления.</string>
-    <string name="category_domains_invalid">Недопустимые домены: %1$s. Используйте настоящий домен, например example.com.</string>
-    <string name="category_keywords_invalid">Недопустимые ключевые слова: %1$s. Используйте только обычные слова.</string>
+    <string name="category_domains_invalid">Эти домены недопустимы: %1$s. Используйте домен, например example.com.</string>
+    <string name="category_keywords_invalid">Эти ключевые слова недопустимы: %1$s. Используйте только обычные слова.</string>
     <string name="delete_category_title">Удалить категорию?</string>
     <string name="delete_category_description">Удалить категорию «%1$s»? Это действие нельзя отменить.</string>
     <string name="custom_categories_locked">Пользовательские категории недоступны в вашем текущем тарифе.</string>
@@ -97,7 +97,7 @@
     <string name="category_match_keywords">Сопоставлять ключевые слова темы</string>
     <string name="category_match_keywords_placeholder">рассылка, дайджест</string>
     <string name="category_match_keywords_help">Слова через запятую. Если хотя бы одно встречается в теме, письмо попадёт в эту категорию.</string>
-    <string name="category_tutorial_text">Совет: письмо попадает в пользовательскую категорию, если домен отправителя или тема содержит любое из ваших ключевых слов. Пользовательские категории проверяются раньше встроенных, поэтому у них всегда приоритет.</string>
+    <string name="category_tutorial_text">Письмо попадает в пользовательскую категорию, если домен отправителя или тема содержит любое из ваших ключевых слов. Пользовательские категории проверяются раньше встроенных, поэтому у них всегда приоритет.</string>
     <string name="rules_create_first_folder_hint">Создайте папку, и это правило сможет перемещать в неё подходящие письма.</string>
     <string name="rules_create_first_label_hint">Создайте метку, и это правило сможет применять её к подходящим письмам.</string>
     <string name="muted_categories">Отключённые категории</string>

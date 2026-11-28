@@ -8,7 +8,7 @@
     <string name="notif_login_alert_action_revoke">Nicht ich</string>
     <string name="notif_login_alert_revoking">Neue Sitzung wird abgemeldet…</string>
     <string name="notif_login_alert_revoked">Sitzung abgemeldet</string>
-    <string name="notif_login_alert_revoked_body">Die neue Sitzung wurde abgemeldet. Ändern Sie ggf. Ihr Passwort in den Sicherheitseinstellungen.</string>
+    <string name="notif_login_alert_revoked_body">Die neue Sitzung wurde abgemeldet. Um Ihr Konto zu schützen, ändern Sie Ihr Passwort in den Sicherheitseinstellungen.</string>
     <string name="notif_login_alert_revoke_failed">Sitzung konnte nicht abgemeldet werden</string>
     <string name="notif_login_alert_revoke_failed_body">Öffnen Sie die App, um Ihre aktiven Sitzungen zu überprüfen.</string>
     <string name="mute_folder_notifications">Ordner-Benachrichtigungen stummschalten</string>

@@ -65,8 +65,8 @@
         <item quantity="other">Erişim %1$d gün içinde kısıtlanacak.</item>
     </plurals>
     <plurals name="templates_decrypt_failed_count">
-        <item quantity="one">%1$d şablon bu cihazda okunamadı. Bu cihazda şu anda bulunmayan bir anahtarla kaydedilmiş.</item>
-        <item quantity="other">%1$d şablon bu cihazda okunamadı. Bu cihazda şu anda bulunmayan bir anahtarla kaydedilmişler.</item>
+        <item quantity="one">%1$d şablon bu cihazda okunamıyor çünkü bu cihazda bulunmayan bir anahtarla kaydedilmiş.</item>
+        <item quantity="other">%1$d şablon bu cihazda okunamıyor çünkü bu cihazda bulunmayan bir anahtarla kaydedilmişler.</item>
     </plurals>
     <plurals name="contact_trash_days_left">
         <item quantity="one">%1$d gün kaldı</item>

@@ -24,10 +24,10 @@
     <string name="settings_feat_auto_responder">자동 응답</string>
     <string name="settings_feat_alias_avatars">별칭 이미지</string>
     <string name="settings_feat_instant_alias_delete">Aster 도메인 별칭 즉시 삭제</string>
-    <string name="alias_too_new_title">이 별칭은 삭제하기에 너무 최근에 만들어졌습니다</string>
-    <string name="alias_too_new_message">Aster 도메인에서 새로 만든 별칭은 30일이 지나야 삭제할 수 있습니다. 이 별칭은 %1$s부터 삭제할 수 있습니다. 바로 삭제하려면 Supernova로 업그레이드하세요.</string>
-    <string name="ghost_alias_too_new_title">이 고스트 별칭은 만료시키기에 너무 최근에 만들어졌습니다</string>
-    <string name="ghost_alias_too_new_message">새로 만든 고스트 별칭은 30일이 지나야 만료시킬 수 있습니다. 이 별칭은 %1$s부터 만료시킬 수 있습니다. Supernova로 업그레이드하면 고스트 별칭을 즉시 만료할 수 있습니다.</string>
+    <string name="alias_too_new_title">이 별칭은 아직 삭제할 수 없습니다</string>
+    <string name="alias_too_new_message">Aster 도메인에서 새로 만든 별칭은 30일 동안 활성 상태로 유지됩니다. 이 별칭은 %1$s부터 삭제할 수 있으며, Supernova로 업그레이드하면 별칭을 바로 삭제할 수 있습니다.</string>
+    <string name="ghost_alias_too_new_title">이 고스트 별칭은 아직 만료시킬 수 없습니다</string>
+    <string name="ghost_alias_too_new_message">새로 만든 고스트 별칭은 30일 동안 활성 상태로 유지됩니다. 이 별칭은 %1$s부터 만료시킬 수 있으며, Supernova로 업그레이드하면 고스트 별칭을 바로 만료시킬 수 있습니다.</string>
     <string name="ghost_alias_max_extension_toast">이 고스트 별칭은 이미 최대 수명인 90일에 도달하여 더 이상 연장할 수 없습니다.</string>
     <string name="settings_feat_folders">폴더</string>
     <string name="settings_feat_labels">라벨</string>
@@ -87,7 +87,7 @@
     <string name="settings_diagnostics_clip_label">진단 정보</string>
     <string name="settings_diagnostics_secure_storage">보안 저장소</string>
     <string name="settings_diagnostics_storage_ok">정상</string>
-    <string name="settings_diagnostics_storage_degraded">성능 저하됨, 로그아웃한 후 다시 로그인하세요</string>
+    <string name="settings_diagnostics_storage_degraded">성능 저하됨. 로그아웃한 후 다시 로그인하세요.</string>
     <string name="settings_crash_reports_title">충돌 보고서 보내기</string>
     <string name="settings_crash_reports_subtitle">직접 켜지 않으면 꺼져 있습니다. 보고서에는 계정, 메시지, 연락처가 절대 포함되지 않습니다.</string>
     <string name="settings_crash_reports_info">이 설정을 켜면 앱이 충돌하거나, 응답하지 않거나, 기능에 연결하지 못할 때 Aster Mail이 Aster에 익명 보고서를 보냅니다. 보고서에는 오류 유형, 앱 버전, 오류가 발생한 앱 코드의 위치가 포함됩니다. 주소, 메시지, 연락처 또는 계정을 식별할 수 있는 정보는 절대 포함되지 않습니다. 이 설정을 끄면 Aster Mail은 보고서를 보내지 않습니다.</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="found_us_banner_message">आपको Aster Mail के बारे में पहली बार कहाँ से पता चला? बस एक सवाल है, और जवाब देना ज़रूरी नहीं है।</string>
+    <string name="found_us_banner_message">आपको Aster Mail के बारे में पहली बार कहाँ से पता चला? जवाब देना ज़रूरी नहीं है।</string>
     <string name="found_us_banner_answer">जवाब दें</string>
     <string name="found_us_banner_dismiss">बंद करें</string>
     <string name="found_us_remind_later">अगले हफ़्ते याद दिलाएँ</string>

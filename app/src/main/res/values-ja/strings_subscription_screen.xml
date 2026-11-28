@@ -6,5 +6,5 @@
     <string name="billing_source_crypto">暗号資産で支払い済み</string>
     <string name="billing_status_trial">トライアル</string>
     <string name="billing_top_plan_title">最上位のプランをご利用中です</string>
-    <string name="billing_section_load_failed">Aster でこのセクションを読み込めませんでした。</string>
+    <string name="billing_section_load_failed">このセクションを読み込めませんでした。もう一度お試しください。</string>
 </resources>

@@ -10,7 +10,7 @@
     <string name="two_factor_on_with_security_key">Attiva con una chiave di sicurezza</string>
     <string name="two_factor_on_with_app_and_key">Attiva con un\'app di autenticazione e una chiave di sicurezza</string>
     <string name="no_passkeys_recommendation">Aggiungi una passkey per un accesso più rapido e sicuro usando la biometria o il PIN del tuo dispositivo.</string>
-    <string name="login_alerts_off_recommendation">Attiva gli avvisi di accesso per essere avvisato quando un nuovo dispositivo accede al tuo account.</string>
+    <string name="login_alerts_off_recommendation">Per ricevere una notifica quando un nuovo dispositivo accede al tuo account, attiva gli avvisi di accesso.</string>
     <string name="billing_usage_title">Panoramica utilizzo</string>
     <plurals name="security_actions_remaining">
         <item quantity="one">%1$d azione consigliata</item>

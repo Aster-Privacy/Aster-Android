@@ -57,12 +57,12 @@
         <item quantity="other">%1$d رسالة</item>
     </plurals>
     <plurals name="spam_auto_delete_notice">
-        <item quantity="zero">تُحذف العناصر في مجلد الرسائل المزعجة تلقائيًا بعد %1$d يوم.</item>
-        <item quantity="one">تُحذف العناصر في مجلد الرسائل المزعجة تلقائيًا بعد يوم واحد.</item>
-        <item quantity="two">تُحذف العناصر في مجلد الرسائل المزعجة تلقائيًا بعد يومين.</item>
-        <item quantity="few">تُحذف العناصر في مجلد الرسائل المزعجة تلقائيًا بعد %1$d أيام.</item>
-        <item quantity="many">تُحذف العناصر في مجلد الرسائل المزعجة تلقائيًا بعد %1$d يومًا.</item>
-        <item quantity="other">تُحذف العناصر في مجلد الرسائل المزعجة تلقائيًا بعد %1$d يوم.</item>
+        <item quantity="zero">تُحذف الرسائل في مجلد الرسائل المزعجة تلقائيًا بعد %1$d يوم.</item>
+        <item quantity="one">تُحذف الرسائل في مجلد الرسائل المزعجة تلقائيًا بعد يوم واحد.</item>
+        <item quantity="two">تُحذف الرسائل في مجلد الرسائل المزعجة تلقائيًا بعد يومين.</item>
+        <item quantity="few">تُحذف الرسائل في مجلد الرسائل المزعجة تلقائيًا بعد %1$d أيام.</item>
+        <item quantity="many">تُحذف الرسائل في مجلد الرسائل المزعجة تلقائيًا بعد %1$d يومًا.</item>
+        <item quantity="other">تُحذف الرسائل في مجلد الرسائل المزعجة تلقائيًا بعد %1$d يوم.</item>
     </plurals>
     <plurals name="trash_auto_delete_notice">
         <item quantity="zero">تُحذف الرسائل تلقائيًا بعد %1$d يوم من نقلها إلى المهملات.</item>

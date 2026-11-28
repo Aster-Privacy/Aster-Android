@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="compose_discard_draft_title">Discard this draft?</string>
-    <string name="compose_discard_draft_message">If you discard this draft, its text and any attachments are deleted. This action cannot be undone.</string>
+    <string name="compose_discard_draft_message">If you discard this draft, its text and any attachments are deleted. This can\'t be undone.</string>
     <string name="scheduled_too_far_ahead">Scheduled emails can go out at most 28 days ahead. Choose an earlier time.</string>
     <string name="send_requires_encryption">Require encryption is on, and mail to addresses outside Aster isn\'t end-to-end encrypted, so this message wasn\'t sent. To send it, remove those addresses or turn off Require encryption in Settings.</string>
     <string name="send_encryption_setting_unavailable">Aster couldn\'t check your encryption settings, so it didn\'t send this message. Check your connection, then try again.</string>

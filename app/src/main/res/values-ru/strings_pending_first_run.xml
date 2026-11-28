@@ -20,6 +20,6 @@
     <string name="recovery_codes_refresh_body">Ваши коды восстановления устарели. Получите новые коды и сохраните их в надёжном месте. После получения новых кодов старые перестанут работать.</string>
     <string name="recovery_codes_refresh_action">Получить новые коды</string>
     <string name="recovery_phrase_migrate_title">Перейдите на коды восстановления</string>
-    <string name="recovery_phrase_migrate_body">Фразы восстановления скоро перестанут работать. Получите коды восстановления сейчас, чтобы сохранить возможность восстановить аккаунт.</string>
+    <string name="recovery_phrase_migrate_body">Aster заменяет фразы восстановления кодами восстановления. Чтобы сохранить возможность восстановить аккаунт, получите коды восстановления сейчас.</string>
     <string name="recovery_phrase_migrate_action">Получить коды</string>
 </resources>

@@ -20,5 +20,5 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 -->
 <resources>
-    <string name="app_lock_setup_failed">Something went wrong. Try setting your lock again.</string>
+    <string name="app_lock_setup_failed">Couldn\'t set up your lock. Try again.</string>
 </resources>

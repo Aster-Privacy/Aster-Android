@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="found_us_banner_message">Aster Mail を最初に知ったきっかけは何ですか？質問は 1 つだけで、回答は任意です。</string>
+    <string name="found_us_banner_message">Aster Mail を最初に知ったきっかけは何ですか？回答は任意です。</string>
     <string name="found_us_banner_answer">回答する</string>
     <string name="found_us_banner_dismiss">閉じる</string>
     <string name="found_us_remind_later">来週もう一度表示</string>

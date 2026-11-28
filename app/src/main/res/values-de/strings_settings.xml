@@ -24,10 +24,10 @@
     <string name="settings_feat_auto_responder">Automatische Antwort</string>
     <string name="settings_feat_alias_avatars">Alias-Bilder</string>
     <string name="settings_feat_instant_alias_delete">Sofortiges Löschen von Aliassen auf Aster-Domains</string>
-    <string name="alias_too_new_title">Dieses Alias ist zu neu zum Löschen</string>
-    <string name="alias_too_new_message">Neue Aliasse auf Aster-Domains bleiben 30 Tage aktiv, bevor Sie sie löschen können. Sie können diesen Alias ab %1$s löschen. Um Aliasse sofort zu löschen, wechseln Sie zu Supernova.</string>
-    <string name="ghost_alias_too_new_title">Dieses Ghost-Alias ist zu neu zum Auslaufen</string>
-    <string name="ghost_alias_too_new_message">Neue Ghost-Aliase bleiben 30 Tage aktiv, bevor sie auslaufen können. Dieses lässt sich ab %1$s auslaufen. Mit Supernova lassen sich Ghost-Aliase sofort auslaufen lassen.</string>
+    <string name="alias_too_new_title">Dieser Alias kann noch nicht gelöscht werden</string>
+    <string name="alias_too_new_message">Neue Aliasse auf Aster-Domains bleiben 30 Tage aktiv. Sie können diesen Alias ab %1$s löschen oder zu Supernova wechseln, um Aliasse sofort zu löschen.</string>
+    <string name="ghost_alias_too_new_title">Dieser Ghost-Alias kann noch nicht ablaufen</string>
+    <string name="ghost_alias_too_new_message">Neue Ghost-Aliasse bleiben 30 Tage aktiv. Sie können diesen ab %1$s ablaufen lassen oder zu Supernova wechseln, um Ghost-Aliasse sofort ablaufen zu lassen.</string>
     <string name="ghost_alias_max_extension_toast">Dieser Ghost-Alias hat bereits seine maximale Lebensdauer von 90 Tagen erreicht und kann nicht weiter verlängert werden.</string>
     <string name="settings_feat_folders">Ordner</string>
     <string name="settings_feat_labels">Labels</string>
@@ -87,7 +87,7 @@
     <string name="settings_diagnostics_clip_label">Diagnose</string>
     <string name="settings_diagnostics_secure_storage">Sicherer Speicher</string>
     <string name="settings_diagnostics_storage_ok">Fehlerfrei</string>
-    <string name="settings_diagnostics_storage_degraded">Beeinträchtigt, melden Sie sich ab und wieder an</string>
+    <string name="settings_diagnostics_storage_degraded">Beeinträchtigt. Melden Sie sich ab und wieder an.</string>
     <string name="settings_crash_reports_title">Absturzberichte senden</string>
     <string name="settings_crash_reports_subtitle">Aus, solange Sie es nicht einschalten. Berichte enthalten nie Ihr Konto, Ihre Nachrichten oder Ihre Kontakte.</string>
     <string name="settings_crash_reports_info">Wenn diese Einstellung aktiviert ist, sendet Aster Mail einen anonymen Bericht an Aster, falls die App abstürzt, nicht mehr reagiert oder eine Funktion nicht erreicht. Ein Bericht enthält die Fehlerart, die App-Version und die Stelle im Code der App, an der der Fehler aufgetreten ist. Er enthält nie Ihre Adresse, Ihre Nachrichten, Ihre Kontakte oder etwas, das Ihr Konto identifiziert. Wenn diese Einstellung deaktiviert ist, sendet Aster Mail keine Berichte.</string>

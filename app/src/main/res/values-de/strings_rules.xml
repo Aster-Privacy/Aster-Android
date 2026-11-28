@@ -80,10 +80,10 @@
     <string name="no_custom_categories">Noch keine eigenen Kategorien.</string>
     <string name="category_name_required">Geben Sie einen Namen für diese Kategorie ein.</string>
     <string name="category_rule_required">Fügen Sie mindestens eine Domain oder ein Stichwort zum Abgleich hinzu.</string>
-    <string name="category_domains_invalid">Ungültige Domains: %1$s. Verwenden Sie eine echte Domain wie example.com.</string>
-    <string name="category_keywords_invalid">Ungültige Stichwörter: %1$s. Verwenden Sie nur normale Wörter.</string>
+    <string name="category_domains_invalid">Diese Domains sind ungültig: %1$s. Verwenden Sie eine Domain wie example.com.</string>
+    <string name="category_keywords_invalid">Diese Stichwörter sind ungültig: %1$s. Verwenden Sie nur normale Wörter.</string>
     <string name="delete_category_title">Kategorie löschen?</string>
-    <string name="delete_category_description">Möchten Sie „%1$s“ wirklich löschen? Das lässt sich nicht rückgängig machen.</string>
+    <string name="delete_category_description">„%1$s“ löschen? Das lässt sich nicht rückgängig machen.</string>
     <string name="custom_categories_locked">Eigene Kategorien sind in Ihrem aktuellen Tarif nicht verfügbar.</string>
     <string name="custom_categories_limit_reached">Sie haben die Höchstzahl eigener Kategorien für Ihren Tarif erreicht. Führen Sie ein Upgrade durch, um mehr zu erhalten.</string>
     <string name="edit_custom_category">Kategorie bearbeiten</string>
@@ -97,7 +97,7 @@
     <string name="category_match_keywords">Betreff-Stichwörter abgleichen</string>
     <string name="category_match_keywords_placeholder">Newsletter, Digest</string>
     <string name="category_match_keywords_help">Kommagetrennte Wörter. Wenn eines davon in der Betreffzeile vorkommt, landet die E-Mail in dieser Kategorie.</string>
-    <string name="category_tutorial_text">Tipp: Eine eigene Kategorie trifft zu, wenn die Absenderdomain ODER der Betreff eines Ihrer Stichwörter enthält. Eigene Kategorien werden vor den integrierten geprüft und haben daher immer Vorrang.</string>
+    <string name="category_tutorial_text">Eine eigene Kategorie trifft zu, wenn die Absenderdomain oder der Betreff eines Ihrer Stichwörter enthält. Eigene Kategorien werden vor den integrierten geprüft und haben daher immer Vorrang.</string>
     <string name="rules_create_first_folder_hint">Erstellen Sie einen Ordner, und diese Regel kann passende E-Mails dorthin verschieben.</string>
     <string name="rules_create_first_label_hint">Erstellen Sie ein Label, und diese Regel kann es passenden E-Mails zuweisen.</string>
     <string name="muted_categories">Stummgeschaltete Kategorien</string>

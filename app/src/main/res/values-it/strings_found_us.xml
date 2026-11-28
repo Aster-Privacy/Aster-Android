@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="found_us_banner_message">Come hai conosciuto Aster Mail? È una sola domanda ed è facoltativa.</string>
+    <string name="found_us_banner_message">Come hai conosciuto Aster Mail? La risposta è facoltativa.</string>
     <string name="found_us_banner_answer">Rispondi</string>
     <string name="found_us_banner_dismiss">Ignora</string>
     <string name="found_us_remind_later">Ricordamelo la prossima settimana</string>
@@ -31,5 +31,5 @@
     <string name="found_us_skip">Salta</string>
     <string name="found_us_send">Invia</string>
     <string name="found_us_thanks">Grazie per avercelo detto.</string>
-    <string name="found_us_send_failed">La risposta non è stata inviata. Riprova tra poco.</string>
+    <string name="found_us_send_failed">Impossibile inviare la risposta. Riprova tra poco.</string>
 </resources>

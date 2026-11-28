@@ -32,7 +32,7 @@
     <string name="domain_bimi_row_inactive">Dokończ konfigurację tej domeny, aby dodać logo marki.</string>
     <string name="domain_bimi_state_draft">Nieopublikowane</string>
     <string name="domain_bimi_state_pending">Oczekiwanie na DNS</string>
-    <string name="domain_bimi_state_live">Aktywne</string>
+    <string name="domain_bimi_state_live">Opublikowane</string>
     <string name="domain_bimi_state_attention">Wymaga uwagi</string>
     <string name="domain_bimi_state_external">Zarządzane gdzie indziej</string>
     <string name="domain_bimi_set_up">Skonfiguruj</string>

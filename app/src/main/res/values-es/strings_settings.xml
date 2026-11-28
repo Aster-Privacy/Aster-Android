@@ -24,10 +24,10 @@
     <string name="settings_feat_auto_responder">Respuesta automática</string>
     <string name="settings_feat_alias_avatars">Imágenes de alias</string>
     <string name="settings_feat_instant_alias_delete">Eliminación instantánea de alias en dominios de Aster</string>
-    <string name="alias_too_new_title">Este alias es demasiado reciente para eliminarse</string>
-    <string name="alias_too_new_message">Los alias nuevos en dominios de Aster siguen activos durante 30 días antes de que puedas eliminarlos. Puedes eliminar este a partir del %1$s. Para eliminarlos al instante, cambia a Supernova.</string>
-    <string name="ghost_alias_too_new_title">Este alias fantasma es demasiado reciente para caducar</string>
-    <string name="ghost_alias_too_new_message">Los alias fantasma nuevos siguen activos durante 30 días antes de poder caducar. Este se podrá caducar a partir del %1$s. Cambia a Supernova para caducar alias fantasma al instante.</string>
+    <string name="alias_too_new_title">Este alias aún no se puede eliminar</string>
+    <string name="alias_too_new_message">Los alias nuevos en dominios de Aster siguen activos durante 30 días. Puedes eliminar este a partir del %1$s, o cambiar a Supernova para eliminar alias al instante.</string>
+    <string name="ghost_alias_too_new_title">Este alias fantasma aún no puede caducar</string>
+    <string name="ghost_alias_too_new_message">Los alias fantasma nuevos siguen activos durante 30 días. Puedes hacer caducar este a partir del %1$s, o cambiar a Supernova para hacer caducar alias fantasma al instante.</string>
     <string name="ghost_alias_max_extension_toast">Este alias fantasma ya alcanzó su vida útil máxima de 90 días y no se puede extender más.</string>
     <string name="settings_feat_folders">Carpetas</string>
     <string name="settings_feat_labels">Etiquetas</string>
@@ -87,7 +87,7 @@
     <string name="settings_diagnostics_clip_label">Diagnóstico</string>
     <string name="settings_diagnostics_secure_storage">Almacenamiento seguro</string>
     <string name="settings_diagnostics_storage_ok">Correcto</string>
-    <string name="settings_diagnostics_storage_degraded">Degradado, cierra sesión y vuelve a iniciarla</string>
+    <string name="settings_diagnostics_storage_degraded">Degradado. Cierra sesión y vuelve a iniciarla.</string>
     <string name="settings_crash_reports_title">Enviar informes de errores</string>
     <string name="settings_crash_reports_subtitle">Desactivado salvo que lo actives. Los informes nunca incluyen tu cuenta, tus mensajes ni tus contactos.</string>
     <string name="settings_crash_reports_info">Cuando este ajuste está activado, Aster Mail envía a Aster un informe anónimo si la app se cierra inesperadamente, deja de responder o no puede acceder a una función. El informe contiene el tipo de error, la versión de la app y el punto del código de la app donde se produjo el error. Nunca contiene tu dirección, tus mensajes, tus contactos ni nada que identifique tu cuenta. Cuando este ajuste está desactivado, Aster Mail no envía ningún informe.</string>

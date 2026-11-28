@@ -4,7 +4,7 @@
     <string name="rules_section_recipients">Odbiorcy</string>
     <string name="rules_section_content">Treść</string>
     <string name="rules_section_attachments_flags">Załączniki i oznaczenia</string>
-    <string name="rules_section_numeric_date_auth">Liczby, data i uwierzytelnianie</string>
+    <string name="rules_section_numeric_date_auth">Liczby, daty i uwierzytelnianie</string>
 
     <string name="rules_op_is">jest</string>
     <string name="rules_op_is_not">nie jest</string>
@@ -80,10 +80,10 @@
     <string name="no_custom_categories">Brak kategorii niestandardowych.</string>
     <string name="category_name_required">Podaj nazwę tej kategorii.</string>
     <string name="category_rule_required">Dodaj co najmniej jedną domenę lub słowo kluczowe do dopasowania.</string>
-    <string name="category_domains_invalid">Nieprawidłowe domeny: %1$s. Użyj prawdziwej domeny, np. example.com.</string>
-    <string name="category_keywords_invalid">Nieprawidłowe słowa kluczowe: %1$s. Używaj tylko zwykłych słów.</string>
+    <string name="category_domains_invalid">Te domeny są nieprawidłowe: %1$s. Użyj domeny, np. example.com.</string>
+    <string name="category_keywords_invalid">Te słowa kluczowe są nieprawidłowe: %1$s. Używaj tylko zwykłych słów.</string>
     <string name="delete_category_title">Usunąć kategorię?</string>
-    <string name="delete_category_description">Czy na pewno chcesz usunąć „%1$s”? Tej operacji nie można cofnąć.</string>
+    <string name="delete_category_description">Usunąć „%1$s”? Tej operacji nie można cofnąć.</string>
     <string name="custom_categories_locked">Własne kategorie nie są dostępne w Twoim obecnym planie.</string>
     <string name="custom_categories_limit_reached">Osiągnięto limit własnych kategorii w Twoim planie. Przejdź na wyższy plan, aby mieć więcej.</string>
     <string name="edit_custom_category">Edytuj kategorię</string>
@@ -97,7 +97,7 @@
     <string name="category_match_keywords">Dopasuj słowa kluczowe w temacie</string>
     <string name="category_match_keywords_placeholder">newsletter, podsumowanie</string>
     <string name="category_match_keywords_help">Słowa oddzielone przecinkami. Jeśli którekolwiek pojawi się w temacie, wiadomość trafi do tej kategorii.</string>
-    <string name="category_tutorial_text">Wskazówka: wiadomość trafia do własnej kategorii, jeśli domena nadawcy LUB temat zawiera dowolne z Twoich słów kluczowych. Własne kategorie są sprawdzane przed wbudowanymi, więc zawsze mają pierwszeństwo.</string>
+    <string name="category_tutorial_text">Wiadomość trafia do własnej kategorii, gdy domena nadawcy lub temat zawiera dowolne z Twoich słów kluczowych. Własne kategorie są sprawdzane przed wbudowanymi, więc zawsze mają pierwszeństwo.</string>
     <string name="rules_create_first_folder_hint">Utwórz folder, a ta reguła będzie mogła przenosić do niego pasujące wiadomości.</string>
     <string name="rules_create_first_label_hint">Utwórz etykietę, a ta reguła będzie mogła stosować ją do pasujących wiadomości.</string>
     <string name="muted_categories">Wyciszone kategorie</string>

@@ -2,7 +2,7 @@
 <resources>
     <string name="fix_enc_codes_share_title">Recovery codes</string>
     <string name="fix_enc_codes_file_note">Each code works once. Keep this file somewhere safe.</string>
-    <string name="fix_enc_codes_save_failed">You can\'t save the file right now. Copy the codes instead.</string>
+    <string name="fix_enc_codes_save_failed">Couldn\'t save the file. Copy the codes instead.</string>
     <string name="enc_hero_status_protected">Protected</string>
     <string name="enc_hero_status_attention">Needs attention</string>
     <string name="enc_hero_summary">Your messages are end-to-end encrypted with a key that only you hold.</string>

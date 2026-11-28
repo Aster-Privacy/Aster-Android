@@ -32,7 +32,7 @@
     <string name="domain_bimi_row_inactive">Rond de configuratie van dit domein af om een merklogo toe te voegen.</string>
     <string name="domain_bimi_state_draft">Niet gepubliceerd</string>
     <string name="domain_bimi_state_pending">Wacht op DNS</string>
-    <string name="domain_bimi_state_live">Actief</string>
+    <string name="domain_bimi_state_live">Gepubliceerd</string>
     <string name="domain_bimi_state_attention">Actie vereist</string>
     <string name="domain_bimi_state_external">Elders beheerd</string>
     <string name="domain_bimi_set_up">Instellen</string>

@@ -6,5 +6,5 @@
     <string name="billing_source_crypto">Kripto ile ödendi</string>
     <string name="billing_status_trial">Deneme</string>
     <string name="billing_top_plan_title">En üst plandasınız</string>
-    <string name="billing_section_load_failed">Aster bu bölümü yükleyemedi.</string>
+    <string name="billing_section_load_failed">Bu bölüm yüklenemedi. Tekrar deneyin.</string>
 </resources>

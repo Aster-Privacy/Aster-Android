@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_lock_setup_failed">Algo salió mal. Vuelve a configurar tu bloqueo.</string>
+    <string name="app_lock_setup_failed">No se pudo configurar tu bloqueo. Inténtalo de nuevo.</string>
 </resources>

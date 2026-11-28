@@ -6,5 +6,5 @@
     <string name="billing_source_crypto">Betaald met crypto</string>
     <string name="billing_status_trial">Proefperiode</string>
     <string name="billing_top_plan_title">Je hebt het hoogste abonnement</string>
-    <string name="billing_section_load_failed">Aster kon dit onderdeel niet laden.</string>
+    <string name="billing_section_load_failed">Dit onderdeel kon niet worden geladen. Probeer het opnieuw.</string>
 </resources>

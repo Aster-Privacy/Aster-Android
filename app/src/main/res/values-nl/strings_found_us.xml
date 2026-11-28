@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="found_us_banner_message">Hoe heb je voor het eerst van Aster Mail gehoord? Het is één vraag en die is optioneel.</string>
+    <string name="found_us_banner_message">Hoe heb je voor het eerst van Aster Mail gehoord? Antwoorden is optioneel.</string>
     <string name="found_us_banner_answer">Beantwoorden</string>
     <string name="found_us_banner_dismiss">Sluiten</string>
     <string name="found_us_remind_later">Volgende week herinneren</string>
@@ -31,5 +31,5 @@
     <string name="found_us_skip">Overslaan</string>
     <string name="found_us_send">Versturen</string>
     <string name="found_us_thanks">Bedankt dat je het ons vertelt.</string>
-    <string name="found_us_send_failed">Je antwoord is niet verstuurd. Probeer het zo opnieuw.</string>
+    <string name="found_us_send_failed">Je antwoord kon niet worden verzonden. Probeer het zo opnieuw.</string>
 </resources>

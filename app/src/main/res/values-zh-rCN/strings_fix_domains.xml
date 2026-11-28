@@ -32,7 +32,7 @@
     <string name="domain_bimi_row_inactive">请完成此域名的设置，以添加品牌徽标。</string>
     <string name="domain_bimi_state_draft">未发布</string>
     <string name="domain_bimi_state_pending">等待 DNS</string>
-    <string name="domain_bimi_state_live">已生效</string>
+    <string name="domain_bimi_state_live">已发布</string>
     <string name="domain_bimi_state_attention">需要处理</string>
     <string name="domain_bimi_state_external">由其他服务管理</string>
     <string name="domain_bimi_set_up">设置</string>

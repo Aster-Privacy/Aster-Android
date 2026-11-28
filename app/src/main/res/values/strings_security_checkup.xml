@@ -10,7 +10,7 @@
     <string name="two_factor_on_with_security_key">On, using a security key</string>
     <string name="two_factor_on_with_app_and_key">On, using an authenticator app and a security key</string>
     <string name="no_passkeys_recommendation">Add a passkey for faster, more secure sign-in using your device\'s biometrics or PIN.</string>
-    <string name="login_alerts_off_recommendation">Turn on login alerts to get notified whenever a new device signs in to your account.</string>
+    <string name="login_alerts_off_recommendation">To get notified when a new device signs in to your account, turn on sign-in alerts.</string>
     <string name="billing_usage_title">Usage overview</string>
     <plurals name="security_actions_remaining">
         <item quantity="one">%1$d recommended action</item>

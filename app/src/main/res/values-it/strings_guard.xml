@@ -13,7 +13,7 @@
     <string name="guard_approve_device">Dispositivo</string>
     <string name="guard_approve_place">Luogo</string>
     <string name="guard_approve_time">Ora</string>
-    <string name="guard_approve_failed">Aster non è riuscito a inviare la tua risposta. Controlla la connessione e riprova.</string>
+    <string name="guard_approve_failed">Impossibile inviare la tua risposta. Controlla la connessione e riprova.</string>
     <string name="guard_approve_action">Approva</string>
     <string name="guard_approve_try_again">Riprova</string>
     <string name="guard_approve_close">Chiudi</string>
@@ -86,7 +86,7 @@
     <string name="guard_rescue_banner">Qualcuno ha avviato un soccorso che disattiva Aster Guard.</string>
     <string name="guard_rescue_banner_stop">Ferma soccorso</string>
     <string name="guard_wait_body">Apri Aster su un dispositivo su cui Aster Guard è attivo, come il browser o l\'app desktop che hai usato per attivarlo. Apri lì la richiesta e inserisci questo numero per approvarla.</string>
-    <string name="guard_wait_expired">Questa richiesta è scaduta. Per riprovare, accedi di nuovo.</string>
+    <string name="guard_wait_expired">Questa richiesta è scaduta. Per continuare, accedi di nuovo.</string>
     <string name="guard_wait_denied">Questo accesso è stato rifiutato su un altro dispositivo.</string>
     <string name="guard_wait_held">Potrai completare l\'accesso su questo telefono dopo %1$s.</string>
     <string name="guard_wait_retry">Troppi tentativi. Riprova tra %1$s.</string>
@@ -96,7 +96,7 @@
     <string name="guard_wait_code_submit">Invia codice</string>
     <string name="guard_wait_wrong_code">Il codice non corrisponde. Controlla il codice e riprova.</string>
     <string name="guard_wait_needs_password">Questo accesso è stato approvato. Per completarlo, inserisci di nuovo la password.</string>
-    <string name="guard_wait_failed">Aster non è riuscito a completare questo accesso. Per riprovare, accedi di nuovo.</string>
+    <string name="guard_wait_failed">Impossibile completare questo accesso. Per continuare, accedi di nuovo.</string>
     <string name="guard_number_description">Numero da inserire sull\'altro telefono: %1$d</string>
     <string name="guard_prompt_resume_subtitle">Accedi con Aster Guard su questo telefono</string>
     <string name="notif_channel_guard_name">Aster Guard</string>

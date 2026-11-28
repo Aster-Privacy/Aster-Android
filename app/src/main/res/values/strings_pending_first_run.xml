@@ -20,6 +20,6 @@
     <string name="recovery_codes_refresh_body">Your recovery codes are out of date. Get new codes and save them somewhere safe. Once you have the new codes, the old ones no longer work.</string>
     <string name="recovery_codes_refresh_action">Get new codes</string>
     <string name="recovery_phrase_migrate_title">Switch to recovery codes</string>
-    <string name="recovery_phrase_migrate_body">Recovery phrases are going away. Get recovery codes now so you can still recover your account.</string>
+    <string name="recovery_phrase_migrate_body">Aster is replacing recovery phrases with recovery codes. To keep a way to recover your account, get recovery codes now.</string>
     <string name="recovery_phrase_migrate_action">Get codes</string>
 </resources>

@@ -8,7 +8,7 @@
     <string name="notif_login_alert_action_revoke">Non ero io</string>
     <string name="notif_login_alert_revoking">Disconnessione della nuova sessione…</string>
     <string name="notif_login_alert_revoked">Sessione disconnessa</string>
-    <string name="notif_login_alert_revoked_body">La nuova sessione è stata disconnessa. Valuta di cambiare la password nelle impostazioni di sicurezza.</string>
+    <string name="notif_login_alert_revoked_body">La nuova sessione è stata disconnessa. Per proteggere il tuo account, cambia la password nelle impostazioni di sicurezza.</string>
     <string name="notif_login_alert_revoke_failed">Impossibile disconnettere la sessione</string>
     <string name="notif_login_alert_revoke_failed_body">Apri l\'app per controllare le sessioni attive.</string>
     <string name="mute_folder_notifications">Silenzia le notifiche della cartella</string>

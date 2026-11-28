@@ -13,7 +13,7 @@
     <string name="guard_approve_device">기기</string>
     <string name="guard_approve_place">위치</string>
     <string name="guard_approve_time">시간</string>
-    <string name="guard_approve_failed">Aster가 응답을 보내지 못했습니다. 연결을 확인하고 다시 시도하세요.</string>
+    <string name="guard_approve_failed">응답을 보내지 못했습니다. 연결을 확인하고 다시 시도하세요.</string>
     <string name="guard_approve_action">승인</string>
     <string name="guard_approve_try_again">다시 시도</string>
     <string name="guard_approve_close">닫기</string>
@@ -87,7 +87,7 @@
     <string name="guard_rescue_banner">누군가 Aster Guard를 끄는 복구를 시작했습니다.</string>
     <string name="guard_rescue_banner_stop">복구 중지</string>
     <string name="guard_wait_body">Aster Guard가 켜진 기기(예: Guard를 켤 때 사용한 브라우저나 데스크톱 앱)에서 Aster를 여세요. 그곳에서 요청을 열고 이 번호를 입력해 승인하세요.</string>
-    <string name="guard_wait_expired">이 요청이 만료되었습니다. 다시 시도하려면 다시 로그인하세요.</string>
+    <string name="guard_wait_expired">이 요청이 만료되었습니다. 계속하려면 다시 로그인하세요.</string>
     <string name="guard_wait_denied">이 로그인은 다른 기기에서 거부되었습니다.</string>
     <string name="guard_wait_held">%1$s 이후에 이 휴대전화에서 로그인을 완료할 수 있습니다.</string>
     <string name="guard_wait_retry">시도 횟수가 너무 많습니다. %1$s 후에 다시 시도하세요.</string>
@@ -97,7 +97,7 @@
     <string name="guard_wait_code_submit">코드 보내기</string>
     <string name="guard_wait_wrong_code">코드가 일치하지 않습니다. 코드를 확인하고 다시 시도하세요.</string>
     <string name="guard_wait_needs_password">이 로그인이 승인되었습니다. 완료하려면 비밀번호를 다시 입력하세요.</string>
-    <string name="guard_wait_failed">Aster가 이 로그인을 완료하지 못했습니다. 다시 시도하려면 다시 로그인하세요.</string>
+    <string name="guard_wait_failed">이 로그인을 완료하지 못했습니다. 계속하려면 다시 로그인하세요.</string>
     <string name="guard_number_description">다른 휴대전화에 입력할 숫자: %1$d</string>
     <string name="guard_prompt_resume_subtitle">이 휴대전화에서 Aster Guard로 로그인</string>
     <string name="notif_channel_guard_name">Aster Guard</string>
