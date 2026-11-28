@@ -36,18 +36,13 @@ class InboxRowRemovalTest {
 
     @Test
     fun placeholder_rows_stay_hidden_right_after_rows_are_removed() {
-        assertFalse(footer_skeleton_wanted(is_loading_more = true, removal_quiet = true))
+        assertFalse(footer_skeleton_wanted(is_loading_more = true, has_more = true, at_list_end = true, removal_quiet = true))
     }
 
     @Test
     fun placeholder_rows_show_while_scrolling_into_the_next_page() {
-        assertTrue(footer_skeleton_wanted(is_loading_more = true, removal_quiet = false))
-        assertFalse(footer_skeleton_wanted(is_loading_more = false, removal_quiet = false))
-    }
-
-    @Test
-    fun placeholder_rows_show_while_a_filter_loads_the_next_page() {
-        assertTrue(footer_skeleton_wanted(is_loading_more = true, removal_quiet = false))
+        assertTrue(footer_skeleton_wanted(is_loading_more = true, has_more = true, at_list_end = true, removal_quiet = false))
+        assertFalse(footer_skeleton_wanted(is_loading_more = false, has_more = true, at_list_end = true, removal_quiet = false))
     }
 
     @Test

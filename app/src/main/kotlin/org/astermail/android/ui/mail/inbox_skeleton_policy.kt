@@ -67,3 +67,20 @@ internal fun filtered_inbox_skeleton_wanted(
     if (!cache_skeleton_allowed || has_rows) return false
     return is_loading || !showing_requested || (initial && !has_error)
 }
+
+internal const val footer_end_slack_items = 3
+
+internal fun list_scrolled_to_end(
+    has_scrolled: Boolean,
+    last_visible_index: Int,
+    total_items: Int,
+    footer_rows_visible: Boolean = false,
+): Boolean = has_scrolled && total_items > 0 && last_visible_index >= 0 &&
+    (footer_rows_visible || total_items - 1 - last_visible_index <= footer_end_slack_items)
+
+internal fun footer_skeleton_wanted(
+    is_loading_more: Boolean,
+    has_more: Boolean,
+    at_list_end: Boolean,
+    removal_quiet: Boolean,
+): Boolean = is_loading_more && has_more && at_list_end && !removal_quiet
