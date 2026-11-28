@@ -3822,4 +3822,19 @@
     <string name="table_delete_row">Zeile löschen</string>
     <string name="table_delete_column">Spalte löschen</string>
     <string name="table_delete">Tabelle löschen</string>
+    <string name="trust_banner_phishing_title">Diese Nachricht könnte ein Phishing-Versuch sein</string>
+    <string name="trust_banner_suspicious_title">Sei vorsichtig mit dieser Nachricht</string>
+    <string name="trust_banner_phishing_body">Links in dieser Nachricht sind deaktiviert. Antworte nicht mit persönlichen Daten oder Passwörtern.</string>
+    <string name="trust_banner_suspicious_body">Prüfe den Absender, bevor du Links öffnest oder antwortest.</string>
+    <string name="trust_banner_enable_links">Links aktivieren</string>
+    <string name="trust_banner_report">Phishing melden</string>
+    <string name="trust_banner_not_phishing">Kein Phishing</string>
+    <string name="trust_reason_impersonation">Diese Nachricht gibt vor, von einem Dienst zu stammen, der sie nicht gesendet hat.</string>
+    <string name="trust_reason_self_name">Der Absendername ist auf deinen eigenen Namen oder deine Adresse gesetzt.</string>
+    <string name="trust_reason_address_in_name">Der Absendername zeigt eine andere Adresse als die, von der die Nachricht gesendet wurde.</string>
+    <string name="trust_reason_lookalike_sender">Die Absenderadresse sieht aus wie eine bekannte Adresse, ist aber eine andere.</string>
+    <string name="trust_reason_unverified_sender">Diese Nachricht konnte nicht als von der Domain des Absenders stammend bestätigt werden.</string>
+    <string name="trust_reason_deceptive_link">Ein Link zeigt eine Adresse an, öffnet aber eine andere.</string>
+    <string name="trust_reason_reported_link">Links in dieser Nachricht führen zu Websites, die andere als Phishing gemeldet haben.</string>
+    <string name="trust_reason_form">Diese Nachricht fordert dich auf, Informationen direkt in der E-Mail einzugeben.</string>
 </resources>

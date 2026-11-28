@@ -3796,4 +3796,19 @@
     <string name="table_delete_row">行を削除</string>
     <string name="table_delete_column">列を削除</string>
     <string name="table_delete">表を削除</string>
+    <string name="trust_banner_phishing_title">このメッセージはフィッシングの可能性があります</string>
+    <string name="trust_banner_suspicious_title">このメッセージには注意してください</string>
+    <string name="trust_banner_phishing_body">このメッセージのリンクはオフになっています。個人情報やパスワードを返信しないでください。</string>
+    <string name="trust_banner_suspicious_body">リンクを開いたり返信したりする前に、送信者を確認してください。</string>
+    <string name="trust_banner_enable_links">リンクをオンにする</string>
+    <string name="trust_banner_report">フィッシングを報告</string>
+    <string name="trust_banner_not_phishing">フィッシングではない</string>
+    <string name="trust_reason_impersonation">このメッセージは、実際には送信していないサービスからのものを装っています。</string>
+    <string name="trust_reason_self_name">送信者名があなた自身の名前またはアドレスに設定されています。</string>
+    <string name="trust_reason_address_in_name">送信者名に、送信元とは異なるアドレスが表示されています。</string>
+    <string name="trust_reason_lookalike_sender">送信者のアドレスはよく知られたアドレスに似ていますが、異なります。</string>
+    <string name="trust_reason_unverified_sender">このメッセージが送信者のドメインから送られたことを確認できませんでした。</string>
+    <string name="trust_reason_deceptive_link">リンクの表示先と実際に開く先が異なります。</string>
+    <string name="trust_reason_reported_link">このメッセージのリンクは、他のユーザーがフィッシングとして報告したサイトにつながります。</string>
+    <string name="trust_reason_form">このメッセージは、メール内に直接情報を入力するよう求めています。</string>
 </resources>

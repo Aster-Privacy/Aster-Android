@@ -112,6 +112,8 @@ interface MailApi {
 
     suspend fun report_spam_sender(request: SpamSenderRequest): SpamSenderResponse
 
+    suspend fun report_phishing(request: PhishingReportRequest): PhishingReportResponse
+
     suspend fun remove_spam_sender(sender_hash: String, sender_domain_hash: String?): SpamSenderResponse
 
     suspend fun delete_message(item_id: String): DeleteResponse
@@ -509,6 +511,15 @@ class MailApiImpl(private val client: ApiClient) : MailApi {
 
     override suspend fun report_spam_sender(request: SpamSenderRequest): SpamSenderResponse {
         val response = client.http.post("${client.base_url}$base/spam_senders") {
+            contentType(ContentType.Application.Json)
+            client.get_csrf()?.let { header("X-CSRF-Token", it) }
+            setBody(request)
+        }
+        return decode_or_throw(response)
+    }
+
+    override suspend fun report_phishing(request: PhishingReportRequest): PhishingReportResponse {
+        val response = client.http.post("${client.base_url}/api/phishing/v1/report") {
             contentType(ContentType.Application.Json)
             client.get_csrf()?.let { header("X-CSRF-Token", it) }
             setBody(request)

@@ -51,6 +51,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import org.astermail.android.api.ApiError
 import org.astermail.android.api.mail.BulkLabelRequest
+import org.astermail.android.api.mail.PhishingReportRequest
 import org.astermail.android.api.mail.BulkPatchMetadataItem
 import org.astermail.android.api.mail.BulkPatchMetadataRequest
 import org.astermail.android.api.mail.BulkScopeFilter
@@ -4316,6 +4317,19 @@ class MailRepository @Inject constructor(
                         ),
                     )
                 }.exceptionOrNull(),
+            )
+        }
+    }
+
+    suspend fun send_phishing_verdict(verdict: String, link_hosts: List<String>, sender_email: String) {
+        val domain = sender_email.trim().lowercase().substringAfterLast('@', "")
+        runCatching {
+            mail_api.report_phishing(
+                PhishingReportRequest(
+                    verdict = verdict,
+                    domain_hashes = link_hosts.take(50).map { sha256_hex(it) },
+                    sender_domain_hash = if (domain.isNotEmpty()) sha256_hex(domain) else null,
+                ),
             )
         }
     }

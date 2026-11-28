@@ -3848,4 +3848,19 @@
     <string name="table_delete_row">Eliminar fila</string>
     <string name="table_delete_column">Eliminar columna</string>
     <string name="table_delete">Eliminar tabla</string>
+    <string name="trust_banner_phishing_title">Este mensaje podría ser un intento de phishing</string>
+    <string name="trust_banner_suspicious_title">Ten cuidado con este mensaje</string>
+    <string name="trust_banner_phishing_body">Los enlaces de este mensaje están desactivados. No respondas con información personal ni contraseñas.</string>
+    <string name="trust_banner_suspicious_body">Comprueba el remitente antes de abrir enlaces o responder.</string>
+    <string name="trust_banner_enable_links">Activar enlaces</string>
+    <string name="trust_banner_report">Reportar phishing</string>
+    <string name="trust_banner_not_phishing">No es phishing</string>
+    <string name="trust_reason_impersonation">Este mensaje finge ser de un servicio que no lo envió.</string>
+    <string name="trust_reason_self_name">El nombre del remitente es tu propio nombre o dirección.</string>
+    <string name="trust_reason_address_in_name">El nombre del remitente muestra una dirección distinta de la que lo envió.</string>
+    <string name="trust_reason_lookalike_sender">La dirección del remitente se parece a una dirección conocida, pero es diferente.</string>
+    <string name="trust_reason_unverified_sender">No se pudo verificar que este mensaje proceda del dominio del remitente.</string>
+    <string name="trust_reason_deceptive_link">Un enlace muestra una dirección pero abre otra distinta.</string>
+    <string name="trust_reason_reported_link">Los enlaces de este mensaje llevan a sitios que otras personas reportaron como phishing.</string>
+    <string name="trust_reason_form">Este mensaje te pide que introduzcas información directamente en el correo.</string>
 </resources>

@@ -3889,4 +3889,19 @@
     <string name="table_delete_row">Удалить строку</string>
     <string name="table_delete_column">Удалить столбец</string>
     <string name="table_delete">Удалить таблицу</string>
+    <string name="trust_banner_phishing_title">Это сообщение может быть попыткой фишинга</string>
+    <string name="trust_banner_suspicious_title">Будьте осторожны с этим сообщением</string>
+    <string name="trust_banner_phishing_body">Ссылки в этом сообщении отключены. Не отвечайте, указывая личные данные или пароли.</string>
+    <string name="trust_banner_suspicious_body">Проверьте отправителя, прежде чем открывать ссылки или отвечать.</string>
+    <string name="trust_banner_enable_links">Включить ссылки</string>
+    <string name="trust_banner_report">Сообщить о фишинге</string>
+    <string name="trust_banner_not_phishing">Не фишинг</string>
+    <string name="trust_reason_impersonation">Это сообщение выдает себя за письмо от сервиса, который его не отправлял.</string>
+    <string name="trust_reason_self_name">В качестве имени отправителя указано ваше имя или адрес.</string>
+    <string name="trust_reason_address_in_name">В имени отправителя указан адрес, отличный от адреса, с которого отправлено сообщение.</string>
+    <string name="trust_reason_lookalike_sender">Адрес отправителя похож на известный адрес, но отличается от него.</string>
+    <string name="trust_reason_unverified_sender">Не удалось подтвердить, что это сообщение отправлено с домена отправителя.</string>
+    <string name="trust_reason_deceptive_link">Ссылка показывает один адрес, а открывает другой.</string>
+    <string name="trust_reason_reported_link">Ссылки в этом сообщении ведут на сайты, которые другие пользователи отметили как фишинг.</string>
+    <string name="trust_reason_form">Это сообщение просит ввести данные прямо в письме.</string>
 </resources>

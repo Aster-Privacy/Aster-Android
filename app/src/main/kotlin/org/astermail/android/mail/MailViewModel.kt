@@ -1157,6 +1157,10 @@ class MailViewModel @Inject constructor(
     private val _toast_events = MutableSharedFlow<ToastEvent>(extraBufferCapacity = 32)
     private val _reported_phishing_ids = MutableStateFlow<Set<String>>(emptySet())
     val reported_phishing_ids: StateFlow<Set<String>> = _reported_phishing_ids.asStateFlow()
+    private val _trust_links_enabled_ids = MutableStateFlow<Set<String>>(emptySet())
+    val trust_links_enabled_ids: StateFlow<Set<String>> = _trust_links_enabled_ids.asStateFlow()
+    private val _trust_dismissed_ids = MutableStateFlow<Set<String>>(emptySet())
+    val trust_dismissed_ids: StateFlow<Set<String>> = _trust_dismissed_ids.asStateFlow()
     val toast_events: SharedFlow<ToastEvent> = _toast_events.asSharedFlow()
 
     private val _batch_action_state = kotlinx.coroutines.flow.MutableStateFlow<BatchActionState?>(null)
@@ -5536,6 +5540,20 @@ class MailViewModel @Inject constructor(
                 repository.remove_spam_senders(sender_emails)
             }
         }
+    }
+
+    fun enable_trust_links(item_id: String) {
+        _trust_links_enabled_ids.update { it + item_id }
+    }
+
+    fun mark_not_phishing(item_id: String, sender_email: String, body_html: String?) {
+        _trust_dismissed_ids.update { it + item_id }
+        send_phishing_verdict("not_phishing", sender_email, body_html)
+    }
+
+    fun send_phishing_verdict(verdict: String, sender_email: String, body_html: String?) {
+        val hosts = phishing_report_hosts(body_html)
+        viewModelScope.launch { repository.send_phishing_verdict(verdict, hosts, sender_email) }
     }
 
     fun unmark_spam(item_ids: List<String>, sender_emails_hint: List<String> = emptyList()) {

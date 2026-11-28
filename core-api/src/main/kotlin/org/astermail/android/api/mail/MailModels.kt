@@ -136,6 +136,18 @@ data class SpamSenderResponse(
 )
 
 @Serializable
+data class PhishingReportRequest(
+    val verdict: String,
+    val domain_hashes: List<String> = emptyList(),
+    val sender_domain_hash: String? = null,
+)
+
+@Serializable
+data class PhishingReportResponse(
+    val accepted: Boolean = false,
+)
+
+@Serializable
 data class BatchMessagesRequest(
     val ids: List<String>,
 )

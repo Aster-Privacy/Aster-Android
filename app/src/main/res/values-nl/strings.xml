@@ -3821,4 +3821,19 @@
     <string name="table_delete_row">Rij verwijderen</string>
     <string name="table_delete_column">Kolom verwijderen</string>
     <string name="table_delete">Tabel verwijderen</string>
+    <string name="trust_banner_phishing_title">Dit bericht is mogelijk een phishingpoging</string>
+    <string name="trust_banner_suspicious_title">Wees voorzichtig met dit bericht</string>
+    <string name="trust_banner_phishing_body">Links in dit bericht zijn uitgeschakeld. Antwoord niet met persoonlijke gegevens of wachtwoorden.</string>
+    <string name="trust_banner_suspicious_body">Controleer de afzender voordat je links opent of antwoordt.</string>
+    <string name="trust_banner_enable_links">Links inschakelen</string>
+    <string name="trust_banner_report">Phishing melden</string>
+    <string name="trust_banner_not_phishing">Geen phishing</string>
+    <string name="trust_reason_impersonation">Dit bericht doet alsof het van een dienst komt die het niet heeft verstuurd.</string>
+    <string name="trust_reason_self_name">De naam van de afzender is ingesteld op je eigen naam of adres.</string>
+    <string name="trust_reason_address_in_name">De naam van de afzender toont een ander adres dan het adres waarvandaan het is verstuurd.</string>
+    <string name="trust_reason_lookalike_sender">Het adres van de afzender lijkt op een bekend adres, maar is anders.</string>
+    <string name="trust_reason_unverified_sender">Er kon niet worden bevestigd dat dit bericht van het domein van de afzender komt.</string>
+    <string name="trust_reason_deceptive_link">Een link toont het ene adres maar opent een ander.</string>
+    <string name="trust_reason_reported_link">Links in dit bericht gaan naar sites die anderen als phishing hebben gemeld.</string>
+    <string name="trust_reason_form">Dit bericht vraagt je om direct in de e-mail gegevens in te vullen.</string>
 </resources>
