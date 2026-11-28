@@ -32,6 +32,22 @@
         <item quantity="many">تم تمييز %d محادثةً بنجمة</item>
         <item quantity="other">تم تمييز %d محادثة بنجمة</item>
     </plurals>
+    <plurals name="reported_as_spam_count">
+        <item quantity="zero">تم الإبلاغ عنها كرسائل مزعجة: %d</item>
+        <item quantity="one">تم الإبلاغ عنها كرسائل مزعجة: %d</item>
+        <item quantity="two">تم الإبلاغ عنها كرسائل مزعجة: %d</item>
+        <item quantity="few">تم الإبلاغ عنها كرسائل مزعجة: %d</item>
+        <item quantity="many">تم الإبلاغ عنها كرسائل مزعجة: %d</item>
+        <item quantity="other">تم الإبلاغ عنها كرسائل مزعجة: %d</item>
+    </plurals>
+    <plurals name="reported_as_phishing_count">
+        <item quantity="zero">تم الإبلاغ عنها كتصيد احتيالي: %d</item>
+        <item quantity="one">تم الإبلاغ عنها كتصيد احتيالي: %d</item>
+        <item quantity="two">تم الإبلاغ عنها كتصيد احتيالي: %d</item>
+        <item quantity="few">تم الإبلاغ عنها كتصيد احتيالي: %d</item>
+        <item quantity="many">تم الإبلاغ عنها كتصيد احتيالي: %d</item>
+        <item quantity="other">تم الإبلاغ عنها كتصيد احتيالي: %d</item>
+    </plurals>
     <plurals name="unstarred_count">
         <item quantity="zero">تمت إزالة النجمة من %d محادثة</item>
         <item quantity="one">تمت إزالة النجمة من محادثة واحدة</item>

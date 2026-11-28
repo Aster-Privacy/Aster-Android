@@ -24,6 +24,18 @@
         <item quantity="many">Отмечено звездой: %d</item>
         <item quantity="other">Отмечено звездой: %d</item>
     </plurals>
+    <plurals name="reported_as_spam_count">
+        <item quantity="one">Отмечено как спам: %d</item>
+        <item quantity="few">Отмечено как спам: %d</item>
+        <item quantity="many">Отмечено как спам: %d</item>
+        <item quantity="other">Отмечено как спам: %d</item>
+    </plurals>
+    <plurals name="reported_as_phishing_count">
+        <item quantity="one">Отмечено как фишинг: %d</item>
+        <item quantity="few">Отмечено как фишинг: %d</item>
+        <item quantity="many">Отмечено как фишинг: %d</item>
+        <item quantity="other">Отмечено как фишинг: %d</item>
+    </plurals>
     <plurals name="unstarred_count">
         <item quantity="one">Звезда снята: %d</item>
         <item quantity="few">Звезда снята: %d</item>

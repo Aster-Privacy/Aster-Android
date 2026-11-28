@@ -16,6 +16,14 @@
         <item quantity="one">Starred %d conversation</item>
         <item quantity="other">Starred %d conversations</item>
     </plurals>
+    <plurals name="reported_as_spam_count">
+        <item quantity="one">Reported %d message as spam</item>
+        <item quantity="other">Reported %d messages as spam</item>
+    </plurals>
+    <plurals name="reported_as_phishing_count">
+        <item quantity="one">Reported %d message as phishing</item>
+        <item quantity="other">Reported %d messages as phishing</item>
+    </plurals>
     <plurals name="unstarred_count">
         <item quantity="one">Unstarred %d conversation</item>
         <item quantity="other">Unstarred %d conversations</item>

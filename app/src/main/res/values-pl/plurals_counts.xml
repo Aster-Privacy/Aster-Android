@@ -24,6 +24,18 @@
         <item quantity="many">Oznaczono gwiazdką %d konwersacji</item>
         <item quantity="other">Oznaczono gwiazdką %d konwersacji</item>
     </plurals>
+    <plurals name="reported_as_spam_count">
+        <item quantity="one">Zgłoszono jako spam: %d</item>
+        <item quantity="few">Zgłoszono jako spam: %d</item>
+        <item quantity="many">Zgłoszono jako spam: %d</item>
+        <item quantity="other">Zgłoszono jako spam: %d</item>
+    </plurals>
+    <plurals name="reported_as_phishing_count">
+        <item quantity="one">Zgłoszono jako phishing: %d</item>
+        <item quantity="few">Zgłoszono jako phishing: %d</item>
+        <item quantity="many">Zgłoszono jako phishing: %d</item>
+        <item quantity="other">Zgłoszono jako phishing: %d</item>
+    </plurals>
     <plurals name="unstarred_count">
         <item quantity="one">Usunięto gwiazdkę z %d konwersacji</item>
         <item quantity="few">Usunięto gwiazdkę z %d konwersacji</item>

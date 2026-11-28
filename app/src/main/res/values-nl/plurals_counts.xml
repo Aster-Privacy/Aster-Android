@@ -16,6 +16,14 @@
         <item quantity="one">%d gesprek met ster gemarkeerd</item>
         <item quantity="other">%d gesprekken met ster gemarkeerd</item>
     </plurals>
+    <plurals name="reported_as_spam_count">
+        <item quantity="one">Als spam gemeld: %d</item>
+        <item quantity="other">Als spam gemeld: %d</item>
+    </plurals>
+    <plurals name="reported_as_phishing_count">
+        <item quantity="one">Als phishing gemeld: %d</item>
+        <item quantity="other">Als phishing gemeld: %d</item>
+    </plurals>
     <plurals name="unstarred_count">
         <item quantity="one">Ster verwijderd van %d gesprek</item>
         <item quantity="other">Ster verwijderd van %d gesprekken</item>

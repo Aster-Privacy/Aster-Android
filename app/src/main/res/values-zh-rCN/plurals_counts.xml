@@ -12,6 +12,12 @@
     <plurals name="starred_count">
         <item quantity="other">已为 %d 个对话添加星标</item>
     </plurals>
+    <plurals name="reported_as_spam_count">
+        <item quantity="other">已举报为垃圾邮件：%d</item>
+    </plurals>
+    <plurals name="reported_as_phishing_count">
+        <item quantity="other">已举报为钓鱼邮件：%d</item>
+    </plurals>
     <plurals name="unstarred_count">
         <item quantity="other">已移除 %d 个对话的星标</item>
     </plurals>

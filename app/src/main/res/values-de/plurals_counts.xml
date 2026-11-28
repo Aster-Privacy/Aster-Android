@@ -16,6 +16,14 @@
         <item quantity="one">Stern für %d Unterhaltung gesetzt</item>
         <item quantity="other">Stern für %d Unterhaltungen gesetzt</item>
     </plurals>
+    <plurals name="reported_as_spam_count">
+        <item quantity="one">Als Spam gemeldet: %d</item>
+        <item quantity="other">Als Spam gemeldet: %d</item>
+    </plurals>
+    <plurals name="reported_as_phishing_count">
+        <item quantity="one">Als Phishing gemeldet: %d</item>
+        <item quantity="other">Als Phishing gemeldet: %d</item>
+    </plurals>
     <plurals name="unstarred_count">
         <item quantity="one">Stern für %d Unterhaltung entfernt</item>
         <item quantity="other">Stern für %d Unterhaltungen entfernt</item>

@@ -1945,14 +1945,12 @@ fun InboxScreen(
     }
 
     fun with_selection_ids(on_ready: (List<String>) -> Unit) {
-        val loaded = selected_email_ids()
-        if (!scope_selection) {
-            on_ready(loaded)
-            return
-        }
-        mail_vm.collect_scope_selection_ids(current_folder, folder_total) { ids ->
-            on_ready((loaded + ids).distinct())
-        }
+        org.astermail.android.mail.gather_selection_ids(
+            loaded = selected_email_ids(),
+            scope_selection = scope_selection,
+            collect_scope = { deliver -> mail_vm.collect_scope_selection_ids(current_folder, folder_total, deliver) },
+            on_ready = on_ready,
+        )
     }
 
     fun notify_if_scope_incomplete(applied: Int) {
@@ -2028,38 +2026,56 @@ fun InboxScreen(
     }
 
     fun unmark_spam_selected() {
-        val ids = selected_email_ids()
         val to_remove = selected_ids.toSet()
-        mail_vm.unmark_spam(ids)
-        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        with_selection_ids { ids ->
+            val picked = org.astermail.android.mail.unmark_spam_selection_of(ids, mail_vm.known_selection_items(ids))
+            mail_vm.unmark_spam(picked.ids, picked.sender_emails)
+            emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+            notify_if_scope_incomplete(picked.ids.size)
+        }
         exit_select_mode()
     }
 
     fun mark_spam_selected() {
-        if (org.astermail.android.mail.is_unmovable_mail_folder(current_folder)) {
+        if (!org.astermail.android.mail.folder_offers_report_actions(current_folder)) {
             exit_select_mode()
             return
         }
-        val thread_count = selected_ids.size
-        val to_remove = selected_ids.toSet()
         with_selection_ids { ids ->
-            mail_vm.mark_spam(ids, maxOf(thread_count, ids.size))
-            emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+            val picked = org.astermail.android.mail.report_selection_of(ids, mail_vm.known_selection_items(ids))
+            if (picked.ids.isEmpty()) return@with_selection_ids
+            val reported = picked.ids.toSet()
+            mail_vm.mark_spam(
+                picked.ids,
+                picked.ids.size,
+                sender_emails_hint = picked.sender_emails,
+                reported_count = picked.ids.size,
+            )
+            emails.removeAll { it.id in reported }
+            notify_if_scope_incomplete(picked.ids.size)
         }
         exit_select_mode()
     }
 
     fun report_phishing_selected() {
-        if (org.astermail.android.mail.is_unmovable_mail_folder(current_folder)) {
+        if (!org.astermail.android.mail.folder_offers_report_actions(current_folder)) {
             exit_select_mode()
             return
         }
-        val thread_count = selected_ids.size
-        val to_remove = selected_ids.toSet()
         val in_spam = current_folder == "spam"
         with_selection_ids { ids ->
-            mail_vm.report_phishing(ids, maxOf(thread_count, ids.size), in_spam = in_spam)
-            if (!in_spam) emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+            val picked = org.astermail.android.mail.report_selection_of(ids, mail_vm.known_selection_items(ids))
+            if (picked.ids.isEmpty()) return@with_selection_ids
+            val reported = picked.ids.toSet()
+            mail_vm.report_phishing(
+                picked.ids,
+                picked.ids.size,
+                sender_emails_hint = picked.sender_emails,
+                in_spam = in_spam,
+                reported_count = picked.ids.size,
+            )
+            if (!in_spam) emails.removeAll { it.id in reported }
+            notify_if_scope_incomplete(picked.ids.size)
         }
         exit_select_mode()
     }
@@ -2231,6 +2247,7 @@ fun InboxScreen(
             return
         }
         val scope_action = scope_action_name(action_id)
+            ?.takeUnless { org.astermail.android.mail.selection_action_needs_ids(action_id) }
         if (server_scope && scope_action != null && mail_vm.action_supports_scope_selection(scope_action)) {
             mail_vm.bulk_scope_action(current_folder, scope_action, null)
             exit_select_mode()
@@ -2722,14 +2739,18 @@ fun InboxScreen(
                                 start_icon = spam_action_icon(is_spam = true), end_icon = TablerIcons.Trash,
                                 start_action = "unmark_spam", end_action = "delete",
                             )
-                            else -> SwipeConfig(
-                                start_label = drafts_swipe_label(current_folder, right_action_outer, right_label_outer, discard_draft_label_outer),
-                                end_label = drafts_swipe_label(current_folder, left_action_outer, left_label_outer, discard_draft_label_outer),
-                                start_icon = swipe_action_icon(right_action_outer),
-                                end_icon = swipe_action_icon(left_action_outer),
-                                start_action = right_action_outer,
-                                end_action = left_action_outer,
-                            )
+                            else -> {
+                                val start_action = folder_swipe_action(current_folder, right_action_outer)
+                                val end_action = folder_swipe_action(current_folder, left_action_outer)
+                                SwipeConfig(
+                                    start_label = drafts_swipe_label(current_folder, start_action, if (start_action == "none") "" else right_label_outer, discard_draft_label_outer),
+                                    end_label = drafts_swipe_label(current_folder, end_action, if (end_action == "none") "" else left_label_outer, discard_draft_label_outer),
+                                    start_icon = swipe_action_icon(start_action),
+                                    end_icon = swipe_action_icon(end_action),
+                                    start_action = start_action,
+                                    end_action = end_action,
+                                )
+                            }
                         }
                     }
                     val trashed_swipe_config = remember(hoisted_swipe_config, delete_forever_label_outer) {
@@ -4532,13 +4553,15 @@ internal fun select_mode_bottom_bar(
                     }
                     else -> {
                         val folder_unmovable = org.astermail.android.mail.is_unmovable_mail_folder(current_folder)
+                        val folder_reportable = org.astermail.android.mail.folder_offers_report_actions(current_folder)
                         resolve_selection_toolbar(
                             custom_actions,
                             selection_all_starred,
                             selection_all_read,
                             is_available = { id ->
                                 (id != "category" || show_category) &&
-                                    !((id == "spam" || id == "archive") && folder_unmovable)
+                                    !(id == "archive" && folder_unmovable) &&
+                                    !((id == "spam" || id == "phishing") && !folder_reportable)
                             },
                         ).forEach { action ->
                             val action_id = action.id
@@ -4691,10 +4714,11 @@ internal fun selection_overflow_sheet(
                     colors.danger,
                 ) { on_action("trash") }
             }
-            if (!in_spam && !unmovable) {
+            val reportable = org.astermail.android.mail.folder_offers_report_actions(current_folder)
+            if (!in_spam && reportable) {
                 overflow_sheet_row("spam", spam_action_icon(is_spam = false), stringResource(R.string.report_spam), colors.danger) { on_action("spam") }
             }
-            if (!unmovable && current_folder != "sent") {
+            if (reportable) {
                 overflow_sheet_row("phishing", TablerIcons.ShieldX, stringResource(R.string.report_phishing), colors.danger) { on_action("phishing") }
             }
             if (on_customize != null) {
@@ -4979,6 +5003,9 @@ private fun swipe_action_color(action: String, colors: org.astermail.android.des
     else -> colors.accent_blue
 }
 
+internal fun folder_swipe_action(folder: String, action: String): String =
+    if (action == "spam" && !org.astermail.android.mail.folder_offers_report_actions(folder)) "none" else action
+
 private fun drafts_swipe_label(folder: String, action: String, label: String, discard_label: String): String =
     if (folder == "drafts" && (action == "delete" || action == "trash")) discard_label else label
 
@@ -5127,7 +5154,7 @@ private fun execute_swipe_action(
             on_star_mutation(mutated)
         }
         "spam" -> {
-            if (current_folder == "spam") return
+            if (current_folder == "spam" || !org.astermail.android.mail.folder_offers_report_actions(current_folder)) return
             mail_vm.mark_spam(ids, 1)
             emails.removeAll { (thread_row_covers(it, thread_id, grouping_enabled)) }
         }
