@@ -30,8 +30,8 @@ import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.unit.dp
 
 internal val ALIAS_AT_PATHS = listOf(
-    "M15.625 12A3.75 3.75 0 1 1 8.125 12A3.75 3.75 0 1 1 15.625 12Z",
-    "M15.625 8.25V13.25A2.625 2.625 0 0 0 20.875 13.25V12A9 9 0 1 0 17.66 18.894",
+    "M15.375 12A3.375 3.375 0 1 1 8.625 12A3.375 3.375 0 1 1 15.375 12Z",
+    "M15.375 9V13.5A2.8125 2.8125 0 0 0 21 13.5V12A9 9 0 1 0 18.894 17.785",
 )
 
 internal val GHOST_MASK_PATHS = listOf(
