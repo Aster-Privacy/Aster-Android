@@ -16,6 +16,14 @@
         <item quantity="one">%d konuşma yıldızlandı</item>
         <item quantity="other">%d konuşma yıldızlandı</item>
     </plurals>
+    <plurals name="reported_as_spam_count">
+        <item quantity="one">Spam olarak bildirildi: %d</item>
+        <item quantity="other">Spam olarak bildirildi: %d</item>
+    </plurals>
+    <plurals name="reported_as_phishing_count">
+        <item quantity="one">Kimlik avı olarak bildirildi: %d</item>
+        <item quantity="other">Kimlik avı olarak bildirildi: %d</item>
+    </plurals>
     <plurals name="unstarred_count">
         <item quantity="one">%d konuşmanın yıldızı kaldırıldı</item>
         <item quantity="other">%d konuşmanın yıldızı kaldırıldı</item>

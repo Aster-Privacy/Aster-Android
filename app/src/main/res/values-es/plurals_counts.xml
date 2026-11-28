@@ -20,6 +20,16 @@
         <item quantity="many">%d conversaciones destacadas</item>
         <item quantity="other">%d conversaciones destacadas</item>
     </plurals>
+    <plurals name="reported_as_spam_count">
+        <item quantity="one">Reportados como spam: %d</item>
+        <item quantity="many">Reportados como spam: %d</item>
+        <item quantity="other">Reportados como spam: %d</item>
+    </plurals>
+    <plurals name="reported_as_phishing_count">
+        <item quantity="one">Reportados como phishing: %d</item>
+        <item quantity="many">Reportados como phishing: %d</item>
+        <item quantity="other">Reportados como phishing: %d</item>
+    </plurals>
     <plurals name="unstarred_count">
         <item quantity="one">Se quitó el destacado de %d conversación</item>
         <item quantity="many">Se quitó el destacado de %d conversaciones</item>

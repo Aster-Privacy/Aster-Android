@@ -29,3 +29,36 @@ val InboxItem.is_reportable: Boolean
 
 fun selection_offers_report_actions(folder: String, picked: Collection<InboxItem>): Boolean =
     folder_offers_report_actions(folder) && (picked.isEmpty() || picked.any { it.is_reportable })
+
+class ReportSelection(val ids: List<String>, val sender_emails: List<String>)
+
+fun report_selection_of(ids: List<String>, known: Map<String, InboxItem>): ReportSelection {
+    val reportable = ids.distinct().filter { known[it]?.is_reportable ?: true }
+    val senders = reportable
+        .mapNotNull { known[it]?.sender_email?.takeIf { email -> email.isNotBlank() } }
+        .distinct()
+    return ReportSelection(reportable, senders)
+}
+
+fun unmark_spam_selection_of(ids: List<String>, known: Map<String, InboxItem>): ReportSelection {
+    val unique = ids.distinct()
+    val senders = unique
+        .mapNotNull { known[it]?.sender_email?.takeIf { email -> email.isNotBlank() } }
+        .distinct()
+    return ReportSelection(unique, senders)
+}
+
+fun selection_action_needs_ids(action_id: String): Boolean = action_id == "spam" || action_id == "phishing"
+
+fun gather_selection_ids(
+    loaded: List<String>,
+    scope_selection: Boolean,
+    collect_scope: ((List<String>) -> Unit) -> Unit,
+    on_ready: (List<String>) -> Unit,
+) {
+    if (!scope_selection) {
+        on_ready(loaded)
+        return
+    }
+    collect_scope { ids -> on_ready((loaded + ids).distinct()) }
+}

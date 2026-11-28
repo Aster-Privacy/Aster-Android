@@ -21,9 +21,13 @@ package org.astermail.android.ui.mail
 import org.astermail.android.api.mail.MailItem
 import org.astermail.android.mail.InboxItem
 import org.astermail.android.mail.folder_offers_report_actions
+import org.astermail.android.mail.gather_selection_ids
 import org.astermail.android.mail.is_reportable
 import org.astermail.android.mail.is_reportable_item_type
+import org.astermail.android.mail.report_selection_of
+import org.astermail.android.mail.selection_action_needs_ids
 import org.astermail.android.mail.selection_offers_report_actions
+import org.astermail.android.mail.unmark_spam_selection_of
 import org.astermail.android.ui.search.search_report_mode
 import org.astermail.android.ui.search.search_report_mode_of
 import org.junit.Assert.assertEquals
@@ -141,5 +145,71 @@ class ReportActionsTest {
         assertFalse(search_report_mode.hidden.toolbar_allows("phishing"))
         assertFalse(search_report_mode.not_spam.toolbar_allows("spam"))
         assertTrue(search_report_mode.not_spam.toolbar_allows("phishing"))
+    }
+
+    @Test
+    fun mixed_all_mail_selection_reports_only_received_messages() {
+        val known = listOf(
+            item("r1", "received", "one@x.org"),
+            item("s1", "sent", "me@aster.cx"),
+            item("r2", null, "two@x.org"),
+            item("d1", "draft", "me@aster.cx"),
+        ).associateBy { it.id }
+        val picked = report_selection_of(listOf("r1", "s1", "r2", "d1"), known)
+        assertEquals(listOf("r1", "r2"), picked.ids)
+        assertEquals(listOf("one@x.org", "two@x.org"), picked.sender_emails)
+        assertTrue(selection_offers_report_actions("all", known.values))
+    }
+
+    @Test
+    fun all_sent_selection_reports_nothing() {
+        val known = listOf(item("s1", "sent"), item("s2", "scheduled")).associateBy { it.id }
+        assertTrue(report_selection_of(listOf("s1", "s2"), known).ids.isEmpty())
+    }
+
+    @Test
+    fun select_all_report_keeps_unloaded_ids_and_known_senders() {
+        val known = listOf(item("r1", "received", "one@x.org"), item("r2", "received", "one@x.org"))
+            .associateBy { it.id }
+        val picked = report_selection_of(listOf("r1", "r2", "scope-3", "r1"), known)
+        assertEquals(listOf("r1", "r2", "scope-3"), picked.ids)
+        assertEquals(listOf("one@x.org"), picked.sender_emails)
+    }
+
+    @Test
+    fun select_all_report_actions_skip_server_scope() {
+        assertTrue(selection_action_needs_ids("spam"))
+        assertTrue(selection_action_needs_ids("phishing"))
+        listOf("not_spam", "archive", "trash", "read").forEach { assertFalse(it, selection_action_needs_ids(it)) }
+    }
+
+    @Test
+    fun unmark_spam_selection_collects_scope_ids() {
+        val collected = mutableListOf<List<String>>()
+        var requested = 0
+        gather_selection_ids(
+            loaded = listOf("a", "b"),
+            scope_selection = true,
+            collect_scope = { deliver ->
+                requested++
+                deliver(listOf("b", "c", "d"))
+            },
+            on_ready = { collected += it },
+        )
+        assertEquals(1, requested)
+        assertEquals(listOf(listOf("a", "b", "c", "d")), collected)
+        val known = listOf(item("a", "received", "one@x.org"), item("c", "received", "two@x.org")).associateBy { it.id }
+        val picked = unmark_spam_selection_of(collected.single(), known)
+        assertEquals(listOf("a", "b", "c", "d"), picked.ids)
+        assertEquals(listOf("one@x.org", "two@x.org"), picked.sender_emails)
+    }
+
+    @Test
+    fun loaded_selection_skips_scope_collection() {
+        var requested = 0
+        var result: List<String>? = null
+        gather_selection_ids(listOf("a"), false, { requested++ }, { result = it })
+        assertEquals(0, requested)
+        assertEquals(listOf("a"), result)
     }
 }

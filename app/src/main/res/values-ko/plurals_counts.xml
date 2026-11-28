@@ -12,6 +12,12 @@
     <plurals name="starred_count">
         <item quantity="other">대화 %d개에 별표를 추가했습니다</item>
     </plurals>
+    <plurals name="reported_as_spam_count">
+        <item quantity="other">스팸으로 신고됨: %d</item>
+    </plurals>
+    <plurals name="reported_as_phishing_count">
+        <item quantity="other">피싱으로 신고됨: %d</item>
+    </plurals>
     <plurals name="unstarred_count">
         <item quantity="other">대화 %d개의 별표를 제거했습니다</item>
     </plurals>

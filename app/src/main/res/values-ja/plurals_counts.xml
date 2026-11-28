@@ -12,6 +12,12 @@
     <plurals name="starred_count">
         <item quantity="other">%d件の会話にスターを付けました</item>
     </plurals>
+    <plurals name="reported_as_spam_count">
+        <item quantity="other">スパムとして報告しました: %d</item>
+    </plurals>
+    <plurals name="reported_as_phishing_count">
+        <item quantity="other">フィッシングとして報告しました: %d</item>
+    </plurals>
     <plurals name="unstarred_count">
         <item quantity="other">%d件の会話のスターを外しました</item>
     </plurals>

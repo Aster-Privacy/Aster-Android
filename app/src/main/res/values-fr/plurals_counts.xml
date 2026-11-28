@@ -20,6 +20,16 @@
         <item quantity="many">%d conversations marquées d\'une étoile</item>
         <item quantity="other">%d conversations marquées d\'une étoile</item>
     </plurals>
+    <plurals name="reported_as_spam_count">
+        <item quantity="one">Signalés comme indésirables : %d</item>
+        <item quantity="many">Signalés comme indésirables : %d</item>
+        <item quantity="other">Signalés comme indésirables : %d</item>
+    </plurals>
+    <plurals name="reported_as_phishing_count">
+        <item quantity="one">Signalés comme hameçonnage : %d</item>
+        <item quantity="many">Signalés comme hameçonnage : %d</item>
+        <item quantity="other">Signalés comme hameçonnage : %d</item>
+    </plurals>
     <plurals name="unstarred_count">
         <item quantity="one">Étoile retirée de %d conversation</item>
         <item quantity="many">Étoile retirée de %d conversations</item>

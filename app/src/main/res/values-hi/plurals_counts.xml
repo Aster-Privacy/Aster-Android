@@ -16,6 +16,14 @@
         <item quantity="one">%d बातचीत तारांकित की गई</item>
         <item quantity="other">%d बातचीत तारांकित की गईं</item>
     </plurals>
+    <plurals name="reported_as_spam_count">
+        <item quantity="one">स्पैम के रूप में शिकायत की गई: %d</item>
+        <item quantity="other">स्पैम के रूप में शिकायत की गई: %d</item>
+    </plurals>
+    <plurals name="reported_as_phishing_count">
+        <item quantity="one">फ़िशिंग के रूप में शिकायत की गई: %d</item>
+        <item quantity="other">फ़िशिंग के रूप में शिकायत की गई: %d</item>
+    </plurals>
     <plurals name="unstarred_count">
         <item quantity="one">%d बातचीत से तारा हटाया गया</item>
         <item quantity="other">%d बातचीत से तारे हटाए गए</item>

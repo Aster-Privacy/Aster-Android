@@ -1945,14 +1945,12 @@ fun InboxScreen(
     }
 
     fun with_selection_ids(on_ready: (List<String>) -> Unit) {
-        val loaded = selected_email_ids()
-        if (!scope_selection) {
-            on_ready(loaded)
-            return
-        }
-        mail_vm.collect_scope_selection_ids(current_folder, folder_total) { ids ->
-            on_ready((loaded + ids).distinct())
-        }
+        org.astermail.android.mail.gather_selection_ids(
+            loaded = selected_email_ids(),
+            scope_selection = scope_selection,
+            collect_scope = { deliver -> mail_vm.collect_scope_selection_ids(current_folder, folder_total, deliver) },
+            on_ready = on_ready,
+        )
     }
 
     fun notify_if_scope_incomplete(applied: Int) {
@@ -2028,10 +2026,13 @@ fun InboxScreen(
     }
 
     fun unmark_spam_selected() {
-        val ids = selected_email_ids()
         val to_remove = selected_ids.toSet()
-        mail_vm.unmark_spam(ids)
-        emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+        with_selection_ids { ids ->
+            val picked = org.astermail.android.mail.unmark_spam_selection_of(ids, mail_vm.known_selection_items(ids))
+            mail_vm.unmark_spam(picked.ids, picked.sender_emails)
+            emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+            notify_if_scope_incomplete(picked.ids.size)
+        }
         exit_select_mode()
     }
 
@@ -2040,11 +2041,18 @@ fun InboxScreen(
             exit_select_mode()
             return
         }
-        val thread_count = selected_ids.size
-        val to_remove = selected_ids.toSet()
         with_selection_ids { ids ->
-            mail_vm.mark_spam(ids, maxOf(thread_count, ids.size))
-            emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+            val picked = org.astermail.android.mail.report_selection_of(ids, mail_vm.known_selection_items(ids))
+            if (picked.ids.isEmpty()) return@with_selection_ids
+            val reported = picked.ids.toSet()
+            mail_vm.mark_spam(
+                picked.ids,
+                picked.ids.size,
+                sender_emails_hint = picked.sender_emails,
+                reported_count = picked.ids.size,
+            )
+            emails.removeAll { it.id in reported }
+            notify_if_scope_incomplete(picked.ids.size)
         }
         exit_select_mode()
     }
@@ -2054,12 +2062,20 @@ fun InboxScreen(
             exit_select_mode()
             return
         }
-        val thread_count = selected_ids.size
-        val to_remove = selected_ids.toSet()
         val in_spam = current_folder == "spam"
         with_selection_ids { ids ->
-            mail_vm.report_phishing(ids, maxOf(thread_count, ids.size), in_spam = in_spam)
-            if (!in_spam) emails.removeAll { (thread_row_covers(it, to_remove, grouping_enabled)) }
+            val picked = org.astermail.android.mail.report_selection_of(ids, mail_vm.known_selection_items(ids))
+            if (picked.ids.isEmpty()) return@with_selection_ids
+            val reported = picked.ids.toSet()
+            mail_vm.report_phishing(
+                picked.ids,
+                picked.ids.size,
+                sender_emails_hint = picked.sender_emails,
+                in_spam = in_spam,
+                reported_count = picked.ids.size,
+            )
+            if (!in_spam) emails.removeAll { it.id in reported }
+            notify_if_scope_incomplete(picked.ids.size)
         }
         exit_select_mode()
     }
@@ -2231,6 +2247,7 @@ fun InboxScreen(
             return
         }
         val scope_action = scope_action_name(action_id)
+            ?.takeUnless { org.astermail.android.mail.selection_action_needs_ids(action_id) }
         if (server_scope && scope_action != null && mail_vm.action_supports_scope_selection(scope_action)) {
             mail_vm.bulk_scope_action(current_folder, scope_action, null)
             exit_select_mode()
