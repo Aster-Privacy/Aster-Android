@@ -224,6 +224,8 @@ import org.astermail.android.ui.mail.thread_message_to_mock
 import org.astermail.android.util.strip_metadata
 import org.astermail.android.util.strip_status
 import org.astermail.android.design.mirror_in_rtl
+import org.astermail.android.ui.icons.alias_at_icon
+import org.astermail.android.ui.icons.ghost_mask_icon
 
 data class AttachmentItem(
     val uri: Uri,
@@ -4851,7 +4853,7 @@ private fun FromAliasSheet(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = TablerIcons.At,
+                        imageVector = ghost_mask_icon,
                         contentDescription = null,
                         tint = colors.accent_blue,
                         modifier = Modifier.size(20.dp),
@@ -4983,7 +4985,7 @@ internal fun sender_mismatch_banner(
     ) {
         Row(verticalAlignment = Alignment.Top) {
             Icon(
-                imageVector = TablerIcons.At,
+                imageVector = alias_at_icon,
                 contentDescription = null,
                 tint = colors.accent_blue,
                 modifier = Modifier
@@ -5607,7 +5609,7 @@ private fun GhostAliasSheet(
                     bottom = AsterSpacing.sm,
                 ),
             )
-            sheet_row(TablerIcons.At, pluralStringResource(R.plurals.valid_for_days, 30, 30), colors.text_primary) { on_pick(30) }
+            sheet_row(ghost_mask_icon, pluralStringResource(R.plurals.valid_for_days, 30, 30), colors.text_primary) { on_pick(30) }
             Spacer(Modifier.height(AsterSpacing.md))
         }
     }

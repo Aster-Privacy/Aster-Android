@@ -135,6 +135,7 @@ import org.astermail.android.design.parse_hex_color_safe
 import androidx.compose.animation.core.tween
 import org.astermail.android.design.components.AsterDragHandle
 import org.astermail.android.storage.StoredAccount
+import org.astermail.android.ui.icons.alias_at_icon
 import org.astermail.android.ui.icons.all_mail_icon
 import org.astermail.android.ui.common.page_surface
 
@@ -3201,7 +3202,7 @@ private fun drawer_alias_row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = TablerIcons.At,
+            imageVector = alias_at_icon,
             contentDescription = null,
             tint = icon_color,
             modifier = Modifier.size(22.dp),

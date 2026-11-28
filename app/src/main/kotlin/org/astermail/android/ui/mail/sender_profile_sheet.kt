@@ -56,7 +56,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import compose.icons.TablerIcons
-import compose.icons.tablericons.At
 import compose.icons.tablericons.Ban
 import compose.icons.tablericons.Check
 import compose.icons.tablericons.CircleCheck
@@ -82,6 +81,7 @@ import org.astermail.android.ui.common.aster_sheet_shape
 import org.astermail.android.ui.common.sheet_container_color
 import org.astermail.android.ui.contacts.Contact
 import org.astermail.android.ui.settings.detail.settings_row_gap
+import org.astermail.android.ui.icons.alias_at_icon
 
 private val internal_sender_domains =
     setOf("aster.cx", "astermail.org", "astermail.me", "astermail.net")
@@ -342,7 +342,7 @@ fun sender_profile_sheet(
                             row_index++
                             sender_sheet_row(
                                 label = stringResource(R.string.alias_open_settings),
-                                icon = TablerIcons.At,
+                                icon = alias_at_icon,
                                 show_chevron = true,
                                 on_click = {
                                     on_close()
