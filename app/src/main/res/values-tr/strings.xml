@@ -297,6 +297,8 @@
     <string name="sending_in_countdown">%d sn sonra gönderilecek</string>
     <string name="reaction_sent">Tepki gönderildi</string>
     <string name="undo_send_too_late">Mesajınız zaten gönderildi</string>
+    <string name="sent_message_toast">Mesaj gönderildi</string>
+    <string name="sent_message_view">Mesajı görüntüle</string>
     <string name="undo">Geri al</string>
     <string name="save_draft">Taslağı kaydet</string>
     <string name="discard">Sil</string>

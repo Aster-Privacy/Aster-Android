@@ -570,6 +570,8 @@
     <string name="sending_in_countdown">Sending in %ds</string>
     <string name="reaction_sent">Reaction sent</string>
     <string name="undo_send_too_late">Your message was already sent</string>
+    <string name="sent_message_toast">Message sent</string>
+    <string name="sent_message_view">View message</string>
     <string name="save_draft">Save draft</string>
     <string name="discard">Discard</string>
     <string name="toggle_cc_bcc">Toggle cc/bcc</string>

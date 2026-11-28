@@ -6950,7 +6950,7 @@ class MailViewModel @Inject constructor(
         )
         if (result.isSuccess && result.getOrNull()?.success == true) {
             invalidate_caches(listOf("sent", "drafts"))
-            repository.notify_send_success()
+            repository.notify_send_success(result.getOrNull()?.mail_item_id)
         }
         return result
     }

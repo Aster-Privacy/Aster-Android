@@ -1056,6 +1056,7 @@ private fun AsterNavHost() {
                     ComposeActivity.intent_for(undo_context, mode = "draft", draft_id = draft_id),
                 )
             },
+            on_view_sent_message = { mail_item_id -> open_mail_detail(nav_controller, mail_item_id) },
         )
         if (!is_locked && undo_toast_allowed) {
             org.astermail.android.ui.mail.undo_send_toast()

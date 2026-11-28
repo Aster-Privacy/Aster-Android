@@ -67,10 +67,24 @@ fun undo_send_toast(undo_vm: UndoSendViewModel = hiltViewModel()) {
 @Composable
 fun undo_send_events(
     on_restored_draft: (String) -> Unit,
+    on_view_sent_message: (String) -> Unit,
     undo_vm: UndoSendViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val open_draft by androidx.compose.runtime.rememberUpdatedState(on_restored_draft)
+    val view_sent by androidx.compose.runtime.rememberUpdatedState(on_view_sent_message)
+    LaunchedEffect(undo_vm) {
+        undo_vm.sent_messages.collect { mail_item_id ->
+            app_toast.show(
+                TopToastState(
+                    message = context.getString(R.string.sent_message_toast),
+                    secondary_label = mail_item_id?.let { context.getString(R.string.sent_message_view) },
+                    on_secondary = mail_item_id?.let { id -> { view_sent(id) } },
+                    duration_ms = SENT_MESSAGE_TOAST_MS,
+                ),
+            )
+        }
+    }
     LaunchedEffect(undo_vm) {
         undo_vm.undo_restored_drafts.collect { draft_id -> open_draft(draft_id) }
     }
@@ -80,3 +94,5 @@ fun undo_send_events(
         }
     }
 }
+
+private const val SENT_MESSAGE_TOAST_MS = 6_000L

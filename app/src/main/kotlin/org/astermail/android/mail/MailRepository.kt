@@ -1359,6 +1359,8 @@ class MailRepository @Inject constructor(
     val pending_undo_send: kotlinx.coroutines.flow.StateFlow<PendingUndoSend?> = _pending_undo_send
     private val _send_result_events = kotlinx.coroutines.flow.MutableSharedFlow<Result<Unit>>(extraBufferCapacity = 8)
     val send_result_events: kotlinx.coroutines.flow.SharedFlow<Result<Unit>> = _send_result_events
+    private val _sent_message_events = kotlinx.coroutines.flow.MutableSharedFlow<String?>(extraBufferCapacity = 8)
+    val sent_message_events: kotlinx.coroutines.flow.SharedFlow<String?> = _sent_message_events
     private val optimistic_send_store = OptimisticSendStore()
     val optimistic_sends: kotlinx.coroutines.flow.StateFlow<List<OptimisticSend>> = optimistic_send_store.sends
     private val _undo_restored_drafts = kotlinx.coroutines.flow.MutableSharedFlow<String>(extraBufferCapacity = 4)
@@ -1375,8 +1377,9 @@ class MailRepository @Inject constructor(
     fun <T> durable_async(block: suspend () -> T): kotlinx.coroutines.Deferred<T> =
         app_scope.async { block() }
 
-    fun notify_send_success() {
+    fun notify_send_success(mail_item_id: String? = null) {
         _send_result_events.tryEmit(Result.success(Unit))
+        _sent_message_events.tryEmit(mail_item_id?.takeIf { it.isNotBlank() })
         org.astermail.android.billing.ReviewPrompt.record_send(context)
     }
     private val _send_problem = kotlinx.coroutines.flow.MutableStateFlow(false)
@@ -2416,6 +2419,7 @@ class MailRepository @Inject constructor(
             sent_draft_id?.takeIf { it.isNotBlank() }?.let { delete_sent_draft(it) }
             _send_problem.value = false
             _send_result_events.tryEmit(Result.success(Unit))
+            _sent_message_events.tryEmit(response?.mail_item_id?.takeIf { it.isNotBlank() })
             org.astermail.android.billing.ReviewPrompt.record_send(context)
             if (BuildConfig.DEBUG) android.util.Log.w("MailRepository", "run_pending_send id=$pending_id SENT mail_item_id=${response?.mail_item_id}")
             PendingSendOutcome.SENT

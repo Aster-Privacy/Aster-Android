@@ -487,6 +487,8 @@
     <string name="sending_in_countdown">%ds में भेजा जाएगा</string>
     <string name="reaction_sent">प्रतिक्रिया भेजी गई</string>
     <string name="undo_send_too_late">आपका संदेश पहले ही भेजा जा चुका है</string>
+    <string name="sent_message_toast">संदेश भेजा गया</string>
+    <string name="sent_message_view">संदेश देखें</string>
     <string name="save_draft">ड्राफ़्ट सहेजें</string>
     <string name="discard">छोड़ दें</string>
     <string name="toggle_cc_bcc">cc/bcc चालू या बंद करें</string>
