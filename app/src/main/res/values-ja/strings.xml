@@ -1598,6 +1598,7 @@
     <string name="add_to_contacts">連絡先に保存</string>
     <string name="remove_from_contacts">連絡先から削除</string>
     <string name="sender_action_new_message">新規メッセージ</string>
+    <string name="sender_system_no_replies">このアドレスは自動送信専用のため、返信を受け取れません。</string>
     <string name="sender_action_add_contact">連絡先に追加</string>
     <string name="sender_action_view_contact">連絡先を表示</string>
     <string name="sender_action_in_contacts">連絡先に登録済み</string>

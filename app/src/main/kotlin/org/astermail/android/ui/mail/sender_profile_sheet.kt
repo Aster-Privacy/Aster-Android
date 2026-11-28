@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -88,9 +89,18 @@ private val internal_sender_domains =
 
 private const val contact_save_timeout_ms = 15_000L
 
+private val system_sender_local_parts =
+    setOf("noreply", "no-reply", "updates")
+
 fun is_internal_sender(email: String): Boolean {
     val domain = email.substringAfter('@', "").lowercase().trim()
     return domain in internal_sender_domains
+}
+
+fun is_system_sender_address(email: String): Boolean {
+    val normalized = email.trim().lowercase()
+    if (!is_official_address(normalized)) return false
+    return normalized.substringBefore('@') in system_sender_local_parts
 }
 
 private enum class sender_contact_slot { add, adding, view, saved }
@@ -131,6 +141,8 @@ fun sender_profile_sheet(
         }
     }
     val shows_official = is_internal && is_official_address(normalized)
+    val avatar_authenticated = !marks_hidden && trust != null && is_internal
+    val is_system = avatar_authenticated && is_system_sender_address(normalized)
     val shows_verified = !is_internal && !shows_official && trust?.show_verified_badge == true
     val existing_contact = remember(contacts_state.contacts, normalized) {
         contacts_state.contacts.firstOrNull { it.email.trim().lowercase() == normalized }
@@ -191,9 +203,9 @@ fun sender_profile_sheet(
     }
 
     val show_alias_settings = is_own_address && on_open_alias_settings != null
-    val show_remove_contact = existing_contact != null
-    val show_unblock = is_blocked && on_unblock != null
-    val show_block = !show_unblock && !is_internal && !is_own_address
+    val show_remove_contact = existing_contact != null && !is_system
+    val show_unblock = is_blocked && on_unblock != null && !is_system
+    val show_block = !show_unblock && !is_internal && !is_own_address && !is_system
     val has_secondary_rows = show_alias_settings || show_remove_contact || show_unblock || show_block
 
     aster_modal_sheet(
@@ -229,7 +241,13 @@ fun sender_profile_sheet(
                     .padding(top = AsterSpacing.xs, bottom = AsterSpacing.lg),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                SenderAvatar(email = normalized, name = sender_name, size = 56.dp, plain = marks_hidden)
+                SenderAvatar(
+                    email = normalized,
+                    name = sender_name,
+                    size = 56.dp,
+                    sender_authenticated = avatar_authenticated,
+                    plain = marks_hidden,
+                )
                 Spacer(Modifier.width(AsterSpacing.md))
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -278,48 +296,49 @@ fun sender_profile_sheet(
             AsterCard(modifier = Modifier.fillMaxWidth()) {
                 Column {
                     sender_sheet_row(
-                        label = stringResource(R.string.sender_action_new_message),
-                        icon = TablerIcons.Mail,
-                        on_click = {
-                            on_close()
-                            on_send_email(normalized)
-                        },
-                    )
-                    settings_row_gap()
-                    sender_sheet_row(
                         label = stringResource(R.string.copy_address),
                         icon = TablerIcons.Copy,
                         on_click = copy_address,
                     )
-                    settings_row_gap()
-                    when (contact_slot) {
-                        sender_contact_slot.view -> sender_sheet_row(
-                            label = stringResource(R.string.sender_action_view_contact),
-                            icon = TablerIcons.User,
-                            show_chevron = true,
+                    if (!is_system) {
+                        settings_row_gap()
+                        sender_sheet_row(
+                            label = stringResource(R.string.sender_action_new_message),
+                            icon = TablerIcons.Mail,
                             on_click = {
-                                val id = existing_contact?.id
-                                val open = on_open_contact
-                                if (id != null && open != null) {
-                                    on_close()
-                                    open(id)
-                                }
+                                on_close()
+                                on_send_email(normalized)
                             },
                         )
-                        sender_contact_slot.saved -> sender_sheet_row(
-                            label = stringResource(R.string.sender_action_in_contacts),
-                            icon = TablerIcons.Check,
-                            highlighted = true,
-                            enabled = false,
-                            on_click = {},
-                        )
-                        else -> sender_sheet_row(
-                            label = stringResource(R.string.sender_action_add_contact),
-                            icon = TablerIcons.UserPlus,
-                            busy = contact_slot == sender_contact_slot.adding,
-                            enabled = contact_slot == sender_contact_slot.add,
-                            on_click = add_contact,
-                        )
+                        settings_row_gap()
+                        when (contact_slot) {
+                            sender_contact_slot.view -> sender_sheet_row(
+                                label = stringResource(R.string.sender_action_view_contact),
+                                icon = TablerIcons.User,
+                                show_chevron = true,
+                                on_click = {
+                                    val id = existing_contact?.id
+                                    val open = on_open_contact
+                                    if (id != null && open != null) {
+                                        on_close()
+                                        open(id)
+                                    }
+                                },
+                            )
+                            sender_contact_slot.saved -> sender_sheet_row(
+                                label = stringResource(R.string.sender_action_in_contacts),
+                                icon = TablerIcons.Check,
+                                highlighted = true,
+                                enabled = false,
+                                on_click = {},
+                            )
+                            else -> sender_sheet_row(
+                                label = stringResource(R.string.sender_action_add_contact),
+                                icon = TablerIcons.UserPlus,
+                                busy = contact_slot == sender_contact_slot.adding,
+                                enabled = contact_slot == sender_contact_slot.add,
+                                on_click = add_contact,
+                            )
                     }
                     settings_row_gap()
                     sender_sheet_row(
@@ -330,7 +349,22 @@ fun sender_profile_sheet(
                             on_search_sender(normalized)
                         },
                     )
+                    }
                 }
+            }
+
+            if (is_system) {
+                Spacer(Modifier.height(AsterSpacing.md))
+                Text(
+                    text = stringResource(R.string.sender_system_no_replies),
+                    color = colors.text_secondary,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AsterSpacing.xs)
+                        .testTag("sender_system_note"),
+                )
             }
 
             if (has_secondary_rows) {

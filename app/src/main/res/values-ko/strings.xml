@@ -1598,6 +1598,7 @@
     <string name="add_to_contacts">연락처에 저장</string>
     <string name="remove_from_contacts">연락처에서 제거</string>
     <string name="sender_action_new_message">새 메시지</string>
+    <string name="sender_system_no_replies">이 주소는 자동 메시지를 보내며 답장을 받을 수 없습니다.</string>
     <string name="sender_action_add_contact">연락처 추가</string>
     <string name="sender_action_view_contact">연락처 보기</string>
     <string name="sender_action_in_contacts">연락처에 있음</string>

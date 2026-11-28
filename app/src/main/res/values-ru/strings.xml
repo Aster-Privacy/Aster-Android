@@ -1616,6 +1616,7 @@
     <string name="add_to_contacts">Сохранить в контакты</string>
     <string name="remove_from_contacts">Удалить из контактов</string>
     <string name="sender_action_new_message">Новое сообщение</string>
+    <string name="sender_system_no_replies">С этого адреса отправляются автоматические сообщения, и он не может получать ответы.</string>
     <string name="sender_action_add_contact">Добавить контакт</string>
     <string name="sender_action_view_contact">Открыть контакт</string>
     <string name="sender_action_in_contacts">В контактах</string>

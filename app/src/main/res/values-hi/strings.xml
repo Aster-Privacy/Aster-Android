@@ -305,6 +305,7 @@
     <string name="add_to_contacts">संपर्कों में सहेजें</string>
     <string name="remove_from_contacts">संपर्कों से निकालें</string>
     <string name="sender_action_new_message">नया संदेश</string>
+    <string name="sender_system_no_replies">यह पता स्वचालित संदेश भेजता है और जवाब प्राप्त नहीं कर सकता।</string>
     <string name="sender_action_add_contact">संपर्क जोड़ें</string>
     <string name="sender_action_view_contact">संपर्क देखें</string>
     <string name="sender_action_in_contacts">संपर्कों में</string>

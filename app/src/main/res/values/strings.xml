@@ -377,6 +377,7 @@
     <string name="add_to_contacts">Save to contacts</string>
     <string name="remove_from_contacts">Remove from contacts</string>
     <string name="sender_action_new_message">New message</string>
+    <string name="sender_system_no_replies">This address sends automated messages and can't receive replies.</string>
     <string name="sender_action_add_contact">Add contact</string>
     <string name="sender_action_view_contact">View contact</string>
     <string name="sender_action_in_contacts">In contacts</string>

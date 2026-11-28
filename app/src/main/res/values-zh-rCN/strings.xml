@@ -1598,6 +1598,7 @@
     <string name="add_to_contacts">保存到联系人</string>
     <string name="remove_from_contacts">从联系人中移除</string>
     <string name="sender_action_new_message">新邮件</string>
+    <string name="sender_system_no_replies">此地址发送自动邮件，无法接收回复。</string>
     <string name="sender_action_add_contact">添加联系人</string>
     <string name="sender_action_view_contact">查看联系人</string>
     <string name="sender_action_in_contacts">已在联系人中</string>
