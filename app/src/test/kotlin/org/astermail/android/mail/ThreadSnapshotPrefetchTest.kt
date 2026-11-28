@@ -29,11 +29,13 @@ import kotlinx.serialization.encodeToString
 import org.astermail.android.api.mail.MailApi
 import org.astermail.android.api.mail.MailItem
 import org.astermail.android.api.mail.ThreadMessageItem
+import org.astermail.android.api.mail.ThreadWithMessages
 import org.astermail.android.api.network.low_network_state
 import org.astermail.android.storage.search.ThreadSnapshotDao
 import org.astermail.android.storage.search.ThreadSnapshotEntity
 import org.astermail.android.storage.search.ThreadSnapshotStamp
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -206,5 +208,57 @@ class ThreadSnapshotPrefetchTest {
 
         assertEquals(2, dao.get_calls.get())
         coVerify(exactly = 0) { mail_api.get_thread_messages("t_cached") }
+    }
+
+    @Test
+    fun `thread that loads but cannot be saved is not fetched again on every resume`() = runTest {
+        coEvery { mail_api.get_thread_messages("t_absent") } returns ThreadWithMessages()
+
+        repo.prefetch_threads_for_offline(listOf(items[2]))
+        repo.prefetch_threads_for_offline(listOf(items[2]))
+        repo.prefetch_threads_for_offline(listOf(items[2]))
+
+        coVerify(exactly = 1) { mail_api.get_thread_messages("t_absent") }
+    }
+
+    @Test
+    fun `new message in a settled thread is fetched again`() = runTest {
+        coEvery { mail_api.get_thread_messages("t_absent") } returns ThreadWithMessages()
+
+        repo.prefetch_threads_for_offline(listOf(items[2]))
+        repo.prefetch_threads_for_offline(listOf(inbox_item("m_reply", "t_absent")))
+
+        coVerify(exactly = 2) { mail_api.get_thread_messages("t_absent") }
+    }
+
+    @Test
+    fun `clearing caches forgets settled threads`() = runTest {
+        coEvery { mail_api.get_thread_messages("t_absent") } returns ThreadWithMessages()
+
+        repo.prefetch_threads_for_offline(listOf(items[2]))
+        repo.clear_caches()
+        repo.prefetch_threads_for_offline(listOf(items[2]))
+
+        coVerify(exactly = 2) { mail_api.get_thread_messages("t_absent") }
+    }
+
+    @Test
+    fun `rows still waiting for their envelope are left to the row refill`() {
+        val waiting = inbox_item("m_wait", "t_wait").copy(is_envelope_missing = true, is_decrypt_pending = true)
+
+        val targets = offline_prefetch_targets(listOf(waiting, items[2]), emptyMap(), now_ms = 0L, limit = 25)
+
+        assertEquals(listOf("t_absent"), targets.map { it.thread_token })
+    }
+
+    @Test
+    fun `settled threads become eligible again after the settle window`() {
+        val settled = mapOf(offline_prefetch_key(items[2]) to 1_000L)
+
+        val soon = offline_prefetch_targets(listOf(items[2]), settled, now_ms = 1_000L + OFFLINE_PREFETCH_SETTLED_MS - 1, limit = 25)
+        val later = offline_prefetch_targets(listOf(items[2]), settled, now_ms = 1_000L + OFFLINE_PREFETCH_SETTLED_MS, limit = 25)
+
+        assertTrue(soon.isEmpty())
+        assertEquals(listOf("t_absent"), later.map { it.thread_token })
     }
 }

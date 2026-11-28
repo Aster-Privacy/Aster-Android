@@ -961,17 +961,15 @@ class MailRepository @Inject constructor(
 
     private val offline_prefetch_mutex = kotlinx.coroutines.sync.Mutex()
 
+    private val offline_prefetch_settled = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
     suspend fun prefetch_threads_for_offline(items: List<InboxItem>, limit: Int = OFFLINE_PREFETCH_LIMIT) {
         if (org.astermail.android.api.network.low_network_state.extend_timeouts()) return
         if (pending_action_queue?.is_network_available() == false) return
         if (!offline_prefetch_mutex.tryLock()) return
         try {
-            val targets = items.asSequence()
-                .filterNot { it.is_undecryptable }
-                .filter { !it.thread_token.isNullOrBlank() }
-                .distinctBy { it.thread_token }
-                .take(limit)
-                .toList()
+            val now = System.currentTimeMillis()
+            val targets = offline_prefetch_targets(items, offline_prefetch_settled, now, limit)
             val missing = withContext(Dispatchers.IO) {
                 val cached = cached_snapshot_message_ids(targets.map { it.thread_token!! })
                 targets.filterNot { item -> cached[item.thread_token!!]?.contains(item.id) == true }
@@ -985,8 +983,11 @@ class MailRepository @Inject constructor(
                         try {
                             val slow_link = org.astermail.android.api.network.low_network_state.extend_timeouts()
                             if (!slow_link && pending_action_queue?.is_network_available() != false) {
-                                kotlinx.coroutines.withTimeoutOrNull(OFFLINE_PREFETCH_TIMEOUT_MS) {
+                                val fetched = kotlinx.coroutines.withTimeoutOrNull(OFFLINE_PREFETCH_TIMEOUT_MS) {
                                     fetch_thread(item.thread_token!!)
+                                }
+                                if (fetched?.isSuccess == true) {
+                                    offline_prefetch_settled[offline_prefetch_key(item)] = System.currentTimeMillis()
                                 }
                             }
                         } finally {
@@ -1024,6 +1025,7 @@ class MailRepository @Inject constructor(
 
     suspend fun clear_cached_message_bodies() {
         thread_snapshot_id_cache.clear()
+        offline_prefetch_settled.clear()
         runCatching { message_body_dao.clear_all() }
         runCatching { thread_snapshot_dao.clear_all() }
     }
@@ -2926,6 +2928,7 @@ class MailRepository @Inject constructor(
         draft_session_ids.clear()
         ratchet_undecryptable_at.clear()
         thread_snapshot_id_cache.clear()
+        offline_prefetch_settled.clear()
         clear_key_trust_lookups()
         InboundAttachmentKeyStore.clear()
         message_preloader.clear()
@@ -9652,6 +9655,23 @@ class AttachmentIntegrityException : Exception("attachment differs from the seal
 private const val OFFLINE_PREFETCH_LIMIT = 25
 private const val OFFLINE_PREFETCH_CONCURRENCY = 2
 private const val OFFLINE_PREFETCH_TIMEOUT_MS = 20_000L
+internal const val OFFLINE_PREFETCH_SETTLED_MS = 30L * 60 * 1000
+
+internal fun offline_prefetch_key(item: InboxItem): String = "${item.thread_token}:${item.id}"
+
+internal fun offline_prefetch_targets(
+    items: List<InboxItem>,
+    settled: Map<String, Long>,
+    now_ms: Long,
+    limit: Int,
+    settled_ms: Long = OFFLINE_PREFETCH_SETTLED_MS,
+): List<InboxItem> = items.asSequence()
+    .filterNot { it.is_undecryptable || it.is_envelope_missing }
+    .filter { !it.thread_token.isNullOrBlank() }
+    .distinctBy { it.thread_token }
+    .take(limit)
+    .filterNot { item -> settled[offline_prefetch_key(item)]?.let { now_ms - it < settled_ms } == true }
+    .toList()
 
 data class ScopeIds(
     val ids: List<String>,
