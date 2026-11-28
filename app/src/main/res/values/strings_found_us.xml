@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="found_us_banner_message">How did you first hear about Aster Mail? It\'s one optional question.</string>
+    <string name="found_us_banner_answer">Answer</string>
+    <string name="found_us_banner_dismiss">Dismiss</string>
+    <string name="found_us_remind_later">Remind me next week</string>
+    <string name="found_us_dont_ask">Don\'t ask again</string>
+    <string name="found_us_modal_title">How did you first hear about Aster Mail?</string>
+    <string name="found_us_modal_subtitle">Choose the one that fits best. Knowing what brought you here helps a small team reach more people who care about privacy.</string>
+    <string name="found_us_source_reddit">Reddit</string>
+    <string name="found_us_source_youtube">A YouTube video or creator</string>
+    <string name="found_us_source_friend">A friend, family member, or coworker</string>
+    <string name="found_us_source_invite_link">An invite link someone sent you</string>
+    <string name="found_us_source_search_engine">A web search</string>
+    <string name="found_us_source_comparison_site">A site that compares email services</string>
+    <string name="found_us_source_privacy_directory">A privacy guide or directory</string>
+    <string name="found_us_source_article">An article, blog, or newsletter</string>
+    <string name="found_us_source_app_store">Google Play, the App Store, or F-Droid</string>
+    <string name="found_us_source_github">GitHub</string>
+    <string name="found_us_source_social_media">Mastodon, Bluesky, X, or another social app</string>
+    <string name="found_us_source_short_video">A short video on TikTok or Instagram</string>
+    <string name="found_us_source_forum">A forum, Discord server, or group chat</string>
+    <string name="found_us_source_ai_assistant">An AI assistant or chatbot</string>
+    <string name="found_us_source_other">Somewhere else</string>
+    <string name="found_us_other_label">Where did you hear about Aster Mail?</string>
+    <string name="found_us_other_placeholder">For example, a podcast</string>
+    <string name="found_us_char_count">%1$d of %2$d</string>
+    <string name="found_us_pick_one_error">Choose an option to send your answer, or select Skip.</string>
+    <string name="found_us_other_required_error">Tell us where you heard about it, or choose another option.</string>
+    <string name="found_us_privacy_note">Your answer is saved on its own, with no link to your account or address, so it can\'t be traced back to you.</string>
+    <string name="found_us_skip">Skip</string>
+    <string name="found_us_send">Send</string>
+    <string name="found_us_thanks">Thanks for telling us.</string>
+    <string name="found_us_send_failed">Your answer didn\'t send. Try again in a moment.</string>
+</resources>

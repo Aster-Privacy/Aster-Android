@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="found_us_banner_message">Aster Mail을 처음 어떻게 알게 되셨나요? 질문은 하나이며 선택 사항입니다.</string>
+    <string name="found_us_banner_answer">답변하기</string>
+    <string name="found_us_banner_dismiss">닫기</string>
+    <string name="found_us_remind_later">다음 주에 다시 알림</string>
+    <string name="found_us_dont_ask">다시 묻지 않기</string>
+    <string name="found_us_modal_title">Aster Mail을 처음 어떻게 알게 되셨나요?</string>
+    <string name="found_us_modal_subtitle">가장 가까운 항목을 골라 주세요. 어떻게 오셨는지 알면 작은 팀이 개인정보를 중요하게 여기는 더 많은 분께 닿을 수 있습니다.</string>
+    <string name="found_us_source_reddit">Reddit</string>
+    <string name="found_us_source_youtube">YouTube 동영상 또는 크리에이터</string>
+    <string name="found_us_source_friend">친구, 가족 또는 동료</string>
+    <string name="found_us_source_invite_link">누군가 보내 준 초대 링크</string>
+    <string name="found_us_source_search_engine">웹 검색</string>
+    <string name="found_us_source_comparison_site">이메일 서비스를 비교하는 사이트</string>
+    <string name="found_us_source_privacy_directory">개인정보 보호 가이드 또는 디렉터리</string>
+    <string name="found_us_source_article">기사, 블로그 또는 뉴스레터</string>
+    <string name="found_us_source_app_store">Google Play, App Store 또는 F-Droid</string>
+    <string name="found_us_source_github">GitHub</string>
+    <string name="found_us_source_social_media">Mastodon, Bluesky, X 또는 다른 소셜 앱</string>
+    <string name="found_us_source_short_video">TikTok 또는 Instagram의 짧은 동영상</string>
+    <string name="found_us_source_forum">포럼, Discord 서버 또는 그룹 채팅</string>
+    <string name="found_us_source_ai_assistant">AI 어시스턴트 또는 챗봇</string>
+    <string name="found_us_source_other">기타</string>
+    <string name="found_us_other_label">Aster Mail을 어디에서 알게 되셨나요?</string>
+    <string name="found_us_other_placeholder">예: 팟캐스트</string>
+    <string name="found_us_char_count">%1$d/%2$d</string>
+    <string name="found_us_pick_one_error">답변을 보내려면 항목을 고르거나 건너뛰기를 선택하세요.</string>
+    <string name="found_us_other_required_error">어디에서 알게 되셨는지 알려 주시거나 다른 항목을 고르세요.</string>
+    <string name="found_us_privacy_note">답변은 계정이나 주소와 연결되지 않은 채 따로 저장되므로 회원님과 연결될 수 없습니다.</string>
+    <string name="found_us_skip">건너뛰기</string>
+    <string name="found_us_send">보내기</string>
+    <string name="found_us_thanks">알려 주셔서 감사합니다.</string>
+    <string name="found_us_send_failed">답변을 보내지 못했습니다. 잠시 후 다시 시도하세요.</string>
+</resources>

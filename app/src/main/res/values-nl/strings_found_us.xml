@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="found_us_banner_message">Hoe heb je voor het eerst van Aster Mail gehoord? Het is één vraag en die is optioneel.</string>
+    <string name="found_us_banner_answer">Beantwoorden</string>
+    <string name="found_us_banner_dismiss">Sluiten</string>
+    <string name="found_us_remind_later">Volgende week herinneren</string>
+    <string name="found_us_dont_ask">Niet meer vragen</string>
+    <string name="found_us_modal_title">Hoe heb je voor het eerst van Aster Mail gehoord?</string>
+    <string name="found_us_modal_subtitle">Kies wat het best past. Weten wat je hierheen bracht, helpt een klein team meer mensen te bereiken die om privacy geven.</string>
+    <string name="found_us_source_reddit">Reddit</string>
+    <string name="found_us_source_youtube">Een YouTube-video of -maker</string>
+    <string name="found_us_source_friend">Een vriend, familielid of collega</string>
+    <string name="found_us_source_invite_link">Een uitnodigingslink die iemand je stuurde</string>
+    <string name="found_us_source_search_engine">Zoeken op het web</string>
+    <string name="found_us_source_comparison_site">Een site die e-maildiensten vergelijkt</string>
+    <string name="found_us_source_privacy_directory">Een privacygids of -overzicht</string>
+    <string name="found_us_source_article">Een artikel, blog of nieuwsbrief</string>
+    <string name="found_us_source_app_store">Google Play, de App Store of F-Droid</string>
+    <string name="found_us_source_github">GitHub</string>
+    <string name="found_us_source_social_media">Mastodon, Bluesky, X of een andere sociale app</string>
+    <string name="found_us_source_short_video">Een korte video op TikTok of Instagram</string>
+    <string name="found_us_source_forum">Een forum, Discord-server of groepschat</string>
+    <string name="found_us_source_ai_assistant">Een AI-assistent of chatbot</string>
+    <string name="found_us_source_other">Ergens anders</string>
+    <string name="found_us_other_label">Waar heb je van Aster Mail gehoord?</string>
+    <string name="found_us_other_placeholder">Bijvoorbeeld een podcast</string>
+    <string name="found_us_char_count">%1$d van %2$d</string>
+    <string name="found_us_pick_one_error">Kies een optie om je antwoord te versturen, of selecteer Overslaan.</string>
+    <string name="found_us_other_required_error">Vertel ons waar je ervan hoorde, of kies een andere optie.</string>
+    <string name="found_us_privacy_note">Je antwoord wordt los opgeslagen, zonder koppeling aan je account of adres, zodat het niet naar jou te herleiden is.</string>
+    <string name="found_us_skip">Overslaan</string>
+    <string name="found_us_send">Versturen</string>
+    <string name="found_us_thanks">Bedankt dat je het ons vertelt.</string>
+    <string name="found_us_send_failed">Je antwoord is niet verstuurd. Probeer het zo opnieuw.</string>
+</resources>

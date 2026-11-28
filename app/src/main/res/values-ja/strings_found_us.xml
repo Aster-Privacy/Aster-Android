@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="found_us_banner_message">Aster Mail を最初に知ったきっかけは何ですか？質問は 1 つだけで、回答は任意です。</string>
+    <string name="found_us_banner_answer">回答する</string>
+    <string name="found_us_banner_dismiss">閉じる</string>
+    <string name="found_us_remind_later">来週もう一度表示</string>
+    <string name="found_us_dont_ask">今後表示しない</string>
+    <string name="found_us_modal_title">Aster Mail を最初に知ったきっかけは何ですか？</string>
+    <string name="found_us_modal_subtitle">いちばん近いものを選んでください。きっかけを教えていただくと、小さなチームがプライバシーを大切にする人たちにより広く届けられるようになります。</string>
+    <string name="found_us_source_reddit">Reddit</string>
+    <string name="found_us_source_youtube">YouTube の動画やクリエイター</string>
+    <string name="found_us_source_friend">友人、家族、同僚</string>
+    <string name="found_us_source_invite_link">誰かから届いた招待リンク</string>
+    <string name="found_us_source_search_engine">Web 検索</string>
+    <string name="found_us_source_comparison_site">メールサービスを比較するサイト</string>
+    <string name="found_us_source_privacy_directory">プライバシーに関するガイドやディレクトリ</string>
+    <string name="found_us_source_article">記事、ブログ、ニュースレター</string>
+    <string name="found_us_source_app_store">Google Play、App Store、F-Droid</string>
+    <string name="found_us_source_github">GitHub</string>
+    <string name="found_us_source_social_media">Mastodon、Bluesky、X などの SNS</string>
+    <string name="found_us_source_short_video">TikTok や Instagram の短い動画</string>
+    <string name="found_us_source_forum">フォーラム、Discord サーバー、グループチャット</string>
+    <string name="found_us_source_ai_assistant">AI アシスタントやチャットボット</string>
+    <string name="found_us_source_other">その他</string>
+    <string name="found_us_other_label">Aster Mail をどこで知りましたか？</string>
+    <string name="found_us_other_placeholder">例：ポッドキャスト</string>
+    <string name="found_us_char_count">%1$d/%2$d</string>
+    <string name="found_us_pick_one_error">回答を送信するには選択肢を選ぶか、スキップを選択してください。</string>
+    <string name="found_us_other_required_error">どこで知ったかを入力するか、別の選択肢を選んでください。</string>
+    <string name="found_us_privacy_note">回答はアカウントやアドレスとは切り離して保存されるため、あなたと結び付けられることはありません。</string>
+    <string name="found_us_skip">スキップ</string>
+    <string name="found_us_send">送信</string>
+    <string name="found_us_thanks">教えていただきありがとうございます。</string>
+    <string name="found_us_send_failed">回答を送信できませんでした。しばらくしてからもう一度お試しください。</string>
+</resources>
