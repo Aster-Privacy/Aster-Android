@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="found_us_banner_message">Wie haben Sie von Aster Mail erfahren? Nur eine Frage, und sie ist freiwillig.</string>
+    <string name="found_us_banner_answer">Antworten</string>
+    <string name="found_us_banner_dismiss">Schließen</string>
+    <string name="found_us_remind_later">Nächste Woche erinnern</string>
+    <string name="found_us_dont_ask">Nicht mehr fragen</string>
+    <string name="found_us_modal_title">Wie haben Sie von Aster Mail erfahren?</string>
+    <string name="found_us_modal_subtitle">Wählen Sie die passendste Antwort. Zu wissen, was Sie hergeführt hat, hilft einem kleinen Team, mehr Menschen zu erreichen, denen Privatsphäre wichtig ist.</string>
+    <string name="found_us_source_reddit">Reddit</string>
+    <string name="found_us_source_youtube">Ein YouTube-Video oder ein YouTube-Kanal</string>
+    <string name="found_us_source_friend">Freunde, Familie oder Kollegen</string>
+    <string name="found_us_source_invite_link">Ein Einladungslink, den Ihnen jemand geschickt hat</string>
+    <string name="found_us_source_search_engine">Eine Websuche</string>
+    <string name="found_us_source_comparison_site">Eine Website, die E-Mail-Dienste vergleicht</string>
+    <string name="found_us_source_privacy_directory">Ein Ratgeber oder Verzeichnis zum Thema Datenschutz</string>
+    <string name="found_us_source_article">Ein Artikel, Blog oder Newsletter</string>
+    <string name="found_us_source_app_store">Google Play, der App Store oder F-Droid</string>
+    <string name="found_us_source_github">GitHub</string>
+    <string name="found_us_source_social_media">Mastodon, Bluesky, X oder ein anderes soziales Netzwerk</string>
+    <string name="found_us_source_short_video">Ein kurzes Video auf TikTok oder Instagram</string>
+    <string name="found_us_source_forum">Ein Forum, ein Discord-Server oder ein Gruppenchat</string>
+    <string name="found_us_source_ai_assistant">Ein KI-Assistent oder Chatbot</string>
+    <string name="found_us_source_other">Woanders</string>
+    <string name="found_us_other_label">Wo haben Sie von Aster Mail erfahren?</string>
+    <string name="found_us_other_placeholder">Zum Beispiel ein Podcast</string>
+    <string name="found_us_char_count">%1$d von %2$d</string>
+    <string name="found_us_pick_one_error">Wählen Sie eine Option, um Ihre Antwort zu senden, oder wählen Sie Überspringen.</string>
+    <string name="found_us_other_required_error">Sagen Sie uns, wo Sie davon erfahren haben, oder wählen Sie eine andere Option.</string>
+    <string name="found_us_privacy_note">Ihre Antwort wird getrennt gespeichert, ohne Verbindung zu Ihrem Konto oder Ihrer Adresse, sodass sie nicht auf Sie zurückgeführt werden kann.</string>
+    <string name="found_us_skip">Überspringen</string>
+    <string name="found_us_send">Senden</string>
+    <string name="found_us_thanks">Danke, dass Sie es uns verraten haben.</string>
+    <string name="found_us_send_failed">Ihre Antwort wurde nicht gesendet. Versuchen Sie es gleich noch einmal.</string>
+</resources>

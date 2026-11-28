@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="found_us_banner_message">Aster Mail\'i ilk nereden duydunuz? Tek bir soru ve yanıtlamak isteğe bağlı.</string>
+    <string name="found_us_banner_answer">Yanıtla</string>
+    <string name="found_us_banner_dismiss">Kapat</string>
+    <string name="found_us_remind_later">Haftaya hatırlat</string>
+    <string name="found_us_dont_ask">Bir daha sorma</string>
+    <string name="found_us_modal_title">Aster Mail\'i ilk nereden duydunuz?</string>
+    <string name="found_us_modal_subtitle">En uygun olanı seçin. Sizi buraya neyin getirdiğini bilmek, küçük bir ekibin gizliliğe önem veren daha çok kişiye ulaşmasına yardımcı olur.</string>
+    <string name="found_us_source_reddit">Reddit</string>
+    <string name="found_us_source_youtube">Bir YouTube videosu veya içerik üreticisi</string>
+    <string name="found_us_source_friend">Bir arkadaş, aile üyesi veya iş arkadaşı</string>
+    <string name="found_us_source_invite_link">Birinin size gönderdiği davet bağlantısı</string>
+    <string name="found_us_source_search_engine">Web araması</string>
+    <string name="found_us_source_comparison_site">E-posta hizmetlerini karşılaştıran bir site</string>
+    <string name="found_us_source_privacy_directory">Bir gizlilik rehberi veya dizini</string>
+    <string name="found_us_source_article">Bir makale, blog veya bülten</string>
+    <string name="found_us_source_app_store">Google Play, App Store veya F-Droid</string>
+    <string name="found_us_source_github">GitHub</string>
+    <string name="found_us_source_social_media">Mastodon, Bluesky, X veya başka bir sosyal uygulama</string>
+    <string name="found_us_source_short_video">TikTok veya Instagram\'da kısa bir video</string>
+    <string name="found_us_source_forum">Bir forum, Discord sunucusu veya grup sohbeti</string>
+    <string name="found_us_source_ai_assistant">Bir yapay zeka asistanı veya sohbet botu</string>
+    <string name="found_us_source_other">Başka bir yer</string>
+    <string name="found_us_other_label">Aster Mail\'i nereden duydunuz?</string>
+    <string name="found_us_other_placeholder">Örneğin bir podcast</string>
+    <string name="found_us_char_count">%1$d/%2$d</string>
+    <string name="found_us_pick_one_error">Yanıtınızı göndermek için bir seçenek belirleyin veya Atla\'yı seçin.</string>
+    <string name="found_us_other_required_error">Nereden duyduğunuzu yazın veya başka bir seçenek belirleyin.</string>
+    <string name="found_us_privacy_note">Yanıtınız hesabınızla veya adresinizle bağlantısı olmadan ayrı olarak kaydedilir, bu yüzden size kadar izlenemez.</string>
+    <string name="found_us_skip">Atla</string>
+    <string name="found_us_send">Gönder</string>
+    <string name="found_us_thanks">Bizimle paylaştığınız için teşekkürler.</string>
+    <string name="found_us_send_failed">Yanıtınız gönderilemedi. Birazdan tekrar deneyin.</string>
+</resources>

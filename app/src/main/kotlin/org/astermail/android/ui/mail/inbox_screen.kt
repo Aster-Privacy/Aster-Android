@@ -730,6 +730,10 @@ fun InboxScreen(
     val show_storage_nudge = storage_nudge_level != null &&
         storage_nudge_account != null &&
         !is_storage_nudge_dismissed(storage_nudge_stored, storage_nudge_level, System.currentTimeMillis())
+    val found_us = org.astermail.android.ui.survey.found_us_host(
+        account_id = settings_state.user?.user_id,
+        is_blocked = show_payment_failed_banner || show_storage_nudge || show_locked_data_banner || show_external_account_banner,
+    )
     val storage_nudge_play = org.astermail.android.billing.remember_play_install()
     LaunchedEffect(show_storage_nudge) {
         if (!show_storage_nudge) return@LaunchedEffect
@@ -2945,6 +2949,16 @@ fun InboxScreen(
                                             payment_failed_due,
                                             java.time.LocalDate.now().toString(),
                                         ),
+                                    )
+                                }
+                            }
+                        }
+                        if (found_us.is_banner_visible && !select_mode) {
+                            item(key = "_found_us_banner", contentType = "found_us_banner") {
+                                Box(modifier = Modifier.fillMaxWidth().animateItem(fadeInSpec = row_fade_in_spec)) {
+                                    org.astermail.android.ui.survey.found_us_banner(
+                                        host = found_us,
+                                        modifier = Modifier.padding(horizontal = AsterSpacing.md, vertical = AsterSpacing.xs),
                                     )
                                 }
                             }

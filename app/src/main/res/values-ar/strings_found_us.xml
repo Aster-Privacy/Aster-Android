@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="found_us_banner_message">كيف عرفت Aster Mail أول مرة؟ إنه سؤال واحد واختياري.</string>
+    <string name="found_us_banner_answer">أجب</string>
+    <string name="found_us_banner_dismiss">إغلاق</string>
+    <string name="found_us_remind_later">ذكّرني الأسبوع القادم</string>
+    <string name="found_us_dont_ask">لا تسألني مرة أخرى</string>
+    <string name="found_us_modal_title">كيف عرفت Aster Mail أول مرة؟</string>
+    <string name="found_us_modal_subtitle">اختر الإجابة الأقرب. معرفة ما أوصلك إلى هنا تساعد فريقًا صغيرًا على الوصول إلى مزيد من الأشخاص المهتمين بالخصوصية.</string>
+    <string name="found_us_source_reddit">Reddit</string>
+    <string name="found_us_source_youtube">فيديو أو صانع محتوى على YouTube</string>
+    <string name="found_us_source_friend">صديق أو أحد أفراد العائلة أو زميل عمل</string>
+    <string name="found_us_source_invite_link">رابط دعوة أرسله إليك أحدهم</string>
+    <string name="found_us_source_search_engine">بحث على الويب</string>
+    <string name="found_us_source_comparison_site">موقع يقارن خدمات البريد الإلكتروني</string>
+    <string name="found_us_source_privacy_directory">دليل أو فهرس عن الخصوصية</string>
+    <string name="found_us_source_article">مقال أو مدونة أو نشرة بريدية</string>
+    <string name="found_us_source_app_store">Google Play أو App Store أو F-Droid</string>
+    <string name="found_us_source_github">GitHub</string>
+    <string name="found_us_source_social_media">Mastodon أو Bluesky أو X أو تطبيق تواصل آخر</string>
+    <string name="found_us_source_short_video">فيديو قصير على TikTok أو Instagram</string>
+    <string name="found_us_source_forum">منتدى أو خادم Discord أو محادثة جماعية</string>
+    <string name="found_us_source_ai_assistant">مساعد ذكاء اصطناعي أو روبوت محادثة</string>
+    <string name="found_us_source_other">مكان آخر</string>
+    <string name="found_us_other_label">أين عرفت Aster Mail؟</string>
+    <string name="found_us_other_placeholder">مثلًا، بودكاست</string>
+    <string name="found_us_char_count">%1$d من %2$d</string>
+    <string name="found_us_pick_one_error">اختر خيارًا لإرسال إجابتك، أو اختر تخطي.</string>
+    <string name="found_us_other_required_error">أخبرنا أين عرفت عنه، أو اختر خيارًا آخر.</string>
+    <string name="found_us_privacy_note">تُحفظ إجابتك منفصلة، دون أي ربط بحسابك أو عنوانك، فلا يمكن إرجاعها إليك.</string>
+    <string name="found_us_skip">تخطي</string>
+    <string name="found_us_send">إرسال</string>
+    <string name="found_us_thanks">شكرًا لإخبارنا.</string>
+    <string name="found_us_send_failed">لم تُرسل إجابتك. حاول مرة أخرى بعد قليل.</string>
+</resources>
