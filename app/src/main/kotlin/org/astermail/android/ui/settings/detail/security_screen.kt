@@ -1047,8 +1047,7 @@ private fun vanguard_section(
                             onCheckedChange = { v ->
                                 when {
                                     v -> vm.enable_vanguard()
-                                    state.vanguard_eligible != false &&
-                                        org.astermail.android.security.LockdownStore.is_enabled(lock_context) ->
+                                    org.astermail.android.security.LockdownStore.is_enabled(lock_context) ->
                                         show_lockdown_first = true
                                     else -> show_disable_confirm = true
                                 }
