@@ -33,18 +33,13 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.MailOutline
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,7 +48,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
 import org.astermail.android.R
 import org.astermail.android.design.AsterMaterial
 import org.astermail.android.design.AsterShapes
@@ -62,8 +56,6 @@ import org.astermail.android.design.components.AsterIconButton
 import org.astermail.android.design.island_surface_color
 import java.net.URI
 import java.util.Locale
-
-private const val copied_duration_ms = 1600L
 
 internal data class ExternalLinkDestination(
     val heading: String,
@@ -101,13 +93,6 @@ internal fun external_link_destination_card(
     val colors = AsterMaterial.colors
     val shape = AsterShapes.island
     val destination = remember(link) { describe_external_link(link) }
-    var copied by remember { mutableStateOf(false) }
-    LaunchedEffect(copied) {
-        if (copied) {
-            delay(copied_duration_ms)
-            copied = false
-        }
-    }
     val copy_label = stringResource(if (destination.is_mail) R.string.copy_address else R.string.copy_link)
     Row(
         modifier = Modifier
@@ -153,9 +138,9 @@ internal fun external_link_destination_card(
         Spacer(Modifier.width(AsterSpacing.xs))
         Box(modifier = Modifier.height(20.dp).width(48.dp), contentAlignment = Alignment.Center) {
             AsterIconButton(
-                icon = if (copied) Icons.Rounded.Check else Icons.Rounded.ContentCopy,
-                content_description = if (copied) stringResource(R.string.copied) else copy_label,
-                onClick = { if (on_copy()) copied = true },
+                icon = Icons.Rounded.ContentCopy,
+                content_description = copy_label,
+                onClick = { on_copy() },
                 modifier = Modifier.requiredSize(48.dp),
                 tint = colors.text_tertiary,
                 icon_size = 18,
