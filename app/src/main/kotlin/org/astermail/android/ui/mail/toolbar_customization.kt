@@ -30,6 +30,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import org.astermail.android.R
 import org.astermail.android.design.auto_mirrored
 import org.astermail.android.ui.icons.mail_check_icon
+import org.astermail.android.ui.icons.mark_read_icon
+import org.astermail.android.ui.icons.mail_unread_icon
 
 data class ToolbarAction(
     val id: String,
@@ -38,7 +40,7 @@ data class ToolbarAction(
 )
 
 val toolbar_action_catalog: List<ToolbarAction> = listOf(
-    ToolbarAction("read", R.string.mark_as_read, TablerIcons.MailOpened),
+    ToolbarAction("read", R.string.mark_as_read, mark_read_icon),
     ToolbarAction("trash", R.string.move_to_trash, TablerIcons.Trash),
     ToolbarAction("archive", R.string.swipe_archive, TablerIcons.Archive),
     ToolbarAction("folder", R.string.move_to_folder, TablerIcons.Folder),
@@ -55,8 +57,8 @@ val selection_toolbar_action_catalog: List<ToolbarAction> = listOf(
     ToolbarAction("folder", R.string.move_to_folder, TablerIcons.Folder),
     ToolbarAction("label", R.string.add_label, TablerIcons.Tag),
     ToolbarAction("category", R.string.move_to_category, TablerIcons.LayoutGrid),
-    ToolbarAction("read", R.string.mark_as_read, TablerIcons.MailOpened),
-    ToolbarAction("unread", R.string.mark_as_unread, TablerIcons.Mail),
+    ToolbarAction("read", R.string.mark_as_read, mark_read_icon),
+    ToolbarAction("unread", R.string.mark_as_unread, mail_unread_icon),
     ToolbarAction("archive", R.string.swipe_archive, TablerIcons.Archive),
     ToolbarAction("star", R.string.star, TablerIcons.Star),
     ToolbarAction("snooze", R.string.snooze, TablerIcons.Clock),
@@ -121,9 +123,9 @@ fun spam_action_icon(is_spam: Boolean): ImageVector =
 
 private val star_off_toolbar_action = ToolbarAction("star", R.string.unstar, TablerIcons.StarOff)
 
-private val mark_unread_toolbar_action = ToolbarAction("unread", R.string.mark_as_unread, TablerIcons.Mail)
+private val mark_unread_toolbar_action = ToolbarAction("unread", R.string.mark_as_unread, mail_unread_icon)
 
-private val mark_read_toolbar_action = ToolbarAction("read", R.string.mark_as_read, TablerIcons.MailOpened)
+private val mark_read_toolbar_action = ToolbarAction("read", R.string.mark_as_read, mark_read_icon)
 
 fun selection_read_toolbar_action(selection_all_read: Boolean): ToolbarAction =
     if (selection_all_read) mark_unread_toolbar_action else mark_read_toolbar_action

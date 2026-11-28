@@ -37,6 +37,8 @@ import compose.icons.tablericons.Plus
 
 import org.astermail.android.ui.icons.pin_icon
 import org.astermail.android.ui.icons.pin_icon_filled
+import org.astermail.android.ui.icons.mark_read_icon
+import org.astermail.android.ui.icons.mail_unread_icon
 import org.astermail.android.design.components.aster_menu_item
 import org.astermail.android.design.components.aster_menu
 import org.astermail.android.design.components.aster_menu_surface
@@ -2332,7 +2334,7 @@ private fun detail_top_bar(
                     }
                 }
                 detail_menu_action(
-                    icon = TablerIcons.Mail,
+                    icon = mail_unread_icon,
                     text = stringResource(R.string.mark_as_unread),
                     tint = colors.text_primary,
                 ) {
@@ -2627,7 +2629,7 @@ private fun detail_bottom_bar(
                         "read" -> {
                             val read_state = api_item?.is_read == true
                             if (read_state) {
-                                bottom_action(TablerIcons.Mail, stringResource(R.string.mark_as_unread), test_tag = "mark_read") {
+                                bottom_action(mail_unread_icon, stringResource(R.string.mark_as_unread), test_tag = "mark_read") {
                                     if (!left_after_unread) {
                                         left_after_unread = true
                                         mail_vm.mark_unread(email_id)
@@ -2636,7 +2638,7 @@ private fun detail_bottom_bar(
                                     }
                                 }
                             } else {
-                                bottom_action(TablerIcons.MailOpened, stringResource(R.string.mark_as_read), test_tag = "mark_read") {
+                                bottom_action(mark_read_icon, stringResource(R.string.mark_as_read), test_tag = "mark_read") {
                                     mail_vm.mark_read(email_id)
                                     show_toast(context.getString(R.string.marked_as_read))
                                 }
@@ -6249,7 +6251,7 @@ internal fun action_menu_sheet(
                             on_star,
                             icon = TablerIcons.Star,
                         )
-                        aster_menu_item(stringResource(R.string.mark_as_unread), on_mark_unread, icon = TablerIcons.Mail)
+                        aster_menu_item(stringResource(R.string.mark_as_unread), on_mark_unread, icon = mail_unread_icon)
                         aster_menu_item(stringResource(R.string.label), on_label, icon = TablerIcons.Tag)
                         aster_menu_item(stringResource(R.string.snooze), on_snooze, icon = TablerIcons.Moon)
                         if (is_trashed) {
